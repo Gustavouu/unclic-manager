@@ -59,19 +59,21 @@ const Inventory = () => {
 
   return (
     <AppLayout title="Estoque">
-      <InventoryLayout
-        inventory={inventory}
-        filteredInventory={filteredInventory}
-        categories={categories}
-        filterOptions={filterOptions}
-        updateFilterOptions={updateFilterOptions}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        onAddItem={handleAddItem}
-        onUpdateItem={handleUpdateItem}
-        onDeleteItem={handleDeleteItem}
-        onRestock={handleRestock}
-      />
+      <div className="max-w-7xl mx-auto">
+        <InventoryLayout
+          inventory={inventory}
+          filteredInventory={filteredInventory}
+          categories={categories}
+          filterOptions={filterOptions}
+          updateFilterOptions={updateFilterOptions}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          onAddItem={handleAddItem}
+          onUpdateItem={handleUpdateItem}
+          onDeleteItem={handleDeleteItem}
+          onRestock={handleRestock}
+        />
+      </div>
     </AppLayout>
   );
 };

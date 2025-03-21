@@ -8,7 +8,7 @@ import { NewInventoryDialog } from "./NewInventoryDialog";
 import { RestockDialog } from "./RestockDialog";
 import { InventorySummaryCards } from "./InventorySummaryCards";
 import { InventoryStats } from "./InventoryStats";
-import { Package, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const InventoryLayout = ({
@@ -57,52 +57,50 @@ export const InventoryLayout = ({
   };
   
   return (
-    <div className="space-y-6">
-      <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-display font-medium">Estoque</h1>
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Estoque</h1>
         <Button onClick={() => document.getElementById("new-inventory-trigger")?.click()}>
           <Plus className="mr-2 h-4 w-4" />
           Adicionar Produto
         </Button>
       </div>
       
-      <div className="space-y-6">
-        <InventorySummaryCards inventory={inventory} />
+      <InventorySummaryCards inventory={inventory} />
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <InventoryStats 
+          inventory={inventory}
+          title="Produtos Mais Movimentados"
+          emptyMessage="Nenhum produto movimentado recentemente"
+          type="recent"
+        />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InventoryStats 
-            inventory={inventory}
-            title="Produtos Mais Movimentados"
-            emptyMessage="Nenhum produto movimentado recentemente"
-            type="recent"
-          />
-          
-          <InventoryStats 
-            inventory={inventory}
-            title="Produtos Parados"
-            emptyMessage="Não há produtos parados"
-            type="stopped"
+        <InventoryStats 
+          inventory={inventory}
+          title="Produtos Parados"
+          emptyMessage="Não há produtos parados"
+          type="stopped"
+        />
+      </div>
+      
+      <div className="bg-white rounded-xl shadow">
+        <div className="p-6 border-b">
+          <InventoryFilters
+            categories={categories}
+            filterOptions={filterOptions}
+            updateFilterOptions={updateFilterOptions}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
           />
         </div>
         
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="p-4 border-b">
-            <InventoryFilters
-              categories={categories}
-              filterOptions={filterOptions}
-              updateFilterOptions={updateFilterOptions}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-            />
-          </div>
-          
-          <InventoryTable 
-            items={filteredInventory}
-            onViewDetails={handleViewDetails}
-            onRestockItem={handleOpenRestockDialog}
-            onDeleteItem={onDeleteItem}
-          />
-        </div>
+        <InventoryTable 
+          items={filteredInventory}
+          onViewDetails={handleViewDetails}
+          onRestockItem={handleOpenRestockDialog}
+          onDeleteItem={onDeleteItem}
+        />
       </div>
       
       {/* New Item Dialog */}
