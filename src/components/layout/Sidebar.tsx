@@ -1,4 +1,3 @@
-
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -14,7 +13,6 @@ import {
   Menu,
   X,
   LogOut,
-  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -62,8 +60,7 @@ export const Sidebar = () => {
   const routes = [
     { icon: <LayoutDashboard size={18} />, label: "Dashboard", path: "/dashboard" },
     { icon: <Calendar size={18} />, label: "Agendamentos", path: "/appointments" },
-    { icon: <Users size={18} />, label: "Clientes", path: "/clients" },
-    { icon: <UserRound size={18} />, label: "Colaboradores", path: "/professionals" },
+    { icon: <UserRound size={18} />, label: "Clientes", path: "/clients" },
     { icon: <ShoppingBag size={18} />, label: "Estoque", path: "/inventory" },
     { icon: <Banknote size={18} />, label: "Financeiro", path: "/finance" },
     { icon: <Scissors size={18} />, label: "Serviços", path: "/services" },

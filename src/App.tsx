@@ -9,7 +9,6 @@ import Appointments from "./pages/Appointments";
 import Services from "./pages/Services";
 import Inventory from "./pages/Inventory";
 import Clients from "./pages/Clients";
-import Professionals from "./pages/Professionals";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./hooks/useAuth";
 import Login from "./pages/auth/Login";
@@ -37,7 +36,6 @@ const App = () => (
               <Route path="/services" element={<Services />} />
               <Route path="/inventory" element={<Inventory />} />
               <Route path="/clients" element={<Clients />} />
-              <Route path="/professionals" element={<Professionals />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />

@@ -14,7 +14,6 @@ const RequireAuth = () => {
     if (path.includes('dashboard')) return 'Dashboard';
     if (path.includes('appointments')) return 'Agendamentos';
     if (path.includes('clients')) return 'Clientes';
-    if (path.includes('professionals')) return 'Colaboradores';
     if (path.includes('inventory')) return 'Estoque';
     if (path.includes('finance')) return 'Financeiro';
     if (path.includes('services')) return 'Serviços';
