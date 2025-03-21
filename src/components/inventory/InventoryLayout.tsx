@@ -67,6 +67,8 @@ export const InventoryLayout = ({
                 categories={categories}
                 filterOptions={filterOptions}
                 updateFilterOptions={updateFilterOptions}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
               />
             </div>
             
