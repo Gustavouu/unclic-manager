@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   addMonths, 
@@ -139,7 +138,10 @@ export const AppointmentCalendar = () => {
         )}
         
         {calendarView === "day" && (
-          <DayView appointments={dayAppointments} />
+          <DayView 
+            appointments={dayAppointments} 
+            selectedDate={selectedDate}
+          />
         )}
       </div>
       
