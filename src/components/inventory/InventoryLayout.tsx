@@ -56,8 +56,8 @@ export const InventoryLayout = ({
   };
   
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+    <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
         <h1 className="text-2xl font-bold">Gestão de Estoque</h1>
         <Button 
           onClick={() => document.getElementById("new-inventory-trigger")?.click()}
@@ -70,7 +70,7 @@ export const InventoryLayout = ({
       
       <InventorySummaryCards inventory={inventory} />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
         <InventoryStats 
           inventory={inventory}
           title="Produtos Mais Movimentados"
