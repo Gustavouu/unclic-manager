@@ -10,6 +10,7 @@ import { ActiveProfessionalFilter } from "./filters/ActiveProfessionalFilter";
 import { SpecialtiesFilter } from "./filters/SpecialtiesFilter";
 import { LastActivityFilter } from "./filters/LastActivityFilter";
 import { useState } from "react";
+import { FilterOptions } from "@/hooks/clients/types";
 
 interface ProfessionalsFiltersSheetProps {
   open: boolean;
@@ -21,12 +22,13 @@ export const ProfessionalsFiltersSheet = ({
   onOpenChange,
 }: ProfessionalsFiltersSheetProps) => {
   // Create filter options state to match what FilterSheetHeader expects
-  const [filterOptions, setFilterOptions] = useState({
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     onlyActive: false,
     gender: "",
     cities: [],
     categories: [],
-    spentRange: [0, 1000]
+    spentRange: [0, 1000],
+    lastVisitRange: [0, 30]
   });
 
   const handleClearFilters = () => {
@@ -40,7 +42,7 @@ export const ProfessionalsFiltersSheet = ({
           <SheetTitle>Filtros</SheetTitle>
         </SheetHeader>
         
-        <FilterSheetHeader filterOptions={filterOptions} onClearFilters={handleClearFilters} />
+        <FilterSheetHeader onClearFilters={handleClearFilters} />
         
         <div className="mt-4 space-y-5 px-1">
           <ActiveProfessionalFilter />

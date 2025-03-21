@@ -4,15 +4,17 @@ import { SpecialtiesFilter } from "./filters/SpecialtiesFilter";
 import { LastActivityFilter } from "./filters/LastActivityFilter";
 import { FiltersHeader } from "@/components/clients/filters/FiltersHeader";
 import { useState } from "react";
+import { FilterOptions } from "@/hooks/clients/types";
 
 export const ProfessionalsFilters = () => {
-  // Create a simple filter options state to match what FiltersHeader expects
-  const [filterOptions, setFilterOptions] = useState({
+  // Create a filter options state to match what FiltersHeader expects
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     onlyActive: false,
     gender: "",
     cities: [],
     categories: [],
-    spentRange: [0, 1000]
+    spentRange: [0, 1000],
+    lastVisitRange: [0, 30]
   });
 
   const handleClearFilters = () => {

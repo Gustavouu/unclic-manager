@@ -48,7 +48,7 @@ export const ProfessionalInfoTab = ({ professional }: ProfessionalInfoTabProps) 
         <CardContent className="space-y-4">
           <div>
             <h4 className="text-sm font-medium text-muted-foreground mb-1">Status</h4>
-            <Badge variant={professional.active ? "default" : "secondary"} className={professional.active ? "bg-green-100 text-green-800" : ""}>
+            <Badge variant="default" className={professional.active ? "bg-green-100 text-green-800" : ""}>
               {professional.active ? "Ativo" : "Inativo"}
             </Badge>
           </div>

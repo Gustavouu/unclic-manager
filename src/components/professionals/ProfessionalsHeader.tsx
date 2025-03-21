@@ -6,6 +6,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileFilterToggle } from "@/components/clients/filters/MobileFilterToggle";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { useState } from "react";
+import { FilterOptions } from "@/hooks/clients/types";
 
 interface ProfessionalsHeaderProps {
   onNewProfessional: () => void;
@@ -16,12 +17,13 @@ export const ProfessionalsHeader = ({ onNewProfessional, onToggleFilters }: Prof
   const isMobile = useIsMobile();
   // Create a mock filter options state to satisfy MobileFilterToggle props
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const filterOptions = {
+  const filterOptions: FilterOptions = {
     onlyActive: false,
     gender: "",
     cities: [],
     categories: [],
-    spentRange: [0, 1000]
+    spentRange: [0, 1000],
+    lastVisitRange: [0, 30]
   };
   
   return (
