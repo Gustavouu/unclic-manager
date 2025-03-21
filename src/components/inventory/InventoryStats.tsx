@@ -30,23 +30,23 @@ export const InventoryStats = ({ inventory, title, emptyMessage, type }: Invento
   return (
     <Card className="border shadow-sm h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{title}</CardTitle>
+        <CardTitle className="text-lg font-medium">{title}</CardTitle>
       </CardHeader>
       <CardContent>
         {filteredItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center text-center py-8">
+          <div className="flex flex-col items-center justify-center text-center py-6">
             <Package className="h-12 w-12 text-muted-foreground/30 mb-3" />
             <p className="text-muted-foreground">{emptyMessage}</p>
           </div>
         ) : (
           <ul className="space-y-3">
             {filteredItems.map(item => (
-              <li key={item.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50">
+              <li key={item.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors">
                 {item.image ? (
                   <img 
                     src={item.image} 
                     alt={item.name} 
-                    className="h-10 w-10 rounded object-cover"
+                    className="h-10 w-10 rounded object-cover border border-muted"
                   />
                 ) : (
                   <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
@@ -54,12 +54,12 @@ export const InventoryStats = ({ inventory, title, emptyMessage, type }: Invento
                   </div>
                 )}
                 <div className="flex-grow">
-                  <p className="font-medium">{item.name}</p>
-                  <p className="text-sm text-muted-foreground">{item.category}</p>
+                  <p className="font-medium line-clamp-1">{item.name}</p>
+                  <p className="text-xs text-muted-foreground">{item.category}</p>
                 </div>
                 <div className="text-right">
                   <p className="font-medium">{item.quantity}</p>
-                  <p className="text-sm text-muted-foreground">em estoque</p>
+                  <p className="text-xs text-muted-foreground">em estoque</p>
                 </div>
               </li>
             ))}

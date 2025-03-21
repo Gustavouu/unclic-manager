@@ -6,6 +6,10 @@ import { InventoryFilters } from "./InventoryFilters";
 import { InventoryDetails } from "./InventoryDetails";
 import { NewInventoryDialog } from "./NewInventoryDialog";
 import { RestockDialog } from "./RestockDialog";
+import { InventorySummaryCards } from "./InventorySummaryCards";
+import { InventoryStats } from "./InventoryStats";
+import { Package, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const InventoryLayout = ({
   inventory,
@@ -54,31 +58,50 @@ export const InventoryLayout = ({
   
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-6 md:flex-row">
-        <div className="w-full">
-          <InventoryHeader 
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
+      <div className="mb-6 flex justify-between items-center">
+        <h1 className="text-2xl font-display font-medium">Estoque</h1>
+        <Button onClick={() => document.getElementById("new-inventory-trigger")?.click()}>
+          <Plus className="mr-2 h-4 w-4" />
+          Adicionar Produto
+        </Button>
+      </div>
+      
+      <div className="space-y-6">
+        <InventorySummaryCards inventory={inventory} />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InventoryStats 
+            inventory={inventory}
+            title="Produtos Mais Movimentados"
+            emptyMessage="Nenhum produto movimentado recentemente"
+            type="recent"
           />
           
-          <div className="mt-4 bg-white rounded-lg shadow-sm border">
-            <div className="p-4 border-b">
-              <InventoryFilters
-                categories={categories}
-                filterOptions={filterOptions}
-                updateFilterOptions={updateFilterOptions}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-              />
-            </div>
-            
-            <InventoryTable 
-              items={filteredInventory}
-              onViewDetails={handleViewDetails}
-              onRestockItem={handleOpenRestockDialog}
-              onDeleteItem={onDeleteItem}
+          <InventoryStats 
+            inventory={inventory}
+            title="Produtos Parados"
+            emptyMessage="Não há produtos parados"
+            type="stopped"
+          />
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border">
+          <div className="p-4 border-b">
+            <InventoryFilters
+              categories={categories}
+              filterOptions={filterOptions}
+              updateFilterOptions={updateFilterOptions}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
             />
           </div>
+          
+          <InventoryTable 
+            items={filteredInventory}
+            onViewDetails={handleViewDetails}
+            onRestockItem={handleOpenRestockDialog}
+            onDeleteItem={onDeleteItem}
+          />
         </div>
       </div>
       

@@ -3,7 +3,12 @@ import { Search, PlusCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export const InventoryHeader = ({ searchTerm, setSearchTerm }) => {
+interface InventoryHeaderProps {
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+}
+
+export const InventoryHeader = ({ searchTerm, setSearchTerm }: InventoryHeaderProps) => {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="relative w-full sm:max-w-md">

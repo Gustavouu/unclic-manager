@@ -1,3 +1,4 @@
+
 import { Eye, MoreVertical, Package2, RefreshCcw, Trash2 } from "lucide-react";
 import {
   Table,
@@ -27,6 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { StatusBadge } from "./details/StatusBadge";
 
 interface InventoryTableProps {
   items: InventoryItem[];
@@ -42,16 +44,6 @@ export const InventoryTable = ({
   onDeleteItem 
 }: InventoryTableProps) => {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-
-  const getQuantityStatusBadge = (item: InventoryItem) => {
-    if (item.quantity === 0) {
-      return <Badge variant="destructive">Sem estoque</Badge>;
-    } else if (item.quantity <= item.minimumQuantity) {
-      return <Badge variant="secondary" className="bg-amber-500 hover:bg-amber-600">Estoque baixo</Badge>;
-    } else {
-      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200 border-green-300">Em estoque</Badge>;
-    }
-  };
 
   const confirmDelete = (id: string) => {
     setItemToDelete(id);
@@ -91,14 +83,14 @@ export const InventoryTable = ({
               </TableRow>
             ) : (
               items.map((item) => (
-                <TableRow key={item.id}>
+                <TableRow key={item.id} className="hover:bg-muted/30">
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       {item.image ? (
                         <img 
                           src={item.image} 
                           alt={item.name} 
-                          className="h-10 w-10 rounded object-cover"
+                          className="h-10 w-10 rounded object-cover border border-muted"
                         />
                       ) : (
                         <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
@@ -117,7 +109,7 @@ export const InventoryTable = ({
                   <TableCell className="text-center">
                     <div className="flex flex-col items-center gap-1">
                       <div>{item.quantity}</div>
-                      <div>{getQuantityStatusBadge(item)}</div>
+                      <StatusBadge item={item} />
                     </div>
                   </TableCell>
                   <TableCell>{formatCurrency(item.sellingPrice)}</TableCell>
