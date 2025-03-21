@@ -1,5 +1,5 @@
 
-import { FilterOptions } from "@/hooks/useClientData";
+import { FilterOptions } from "@/hooks/clients";
 import {
   Sheet,
   SheetContent,

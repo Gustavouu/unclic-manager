@@ -1,11 +1,10 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserPlus, Search, SlidersHorizontal, Plus } from "lucide-react";
 import { useState } from "react";
 import { NewClientDialog } from "./NewClientDialog";
 import { ClientsFiltersSheet } from "./ClientsFiltersSheet";
-import { FilterOptions } from "@/hooks/useClientData";
+import { FilterOptions } from "@/hooks/clients";
 
 type ClientsHeaderProps = {
   searchTerm: string;

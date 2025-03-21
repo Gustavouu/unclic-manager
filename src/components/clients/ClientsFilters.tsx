@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FilterOptions } from "@/hooks/useClientData";
+import { FilterOptions } from "@/hooks/clients";
 import { Badge } from "@/components/ui/badge";
 import { X, SlidersHorizontal } from "lucide-react";
 import { Slider } from "@/components/ui/slider";

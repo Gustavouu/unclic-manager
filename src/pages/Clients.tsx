@@ -4,7 +4,7 @@ import { ClientsLayout } from "@/components/clients/ClientsLayout";
 import { ClientsHeader } from "@/components/clients/ClientsHeader";
 import { ClientsTable } from "@/components/clients/ClientsTable";
 import { ClientDetails } from "@/components/clients/ClientDetails";
-import { useClientData } from "@/hooks/useClientData";
+import { useClientData } from "@/hooks/clients";
 import { 
   Pagination, 
   PaginationContent, 

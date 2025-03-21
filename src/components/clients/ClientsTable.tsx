@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -7,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Client } from "@/hooks/useClientData";
+import { Client } from "@/hooks/clients";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, Trash2, Calendar, MoreVertical } from "lucide-react";

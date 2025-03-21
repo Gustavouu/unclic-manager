@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useClientData } from "@/hooks/useClientData";
+import { useClientData } from "@/hooks/clients";
 import { ClientForm } from "./form/ClientForm";
 import { ClientSubmitValues } from "./form/ClientFormSchema";
 
