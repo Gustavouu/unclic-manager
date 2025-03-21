@@ -3,7 +3,6 @@ import { useState } from "react";
 import { ClientsLayout } from "@/components/clients/ClientsLayout";
 import { ClientsHeader } from "@/components/clients/ClientsHeader";
 import { ClientsTable } from "@/components/clients/ClientsTable";
-import { ClientsFilters } from "@/components/clients/ClientsFilters";
 import { ClientDetails } from "@/components/clients/ClientDetails";
 import { useClientData } from "@/hooks/useClientData";
 
@@ -41,23 +40,20 @@ const Clients = () => {
 
   return (
     <ClientsLayout>
-      <ClientsHeader searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1 order-2 lg:order-1">
-          <ClientsFilters 
-            filterOptions={filterOptions} 
-            updateFilterOptions={updateFilterOptions}
-            availableCities={availableCities}
-            availableCategories={availableCategories}
-          />
-        </div>
-        <div className="lg:col-span-3 order-1 lg:order-2">
-          <ClientsTable 
-            clients={filteredClients} 
-            onShowDetails={handleShowDetails} 
-            onDeleteClient={handleDeleteClient}
-          />
-        </div>
+      <ClientsHeader 
+        searchTerm={searchTerm} 
+        setSearchTerm={setSearchTerm} 
+        filterOptions={filterOptions}
+        updateFilterOptions={updateFilterOptions}
+        availableCities={availableCities}
+        availableCategories={availableCategories}
+      />
+      <div className="grid grid-cols-1 gap-6">
+        <ClientsTable 
+          clients={filteredClients} 
+          onShowDetails={handleShowDetails} 
+          onDeleteClient={handleDeleteClient}
+        />
       </div>
       {showDetails && selectedClientId && (
         <ClientDetails 

@@ -152,6 +152,27 @@ export const useClientData = () => {
         return false;
       }
       
+      // Filtro por data da última visita
+      if (filterOptions.lastVisitRange[0] || filterOptions.lastVisitRange[1]) {
+        if (!client.lastVisit) return false;
+        
+        const lastVisitDate = new Date(client.lastVisit);
+        const startDate = filterOptions.lastVisitRange[0] 
+          ? new Date(filterOptions.lastVisitRange[0]) 
+          : null;
+        const endDate = filterOptions.lastVisitRange[1] 
+          ? new Date(filterOptions.lastVisitRange[1]) 
+          : null;
+        
+        if (startDate && lastVisitDate < startDate) return false;
+        if (endDate) {
+          // Ajustar a data final para incluir o fim do dia
+          const adjustedEndDate = new Date(endDate);
+          adjustedEndDate.setHours(23, 59, 59, 999);
+          if (lastVisitDate > adjustedEndDate) return false;
+        }
+      }
+      
       // Filtro por cidades
       if (filterOptions.cities.length > 0 && client.city && 
           !filterOptions.cities.includes(client.city)) {
