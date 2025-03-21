@@ -42,8 +42,8 @@ const Clients = () => {
   return (
     <ClientsLayout>
       <ClientsHeader searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1 order-2 md:order-1">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-1 order-2 lg:order-1">
           <ClientsFilters 
             filterOptions={filterOptions} 
             updateFilterOptions={updateFilterOptions}
@@ -51,7 +51,7 @@ const Clients = () => {
             availableCategories={availableCategories}
           />
         </div>
-        <div className="md:col-span-2 order-1 md:order-2">
+        <div className="lg:col-span-3 order-1 lg:order-2">
           <ClientsTable 
             clients={filteredClients} 
             onShowDetails={handleShowDetails} 
