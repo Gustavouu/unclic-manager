@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UserPlus, Search, SlidersHorizontal } from "lucide-react";
+import { UserPlus, Search, SlidersHorizontal, Plus } from "lucide-react";
 import { useState } from "react";
 import { NewClientDialog } from "./NewClientDialog";
 import { ClientsFiltersSheet } from "./ClientsFiltersSheet";
@@ -63,9 +63,9 @@ export const ClientsHeader = ({
         </Button>
         <Button 
           onClick={() => setShowNewClientDialog(true)}
-          className="w-full md:w-auto"
+          className="w-full md:w-auto bg-primary"
         >
-          <UserPlus size={18} className="mr-2" />
+          <Plus size={18} className="mr-2" />
           Novo Cliente
         </Button>
       </div>

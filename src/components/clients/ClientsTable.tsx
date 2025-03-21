@@ -10,7 +10,7 @@ import {
 import { Client } from "@/hooks/useClientData";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Trash2, Calendar } from "lucide-react";
+import { Eye, Trash2, Calendar, MoreVertical } from "lucide-react";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +23,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type ClientsTableProps = {
   clients: Client[];
@@ -73,15 +79,15 @@ export const ClientsTable = ({ clients, onShowDetails, onDeleteClient }: Clients
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
+    <div className="w-full">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-slate-50">
           <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead className="hidden md:table-cell">Categoria</TableHead>
-            <TableHead className="hidden md:table-cell">Última Visita</TableHead>
-            <TableHead className="hidden md:table-cell">Total Gasto</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
+            <TableHead className="font-medium">Nome</TableHead>
+            <TableHead className="font-medium hidden md:table-cell">Categoria</TableHead>
+            <TableHead className="font-medium hidden md:table-cell">Última Visita</TableHead>
+            <TableHead className="font-medium hidden md:table-cell">Total Gasto</TableHead>
+            <TableHead className="text-right font-medium">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -93,7 +99,7 @@ export const ClientsTable = ({ clients, onShowDetails, onDeleteClient }: Clients
             </TableRow>
           ) : (
             clients.map((client) => (
-              <TableRow key={client.id}>
+              <TableRow key={client.id} className="hover:bg-slate-50">
                 <TableCell>
                   <div>
                     <p className="font-medium">{client.name}</p>
@@ -114,35 +120,36 @@ export const ClientsTable = ({ clients, onShowDetails, onDeleteClient }: Clients
                   {formatCurrency(client.totalSpent)}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => onShowDetails(client.id)}
-                      title="Ver detalhes"
-                    >
-                      <Eye size={16} />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      asChild
-                      title="Agendar"
-                    >
-                      <Link to={`/appointments?clientId=${client.id}`}>
-                        <Calendar size={16} />
-                      </Link>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setClientToDelete(client.id)}
-                      className="text-destructive hover:text-destructive/90"
-                      title="Excluir"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                      >
+                        <MoreVertical size={16} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onShowDetails(client.id)}>
+                        <Eye size={14} className="mr-2" />
+                        Ver detalhes
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to={`/appointments?clientId=${client.id}`}>
+                          <Calendar size={14} className="mr-2" />
+                          Agendar
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => setClientToDelete(client.id)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 size={14} className="mr-2" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))
