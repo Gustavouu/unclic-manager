@@ -1,59 +1,73 @@
 
 import { useState } from "react";
+import { Search } from "lucide-react";
+import { FilterOptions } from "@/hooks/useProfessionalData";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Filter, UserRoundPlus } from "lucide-react";
-import { NewProfessionalDialog } from "@/components/professionals/NewProfessionalDialog";
+import { ProfessionalsFiltersSheet } from "./filters/ProfessionalsFiltersSheet";
+import { SlidersHorizontal } from "lucide-react";
 
-interface ProfessionalsHeaderProps {
+type ProfessionalsHeaderProps = {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  setIsFiltersOpen: (isOpen: boolean) => void;
-  isFiltersOpen: boolean;
-  onAddProfessional: (newProfessional: any) => void;
-}
+  filterOptions: FilterOptions;
+  updateFilterOptions: (newOptions: Partial<FilterOptions>) => void;
+};
 
-export const ProfessionalsHeader = ({ 
-  searchTerm, 
-  setSearchTerm, 
-  setIsFiltersOpen, 
-  isFiltersOpen,
-  onAddProfessional
+export const ProfessionalsHeader = ({
+  searchTerm,
+  setSearchTerm,
+  filterOptions,
+  updateFilterOptions
 }: ProfessionalsHeaderProps) => {
-  const [isNewDialogOpen, setIsNewDialogOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const handleAddProfessional = (newProfessional) => {
-    onAddProfessional(newProfessional);
-    setIsNewDialogOpen(false);
-  };
+  // Count active filters
+  const activeFiltersCount = 
+    filterOptions.status.length +
+    filterOptions.role.length +
+    filterOptions.specialty.length;
 
   return (
-    <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 mb-6">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-        <input 
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-          placeholder="Buscar colaboradores por nome, email ou telefone" 
+    <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+      <div className="relative w-full sm:w-96">
+        <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Buscar colaboradores..."
+          className="w-full pl-9"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
       
-      <div className="flex space-x-2">
+      <div className="flex items-center gap-2">
         <Button 
           variant="outline" 
-          className="gap-2"
-          onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+          size="sm"
+          onClick={() => setFiltersOpen(true)}
+          className="relative"
         >
-          <Filter size={16} />
+          <SlidersHorizontal className="mr-2 h-4 w-4" />
           Filtros
+          {activeFiltersCount > 0 && (
+            <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-primary text-xs font-medium flex items-center justify-center text-primary-foreground">
+              {activeFiltersCount}
+            </span>
+          )}
         </Button>
         
-        <NewProfessionalDialog 
-          isOpen={isNewDialogOpen} 
-          onOpenChange={setIsNewDialogOpen}
-          onSubmit={handleAddProfessional}
-        />
+        <Button size="sm">
+          Adicionar Colaborador
+        </Button>
       </div>
+
+      <ProfessionalsFiltersSheet
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        filterOptions={filterOptions}
+        updateFilterOptions={updateFilterOptions}
+      />
     </div>
   );
 };
