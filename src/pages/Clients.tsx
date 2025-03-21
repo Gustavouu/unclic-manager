@@ -17,16 +17,18 @@ const Clients = () => {
 
   return (
     <AppLayout title="Clientes">
-      <ClientsLayout
-        clients={clients}
-        filteredClients={filteredClients}
-        filterOptions={filterOptions}
-        updateFilterOptions={updateFilterOptions}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        onDeleteClient={deleteClient}
-        onAddClient={addClient}
-      />
+      <div className="space-y-6 animate-fade-in">
+        <ClientsLayout
+          clients={clients}
+          filteredClients={filteredClients}
+          filterOptions={filterOptions}
+          updateFilterOptions={updateFilterOptions}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          onDeleteClient={deleteClient}
+          onAddClient={addClient}
+        />
+      </div>
     </AppLayout>
   );
 };
