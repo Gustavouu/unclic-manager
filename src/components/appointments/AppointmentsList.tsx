@@ -39,6 +39,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { DateRange } from "react-day-picker";
 
 // Sample data
 const appointments = [
@@ -121,10 +122,7 @@ export const AppointmentsList = () => {
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "all">("all");
   const [serviceFilter, setServiceFilter] = useState<ServiceType>("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
-  const [customDateRange, setCustomDateRange] = useState<{
-    from?: Date,
-    to?: Date
-  }>({});
+  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>(undefined);
   const [showFilters, setShowFilters] = useState(false);
   
   const filterAppointments = () => {
@@ -161,7 +159,7 @@ export const AppointmentsList = () => {
           matchesDate = isAfter(appointment.date, today) && isBefore(appointment.date, nextWeek);
           break;
         case "custom":
-          if (customDateRange.from) {
+          if (customDateRange?.from) {
             matchesDate = isAfter(appointment.date, startOfDay(customDateRange.from));
             
             if (customDateRange.to) {
@@ -191,7 +189,7 @@ export const AppointmentsList = () => {
     setStatusFilter("all");
     setServiceFilter("all");
     setDateFilter("all");
-    setCustomDateRange({});
+    setCustomDateRange(undefined);
   };
 
   return (
@@ -298,7 +296,7 @@ export const AppointmentsList = () => {
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className="gap-1">
                         <CalendarRange size={16} />
-                        {customDateRange.from ? (
+                        {customDateRange?.from ? (
                           customDateRange.to ? (
                             <>
                               {format(customDateRange.from, "dd/MM")} - {format(customDateRange.to, "dd/MM")}
