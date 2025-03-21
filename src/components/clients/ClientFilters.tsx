@@ -22,7 +22,7 @@ interface ClientFiltersProps {
 }
 
 export const ClientFilters = ({ filterOptions, updateFilterOptions }: ClientFiltersProps) => {
-  const { availableCities, availableCategories } = useClientData("");
+  const { availableCities, availableCategories } = useClientData();
   
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
