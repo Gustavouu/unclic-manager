@@ -9,15 +9,16 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { CalendarViewType } from "./types";
 
 type CalendarHeaderProps = {
   currentDate: Date;
   selectedDate: Date;
-  calendarView: "month" | "week" | "day";
+  calendarView: CalendarViewType;
   onPrevPeriod: () => void;
   onNextPeriod: () => void;
   onSelectDate: (date: Date | undefined) => void;
-  onViewChange: (view: "month" | "week" | "day") => void;
+  onViewChange: (view: CalendarViewType) => void;
 };
 
 export const CalendarHeader = ({
