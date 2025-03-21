@@ -23,7 +23,7 @@ export const ProfessionalsHeader = ({ onNewProfessional, onToggleFilters }: Prof
     cities: [],
     categories: [],
     spentRange: [0, 1000],
-    lastVisitRange: [0, 30]
+    lastVisitRange: [null, null]
   };
   
   return (

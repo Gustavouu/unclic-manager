@@ -14,7 +14,7 @@ export const ProfessionalsFilters = () => {
     cities: [],
     categories: [],
     spentRange: [0, 1000],
-    lastVisitRange: [0, 30]
+    lastVisitRange: [null, null]
   });
 
   const handleClearFilters = () => {
