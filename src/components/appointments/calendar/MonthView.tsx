@@ -1,7 +1,7 @@
 
 import { format, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
-import { AppointmentType } from "../AppointmentCalendar";
+import { AppointmentType } from "./types";
 
 type MonthViewProps = {
   calendarDays: (Date | null)[];

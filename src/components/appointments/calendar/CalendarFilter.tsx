@@ -1,5 +1,5 @@
 
-import { ServiceType } from "../AppointmentCalendar";
+import { ServiceType, SERVICE_TYPE_NAMES } from "./types";
 import { cn } from "@/lib/utils";
 import { 
   Scissors, 

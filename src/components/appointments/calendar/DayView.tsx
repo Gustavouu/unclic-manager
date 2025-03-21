@@ -3,7 +3,7 @@ import { useState } from "react";
 import { format, addHours, setHours, setMinutes, isWithinInterval, differenceInMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon, Clock, ChevronLeft, User, Tag } from "lucide-react";
-import { AppointmentType } from "../AppointmentCalendar";
+import { AppointmentType } from "./types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
