@@ -1,4 +1,3 @@
-
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -59,7 +58,6 @@ export const Sidebar = () => {
   
   const pathName = location.pathname;
   
-  // The routes array is reordered to place "Colaboradores" between "Clientes" and "Estoque"
   const routes = [
     { icon: <LayoutDashboard size={18} />, label: "Dashboard", path: "/dashboard" },
     { icon: <Calendar size={18} />, label: "Agendamentos", path: "/appointments" },
@@ -158,7 +156,6 @@ export const Sidebar = () => {
         </div>
       </aside>
       
-      {/* Overlay for mobile */}
       {isMobile && isOpen && (
         <div 
           className="fixed inset-0 bg-black/30 z-30 backdrop-blur-sm transition-all duration-300 ease-in-out"
