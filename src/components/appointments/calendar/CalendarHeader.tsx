@@ -11,26 +11,37 @@ import {
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 type CalendarHeaderProps = {
-  currentMonth: Date;
+  currentDate: Date;
   selectedDate: Date;
-  calendarView: "month" | "day";
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
+  calendarView: "month" | "week" | "day";
+  onPrevPeriod: () => void;
+  onNextPeriod: () => void;
   onSelectDate: (date: Date | undefined) => void;
-  onViewChange: (view: "month" | "day") => void;
+  onViewChange: (view: "month" | "week" | "day") => void;
 };
 
 export const CalendarHeader = ({
-  currentMonth,
+  currentDate,
   selectedDate,
   calendarView,
-  onPrevMonth,
-  onNextMonth,
+  onPrevPeriod,
+  onNextPeriod,
   onSelectDate,
   onViewChange,
 }: CalendarHeaderProps) => {
-  const formattedMonth = format(currentMonth, "MMMM yyyy", { locale: ptBR });
-  const capitalizedMonth = formattedMonth.charAt(0).toUpperCase() + formattedMonth.slice(1);
+  // Formatar o título com base na visualização atual
+  let headerTitle = "";
+  
+  if (calendarView === "month") {
+    const formattedMonth = format(currentDate, "MMMM yyyy", { locale: ptBR });
+    headerTitle = formattedMonth.charAt(0).toUpperCase() + formattedMonth.slice(1);
+  } else if (calendarView === "week") {
+    const weekStart = format(currentDate, "d", { locale: ptBR });
+    const weekStartMonth = format(currentDate, "MMMM", { locale: ptBR });
+    headerTitle = `Semana de ${weekStart} de ${weekStartMonth}`;
+  } else {
+    headerTitle = format(selectedDate, "d 'de' MMMM", { locale: ptBR });
+  }
 
   return (
     <div className="mb-4">
@@ -63,31 +74,20 @@ export const CalendarHeader = ({
         </div>
       </div>
       
-      {calendarView === "month" && (
-        <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4">
-          <h3 className="text-base font-medium text-blue-800 flex items-center gap-2">
-            <CalendarIcon size={16} className="text-blue-600" />
-            {capitalizedMonth}
-          </h3>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={onPrevMonth} className="h-7 w-7 hover:bg-blue-100">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={onNextMonth} className="h-7 w-7 hover:bg-blue-100">
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+      <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4">
+        <h3 className="text-base font-medium text-blue-800 flex items-center gap-2">
+          <CalendarIcon size={16} className="text-blue-600" />
+          {headerTitle}
+        </h3>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={onPrevPeriod} className="h-7 w-7 hover:bg-blue-100">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={onNextPeriod} className="h-7 w-7 hover:bg-blue-100">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
-      )}
-      
-      {calendarView === "day" && (
-        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100 mb-4">
-          <h3 className="flex items-center gap-1 text-base font-medium text-blue-800">
-            <CalendarIcon size={16} className="text-blue-600" />
-            {format(selectedDate, "d 'de' MMMM", { locale: ptBR })}
-          </h3>
-        </div>
-      )}
+      </div>
     </div>
   );
 };

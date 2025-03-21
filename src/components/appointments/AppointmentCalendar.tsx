@@ -4,12 +4,17 @@ import {
   addMonths, 
   subMonths, 
   startOfMonth, 
-  endOfMonth, 
+  endOfMonth,
+  startOfWeek,
+  endOfWeek, 
   eachDayOfInterval, 
   getDay, 
   isSameDay,
   setHours,
-  setMinutes
+  setMinutes,
+  addWeeks,
+  subWeeks,
+  format
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarFilter } from "./calendar/CalendarFilter";
@@ -17,6 +22,8 @@ import { CalendarHeader } from "./calendar/CalendarHeader";
 import { MonthView } from "./calendar/MonthView";
 import { DayView } from "./calendar/DayView";
 import { CalendarFooter } from "./calendar/CalendarFooter";
+import { Button } from "@/components/ui/button";
+import { Calendar, Grid3X3, ListFilter } from "lucide-react";
 
 // Sample appointments data
 const SAMPLE_APPOINTMENTS = [
@@ -93,23 +100,31 @@ export type AppointmentType = {
 };
 
 export const AppointmentCalendar = () => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [calendarView, setCalendarView] = useState<"month" | "day">("month");
+  const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month");
   const [serviceFilter, setServiceFilter] = useState<ServiceType>("all");
 
-  const nextMonth = () => {
-    setCurrentMonth(addMonths(currentMonth, 1));
+  const nextPeriod = () => {
+    if (calendarView === "month") {
+      setCurrentDate(addMonths(currentDate, 1));
+    } else if (calendarView === "week") {
+      setCurrentDate(addWeeks(currentDate, 1));
+    }
   };
 
-  const prevMonth = () => {
-    setCurrentMonth(subMonths(currentMonth, 1));
+  const prevPeriod = () => {
+    if (calendarView === "month") {
+      setCurrentDate(subMonths(currentDate, 1));
+    } else if (calendarView === "week") {
+      setCurrentDate(subWeeks(currentDate, 1));
+    }
   };
 
   const handleSelectDate = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
-      setCurrentMonth(date);
+      setCurrentDate(date);
     }
   };
 
@@ -118,16 +133,28 @@ export const AppointmentCalendar = () => {
     setCalendarView("day");
   };
 
-  // Create calendar grid with correct starting position
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const startWeekday = getDay(monthStart);
+  // Create calendar days based on current view
+  let calendarDays: (Date | null)[] = [];
   
-  const calendarDays = Array(startWeekday).fill(null);
-  monthDays.forEach(day => calendarDays.push(day));
+  if (calendarView === "month") {
+    // Month view logic
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const startWeekday = getDay(monthStart);
+    
+    calendarDays = Array(startWeekday).fill(null);
+    monthDays.forEach(day => calendarDays.push(day));
+  } else if (calendarView === "week") {
+    // Week view logic
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+    const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
+    const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+    
+    calendarDays = weekDays;
+  }
 
-  // Filter appointments based on service type and selected date
+  // Filter appointments based on service type
   const filteredAppointments = SAMPLE_APPOINTMENTS.filter(app => 
     (serviceFilter === "all" || app.serviceType === serviceFilter)
   );
@@ -141,21 +168,44 @@ export const AppointmentCalendar = () => {
     <div className="rounded-lg border border-border/40 shadow-sm overflow-hidden bg-white">
       <div className="p-4">
         <CalendarHeader 
-          currentMonth={currentMonth}
+          currentDate={currentDate}
           selectedDate={selectedDate}
           calendarView={calendarView}
-          onPrevMonth={prevMonth}
-          onNextMonth={nextMonth}
+          onPrevPeriod={prevPeriod}
+          onNextPeriod={nextPeriod}
           onSelectDate={handleSelectDate}
           onViewChange={setCalendarView}
         />
         
         <div className="mb-4 border-b pb-4">
-          <CalendarFilter 
-            serviceFilter={serviceFilter}
-            onFilterChange={setServiceFilter}
-            serviceTypes={SERVICE_TYPE_NAMES}
-          />
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-3">
+            <CalendarFilter 
+              serviceFilter={serviceFilter}
+              onFilterChange={setServiceFilter}
+              serviceTypes={SERVICE_TYPE_NAMES}
+            />
+            
+            <div className="flex items-center gap-2 self-end">
+              <Button
+                variant="outline"
+                size="sm"
+                className={`h-9 ${calendarView === 'month' ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}`}
+                onClick={() => setCalendarView('month')}
+              >
+                <Grid3X3 size={16} className="mr-1" />
+                Mensal
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`h-9 ${calendarView === 'week' ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}`}
+                onClick={() => setCalendarView('week')}
+              >
+                <Calendar size={16} className="mr-1" />
+                Semanal
+              </Button>
+            </div>
+          </div>
         </div>
         
         {calendarView === "month" && (
@@ -168,6 +218,17 @@ export const AppointmentCalendar = () => {
           />
         )}
         
+        {calendarView === "week" && (
+          <MonthView
+            calendarDays={calendarDays}
+            weekDays={weekDays}
+            selectedDate={selectedDate}
+            appointments={filteredAppointments}
+            onSelectDay={handleSelectDay}
+            isWeekView={true}
+          />
+        )}
+        
         {calendarView === "day" && (
           <DayView 
             appointments={dayAppointments} 
@@ -177,7 +238,7 @@ export const AppointmentCalendar = () => {
         )}
       </div>
       
-      <CalendarFooter onNewAppointment={() => {}} />
+      <CalendarFooter />
     </div>
   );
 };
