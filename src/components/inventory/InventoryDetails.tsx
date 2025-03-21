@@ -6,15 +6,17 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
-  SheetClose
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Package2, BarChart, Edit, Loader2 } from "lucide-react";
 import { InventoryForm } from "./form/InventoryForm";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { getEmptyInventoryForm } from "./form/inventoryFormValidation";
+import { StatusBadge } from "./details/StatusBadge";
+import { DetailsTab } from "./details/DetailsTab";
+import { StatsTab } from "./details/StatsTab";
+import { formatCurrency, getFormattedDate } from "./details/formatters";
+import { getInventoryFormData } from "./details/InventoryFormData";
 
 export const InventoryDetails = ({ item, isOpen, onClose, onUpdateItem, categories }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -38,17 +40,6 @@ export const InventoryDetails = ({ item, isOpen, onClose, onUpdateItem, categori
     );
   }
 
-  const formatCurrency = (value?: number) => {
-    if (value === undefined) return "—";
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
-
-  const getFormattedDate = (dateString?: string) => {
-    if (!dateString) return "—";
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR').format(date);
-  };
-
   const handleUpdate = (formData) => {
     onUpdateItem(item.id, {
       ...formData,
@@ -58,35 +49,6 @@ export const InventoryDetails = ({ item, isOpen, onClose, onUpdateItem, categori
       sellingPrice: formData.sellingPrice ? parseFloat(formData.sellingPrice) : undefined,
     });
     setIsEditing(false);
-  };
-
-  const getInventoryFormData = () => {
-    return {
-      name: item.name,
-      description: item.description || "",
-      category: item.category,
-      quantity: item.quantity.toString(),
-      minimumQuantity: item.minimumQuantity.toString(),
-      costPrice: item.costPrice?.toString() || "",
-      sellingPrice: item.sellingPrice?.toString() || "",
-      supplier: item.supplier || "",
-      location: item.location || "",
-      image: item.image || "",
-      barcode: item.barcode || "",
-      sku: item.sku || "",
-      isEquipment: item.isEquipment,
-      expirationDate: item.expirationDate || "",
-    };
-  };
-
-  const getStatusBadge = () => {
-    if (item.quantity === 0) {
-      return <Badge variant="destructive">Sem estoque</Badge>;
-    } else if (item.quantity <= item.minimumQuantity) {
-      return <Badge variant="secondary" className="bg-amber-500 hover:bg-amber-600">Estoque baixo</Badge>;
-    } else {
-      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-200 border-green-300">Em estoque</Badge>;
-    }
   };
 
   return (
@@ -99,7 +61,7 @@ export const InventoryDetails = ({ item, isOpen, onClose, onUpdateItem, categori
           </SheetTitle>
           <SheetDescription className="flex flex-wrap gap-2 items-center mt-1">
             <span className="text-muted-foreground">{item.category}</span>
-            {getStatusBadge()}
+            <StatusBadge item={item} />
             {item.isEquipment && <Badge variant="outline">Equipamento</Badge>}
           </SheetDescription>
         </SheetHeader>
@@ -125,112 +87,26 @@ export const InventoryDetails = ({ item, isOpen, onClose, onUpdateItem, categori
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="details" className="space-y-4">
-                {item.image && (
-                  <div className="flex justify-center my-4">
-                    <img 
-                      src={item.image} 
-                      alt={item.name} 
-                      className="h-32 w-32 object-cover rounded-md border"
-                    />
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  <Card>
-                    <CardContent className="p-4">
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Quantidade</h4>
-                      <p className="text-lg font-medium">{item.quantity}</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4">
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Quant. Mínima</h4>
-                      <p className="text-lg font-medium">{item.minimumQuantity}</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Card>
-                  <CardContent className="p-4 space-y-3">
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Descrição</h4>
-                      <p>{item.description || "—"}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Preço de Custo</h4>
-                        <p>{formatCurrency(item.costPrice)}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Preço de Venda</h4>
-                        <p>{formatCurrency(item.sellingPrice)}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Fornecedor</h4>
-                        <p>{item.supplier || "—"}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Localização</h4>
-                        <p>{item.location || "—"}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">SKU</h4>
-                        <p>{item.sku || "—"}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Código de Barras</h4>
-                        <p>{item.barcode || "—"}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Data da Validade</h4>
-                        <p>{item.expirationDate ? getFormattedDate(item.expirationDate) : "—"}</p>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-muted-foreground mb-1">Última Reposição</h4>
-                        <p>{item.lastRestockDate ? getFormattedDate(item.lastRestockDate) : "—"}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <TabsContent value="details">
+                <DetailsTab 
+                  item={item} 
+                  formatCurrency={formatCurrency} 
+                  getFormattedDate={getFormattedDate} 
+                />
               </TabsContent>
 
               <TabsContent value="stats">
-                <Card>
-                  <CardContent className="p-4 space-y-4">
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Valor em Estoque</h4>
-                      <p className="text-lg font-medium">
-                        {formatCurrency(item.quantity * (item.costPrice || 0))}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Margem de Lucro</h4>
-                      <p className="text-lg font-medium">
-                        {item.costPrice && item.sellingPrice 
-                          ? `${(((item.sellingPrice - item.costPrice) / item.costPrice) * 100).toFixed(2)}%` 
-                          : "—"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Criado em</h4>
-                      <p>{getFormattedDate(item.createdAt)}</p>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Última atualização</h4>
-                      <p>{getFormattedDate(item.updatedAt)}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <StatsTab 
+                  item={item} 
+                  formatCurrency={formatCurrency} 
+                  getFormattedDate={getFormattedDate} 
+                />
               </TabsContent>
             </Tabs>
           </>
         ) : (
           <InventoryForm
-            initialData={getInventoryFormData()}
+            initialData={getInventoryFormData(item)}
             categories={categories}
             onSubmit={handleUpdate}
             onCancel={() => setIsEditing(false)}
