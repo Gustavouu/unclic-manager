@@ -43,14 +43,14 @@ export const ClientsLayout = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="w-full space-y-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-display font-bold">Gerenciamento de Clientes</h1>
+        <h1 className="text-2xl font-bold">Gerenciamento de Clientes</h1>
         <p className="text-muted-foreground">Visualize e gerencie seus clientes cadastrados.</p>
       </div>
 
-      <Card className="shadow-sm overflow-hidden">
-        <div className="border-b bg-gray-50 p-4">
+      <Card className="shadow-sm">
+        <div className="p-6 border-b bg-gray-50">
           <ClientsHeader 
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
@@ -61,7 +61,7 @@ export const ClientsLayout = ({
         </div>
         
         {isFiltersOpen && (
-          <div className="px-4 pt-4">
+          <div className="px-6 pt-6">
             <ClientFilters 
               filterOptions={filterOptions}
               updateFilterOptions={updateFilterOptions}
@@ -69,7 +69,7 @@ export const ClientsLayout = ({
           </div>
         )}
         
-        <div className="p-4">
+        <div className="p-6">
           <ClientsTable 
             clients={filteredClients} 
             onDelete={onDeleteClient} 
