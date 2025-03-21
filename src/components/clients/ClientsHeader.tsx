@@ -55,13 +55,13 @@ export const ClientsHeader = ({
           <UserPlus size={16} />
           Novo Cliente
         </Button>
-        
-        <NewClientDialog 
-          isOpen={isNewClientDialogOpen} 
-          onOpenChange={setIsNewClientDialogOpen}
-          onSubmit={handleAddClient}
-        />
       </div>
+      
+      <NewClientDialog 
+        isOpen={isNewClientDialogOpen} 
+        onOpenChange={setIsNewClientDialogOpen}
+        onSubmit={handleAddClient}
+      />
     </div>
   );
 };

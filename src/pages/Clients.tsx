@@ -1,6 +1,6 @@
 
 import { AppLayout } from "@/components/layout/AppLayout";
-import { ClientsLayout } from "@/components/clients/ClientsLayout";
+import { ClientsView } from "@/components/clients/ClientsView";
 import { useClientData } from "@/hooks/useClientData";
 
 const Clients = () => {
@@ -17,7 +17,7 @@ const Clients = () => {
 
   return (
     <AppLayout title="Clientes">
-      <ClientsLayout
+      <ClientsView
         clients={clients}
         filteredClients={filteredClients}
         filterOptions={filterOptions}
