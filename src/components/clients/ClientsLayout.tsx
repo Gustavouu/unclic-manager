@@ -43,9 +43,9 @@ export const ClientsLayout = ({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-4">
       <Card className="shadow-sm">
-        <div className="p-6">
+        <div className="p-4">
           <ClientsHeader 
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
