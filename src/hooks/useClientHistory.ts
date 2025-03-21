@@ -1,8 +1,24 @@
 
 import { useState, useEffect } from "react";
-import { ServiceHistoryItem } from "@/components/clients/details/ServiceHistoryItem";
-import { PurchaseHistoryItem } from "@/components/clients/details/PurchaseHistoryItem";
 import { Client } from "@/hooks/useClientData";
+
+// Define the types internally since the client component files were removed
+export type ServiceHistoryItem = {
+  id: string;
+  date: string;
+  serviceName: string;
+  price: number;
+  professional: string;
+  duration: number;
+};
+
+export type PurchaseHistoryItem = {
+  id: string;
+  date: string;
+  productName: string;
+  quantity: number;
+  price: number;
+};
 
 export const useClientHistory = (clientId: string) => {
   const [client, setClient] = useState<Client | null>(null);
