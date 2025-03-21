@@ -6,6 +6,7 @@ import { ClientsTable } from "@/components/clients/ClientsTable";
 import { ClientFilters } from "@/components/clients/ClientFilters";
 import { ClientDetails } from "@/components/clients/ClientDetails";
 import { FilterOptions } from "@/hooks/useClientData";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface ClientsLayoutProps {
   clients: any[];
@@ -30,49 +31,55 @@ export const ClientsLayout = ({
 }: ClientsLayoutProps) => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [isClientDetailsOpen, setIsClientDetailsOpen] = useState(false);
 
   const handleClientClick = (id: string) => {
-    setSelectedClientId(prevId => prevId === id ? null : id);
+    setSelectedClientId(id);
+    setIsClientDetailsOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setIsClientDetailsOpen(false);
   };
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-      <div className={`md:col-span-${selectedClientId ? '2' : '3'}`}>
-        <Card className="shadow-sm">
-          <div className="p-6">
-            <ClientsHeader 
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              isFiltersOpen={isFiltersOpen}
-              setIsFiltersOpen={setIsFiltersOpen}
-              onAddClient={onAddClient}
+    <div className="w-full">
+      <Card className="shadow-sm">
+        <div className="p-6">
+          <ClientsHeader 
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            isFiltersOpen={isFiltersOpen}
+            setIsFiltersOpen={setIsFiltersOpen}
+            onAddClient={onAddClient}
+          />
+          
+          {isFiltersOpen && (
+            <ClientFilters 
+              filterOptions={filterOptions}
+              updateFilterOptions={updateFilterOptions}
             />
-            
-            {isFiltersOpen && (
-              <ClientFilters 
-                filterOptions={filterOptions}
-                updateFilterOptions={updateFilterOptions}
-              />
-            )}
-            
-            <ClientsTable 
-              clients={filteredClients} 
-              onDelete={onDeleteClient} 
-              onRowClick={handleClientClick}
-              selectedClientId={selectedClientId}
-            />
-          </div>
-        </Card>
-      </div>
-      
-      {selectedClientId && (
-        <div className="md:col-span-1">
-          <ClientDetails 
-            clientId={selectedClientId} 
-            onClose={() => setSelectedClientId(null)} 
+          )}
+          
+          <ClientsTable 
+            clients={filteredClients} 
+            onDelete={onDeleteClient} 
+            onRowClick={handleClientClick}
+            selectedClientId={selectedClientId}
           />
         </div>
-      )}
+      </Card>
+      
+      <Dialog open={isClientDetailsOpen} onOpenChange={setIsClientDetailsOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          {selectedClientId && (
+            <ClientDetails 
+              clientId={selectedClientId} 
+              onClose={handleCloseDetails} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
