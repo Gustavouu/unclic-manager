@@ -49,9 +49,8 @@ export const ProfessionalsLayout = ({
           <ProfessionalsHeader 
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
-            isFiltersOpen={isFiltersOpen}
-            setIsFiltersOpen={setIsFiltersOpen}
-            onAddProfessional={onAddProfessional}
+            filterOptions={filterOptions}
+            updateFilterOptions={updateFilterOptions}
           />
           
           {isFiltersOpen && (

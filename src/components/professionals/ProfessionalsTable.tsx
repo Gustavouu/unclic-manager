@@ -1,4 +1,3 @@
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, Edit, Trash2, UserRound } from "lucide-react";
@@ -22,10 +21,25 @@ interface ProfessionalsTableProps {
   onDelete: (id: string) => void;
   onRowClick: (id: string) => void;
   selectedProfessionalId: string | null;
+  onShowDetails?: (professionalId: string) => void;
 }
 
-export const ProfessionalsTable = ({ professionals, onDelete, onRowClick, selectedProfessionalId }: ProfessionalsTableProps) => {
+export const ProfessionalsTable = ({ 
+  professionals, 
+  onDelete, 
+  onRowClick, 
+  selectedProfessionalId,
+  onShowDetails
+}: ProfessionalsTableProps) => {
   const [professionalToDelete, setProfessionalToDelete] = useState<string | null>(null);
+
+  // Handler for row click that respects both callbacks
+  const handleRowClick = (id: string) => {
+    onRowClick(id);
+    if (onShowDetails) {
+      onShowDetails(id);
+    }
+  };
 
   // Format date to display
   const formatDate = (dateString: string | null) => {
@@ -117,7 +131,7 @@ export const ProfessionalsTable = ({ professionals, onDelete, onRowClick, select
             {professionals.map((professional) => (
               <TableRow 
                 key={professional.id} 
-                onClick={() => onRowClick(professional.id)}
+                onClick={() => handleRowClick(professional.id)}
                 className={`cursor-pointer transition-colors ${
                   selectedProfessionalId === professional.id ? 'bg-muted' : ''
                 }`}

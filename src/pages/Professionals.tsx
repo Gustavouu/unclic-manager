@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProfessionalsLayout } from "@/components/professionals/ProfessionalsLayout";
@@ -65,13 +64,11 @@ const Professionals = () => {
     setSelectedProfessionalId(null);
   };
 
-  // Pagination logic
   const indexOfLastProfessional = currentPage * itemsPerPage;
   const indexOfFirstProfessional = indexOfLastProfessional - itemsPerPage;
   const currentProfessionals = filteredProfessionals.slice(indexOfFirstProfessional, indexOfLastProfessional);
   const totalPages = Math.ceil(filteredProfessionals.length / itemsPerPage);
 
-  // Generate page numbers
   const pageNumbers = [];
   const maxPagesToShow = 5;
   
@@ -136,8 +133,9 @@ const Professionals = () => {
             <Card className="border shadow-sm">
               <ProfessionalsTable 
                 professionals={currentProfessionals} 
-                onShowDetails={handleShowDetails} 
-                onDeleteProfessional={handleDeleteProfessional}
+                onRowClick={handleShowDetails} 
+                onDelete={handleDeleteProfessional}
+                selectedProfessionalId={selectedProfessionalId}
               />
               
               <div className="flex items-center justify-between px-6 py-4 border-t">

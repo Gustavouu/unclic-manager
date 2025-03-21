@@ -1,26 +1,34 @@
 
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { FilterOptions } from "@/hooks/useProfessionalData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ProfessionalsFiltersSheet } from "./filters/ProfessionalsFiltersSheet";
-import { SlidersHorizontal } from "lucide-react";
 
-type ProfessionalsHeaderProps = {
+export type ProfessionalsHeaderProps = {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   filterOptions: FilterOptions;
   updateFilterOptions: (newOptions: Partial<FilterOptions>) => void;
+  isFiltersOpen?: boolean;
+  setIsFiltersOpen?: (open: boolean) => void;
+  onAddProfessional?: (newProfessional: any) => void;
 };
 
 export const ProfessionalsHeader = ({
   searchTerm,
   setSearchTerm,
   filterOptions,
-  updateFilterOptions
+  updateFilterOptions,
+  isFiltersOpen,
+  setIsFiltersOpen
 }: ProfessionalsHeaderProps) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Use the props if provided, otherwise use local state
+  const isOpen = isFiltersOpen !== undefined ? isFiltersOpen : filtersOpen;
+  const setOpen = setIsFiltersOpen || setFiltersOpen;
 
   // Count active filters
   const activeFiltersCount = 
@@ -45,7 +53,7 @@ export const ProfessionalsHeader = ({
         <Button 
           variant="outline" 
           size="sm"
-          onClick={() => setFiltersOpen(true)}
+          onClick={() => setOpen(true)}
           className="relative"
         >
           <SlidersHorizontal className="mr-2 h-4 w-4" />
@@ -63,8 +71,8 @@ export const ProfessionalsHeader = ({
       </div>
 
       <ProfessionalsFiltersSheet
-        open={filtersOpen}
-        onOpenChange={setFiltersOpen}
+        open={isOpen}
+        onOpenChange={setOpen}
         filterOptions={filterOptions}
         updateFilterOptions={updateFilterOptions}
       />
