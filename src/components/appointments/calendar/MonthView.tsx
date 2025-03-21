@@ -19,12 +19,12 @@ export const MonthView = ({
   onSelectDay,
 }: MonthViewProps) => {
   return (
-    <>
-      <div className="grid grid-cols-7 gap-2 mb-2">
+    <div className="rounded-lg border border-border/30 p-4 bg-white shadow-sm">
+      <div className="grid grid-cols-7 gap-2 mb-4">
         {weekDays.map((day, index) => (
           <div 
             key={index} 
-            className="text-xs text-center font-medium text-muted-foreground py-1"
+            className="text-xs text-center font-semibold text-muted-foreground py-2"
           >
             {day}
           </div>
@@ -43,25 +43,36 @@ export const MonthView = ({
             ? appointments.filter(app => isSameDay(app.date, day)).length
             : 0;
             
+          // Determine if today
+          const isToday = day ? isSameDay(day, new Date()) : false;
+          
           return (
             <div key={index} className="aspect-square">
               {day ? (
                 <button
                   className={cn(
-                    "w-full h-full rounded-lg flex flex-col items-center justify-center text-sm relative transition-all",
-                    isSameDay(day, selectedDate) && "bg-primary text-primary-foreground font-medium",
-                    isSameDay(day, new Date()) && !isSameDay(day, selectedDate) && "bg-muted font-medium",
-                    !isSameDay(day, new Date()) && !isSameDay(day, selectedDate) && "hover:bg-muted/60"
+                    "w-full h-full rounded-lg flex flex-col items-center justify-center transition-all",
+                    isSameDay(day, selectedDate) && "bg-primary text-primary-foreground font-medium shadow-md",
+                    isToday && !isSameDay(day, selectedDate) && "bg-blue-50 border border-blue-200 font-medium",
+                    !isToday && !isSameDay(day, selectedDate) && "hover:bg-muted/60 border border-transparent hover:border-border/40"
                   )}
                   onClick={() => onSelectDay(day)}
                 >
-                  <span className="mb-1">{format(day, "d")}</span>
+                  <span className={cn(
+                    "mb-1",
+                    isToday && !isSameDay(day, selectedDate) && "text-blue-700"
+                  )}>
+                    {format(day, "d")}
+                  </span>
+                  
                   {hasAppointments && (
                     <span className={cn(
-                      "text-xs px-1.5 py-0.5 rounded-full",
+                      "text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[20px]",
                       isSameDay(day, selectedDate) 
                         ? "bg-primary-foreground/20 text-primary-foreground" 
-                        : "bg-blue-100 text-blue-700"
+                        : isToday
+                          ? "bg-blue-200 text-blue-700"
+                          : "bg-blue-100 text-blue-700"
                     )}>
                       {appointmentCount}
                     </span>
@@ -74,6 +85,6 @@ export const MonthView = ({
           );
         })}
       </div>
-    </>
+    </div>
   );
 };

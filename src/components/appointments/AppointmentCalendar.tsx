@@ -140,8 +140,8 @@ export const AppointmentCalendar = () => {
   );
 
   return (
-    <div className="bg-white rounded-xl border border-border/40 overflow-hidden">
-      <div className="p-6 border-b border-border/60">
+    <div className="rounded-xl overflow-hidden bg-gradient-to-b from-blue-50 to-white">
+      <div className="p-6">
         <CalendarHeader 
           currentMonth={currentMonth}
           selectedDate={selectedDate}

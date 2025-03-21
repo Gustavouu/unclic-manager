@@ -1,49 +1,60 @@
 
-import { 
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ServiceType } from "../AppointmentCalendar";
-import { Filter } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { 
+  Scissors, 
+  Music2, 
+  Smile, 
+  Sparkles,
+  Palette, 
+  FilterX 
+} from "lucide-react";
 
 type CalendarFilterProps = {
   serviceFilter: ServiceType;
-  onFilterChange: (value: ServiceType) => void;
+  onFilterChange: (type: ServiceType) => void;
   serviceTypes: Record<ServiceType, string>;
 };
 
-export const CalendarFilter = ({ 
-  serviceFilter, 
+export const CalendarFilter = ({
+  serviceFilter,
   onFilterChange,
-  serviceTypes 
+  serviceTypes,
 }: CalendarFilterProps) => {
+  // Map service types to icons
+  const serviceIcons: Record<ServiceType, React.ReactNode> = {
+    all: <FilterX size={16} />,
+    hair: <Scissors size={16} />,
+    barber: <Music2 size={16} />,
+    nails: <Sparkles size={16} />,
+    makeup: <Palette size={16} />,
+    skincare: <Smile size={16} />,
+  };
+
   return (
-    <div className="mb-6 flex items-center gap-2">
-      <div className="flex items-center text-sm text-muted-foreground">
-        <Filter className="h-4 w-4 mr-2" />
-        <span>Filtrar por:</span>
+    <div className="mb-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium text-muted-foreground mb-2">Filtrar por tipo de serviço</h3>
       </div>
-      <Select
-        value={serviceFilter}
-        onValueChange={(value) => onFilterChange(value as ServiceType)}
-      >
-        <SelectTrigger className="w-[220px]">
-          <SelectValue placeholder="Selecione um serviço" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {Object.entries(serviceTypes).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+      <div className="flex flex-wrap gap-2">
+        {Object.entries(serviceTypes).map(([type, label]) => (
+          <button
+            key={type}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all whitespace-nowrap",
+              serviceFilter === type
+                ? "bg-blue-100 text-blue-700 font-medium"
+                : "bg-muted/40 text-muted-foreground hover:bg-muted/70"
+            )}
+            onClick={() => onFilterChange(type as ServiceType)}
+          >
+            <span className="flex-shrink-0">
+              {serviceIcons[type as ServiceType]}
+            </span>
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 };

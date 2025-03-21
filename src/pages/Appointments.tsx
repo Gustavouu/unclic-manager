@@ -18,38 +18,38 @@ const Appointments = () => {
         <h1 className="text-xl font-display font-medium">Gerenciamento de Agendamentos</h1>
         <Button 
           onClick={() => setShowNewAppointmentDialog(true)}
-          className="gap-2"
+          className="gap-2 bg-blue-600 hover:bg-blue-700"
         >
           <CalendarPlus size={16} />
           Novo Agendamento
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-4">
+      <Card className="border-blue-100 shadow-sm">
+        <CardContent className="p-0">
           <Tabs 
             defaultValue="calendar" 
             className="w-full"
             onValueChange={(value) => setView(value as "calendar" | "list")}
           >
-            <div className="flex justify-between items-center mb-4">
-              <TabsList>
-                <TabsTrigger value="calendar" className="gap-2">
+            <div className="flex justify-between items-center p-4 border-b border-blue-100 bg-blue-50/50">
+              <TabsList className="bg-blue-100">
+                <TabsTrigger value="calendar" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                   <CalendarIcon size={16} />
                   <span>Calendário</span>
                 </TabsTrigger>
-                <TabsTrigger value="list" className="gap-2">
+                <TabsTrigger value="list" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                   <List size={16} />
                   <span>Lista</span>
                 </TabsTrigger>
               </TabsList>
             </div>
             
-            <TabsContent value="calendar" className="mt-2">
+            <TabsContent value="calendar" className="mt-0">
               <AppointmentCalendar />
             </TabsContent>
             
-            <TabsContent value="list" className="mt-2">
+            <TabsContent value="list" className="mt-0">
               <AppointmentsList />
             </TabsContent>
           </Tabs>

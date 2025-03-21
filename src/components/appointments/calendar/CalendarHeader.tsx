@@ -29,6 +29,9 @@ export const CalendarHeader = ({
   onSelectDate,
   onViewChange,
 }: CalendarHeaderProps) => {
+  const formattedMonth = format(currentMonth, "MMMM yyyy", { locale: ptBR });
+  const capitalizedMonth = formattedMonth.charAt(0).toUpperCase() + formattedMonth.slice(1);
+
   return (
     <>
       <div className="flex items-center justify-between mb-6">
@@ -37,8 +40,8 @@ export const CalendarHeader = ({
         <div className="flex items-center gap-2">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <CalendarIcon className="h-4 w-4" />
+              <Button variant="outline" size="sm" className="gap-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50">
+                <CalendarIcon className="h-4 w-4 text-blue-600" />
                 <span>Selecionar Data</span>
               </Button>
             </PopoverTrigger>
@@ -61,15 +64,16 @@ export const CalendarHeader = ({
       </div>
       
       {calendarView === "month" && (
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-medium">
-            {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
+        <div className="flex items-center justify-between mb-6 bg-blue-50 p-3 rounded-lg border border-blue-100">
+          <h3 className="text-lg font-medium text-blue-800 flex items-center gap-2">
+            <CalendarIcon size={18} className="text-blue-600" />
+            {capitalizedMonth}
           </h3>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={onPrevMonth} className="h-8 w-8">
+            <Button variant="ghost" size="icon" onClick={onPrevMonth} className="h-8 w-8 hover:bg-blue-100 hover:text-blue-700">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={onNextMonth} className="h-8 w-8">
+            <Button variant="ghost" size="icon" onClick={onNextMonth} className="h-8 w-8 hover:bg-blue-100 hover:text-blue-700">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -77,9 +81,9 @@ export const CalendarHeader = ({
       )}
       
       {calendarView === "day" && (
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="flex items-center gap-1 text-lg font-medium">
-            {format(selectedDate, "EEEE, d 'de' MMMM", { locale: ptBR })}
+        <div className="flex items-center justify-between mb-0">
+          <h3 className="flex items-center gap-1 text-lg font-medium text-blue-800">
+            {format(selectedDate, "d", { locale: ptBR })} de {capitalizedMonth}
           </h3>
         </div>
       )}
