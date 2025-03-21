@@ -59,6 +59,7 @@ export const Sidebar = () => {
   
   const pathName = location.pathname;
   
+  // The routes array is reordered to place "Colaboradores" between "Clientes" and "Estoque"
   const routes = [
     { icon: <LayoutDashboard size={18} />, label: "Dashboard", path: "/dashboard" },
     { icon: <Calendar size={18} />, label: "Agendamentos", path: "/appointments" },
