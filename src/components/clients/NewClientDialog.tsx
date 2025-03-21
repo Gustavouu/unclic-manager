@@ -55,7 +55,17 @@ export const NewClientDialog = ({ onClose }: NewClientDialogProps) => {
   });
 
   const onSubmit = (data: ClientFormValues) => {
-    addClient(data);
+    // Garantir que o nome é uma string não vazia, mesmo que isso já seja validado pelo schema
+    const clientData = {
+      name: data.name, // Esta propriedade é obrigatória
+      email: data.email || "",
+      phone: data.phone || "",
+      gender: data.gender,
+      city: data.city,
+      category: data.category
+    };
+    
+    addClient(clientData);
     toast.success("Cliente adicionado com sucesso!");
     onClose();
   };
