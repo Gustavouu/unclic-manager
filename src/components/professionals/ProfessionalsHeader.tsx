@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, Plus } from "lucide-react";
 import { FilterOptions } from "@/hooks/useProfessionalData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,7 @@ export const ProfessionalsHeader = ({
         </Button>
         
         <Button size="sm" onClick={onAddProfessional}>
+          <Plus className="mr-2 h-4 w-4" />
           Adicionar Colaborador
         </Button>
       </div>

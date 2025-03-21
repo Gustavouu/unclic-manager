@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useProfessionalData } from "@/hooks/useProfessionalData";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { ProfessionalsContent } from "@/components/professionals/ProfessionalsContent";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const Professionals = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -68,6 +69,7 @@ const Professionals = () => {
           setSearchTerm={setSearchTerm} 
           filterOptions={filterOptions}
           updateFilterOptions={updateFilterOptions}
+          onAddProfessional={handleAddProfessional}
         />
         
         <ProfessionalsContent
@@ -80,12 +82,16 @@ const Professionals = () => {
           selectedProfessionalId={selectedProfessionalId}
         />
         
-        {showDetails && selectedProfessionalId && (
-          <ProfessionalDetails 
-            professionalId={selectedProfessionalId} 
-            onClose={handleCloseDetails} 
-          />
-        )}
+        <Dialog open={showDetails} onOpenChange={setShowDetails}>
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            {selectedProfessionalId && (
+              <ProfessionalDetails 
+                professionalId={selectedProfessionalId} 
+                onClose={handleCloseDetails} 
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );

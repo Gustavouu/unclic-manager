@@ -1,6 +1,6 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { DateRange } from "react-day-picker";
 
 export type Professional = {
   id: string;
@@ -22,6 +22,7 @@ export type FilterOptions = {
   status: string[];
   role: string[];
   specialty: string[];
+  dateRange?: DateRange | undefined;
 };
 
 // Mock data para demonstração
@@ -103,7 +104,8 @@ export const useProfessionalData = (searchTerm: string = "") => {
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     status: [],
     role: [],
-    specialty: []
+    specialty: [],
+    dateRange: undefined
   });
 
   // Calcular opções disponíveis para os filtros
@@ -135,8 +137,14 @@ export const useProfessionalData = (searchTerm: string = "") => {
         filterOptions.role.includes(professional.role);
       const matchesSpecialty = filterOptions.specialty.length === 0 || 
         filterOptions.specialty.includes(professional.specialty);
+      
+      // Filter by date range if present
+      const matchesDateRange = !filterOptions.dateRange?.from || !professional.hireDate 
+        ? true 
+        : new Date(professional.hireDate) >= filterOptions.dateRange.from && 
+          (!filterOptions.dateRange.to || new Date(professional.hireDate) <= filterOptions.dateRange.to);
 
-      return matchesSearchTerm && matchesStatus && matchesRole && matchesSpecialty;
+      return matchesSearchTerm && matchesStatus && matchesRole && matchesSpecialty && matchesDateRange;
     });
   }, [professionals, searchTerm, filterOptions]);
 
