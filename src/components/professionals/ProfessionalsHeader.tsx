@@ -15,7 +15,6 @@ interface ProfessionalsHeaderProps {
 
 export const ProfessionalsHeader = ({ onNewProfessional, onToggleFilters }: ProfessionalsHeaderProps) => {
   const isMobile = useIsMobile();
-  // Create a mock filter options state to satisfy MobileFilterToggle props
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterOptions: FilterOptions = {
     onlyActive: false,
@@ -27,33 +26,38 @@ export const ProfessionalsHeader = ({ onNewProfessional, onToggleFilters }: Prof
   };
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <Breadcrumb items={[
         { label: "Home", active: false },
         { label: "Colaboradores", active: true },
       ]} />
       
       <div className="flex flex-col md:flex-row justify-between gap-4">
-        <h1 className="text-xl font-display font-medium">Colaboradores</h1>
+        <h1 className="text-2xl font-display font-semibold text-foreground/90">Colaboradores</h1>
         
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 min-w-[240px]">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Buscar colaborador..." 
-              className="pl-8"
+              className="pl-9 h-10 border-muted bg-background/50"
             />
           </div>
           
           {!isMobile && (
-            <Button variant="outline" size="icon" className="shrink-0">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={onToggleFilters} 
+              className="h-10 w-10 shrink-0 border-muted"
+            >
               <SlidersHorizontal className="h-4 w-4" />
             </Button>
           )}
           
           <Button 
             onClick={onNewProfessional}
-            className="gap-2 bg-blue-600 hover:bg-blue-700"
+            className="h-10 gap-2 bg-blue-600 hover:bg-blue-700 text-white"
           >
             <UserPlus className="h-4 w-4" />
             {isMobile ? "" : "Novo Colaborador"}

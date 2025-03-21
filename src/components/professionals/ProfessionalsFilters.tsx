@@ -22,10 +22,10 @@ export const ProfessionalsFilters = () => {
   };
 
   return (
-    <div className="space-y-4 rounded-lg border bg-card p-4">
+    <div className="space-y-5 rounded-xl border border-border/60 bg-card p-5 shadow-sm">
       <FiltersHeader filterOptions={filterOptions} onClearFilters={handleClearFilters} />
       
-      <div className="space-y-4">
+      <div className="space-y-5 pt-1">
         <ActiveProfessionalFilter />
         <SpecialtiesFilter />
         <LastActivityFilter />

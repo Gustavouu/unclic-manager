@@ -17,15 +17,15 @@ export const ProfessionalsLayout = ({ onSelectProfessional }: ProfessionalsLayou
   const [showFilters, setShowFilters] = useState(false);
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <ProfessionalsHeader 
         onNewProfessional={() => setShowNewProfessionalDialog(true)}
         onToggleFilters={() => setShowFilters(true)}
       />
       
-      <div className="flex gap-4">
+      <div className="flex gap-6">
         {!isMobile && (
-          <div className="hidden md:block w-64 shrink-0">
+          <div className="hidden md:block w-72 shrink-0">
             <ProfessionalsFilters />
           </div>
         )}

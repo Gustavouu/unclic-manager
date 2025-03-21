@@ -39,12 +39,12 @@ export const ProfessionalsFiltersSheet = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md">
         <SheetHeader className="space-y-0">
-          <SheetTitle>Filtros</SheetTitle>
+          <SheetTitle className="text-xl font-semibold">Filtros</SheetTitle>
         </SheetHeader>
         
         <FilterSheetHeader onClearFilters={handleClearFilters} />
         
-        <div className="mt-4 space-y-5 px-1">
+        <div className="mt-5 space-y-5 px-1">
           <ActiveProfessionalFilter />
           <SpecialtiesFilter />
           <LastActivityFilter />

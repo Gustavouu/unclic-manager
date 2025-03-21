@@ -24,30 +24,30 @@ export const ProfessionalDetails = ({ professionalId, onBack }: ProfessionalDeta
   }
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Button
         variant="ghost"
         size="sm"
-        className="gap-2"
+        className="gap-2 -ml-2 hover:bg-muted/50"
         onClick={onBack}
       >
         <ArrowLeft className="h-4 w-4" />
         Voltar para Lista
       </Button>
       
-      <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
-        <div className="flex items-center gap-4">
-          <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium text-xl">
+      <div className="flex flex-col md:flex-row justify-between gap-6 items-start md:items-center bg-card border border-border/60 rounded-xl p-6 shadow-sm">
+        <div className="flex items-center gap-5">
+          <div className="h-20 w-20 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 font-medium text-2xl border-2 border-blue-100">
             {professional.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
           </div>
           <div>
             <h1 className="text-2xl font-semibold">{professional.name}</h1>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 text-muted-foreground">
-              <div className="flex items-center gap-1">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 text-muted-foreground mt-1.5">
+              <div className="flex items-center gap-1.5">
                 <Phone className="h-3.5 w-3.5" />
                 <span>{professional.phone}</span>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <Mail className="h-3.5 w-3.5" />
                 <span>{professional.email}</span>
               </div>
@@ -55,19 +55,19 @@ export const ProfessionalDetails = ({ professionalId, onBack }: ProfessionalDeta
           </div>
         </div>
         
-        <Button className="gap-2">
+        <Button className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
           <Edit className="h-4 w-4" />
           Editar Colaborador
         </Button>
       </div>
       
       <Tabs defaultValue="info" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:w-auto md:inline-flex">
-          <TabsTrigger value="info" className="gap-2">
+        <TabsList className="grid w-full md:w-auto md:inline-flex grid-cols-2 p-1 bg-muted/50">
+          <TabsTrigger value="info" className="gap-2 px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <UserCircle className="h-4 w-4" />
             Informações
           </TabsTrigger>
-          <TabsTrigger value="history" className="gap-2">
+          <TabsTrigger value="history" className="gap-2 px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <CalendarRange className="h-4 w-4" />
             Histórico de Agendamentos
           </TabsTrigger>

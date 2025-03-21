@@ -27,25 +27,29 @@ interface ProfessionalsTableProps {
 
 export const ProfessionalsTable = ({ onSelectProfessional }: ProfessionalsTableProps) => {
   return (
-    <div className="rounded-md border">
+    <div className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-sm">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead className="w-[250px]">Nome</TableHead>
-            <TableHead className="hidden md:table-cell">Contato</TableHead>
-            <TableHead className="hidden md:table-cell">Especialidades</TableHead>
-            <TableHead className="hidden md:table-cell">Status</TableHead>
-            <TableHead className="hidden lg:table-cell">Última Atividade</TableHead>
+          <TableRow className="bg-muted/30">
+            <TableHead className="w-[250px] font-medium">Nome</TableHead>
+            <TableHead className="hidden md:table-cell font-medium">Contato</TableHead>
+            <TableHead className="hidden md:table-cell font-medium">Especialidades</TableHead>
+            <TableHead className="hidden md:table-cell font-medium">Status</TableHead>
+            <TableHead className="hidden lg:table-cell font-medium">Última Atividade</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {professionals.map((professional) => (
-            <TableRow key={professional.id} className="cursor-pointer hover:bg-muted/50" onClick={() => onSelectProfessional(professional.id)}>
+            <TableRow 
+              key={professional.id} 
+              className="cursor-pointer hover:bg-muted/40 transition-colors" 
+              onClick={() => onSelectProfessional(professional.id)}
+            >
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-9 w-9">
-                    <AvatarFallback className="bg-primary/10 text-primary">
+                  <Avatar className="h-10 w-10 border-2 border-border/30">
+                    <AvatarFallback className={`${professional.active ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-600'}`}>
                       {professional.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -55,11 +59,11 @@ export const ProfessionalsTable = ({ onSelectProfessional }: ProfessionalsTableP
               <TableCell className="hidden md:table-cell">
                 <div className="flex flex-col space-y-1">
                   <div className="flex items-center text-sm">
-                    <Phone className="mr-1 h-3 w-3" />
+                    <Phone className="mr-1.5 h-3 w-3 text-muted-foreground" />
                     {professional.phone}
                   </div>
                   <div className="flex items-center text-sm">
-                    <Mail className="mr-1 h-3 w-3" />
+                    <Mail className="mr-1.5 h-3 w-3 text-muted-foreground" />
                     {professional.email}
                   </div>
                 </div>
@@ -67,20 +71,20 @@ export const ProfessionalsTable = ({ onSelectProfessional }: ProfessionalsTableP
               <TableCell className="hidden md:table-cell">
                 <div className="flex flex-wrap gap-1">
                   {professional.specialties.map((specialty, index) => (
-                    <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
+                    <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-normal">
                       {specialty}
                     </Badge>
                   ))}
                 </div>
               </TableCell>
               <TableCell className="hidden md:table-cell">
-                <Badge variant="default" className={professional.active ? "bg-green-100 text-green-800" : ""}>
+                <Badge variant={professional.active ? "default" : "outline"} className={professional.active ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}>
                   {professional.active ? "Ativo" : "Inativo"}
                 </Badge>
               </TableCell>
               <TableCell className="hidden lg:table-cell">
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <CalendarClock className="mr-1 h-3 w-3" />
+                  <CalendarClock className="mr-1.5 h-3 w-3" />
                   {format(new Date(professional.lastActivity), "dd/MM/yyyy", { locale: ptBR })}
                 </div>
               </TableCell>
@@ -91,15 +95,15 @@ export const ProfessionalsTable = ({ onSelectProfessional }: ProfessionalsTableP
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem onClick={(e) => {
                       e.stopPropagation();
                       onSelectProfessional(professional.id);
-                    }}>
+                    }} className="cursor-pointer">
                       Ver detalhes
                     </DropdownMenuItem>
-                    <DropdownMenuItem>Editar</DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">
+                    <DropdownMenuItem className="cursor-pointer">Editar</DropdownMenuItem>
+                    <DropdownMenuItem className="text-red-600 cursor-pointer">
                       {professional.active ? "Desativar" : "Ativar"}
                     </DropdownMenuItem>
                   </DropdownMenuContent>

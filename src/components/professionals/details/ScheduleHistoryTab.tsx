@@ -22,23 +22,23 @@ export const ScheduleHistoryTab = ({ professionalId }: ScheduleHistoryTabProps) 
   const professionalHistory = scheduleHistory.filter(item => item.professionalId === professionalId);
   
   return (
-    <Card>
-      <div className="rounded-md border">
+    <Card className="border-border/60 shadow-sm overflow-hidden">
+      <div className="rounded-md">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Data</TableHead>
-              <TableHead>Horário</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Serviço</TableHead>
-              <TableHead>Valor</TableHead>
-              <TableHead>Status</TableHead>
+            <TableRow className="bg-muted/30">
+              <TableHead className="font-medium">Data</TableHead>
+              <TableHead className="font-medium">Horário</TableHead>
+              <TableHead className="font-medium">Cliente</TableHead>
+              <TableHead className="font-medium">Serviço</TableHead>
+              <TableHead className="font-medium">Valor</TableHead>
+              <TableHead className="font-medium">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {professionalHistory.length > 0 ? (
               professionalHistory.map((appointment) => (
-                <TableRow key={appointment.id}>
+                <TableRow key={appointment.id} className="hover:bg-muted/40 transition-colors">
                   <TableCell>
                     {format(new Date(appointment.date), "dd/MM/yyyy", { locale: ptBR })}
                   </TableCell>
@@ -69,7 +69,7 @@ export const ScheduleHistoryTab = ({ professionalId }: ScheduleHistoryTabProps) 
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   Nenhum agendamento encontrado para este profissional.
                 </TableCell>
               </TableRow>
