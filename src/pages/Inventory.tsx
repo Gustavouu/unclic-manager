@@ -59,21 +59,19 @@ const Inventory = () => {
 
   return (
     <AppLayout title="Estoque">
-      <div className="container py-6 mx-auto max-w-7xl">
-        <InventoryLayout
-          inventory={inventory}
-          filteredInventory={filteredInventory}
-          categories={categories}
-          filterOptions={filterOptions}
-          updateFilterOptions={updateFilterOptions}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          onAddItem={handleAddItem}
-          onUpdateItem={handleUpdateItem}
-          onDeleteItem={handleDeleteItem}
-          onRestock={handleRestock}
-        />
-      </div>
+      <InventoryLayout
+        inventory={inventory}
+        filteredInventory={filteredInventory}
+        categories={categories}
+        filterOptions={filterOptions}
+        updateFilterOptions={updateFilterOptions}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        onAddItem={handleAddItem}
+        onUpdateItem={handleUpdateItem}
+        onDeleteItem={handleDeleteItem}
+        onRestock={handleRestock}
+      />
     </AppLayout>
   );
 };
