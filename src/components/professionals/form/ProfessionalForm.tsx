@@ -52,9 +52,6 @@ export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
     }
   };
 
-  // Garantir que specialties é sempre um array
-  const safeSpecialties = Array.isArray(specialties) ? specialties : [];
-
   return (
     <Form {...form}>
       <DialogDescription className="mb-5">
@@ -64,7 +61,7 @@ export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <ProfessionalFormFields 
           form={form} 
-          specialties={safeSpecialties} 
+          specialties={Array.isArray(specialties) ? specialties : []} 
         />
         
         <DialogFooter className="pt-2">

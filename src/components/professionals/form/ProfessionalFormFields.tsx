@@ -99,7 +99,7 @@ export const ProfessionalFormFields = ({ form, specialties = [] }: ProfessionalF
                   placeholder="0" 
                   min="0" 
                   max="100" 
-                  {...field} 
+                  {...field}
                 />
               </FormControl>
               <FormDescription>
