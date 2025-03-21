@@ -1,6 +1,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { InventoryItem } from "@/hooks/useInventoryData";
+import { InventoryItem } from "@/hooks/inventory";
 
 interface StatsTabProps {
   item: InventoryItem;

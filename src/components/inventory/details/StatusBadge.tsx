@@ -1,6 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
-import { InventoryItem } from "@/hooks/useInventoryData";
+import { InventoryItem } from "@/hooks/inventory";
 
 interface StatusBadgeProps {
   item: InventoryItem;

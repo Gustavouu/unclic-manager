@@ -1,4 +1,3 @@
-
 import { Eye, MoreVertical, Package2, RefreshCcw, Trash2 } from "lucide-react";
 import {
   Table,
@@ -16,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { InventoryItem } from "@/hooks/useInventoryData";
+import { InventoryItem } from "@/hooks/inventory";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +25,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 

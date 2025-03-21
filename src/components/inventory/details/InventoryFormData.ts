@@ -1,6 +1,6 @@
 
 import { InventoryFormData } from "../form/inventoryFormValidation";
-import { InventoryItem } from "@/hooks/useInventoryData";
+import { InventoryItem } from "@/hooks/inventory";
 
 export const getInventoryFormData = (item: InventoryItem): InventoryFormData => {
   return {

@@ -2,7 +2,7 @@
 import { Package, Filter } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { InventoryFilterOptions } from "@/hooks/useInventoryData";
+import { InventoryFilterOptions } from "@/hooks/inventory";
 
 interface InventoryFiltersProps {
   categories: string[];
