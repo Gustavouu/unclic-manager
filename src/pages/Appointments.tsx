@@ -7,14 +7,15 @@ import { Button } from "@/components/ui/button";
 import { AppointmentCalendar } from "@/components/appointments/AppointmentCalendar";
 import { AppointmentsList } from "@/components/appointments/AppointmentsList";
 import { NewAppointmentDialog } from "@/components/appointments/NewAppointmentDialog";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 const Appointments = () => {
   const [view, setView] = useState<"calendar" | "list">("calendar");
   const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4">
+      <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl font-display font-medium">Gerenciamento de Agendamentos</h1>
         <Button 
           onClick={() => setShowNewAppointmentDialog(true)}

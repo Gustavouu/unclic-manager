@@ -36,12 +36,12 @@ export const CalendarFilter = ({
       <div className="flex items-center">
         <h3 className="text-sm font-medium text-gray-700 mb-2">Filtrar por tipo de serviço</h3>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {Object.entries(serviceTypes).map(([type, label]) => (
           <button
             key={type}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all whitespace-nowrap",
+              "flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all whitespace-nowrap",
               serviceFilter === type
                 ? "bg-blue-100 text-blue-700 font-medium"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"

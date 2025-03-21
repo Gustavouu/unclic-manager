@@ -20,7 +20,7 @@ export const WeekView = ({
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
   
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
       {weekDays.map((day, index) => {
         // Get appointments for this day
         const dayAppointments = weekAppointments.filter(app => isSameDay(app.date, day));
@@ -28,7 +28,7 @@ export const WeekView = ({
         
         return (
           <div key={index} className="border border-gray-200 rounded-lg">
-            <div className="p-3 bg-gray-50 border-b border-gray-200">
+            <div className="p-2 bg-gray-50 border-b border-gray-200">
               <h3 className="text-sm font-medium text-gray-700">
                 {format(day, "EEEE, dd/MM", { locale: ptBR })}
               </h3>
@@ -41,14 +41,14 @@ export const WeekView = ({
                   .map(appointment => (
                     <div 
                       key={appointment.id}
-                      className="p-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="p-2 hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() => onSelectAppointment(appointment.date)}
                     >
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="font-medium text-gray-800">{appointment.clientName}</p>
                           <p className="text-sm text-gray-600">{appointment.serviceName}</p>
-                          <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
+                          <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
                             <span>{appointment.duration} min</span>
                             <span>R$ {appointment.price.toFixed(2)}</span>
                           </div>
@@ -62,7 +62,7 @@ export const WeekView = ({
                     </div>
                   ))
               ) : (
-                <div className="p-4 text-center text-gray-500">
+                <div className="p-3 text-center text-gray-500 text-sm">
                   Nenhum agendamento
                 </div>
               )}
