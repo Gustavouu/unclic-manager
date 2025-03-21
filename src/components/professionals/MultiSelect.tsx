@@ -19,8 +19,8 @@ interface MultiSelectProps {
 }
 
 export function MultiSelect({
-  options,
-  value,
+  options = [], // Default to empty array
+  value = [], // Default to empty array
   onChange,
   placeholder = "Selecione opções",
   className,
@@ -29,16 +29,20 @@ export function MultiSelect({
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
 
+  // Ensure options and value are always arrays
+  const safeOptions = Array.isArray(options) ? options : [];
+  const safeValue = Array.isArray(value) ? value : [];
+
   const handleUnselect = (option: Option) => {
-    onChange(value.filter((item) => item.value !== option.value));
+    onChange(safeValue.filter((item) => item.value !== option.value));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     const input = inputRef.current;
     if (input) {
       if (e.key === "Delete" || e.key === "Backspace") {
-        if (input.value === "" && value.length > 0) {
-          onChange(value.slice(0, -1));
+        if (input.value === "" && safeValue.length > 0) {
+          onChange(safeValue.slice(0, -1));
         }
       }
       if (e.key === "Escape") {
@@ -46,10 +50,6 @@ export function MultiSelect({
       }
     }
   };
-
-  // Ensure options and value are always arrays
-  const safeOptions = Array.isArray(options) ? options : [];
-  const safeValue = Array.isArray(value) ? value : [];
 
   const selectables = safeOptions.filter(
     (option) => !safeValue.some((item) => item.value === option.value)

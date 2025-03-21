@@ -14,6 +14,7 @@ interface ProfessionalFormProps {
 }
 
 export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
+  // Get professionals data with safely initialized specialties
   const { specialties = [], addProfessional } = useProfessionals();
   
   const form = useForm<ProfessionalCreateForm>({
@@ -30,7 +31,13 @@ export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
   });
 
   const onSubmit = async (data: ProfessionalCreateForm) => {
-    await addProfessional(data);
+    // Ensure specialties is always an array
+    const formData = {
+      ...data,
+      specialties: Array.isArray(data.specialties) ? data.specialties : []
+    };
+    
+    await addProfessional(formData);
     form.reset();
     onClose();
   };
@@ -38,7 +45,10 @@ export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <ProfessionalFormFields form={form} specialties={specialties} />
+        <ProfessionalFormFields 
+          form={form} 
+          specialties={specialties} 
+        />
         
         <DialogFooter>
           <Button 

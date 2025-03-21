@@ -3,16 +3,19 @@ import { useMemo, useCallback } from "react";
 import { Professional } from "./types";
 
 export const useProfessionalUtils = (professionals: Professional[] = []) => {
-  // Extrair todas as especialidades dos profissionais
-  const specialties = useMemo(() => {
-    const allSpecialties = professionals.flatMap(p => p.specialties || []);
-    return [...new Set(allSpecialties)];
-  }, [professionals]);
+  // Ensure professionals is always an array
+  const safeProfessionals = Array.isArray(professionals) ? professionals : [];
   
-  // Buscar profissional por ID
+  // Extract all specialties from professionals with null check
+  const specialties = useMemo(() => {
+    const allSpecialties = safeProfessionals.flatMap(p => p.specialties || []);
+    return [...new Set(allSpecialties)];
+  }, [safeProfessionals]);
+  
+  // Search professional by ID with null check
   const getProfessionalById = useCallback((id: string) => {
-    return professionals.find(p => p.id === id);
-  }, [professionals]);
+    return safeProfessionals.find(p => p.id === id);
+  }, [safeProfessionals]);
 
   return {
     specialties,
