@@ -12,7 +12,7 @@ interface ProfessionalFormFieldsProps {
 }
 
 export const ProfessionalFormFields = ({ form, specialties = [] }: ProfessionalFormFieldsProps) => {
-  // Garantir que specialties é sempre um array
+  // Ensure specialties is always an array
   const safeSpecialties = Array.isArray(specialties) ? specialties : [];
   
   return (
@@ -98,7 +98,7 @@ export const ProfessionalFormFields = ({ form, specialties = [] }: ProfessionalF
           control={form.control}
           name="specialties"
           render={({ field }) => {
-            // Garantir que field.value é sempre um array
+            // Ensure field.value is always an array
             const safeValue = Array.isArray(field.value) ? field.value : [];
             
             return (

@@ -47,7 +47,7 @@ export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <ProfessionalFormFields 
           form={form} 
-          specialties={specialties || []} 
+          specialties={Array.isArray(specialties) ? specialties : []} 
         />
         
         <DialogFooter>
