@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { useClientData } from "@/hooks/useClientData";
 import { ClientForm } from "./form/ClientForm";
-import { ClientFormValues } from "./form/ClientFormSchema";
+import { ClientSubmitValues } from "./form/ClientFormSchema";
 
 type NewClientDialogProps = {
   onClose: () => void;
@@ -17,7 +17,7 @@ type NewClientDialogProps = {
 export const NewClientDialog = ({ onClose }: NewClientDialogProps) => {
   const { addClient, availableCities } = useClientData();
 
-  const handleSubmit = (data: Omit<ClientFormValues, "id" | "lastVisit" | "totalSpent">) => {
+  const handleSubmit = (data: ClientSubmitValues) => {
     addClient(data);
     onClose();
   };

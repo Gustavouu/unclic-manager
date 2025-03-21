@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { DialogFooter } from "@/components/ui/dialog";
 import { PersonalInfoFields } from "./PersonalInfoFields";
-import { clientSchema, ClientFormValues } from "./ClientFormSchema";
+import { clientSchema, ClientFormValues, ClientSubmitValues } from "./ClientFormSchema";
 import { toast } from "sonner";
 
 type ClientFormProps = {
-  onSubmit: (data: Omit<ClientFormValues, "id" | "lastVisit" | "totalSpent">) => void;
+  onSubmit: (data: ClientSubmitValues) => void;
   onCancel: () => void;
   availableCities: string[];
 };
@@ -28,9 +28,9 @@ export const ClientForm = ({ onSubmit, onCancel, availableCities }: ClientFormPr
   });
 
   const handleSubmit = (data: ClientFormValues) => {
-    // Garantir que o nome é uma string não vazia, mesmo que isso já seja validado pelo schema
-    const clientData = {
-      name: data.name, // Esta propriedade é obrigatória
+    // Guarantee that name is a non-empty string, even though it's already validated by the schema
+    const clientData: ClientSubmitValues = {
+      name: data.name, // This property is required
       email: data.email || "",
       phone: data.phone || "",
       gender: data.gender,

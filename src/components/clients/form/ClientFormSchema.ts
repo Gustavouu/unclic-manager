@@ -11,3 +11,13 @@ export const clientSchema = z.object({
 });
 
 export type ClientFormValues = z.infer<typeof clientSchema>;
+
+// This type ensures name is treated as required when passing to the useClientData functions
+export type ClientSubmitValues = {
+  name: string;
+  email?: string;
+  phone?: string;
+  gender?: string;
+  city?: string;
+  category?: string;
+};
