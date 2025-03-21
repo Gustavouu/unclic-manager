@@ -43,32 +43,34 @@ export const ClientsLayout = ({
   };
 
   return (
-    <div className="w-full">
-      <Card className="shadow-sm">
-        <div className="p-2">
-          <ClientsHeader 
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            isFiltersOpen={isFiltersOpen}
-            setIsFiltersOpen={setIsFiltersOpen}
-            onAddClient={onAddClient}
-          />
-          
-          {isFiltersOpen && (
-            <ClientFilters 
-              filterOptions={filterOptions}
-              updateFilterOptions={updateFilterOptions}
-            />
-          )}
-          
-          <ClientsTable 
-            clients={filteredClients} 
-            onDelete={onDeleteClient} 
-            onRowClick={handleClientClick}
-            selectedClientId={selectedClientId}
+    <Card className="shadow-sm overflow-hidden">
+      <div className="border-b bg-gray-50 p-3">
+        <ClientsHeader 
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          isFiltersOpen={isFiltersOpen}
+          setIsFiltersOpen={setIsFiltersOpen}
+          onAddClient={onAddClient}
+        />
+      </div>
+      
+      {isFiltersOpen && (
+        <div className="px-3 pt-3">
+          <ClientFilters 
+            filterOptions={filterOptions}
+            updateFilterOptions={updateFilterOptions}
           />
         </div>
-      </Card>
+      )}
+      
+      <div className="p-3">
+        <ClientsTable 
+          clients={filteredClients} 
+          onDelete={onDeleteClient} 
+          onRowClick={handleClientClick}
+          selectedClientId={selectedClientId}
+        />
+      </div>
       
       <Dialog open={isClientDetailsOpen} onOpenChange={setIsClientDetailsOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -80,6 +82,6 @@ export const ClientsLayout = ({
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Card>
   );
 };
