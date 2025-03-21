@@ -8,8 +8,6 @@ import {
   eachDayOfInterval, 
   getDay, 
   isSameDay,
-  format,
-  parse,
   setHours,
   setMinutes
 } from "date-fns";
@@ -82,7 +80,7 @@ export const SERVICE_TYPE_NAMES: Record<ServiceType, string> = {
   skincare: "Estética Facial"
 };
 
-const weekDays = ["D", "S", "T", "Q", "Q", "S", "S"];
+const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 export type AppointmentType = {
   id: string;
@@ -140,8 +138,8 @@ export const AppointmentCalendar = () => {
   );
 
   return (
-    <div className="rounded-xl overflow-hidden bg-gradient-to-b from-blue-50 to-white">
-      <div className="p-6">
+    <div className="rounded-lg border border-border/40 shadow-sm overflow-hidden bg-white">
+      <div className="p-4">
         <CalendarHeader 
           currentMonth={currentMonth}
           selectedDate={selectedDate}
@@ -152,11 +150,13 @@ export const AppointmentCalendar = () => {
           onViewChange={setCalendarView}
         />
         
-        <CalendarFilter 
-          serviceFilter={serviceFilter}
-          onFilterChange={setServiceFilter}
-          serviceTypes={SERVICE_TYPE_NAMES}
-        />
+        <div className="mb-4 border-b pb-4">
+          <CalendarFilter 
+            serviceFilter={serviceFilter}
+            onFilterChange={setServiceFilter}
+            serviceTypes={SERVICE_TYPE_NAMES}
+          />
+        </div>
         
         {calendarView === "month" && (
           <MonthView

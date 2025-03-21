@@ -33,15 +33,15 @@ export const CalendarHeader = ({
   const capitalizedMonth = formattedMonth.charAt(0).toUpperCase() + formattedMonth.slice(1);
 
   return (
-    <>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-display font-semibold">Calendário de Agendamentos</h2>
+    <div className="mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <h2 className="text-lg font-medium">Calendário de Agendamentos</h2>
         
         <div className="flex items-center gap-2">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50">
-                <CalendarIcon className="h-4 w-4 text-blue-600" />
+              <Button variant="outline" size="sm" className="gap-2 text-sm">
+                <CalendarIcon className="h-4 w-4" />
                 <span>Selecionar Data</span>
               </Button>
             </PopoverTrigger>
@@ -64,16 +64,16 @@ export const CalendarHeader = ({
       </div>
       
       {calendarView === "month" && (
-        <div className="flex items-center justify-between mb-6 bg-blue-50 p-3 rounded-lg border border-blue-100">
-          <h3 className="text-lg font-medium text-blue-800 flex items-center gap-2">
-            <CalendarIcon size={18} className="text-blue-600" />
+        <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4">
+          <h3 className="text-base font-medium text-blue-800 flex items-center gap-2">
+            <CalendarIcon size={16} className="text-blue-600" />
             {capitalizedMonth}
           </h3>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={onPrevMonth} className="h-8 w-8 hover:bg-blue-100 hover:text-blue-700">
+            <Button variant="ghost" size="icon" onClick={onPrevMonth} className="h-7 w-7 hover:bg-blue-100">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={onNextMonth} className="h-8 w-8 hover:bg-blue-100 hover:text-blue-700">
+            <Button variant="ghost" size="icon" onClick={onNextMonth} className="h-7 w-7 hover:bg-blue-100">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -81,12 +81,13 @@ export const CalendarHeader = ({
       )}
       
       {calendarView === "day" && (
-        <div className="flex items-center justify-between mb-0">
-          <h3 className="flex items-center gap-1 text-lg font-medium text-blue-800">
-            {format(selectedDate, "d", { locale: ptBR })} de {capitalizedMonth}
+        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100 mb-4">
+          <h3 className="flex items-center gap-1 text-base font-medium text-blue-800">
+            <CalendarIcon size={16} className="text-blue-600" />
+            {format(selectedDate, "d 'de' MMMM", { locale: ptBR })}
           </h3>
         </div>
       )}
-    </>
+    </div>
   );
 };

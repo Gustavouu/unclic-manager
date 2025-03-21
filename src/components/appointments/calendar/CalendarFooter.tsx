@@ -8,13 +8,13 @@ type CalendarFooterProps = {
 
 export const CalendarFooter = ({ onNewAppointment }: CalendarFooterProps) => {
   return (
-    <div className="p-4 bg-muted/40 flex justify-end">
+    <div className="p-3 bg-gray-50 border-t border-gray-200 flex justify-end">
       <Button 
-        className="gap-2" 
-        size="sm"
         onClick={onNewAppointment}
+        className="gap-2"
+        size="sm"
       >
-        <CalendarPlus className="h-4 w-4" />
+        <CalendarPlus size={16} />
         Novo Agendamento
       </Button>
     </div>

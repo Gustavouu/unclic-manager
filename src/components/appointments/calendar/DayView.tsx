@@ -58,32 +58,32 @@ export const DayView = ({
   };
   
   return (
-    <div className="rounded-lg border border-border/30 p-4 bg-white shadow-sm">
+    <div className="border border-gray-200 rounded-lg bg-white">
       <Button 
         variant="ghost" 
         size="sm" 
         onClick={onBackToMonth}
-        className="mb-4 text-muted-foreground flex items-center gap-1 pl-1 hover:bg-blue-50 hover:text-blue-700"
+        className="mb-2 text-gray-600 flex items-center gap-1 pl-2 m-2"
       >
         <ChevronLeft className="h-4 w-4" />
         Voltar para visualização mensal
       </Button>
       
-      <div className="text-sm font-medium text-muted-foreground mb-6 flex items-center">
+      <div className="text-sm font-medium text-gray-600 mb-4 flex items-center px-4">
         <Clock className="mr-2 h-4 w-4 text-blue-600" />
-        <span className="font-semibold text-base text-foreground">
+        <span className="font-semibold text-base text-gray-800">
           {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
         </span>
       </div>
       
       {appointments.length === 0 ? (
-        <div className="py-10 text-center border border-dashed border-border/40 rounded-lg bg-muted/20">
-          <CalendarIcon className="h-12 w-12 mx-auto text-muted-foreground/60 mb-3" />
-          <p className="text-muted-foreground font-medium">Nenhum agendamento para este dia</p>
-          <p className="text-sm text-muted-foreground/75 mt-1">Clique em + para adicionar um novo agendamento</p>
+        <div className="py-8 text-center border border-dashed border-gray-200 rounded-lg mx-4 mb-4 bg-gray-50">
+          <CalendarIcon className="h-10 w-10 mx-auto text-gray-400 mb-2" />
+          <p className="text-gray-600 font-medium">Nenhum agendamento para este dia</p>
+          <p className="text-sm text-gray-500 mt-1">Clique em + para adicionar um novo agendamento</p>
         </div>
       ) : (
-        <div className="space-y-1 pr-2 max-h-[500px] overflow-y-auto rounded-lg">
+        <div className="space-y-px pr-2 pl-2 max-h-[400px] overflow-y-auto">
           {timeSlots.map((slot, index) => {
             const slotAppointments = getAppointmentsForSlot(slot);
             const hasAppointment = slotAppointments.length > 0;
@@ -94,18 +94,18 @@ export const DayView = ({
               <div 
                 key={index}
                 className={cn(
-                  "flex items-stretch border-l-2 pl-3 py-2 transition-all",
-                  hasAppointment ? "border-l-blue-600" : "border-l-border/30",
-                  hoveredSlot === timeLabel ? "bg-blue-50 rounded-lg" : "",
+                  "flex items-stretch border-l-2 pl-3 py-2 mx-2",
+                  hasAppointment ? "border-l-blue-600" : "border-l-gray-200",
+                  hoveredSlot === timeLabel ? "bg-gray-50 rounded" : "",
                   isHalfHour ? "border-l-dashed" : ""
                 )}
                 onMouseEnter={() => setHoveredSlot(timeLabel)}
                 onMouseLeave={() => setHoveredSlot(null)}
               >
-                <div className="w-16 flex-shrink-0 flex items-center">
+                <div className="w-12 flex-shrink-0 flex items-center">
                   <span className={cn(
                     "text-sm font-medium",
-                    hasAppointment ? "text-blue-700" : "text-muted-foreground"
+                    hasAppointment ? "text-blue-700" : "text-gray-500"
                   )}>
                     {timeLabel}
                   </span>
@@ -116,34 +116,33 @@ export const DayView = ({
                     <div className="ml-2 space-y-2">
                       {slotAppointments.map(appointment => {
                         // Calculate height based on appointment duration
-                        const durationInMinutes = appointment.duration;
-                        const heightClass = durationInMinutes >= 90 
-                          ? "min-h-[90px]" 
-                          : durationInMinutes >= 60 
-                            ? "min-h-[70px]" 
+                        const heightClass = appointment.duration >= 90 
+                          ? "min-h-[80px]" 
+                          : appointment.duration >= 60 
+                            ? "min-h-[65px]" 
                             : "min-h-[50px]";
                             
                         return (
                           <div 
                             key={appointment.id}
                             className={cn(
-                              "p-3 rounded-lg border border-blue-100 bg-white shadow-sm hover:shadow-md transition-all cursor-pointer",
+                              "p-3 rounded-lg border border-blue-100 bg-white shadow-sm hover:shadow-md cursor-pointer",
                               "hover:border-blue-300",
                               heightClass
                             )}
                           >
                             <div className="flex justify-between items-start">
                               <div>
-                                <p className="font-medium text-slate-800">{appointment.clientName}</p>
-                                <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                                <p className="font-medium text-gray-800">{appointment.clientName}</p>
+                                <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
                                   <span className="text-blue-700">{appointment.serviceName}</span>
                                 </div>
                                 <div className="flex items-center gap-4 mt-2 text-xs">
-                                  <div className="flex items-center gap-1 text-muted-foreground">
+                                  <div className="flex items-center gap-1 text-gray-500">
                                     <Clock className="h-3 w-3 text-blue-600" />
                                     <span>{appointment.duration} min</span>
                                   </div>
-                                  <div className="flex items-center gap-1 text-muted-foreground">
+                                  <div className="flex items-center gap-1 text-gray-500">
                                     <Tag className="h-3 w-3 text-blue-600" />
                                     <span>R$ {appointment.price.toFixed(2)}</span>
                                   </div>
@@ -159,7 +158,7 @@ export const DayView = ({
                     </div>
                   ) : (
                     <div className="ml-2 h-full flex items-center">
-                      <div className="text-sm text-muted-foreground/60 italic">
+                      <div className="text-sm text-gray-400 italic">
                         Disponível
                       </div>
                     </div>

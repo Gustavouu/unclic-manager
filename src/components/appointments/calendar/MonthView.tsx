@@ -19,19 +19,19 @@ export const MonthView = ({
   onSelectDay,
 }: MonthViewProps) => {
   return (
-    <div className="rounded-lg border border-border/30 p-4 bg-white shadow-sm">
-      <div className="grid grid-cols-7 gap-2 mb-4">
+    <div className="bg-white border border-gray-100 rounded-lg shadow-sm">
+      <div className="grid grid-cols-7 gap-px bg-gray-100">
         {weekDays.map((day, index) => (
           <div 
             key={index} 
-            className="text-xs text-center font-semibold text-muted-foreground py-2"
+            className="text-xs font-medium text-center text-gray-600 p-2 bg-gray-50"
           >
             {day}
           </div>
         ))}
       </div>
       
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-px bg-gray-100">
         {calendarDays.map((day, index) => {
           // Check if this day has appointments
           const hasAppointments = day 
@@ -47,39 +47,39 @@ export const MonthView = ({
           const isToday = day ? isSameDay(day, new Date()) : false;
           
           return (
-            <div key={index} className="aspect-square">
+            <div key={index} className="bg-white">
               {day ? (
                 <button
                   className={cn(
-                    "w-full h-full rounded-lg flex flex-col items-center justify-center transition-all",
-                    isSameDay(day, selectedDate) && "bg-primary text-primary-foreground font-medium shadow-md",
-                    isToday && !isSameDay(day, selectedDate) && "bg-blue-50 border border-blue-200 font-medium",
-                    !isToday && !isSameDay(day, selectedDate) && "hover:bg-muted/60 border border-transparent hover:border-border/40"
+                    "w-full h-16 sm:h-24 flex flex-col items-center justify-start p-1 transition-all",
+                    isSameDay(day, selectedDate) && "bg-blue-50",
+                    isToday && !isSameDay(day, selectedDate) && "bg-blue-50/50",
+                    !isToday && !isSameDay(day, selectedDate) && "hover:bg-gray-50"
                   )}
                   onClick={() => onSelectDay(day)}
                 >
                   <span className={cn(
-                    "mb-1",
-                    isToday && !isSameDay(day, selectedDate) && "text-blue-700"
+                    "h-7 w-7 flex items-center justify-center text-sm rounded-full mb-1",
+                    isToday && "bg-blue-600 text-white",
+                    isSameDay(day, selectedDate) && !isToday && "bg-blue-100 text-blue-800 font-medium",
+                    !isToday && !isSameDay(day, selectedDate) && "text-gray-700"
                   )}>
                     {format(day, "d")}
                   </span>
                   
                   {hasAppointments && (
                     <span className={cn(
-                      "text-xs px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[20px]",
+                      "text-xs px-1.5 py-0.5 rounded-full",
                       isSameDay(day, selectedDate) 
-                        ? "bg-primary-foreground/20 text-primary-foreground" 
-                        : isToday
-                          ? "bg-blue-200 text-blue-700"
-                          : "bg-blue-100 text-blue-700"
+                        ? "bg-blue-200 text-blue-800" 
+                        : "bg-gray-200 text-gray-800"
                     )}>
                       {appointmentCount}
                     </span>
                   )}
                 </button>
               ) : (
-                <div className="w-full h-full" />
+                <div className="w-full h-16 sm:h-24 bg-gray-50/50" />
               )}
             </div>
           );
