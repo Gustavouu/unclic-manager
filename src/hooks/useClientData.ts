@@ -23,7 +23,10 @@ export type FilterOptions = {
   gender: string | null;
 };
 
-export const useClientData = (searchTerm: string) => {
+export const useClientData = () => {
+  // Internal search term state
+  const [searchTerm, setSearchTerm] = useState("");
+  
   // Dados de exemplo para clientes
   const [clients, setClients] = useState<Client[]>([
     {
@@ -179,6 +182,8 @@ export const useClientData = (searchTerm: string) => {
     filterOptions,
     updateFilterOptions,
     availableCities,
-    availableCategories
+    availableCategories,
+    searchTerm,
+    setSearchTerm
   };
 };

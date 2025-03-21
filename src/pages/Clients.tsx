@@ -16,16 +16,18 @@ const Clients = () => {
   } = useClientData();
 
   return (
-    <ClientsLayout
-      clients={clients}
-      filteredClients={filteredClients}
-      filterOptions={filterOptions}
-      updateFilterOptions={updateFilterOptions}
-      searchTerm={searchTerm}
-      setSearchTerm={setSearchTerm}
-      onDeleteClient={deleteClient}
-      onAddClient={addClient}
-    />
+    <AppLayout title="Clientes">
+      <ClientsLayout
+        clients={clients}
+        filteredClients={filteredClients}
+        filterOptions={filterOptions}
+        updateFilterOptions={updateFilterOptions}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        onDeleteClient={deleteClient}
+        onAddClient={addClient}
+      />
+    </AppLayout>
   );
 };
 
