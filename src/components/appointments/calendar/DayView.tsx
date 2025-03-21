@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { format, addHours, setHours, setMinutes, isWithinInterval, differenceInMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Clock, ChevronLeft, User, Tag } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, ChevronLeft, User, Tag } from "lucide-react";
 import { AppointmentType } from "../AppointmentCalendar";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -171,22 +171,3 @@ export const DayView = ({
     </div>
   );
 };
-
-// Helper component for the calendar icon
-const CalendarIcon = (props: any) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round"
-    {...props}
-  >
-    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-    <line x1="16" x2="16" y1="2" y2="6" />
-    <line x1="8" x2="8" y1="2" y2="6" />
-    <line x1="3" x2="21" y1="10" y2="10" />
-  </svg>
-);
