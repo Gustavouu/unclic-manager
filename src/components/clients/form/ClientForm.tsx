@@ -28,11 +28,11 @@ export const ClientForm = ({ onSubmit, onCancel, availableCities }: ClientFormPr
   });
 
   const handleSubmit = (data: ClientFormValues) => {
-    // Guarantee that name is a non-empty string, even though it's already validated by the schema
+    // Ensure we meet the required fields for ClientSubmitValues
     const clientData: ClientSubmitValues = {
-      name: data.name, // This property is required
-      email: data.email || "",
-      phone: data.phone || "",
+      name: data.name,
+      email: data.email || "", // Always provide a string value for email
+      phone: data.phone || "", // Always provide a string value for phone
       gender: data.gender,
       city: data.city,
       category: data.category
