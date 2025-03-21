@@ -15,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { InventoryItem } from "@/hooks/inventory";
 import { 
   AlertDialog,
@@ -63,7 +62,7 @@ export const InventoryTable = ({
 
   return (
     <>
-      <div className="relative overflow-x-auto">
+      <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

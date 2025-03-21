@@ -56,10 +56,13 @@ export const InventoryLayout = ({
   };
   
   return (
-    <div className="container py-8 mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-semibold">Gestão de Estoque</h1>
-        <Button onClick={() => document.getElementById("new-inventory-trigger")?.click()}>
+    <div className="container mx-auto py-8 px-4 max-w-7xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+        <h1 className="text-2xl font-bold">Gestão de Estoque</h1>
+        <Button 
+          onClick={() => document.getElementById("new-inventory-trigger")?.click()}
+          className="w-full sm:w-auto"
+        >
           <Plus className="mr-2 h-4 w-4" />
           Adicionar Produto
         </Button>
@@ -83,7 +86,7 @@ export const InventoryLayout = ({
         />
       </div>
       
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="p-6 border-b">
           <InventoryFilters
             categories={categories}

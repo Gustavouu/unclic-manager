@@ -67,7 +67,7 @@ interface SummaryCardProps {
 
 const SummaryCard = ({ title, value, icon, iconClass }: SummaryCardProps) => {
   return (
-    <Card className="border shadow-sm hover:shadow transition-shadow duration-200">
+    <Card className="border shadow-sm hover:shadow-md transition-shadow duration-200">
       <CardContent className="p-5 flex items-center space-x-4">
         <div className={`p-3 rounded-full ${iconClass}`}>
           {icon}
