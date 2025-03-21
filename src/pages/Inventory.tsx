@@ -1,10 +1,12 @@
 
+import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useInventory } from "@/hooks/inventory";
 import { useToast } from "@/components/ui/use-toast";
 import { InventoryLayout } from "@/components/inventory/InventoryLayout";
 
 const Inventory = () => {
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   
   const { 
@@ -13,8 +15,6 @@ const Inventory = () => {
     categories,
     filterOptions,
     updateFilterOptions,
-    searchTerm,
-    setSearchTerm,
     addInventoryItem,
     updateInventoryItem,
     deleteInventoryItem,
