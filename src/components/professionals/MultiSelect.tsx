@@ -19,8 +19,8 @@ interface MultiSelectProps {
 }
 
 export function MultiSelect({
-  options = [],
-  value = [],
+  options,
+  value,
   onChange,
   placeholder = "Selecione opções",
   className,
@@ -29,15 +29,15 @@ export function MultiSelect({
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
 
-  // Ensure options and value are arrays
+  // Garantir que options e value são sempre arrays
   const safeOptions = Array.isArray(options) ? options : [];
   const safeValue = Array.isArray(value) ? value : [];
 
-  const handleUnselect = (option: Option) => {
+  const handleUnselect = React.useCallback((option: Option) => {
     onChange(safeValue.filter((item) => item.value !== option.value));
-  };
+  }, [safeValue, onChange]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+  const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     const input = inputRef.current;
     if (input) {
       if (e.key === "Delete" || e.key === "Backspace") {
@@ -49,11 +49,12 @@ export function MultiSelect({
         input.blur();
       }
     }
-  };
+  }, [safeValue, onChange]);
 
-  const selectables = safeOptions.filter(
+  // Filtrar opções já selecionadas
+  const selectables = React.useMemo(() => safeOptions.filter(
     (option) => !safeValue.some((item) => item.value === option.value)
-  );
+  ), [safeOptions, safeValue]);
 
   return (
     <Command

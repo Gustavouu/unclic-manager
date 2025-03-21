@@ -1,10 +1,11 @@
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MultiSelect } from "../MultiSelect";
 import { UseFormReturn } from "react-hook-form";
 import { ProfessionalCreateForm } from "@/hooks/professionals/types";
+import React from "react";
 
 interface ProfessionalFormFieldsProps {
   form: UseFormReturn<ProfessionalCreateForm>;
@@ -12,8 +13,20 @@ interface ProfessionalFormFieldsProps {
 }
 
 export const ProfessionalFormFields = ({ form, specialties = [] }: ProfessionalFormFieldsProps) => {
-  // Ensure specialties is always an array
-  const safeSpecialties = Array.isArray(specialties) ? specialties : [];
+  // Garantir que specialties é sempre um array
+  const safeSpecialties = React.useMemo(() => 
+    Array.isArray(specialties) ? specialties : [], 
+    [specialties]
+  );
+  
+  // Criar opções para o MultiSelect
+  const specialtyOptions = React.useMemo(() => 
+    safeSpecialties.map(specialty => ({
+      label: specialty,
+      value: specialty
+    })),
+    [safeSpecialties]
+  );
   
   return (
     <>
@@ -53,7 +66,7 @@ export const ProfessionalFormFields = ({ form, specialties = [] }: ProfessionalF
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="email@exemplo.com" {...field} />
+                <Input placeholder="email@exemplo.com" type="email" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -89,6 +102,9 @@ export const ProfessionalFormFields = ({ form, specialties = [] }: ProfessionalF
                   {...field} 
                 />
               </FormControl>
+              <FormDescription>
+                Percentual de comissão sobre serviços realizados
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -98,8 +114,14 @@ export const ProfessionalFormFields = ({ form, specialties = [] }: ProfessionalF
           control={form.control}
           name="specialties"
           render={({ field }) => {
-            // Ensure field.value is always an array
-            const safeValue = Array.isArray(field.value) ? field.value : [];
+            // Garantir que field.value é sempre um array
+            const selectedValues = Array.isArray(field.value) ? field.value : [];
+            
+            // Converter o array de strings para o formato esperado pelo MultiSelect
+            const selectedOptions = selectedValues.map(value => ({
+              label: value,
+              value
+            }));
             
             return (
               <FormItem>
@@ -107,19 +129,16 @@ export const ProfessionalFormFields = ({ form, specialties = [] }: ProfessionalF
                 <FormControl>
                   <MultiSelect
                     placeholder="Selecione as especializações"
-                    options={safeSpecialties.map(specialty => ({ 
-                      label: specialty, 
-                      value: specialty 
-                    }))}
-                    value={safeValue.map(value => ({ 
-                      label: value, 
-                      value 
-                    }))}
+                    options={specialtyOptions}
+                    value={selectedOptions}
                     onChange={(newValue) => {
                       field.onChange(newValue.map(item => item.value));
                     }}
                   />
                 </FormControl>
+                <FormDescription>
+                  Selecione os serviços que este profissional realiza
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             );
