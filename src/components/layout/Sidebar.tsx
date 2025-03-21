@@ -13,11 +13,13 @@ import {
   Settings,
   HelpCircle,
   Menu,
-  X
+  X,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type SidebarItemProps = {
   icon: React.ReactNode;
@@ -28,10 +30,19 @@ type SidebarItemProps = {
 
 const SidebarItem = ({ icon, label, to, isActive }: SidebarItemProps) => {
   return (
-    <Link to={to} className={cn("sidebar-item", isActive && "active")}>
-      {icon}
-      <span>{label}</span>
-    </Link>
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link to={to} className={cn("sidebar-item group", isActive && "active")}>
+            <div className="sidebar-icon">{icon}</div>
+            <span className="sidebar-label">{label}</span>
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={10} className="md:hidden">
+          {label}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
@@ -73,7 +84,7 @@ export const Sidebar = () => {
       
       <aside 
         className={cn(
-          "bg-sidebar-background h-screen flex flex-col fixed top-0 left-0 z-40 transition-all duration-300 ease-in-out",
+          "bg-sidebar-background h-screen flex flex-col top-0 left-0 z-40 transition-all duration-300 ease-in-out shadow-md",
           isOpen ? "w-64 translate-x-0" : isMobile ? "w-64 -translate-x-full" : "w-20"
         )}
       >
@@ -92,7 +103,7 @@ export const Sidebar = () => {
           )}
         </div>
         
-        <nav className="mt-6 space-y-2 px-3 flex-1 overflow-y-auto">
+        <nav className="mt-6 space-y-1 px-3 flex-1 overflow-y-auto">
           {routes.map((route) => (
             <SidebarItem
               key={route.path}
@@ -125,6 +136,19 @@ export const Sidebar = () => {
             </div>
           </div>
         )}
+        
+        <div className={cn(
+          "p-3 border-t border-sidebar-border",
+          !isOpen && !isMobile && "flex justify-center"
+        )}>
+          <button className={cn(
+            "w-full py-2 px-3 rounded-md flex items-center gap-2 text-sidebar-foreground/80 hover:bg-sidebar-accent/50 transition-colors",
+            !isOpen && !isMobile && "justify-center p-2"
+          )}>
+            <LogOut size={20} />
+            {(isOpen || isMobile) && <span>Sair</span>}
+          </button>
+        </div>
       </aside>
       
       {/* Overlay for mobile */}
