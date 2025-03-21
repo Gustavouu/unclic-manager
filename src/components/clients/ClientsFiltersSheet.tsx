@@ -3,19 +3,15 @@ import { FilterOptions } from "@/hooks/clients";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { SlidersHorizontal } from "lucide-react";
 import { ActiveClientFilter } from "./filters/ActiveClientFilter";
 import { LastVisitFilter } from "./filters/LastVisitFilter";
 import { SpentRangeFilter } from "./filters/SpentRangeFilter";
 import { GenderFilter } from "./filters/GenderFilter";
 import { CategoriesFilter } from "./filters/CategoriesFilter";
 import { CitiesFilter } from "./filters/CitiesFilter";
+import { FilterSheetHeader } from "./filters/FilterSheetHeader";
+import { FilterItem } from "./filters/FilterItem";
 
 type ClientsFiltersSheetProps = {
   open: boolean;
@@ -78,66 +74,52 @@ export const ClientsFiltersSheet = ({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-        <SheetHeader className="mb-6">
-          <SheetTitle className="flex items-center">
-            <SlidersHorizontal className="h-5 w-5 mr-2" />
-            Filtros
-          </SheetTitle>
-          <SheetDescription className="flex justify-between items-center">
-            <span>Filtrar clientes por diferentes critérios</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAllFilters}
-              className="text-blue-600 hover:text-blue-800 transition-colors"
-            >
-              Limpar todos
-            </Button>
-          </SheetDescription>
-        </SheetHeader>
+        <FilterSheetHeader onClearFilters={clearAllFilters} />
 
         <div className="space-y-6">
-          <ActiveClientFilter 
-            checked={filterOptions.onlyActive}
-            onCheckedChange={(checked) => updateFilterOptions({ onlyActive: checked })}
-          />
+          <FilterItem>
+            <ActiveClientFilter 
+              checked={filterOptions.onlyActive}
+              onCheckedChange={(checked) => updateFilterOptions({ onlyActive: checked })}
+            />
+          </FilterItem>
 
-          <Separator className="my-4" />
+          <FilterItem>
+            <LastVisitFilter
+              value={filterOptions.lastVisitRange}
+              onChange={handleLastVisitRangeChange}
+            />
+          </FilterItem>
 
-          <LastVisitFilter
-            value={filterOptions.lastVisitRange}
-            onChange={handleLastVisitRangeChange}
-          />
+          <FilterItem>
+            <SpentRangeFilter
+              value={filterOptions.spentRange}
+              onChange={handleSpentRangeChange}
+            />
+          </FilterItem>
 
-          <Separator className="my-4" />
+          <FilterItem>
+            <GenderFilter
+              value={filterOptions.gender}
+              onChange={handleGenderChange}
+            />
+          </FilterItem>
 
-          <SpentRangeFilter
-            value={filterOptions.spentRange}
-            onChange={handleSpentRangeChange}
-          />
+          <FilterItem>
+            <CategoriesFilter
+              categories={availableCategories}
+              selectedCategories={filterOptions.categories}
+              onToggle={handleCategoryToggle}
+            />
+          </FilterItem>
 
-          <Separator className="my-4" />
-
-          <GenderFilter
-            value={filterOptions.gender}
-            onChange={handleGenderChange}
-          />
-
-          <Separator className="my-4" />
-
-          <CategoriesFilter
-            categories={availableCategories}
-            selectedCategories={filterOptions.categories}
-            onToggle={handleCategoryToggle}
-          />
-
-          <Separator className="my-4" />
-
-          <CitiesFilter
-            cities={availableCities}
-            selectedCities={filterOptions.cities}
-            onToggle={handleCityToggle}
-          />
+          <FilterItem showSeparator={false}>
+            <CitiesFilter
+              cities={availableCities}
+              selectedCities={filterOptions.cities}
+              onToggle={handleCityToggle}
+            />
+          </FilterItem>
         </div>
       </SheetContent>
     </Sheet>
