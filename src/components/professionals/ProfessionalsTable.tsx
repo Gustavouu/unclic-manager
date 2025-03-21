@@ -74,7 +74,7 @@ export const ProfessionalsTable = ({ onSelectProfessional }: ProfessionalsTableP
                 </div>
               </TableCell>
               <TableCell className="hidden md:table-cell">
-                <Badge variant={professional.active ? "success" : "secondary"}>
+                <Badge variant={professional.active ? "default" : "secondary"} className={professional.active ? "bg-green-100 text-green-800" : ""}>
                   {professional.active ? "Ativo" : "Inativo"}
                 </Badge>
               </TableCell>

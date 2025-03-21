@@ -54,10 +54,11 @@ export const ScheduleHistoryTab = ({ professionalId }: ScheduleHistoryTabProps) 
                   <TableCell>
                     <Badge
                       variant={
-                        appointment.status === 'completed' ? "success" :
+                        appointment.status === 'completed' ? "default" :
                         appointment.status === 'canceled' ? "destructive" :
                         appointment.status === 'pending' ? "outline" : "secondary"
                       }
+                      className={appointment.status === 'completed' ? "bg-green-100 text-green-800" : ""}
                     >
                       {appointment.status === 'completed' ? "Concluído" :
                        appointment.status === 'canceled' ? "Cancelado" :

@@ -5,6 +5,7 @@ import { Search, SlidersHorizontal, UserPlus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileFilterToggle } from "@/components/clients/filters/MobileFilterToggle";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
+import { useState } from "react";
 
 interface ProfessionalsHeaderProps {
   onNewProfessional: () => void;
@@ -13,6 +14,15 @@ interface ProfessionalsHeaderProps {
 
 export const ProfessionalsHeader = ({ onNewProfessional, onToggleFilters }: ProfessionalsHeaderProps) => {
   const isMobile = useIsMobile();
+  // Create a mock filter options state to satisfy MobileFilterToggle props
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterOptions = {
+    onlyActive: false,
+    gender: "",
+    cities: [],
+    categories: [],
+    spentRange: [0, 1000]
+  };
   
   return (
     <div className="space-y-4">
@@ -48,7 +58,11 @@ export const ProfessionalsHeader = ({ onNewProfessional, onToggleFilters }: Prof
           </Button>
           
           {isMobile && (
-            <MobileFilterToggle onClick={onToggleFilters} />
+            <MobileFilterToggle 
+              onClick={onToggleFilters} 
+              filterOptions={filterOptions}
+              isOpen={isFilterOpen}
+            />
           )}
         </div>
       </div>
