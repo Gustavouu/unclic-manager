@@ -10,24 +10,37 @@ import Clients from "./pages/Clients";
 import Professionals from "./pages/Professionals";
 import Services from "./pages/Services";
 import NotFound from "./pages/NotFound";
+import { AuthProvider } from "./hooks/useAuth";
+import Login from "./pages/auth/Login";
+import SignUp from "./pages/auth/SignUp";
+import RequireAuth from "./components/auth/RequireAuth";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/appointments" element={<Appointments />} />
-          <Route path="/clients" element={<Clients />} />
-          <Route path="/professionals" element={<Professionals />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            
+            {/* Protected routes */}
+            <Route element={<RequireAuth />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/appointments" element={<Appointments />} />
+              <Route path="/clients" element={<Clients />} />
+              <Route path="/professionals" element={<Professionals />} />
+              <Route path="/services" element={<Services />} />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
