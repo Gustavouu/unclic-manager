@@ -15,36 +15,35 @@ const Appointments = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-display font-medium">Gerenciamento de Agendamentos</h1>
-        <Button 
-          onClick={() => setShowNewAppointmentDialog(true)}
-          className="gap-2 bg-blue-600 hover:bg-blue-700"
-        >
-          <CalendarPlus size={16} />
-          Novo Agendamento
-        </Button>
-      </div>
+      <h1 className="text-xl font-display font-medium mb-4">Gerenciamento de Agendamentos</h1>
 
       <Card className="border shadow-sm overflow-hidden">
+        <div className="flex justify-between items-center p-3 border-b bg-gray-50">
+          <TabsList className="bg-gray-200">
+            <TabsTrigger value="calendar" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <CalendarIcon size={16} />
+              <span>Calendário</span>
+            </TabsTrigger>
+            <TabsTrigger value="list" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <List size={16} />
+              <span>Lista</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <Button 
+            onClick={() => setShowNewAppointmentDialog(true)}
+            className="gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <CalendarPlus size={16} />
+            Novo Agendamento
+          </Button>
+        </div>
+        
         <Tabs 
           defaultValue="calendar" 
           className="w-full"
           onValueChange={(value) => setView(value as "calendar" | "list")}
         >
-          <div className="flex justify-between items-center p-3 border-b bg-gray-50">
-            <TabsList className="bg-gray-200">
-              <TabsTrigger value="calendar" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-                <CalendarIcon size={16} />
-                <span>Calendário</span>
-              </TabsTrigger>
-              <TabsTrigger value="list" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-                <List size={16} />
-                <span>Lista</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
-          
           <TabsContent value="calendar" className="mt-0 p-0">
             <AppointmentCalendar />
           </TabsContent>
