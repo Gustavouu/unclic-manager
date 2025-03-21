@@ -1,13 +1,7 @@
 
 import { format, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
-
-type AppointmentType = {
-  id: string;
-  date: Date;
-  clientName: string;
-  serviceName: string;
-};
+import { AppointmentType } from "../Calendar";
 
 type MonthViewProps = {
   calendarDays: (Date | null)[];

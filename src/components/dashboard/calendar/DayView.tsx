@@ -1,13 +1,7 @@
 
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-
-type AppointmentType = {
-  id: string;
-  date: Date;
-  clientName: string;
-  serviceName: string;
-};
+import { AppointmentType } from "../Calendar";
 
 type DayViewProps = {
   appointments: AppointmentType[];
