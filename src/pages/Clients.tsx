@@ -16,7 +16,7 @@ const Clients = () => {
   } = useClientData();
 
   return (
-    <AppLayout title="Clientes">
+    <AppLayout title="Draft">
       <ClientsView
         clients={clients}
         filteredClients={filteredClients}
