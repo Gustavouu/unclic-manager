@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { ProfessionalFilters } from "./ProfessionalFilters";
 import { ProfessionalsTable } from "./ProfessionalsTable";
 import { ProfessionalsPagination } from "./pagination/ProfessionalsPagination";
 import { FilterOptions } from "@/hooks/useProfessionalData";
@@ -37,32 +36,23 @@ export const ProfessionalsContent = ({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
-      <div className="lg:col-span-1">
-        <ProfessionalFilters 
-          filterOptions={filterOptions}
-          updateFilterOptions={updateFilterOptions}
+    <div className="mb-6">
+      <Card className="border shadow-sm">
+        <ProfessionalsTable 
+          professionals={currentProfessionals} 
+          onRowClick={handleRowClick} 
+          onDelete={onDelete}
+          selectedProfessionalId={selectedProfessionalId}
         />
-      </div>
-      
-      <div className="lg:col-span-3">
-        <Card className="border shadow-sm">
-          <ProfessionalsTable 
-            professionals={currentProfessionals} 
-            onRowClick={handleRowClick} 
-            onDelete={onDelete}
-            selectedProfessionalId={selectedProfessionalId}
-          />
-          
-          <ProfessionalsPagination
-            totalItems={filteredProfessionals.length}
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
-            itemsPerPage={itemsPerPage}
-            setItemsPerPage={setItemsPerPage}
-          />
-        </Card>
-      </div>
+        
+        <ProfessionalsPagination
+          totalItems={filteredProfessionals.length}
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          setItemsPerPage={setItemsPerPage}
+        />
+      </Card>
     </div>
   );
 };

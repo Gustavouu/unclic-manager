@@ -11,8 +11,6 @@ export type ProfessionalsHeaderProps = {
   setSearchTerm: (term: string) => void;
   filterOptions: FilterOptions;
   updateFilterOptions: (newOptions: Partial<FilterOptions>) => void;
-  isFiltersOpen?: boolean;
-  setIsFiltersOpen?: (open: boolean) => void;
   onAddProfessional?: (newProfessional: any) => void;
 };
 
@@ -21,20 +19,16 @@ export const ProfessionalsHeader = ({
   setSearchTerm,
   filterOptions,
   updateFilterOptions,
-  isFiltersOpen,
-  setIsFiltersOpen
+  onAddProfessional
 }: ProfessionalsHeaderProps) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
-
-  // Use the props if provided, otherwise use local state
-  const isOpen = isFiltersOpen !== undefined ? isFiltersOpen : filtersOpen;
-  const setOpen = setIsFiltersOpen || setFiltersOpen;
 
   // Count active filters
   const activeFiltersCount = 
     filterOptions.status.length +
     filterOptions.role.length +
-    filterOptions.specialty.length;
+    filterOptions.specialty.length +
+    (filterOptions.dateRange?.from || filterOptions.dateRange?.to ? 1 : 0);
 
   return (
     <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
@@ -53,7 +47,7 @@ export const ProfessionalsHeader = ({
         <Button 
           variant="outline" 
           size="sm"
-          onClick={() => setOpen(true)}
+          onClick={() => setFiltersOpen(true)}
           className="relative"
         >
           <SlidersHorizontal className="mr-2 h-4 w-4" />
@@ -65,14 +59,14 @@ export const ProfessionalsHeader = ({
           )}
         </Button>
         
-        <Button size="sm">
+        <Button size="sm" onClick={onAddProfessional}>
           Adicionar Colaborador
         </Button>
       </div>
 
       <ProfessionalsFiltersSheet
-        open={isOpen}
-        onOpenChange={setOpen}
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
         filterOptions={filterOptions}
         updateFilterOptions={updateFilterOptions}
       />

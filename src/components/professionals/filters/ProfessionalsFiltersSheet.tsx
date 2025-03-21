@@ -9,6 +9,8 @@ import { FilterItem } from "@/components/clients/filters/FilterItem";
 import { StatusFilter } from "./StatusFilter";
 import { RoleFilter } from "./RoleFilter";
 import { SpecialtyFilter } from "./SpecialtyFilter";
+import { DateRangeFilter } from "./DateRangeFilter";
+import { DateRange } from "react-day-picker";
 
 type ProfessionalsFiltersSheetProps = {
   open: boolean;
@@ -47,11 +49,16 @@ export const ProfessionalsFiltersSheet = ({
     updateFilterOptions({ specialty: newSpecialties });
   };
 
+  const handleDateRangeChange = (dateRange: DateRange | undefined) => {
+    updateFilterOptions({ dateRange });
+  };
+
   const clearAllFilters = () => {
     updateFilterOptions({
       status: [],
       role: [],
-      specialty: []
+      specialty: [],
+      dateRange: undefined
     });
   };
 
@@ -77,11 +84,19 @@ export const ProfessionalsFiltersSheet = ({
             />
           </FilterItem>
 
-          <FilterItem showSeparator={false}>
+          <FilterItem>
             <SpecialtyFilter
               specialties={['Coloração', 'Barba', 'Massagem', 'Unhas em Gel', 'Penteados']}
               selectedSpecialties={filterOptions.specialty}
               onToggle={handleSpecialtyToggle}
+            />
+          </FilterItem>
+
+          <FilterItem showSeparator={false}>
+            <DateRangeFilter
+              value={filterOptions.dateRange}
+              onChange={handleDateRangeChange}
+              title="Data de Contratação"
             />
           </FilterItem>
         </div>
