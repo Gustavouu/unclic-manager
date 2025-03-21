@@ -43,34 +43,41 @@ export const ClientsLayout = ({
   };
 
   return (
-    <Card className="shadow-sm overflow-hidden">
-      <div className="border-b bg-gray-50 p-3">
-        <ClientsHeader 
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          isFiltersOpen={isFiltersOpen}
-          setIsFiltersOpen={setIsFiltersOpen}
-          onAddClient={onAddClient}
-        />
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-display font-bold">Gerenciamento de Clientes</h1>
+        <p className="text-muted-foreground">Visualize e gerencie seus clientes cadastrados.</p>
       </div>
-      
-      {isFiltersOpen && (
-        <div className="px-3 pt-3">
-          <ClientFilters 
-            filterOptions={filterOptions}
-            updateFilterOptions={updateFilterOptions}
+
+      <Card className="shadow-sm overflow-hidden">
+        <div className="border-b bg-gray-50 p-4">
+          <ClientsHeader 
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            isFiltersOpen={isFiltersOpen}
+            setIsFiltersOpen={setIsFiltersOpen}
+            onAddClient={onAddClient}
           />
         </div>
-      )}
-      
-      <div className="p-3">
-        <ClientsTable 
-          clients={filteredClients} 
-          onDelete={onDeleteClient} 
-          onRowClick={handleClientClick}
-          selectedClientId={selectedClientId}
-        />
-      </div>
+        
+        {isFiltersOpen && (
+          <div className="px-4 pt-4">
+            <ClientFilters 
+              filterOptions={filterOptions}
+              updateFilterOptions={updateFilterOptions}
+            />
+          </div>
+        )}
+        
+        <div className="p-4">
+          <ClientsTable 
+            clients={filteredClients} 
+            onDelete={onDeleteClient} 
+            onRowClick={handleClientClick}
+            selectedClientId={selectedClientId}
+          />
+        </div>
+      </Card>
       
       <Dialog open={isClientDetailsOpen} onOpenChange={setIsClientDetailsOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -82,6 +89,6 @@ export const ClientsLayout = ({
           )}
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
   );
 };

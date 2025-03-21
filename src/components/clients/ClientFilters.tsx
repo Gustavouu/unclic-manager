@@ -1,3 +1,4 @@
+
 import { FilterOptions } from "@/hooks/useClientData";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -13,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { useClientData } from "@/hooks/useClientData";
 
 interface ClientFiltersProps {
   filterOptions: FilterOptions;
@@ -21,7 +21,9 @@ interface ClientFiltersProps {
 }
 
 export const ClientFilters = ({ filterOptions, updateFilterOptions }: ClientFiltersProps) => {
-  const { availableCities, availableCategories } = useClientData();
+  // Hard-coded available cities and categories from the sample data
+  const availableCities = ["São Paulo", "Rio de Janeiro", "Belo Horizonte", "Curitiba"];
+  const availableCategories = ["VIP", "Premium", "Regular", "Novo"];
   
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
