@@ -47,8 +47,12 @@ export function MultiSelect({
     }
   };
 
-  const selectables = options.filter(
-    (option) => !value.some((item) => item.value === option.value)
+  // Ensure options and value are always arrays
+  const safeOptions = Array.isArray(options) ? options : [];
+  const safeValue = Array.isArray(value) ? value : [];
+
+  const selectables = safeOptions.filter(
+    (option) => !safeValue.some((item) => item.value === option.value)
   );
 
   return (
@@ -58,7 +62,7 @@ export function MultiSelect({
     >
       <div className="group border border-input px-3 py-2 text-sm ring-offset-background rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
         <div className="flex flex-wrap gap-1">
-          {value.map((option) => {
+          {safeValue.map((option) => {
             return (
               <Badge key={option.value} variant="secondary" className="rounded-sm">
                 {option.label}
@@ -86,7 +90,7 @@ export function MultiSelect({
             onValueChange={setInputValue}
             onBlur={() => setOpen(false)}
             onFocus={() => setOpen(true)}
-            placeholder={value.length > 0 ? "" : placeholder}
+            placeholder={safeValue.length > 0 ? "" : placeholder}
             className="ml-2 bg-transparent outline-none placeholder:text-muted-foreground flex-1 pl-1"
           />
         </div>
@@ -104,7 +108,7 @@ export function MultiSelect({
                       e.stopPropagation();
                     }}
                     onSelect={() => {
-                      onChange([...value, option]);
+                      onChange([...safeValue, option]);
                       setInputValue("");
                     }}
                     className={"cursor-pointer"}

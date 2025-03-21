@@ -2,10 +2,10 @@
 import { useMemo, useCallback } from "react";
 import { Professional } from "./types";
 
-export const useProfessionalUtils = (professionals: Professional[]) => {
+export const useProfessionalUtils = (professionals: Professional[] = []) => {
   // Extrair todas as especialidades dos profissionais
   const specialties = useMemo(() => {
-    const allSpecialties = professionals.flatMap(p => p.specialties);
+    const allSpecialties = professionals.flatMap(p => p.specialties || []);
     return [...new Set(allSpecialties)];
   }, [professionals]);
   

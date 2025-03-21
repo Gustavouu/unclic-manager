@@ -11,7 +11,10 @@ interface ProfessionalFormFieldsProps {
   specialties: string[];
 }
 
-export const ProfessionalFormFields = ({ form, specialties }: ProfessionalFormFieldsProps) => {
+export const ProfessionalFormFields = ({ form, specialties = [] }: ProfessionalFormFieldsProps) => {
+  // Ensure specialties is always an array
+  const safeSpecialties = Array.isArray(specialties) ? specialties : [];
+  
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -94,28 +97,33 @@ export const ProfessionalFormFields = ({ form, specialties }: ProfessionalFormFi
         <FormField
           control={form.control}
           name="specialties"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Especializações *</FormLabel>
-              <FormControl>
-                <MultiSelect
-                  placeholder="Selecione as especializações"
-                  options={specialties.map(specialty => ({ 
-                    label: specialty, 
-                    value: specialty 
-                  }))}
-                  value={field.value.map(value => ({ 
-                    label: value, 
-                    value 
-                  }))}
-                  onChange={(newValue) => {
-                    field.onChange(newValue.map(item => item.value));
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            // Ensure field.value is always an array
+            const safeValue = Array.isArray(field.value) ? field.value : [];
+            
+            return (
+              <FormItem>
+                <FormLabel>Especializações *</FormLabel>
+                <FormControl>
+                  <MultiSelect
+                    placeholder="Selecione as especializações"
+                    options={safeSpecialties.map(specialty => ({ 
+                      label: specialty, 
+                      value: specialty 
+                    }))}
+                    value={safeValue.map(value => ({ 
+                      label: value, 
+                      value 
+                    }))}
+                    onChange={(newValue) => {
+                      field.onChange(newValue.map(item => item.value));
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
       </div>
       

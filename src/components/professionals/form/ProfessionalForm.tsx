@@ -14,7 +14,7 @@ interface ProfessionalFormProps {
 }
 
 export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
-  const { specialties, addProfessional } = useProfessionals();
+  const { specialties = [], addProfessional } = useProfessionals();
   
   const form = useForm<ProfessionalCreateForm>({
     resolver: zodResolver(professionalSchema),
