@@ -29,6 +29,17 @@ import { SAMPLE_APPOINTMENTS } from "./calendar/sampleData";
 
 const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
+// Define business hours
+const BUSINESS_HOURS: Record<string, { isOpen: boolean; hours?: string }> = {
+  0: { isOpen: false }, // Sunday
+  1: { isOpen: true, hours: "09:00 - 18:00" }, // Monday
+  2: { isOpen: true, hours: "09:00 - 18:00" }, // Tuesday
+  3: { isOpen: true, hours: "09:00 - 18:00" }, // Wednesday
+  4: { isOpen: true, hours: "09:00 - 18:00" }, // Thursday
+  5: { isOpen: true, hours: "09:00 - 18:00" }, // Friday
+  6: { isOpen: true, hours: "09:00 - 16:00" }, // Saturday
+};
+
 export const AppointmentCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -165,6 +176,7 @@ export const AppointmentCalendar = () => {
             currentDate={currentDate}
             weekAppointments={weekAppointments}
             onSelectAppointment={handleSelectAppointment}
+            businessHours={BUSINESS_HOURS}
           />
         )}
         

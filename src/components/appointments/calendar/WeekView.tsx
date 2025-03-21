@@ -2,17 +2,28 @@
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AppointmentType } from "./types";
+import { cn } from "@/lib/utils";
 
 type WeekViewProps = {
   currentDate: Date;
   weekAppointments: AppointmentType[];
   onSelectAppointment: (date: Date) => void;
+  businessHours: Record<string, { isOpen: boolean; hours?: string }>;
 };
 
 export const WeekView = ({
   currentDate,
   weekAppointments,
-  onSelectAppointment
+  onSelectAppointment,
+  businessHours = {
+    0: { isOpen: false }, // Sunday
+    1: { isOpen: true, hours: "09:00 - 18:00" }, // Monday
+    2: { isOpen: true, hours: "09:00 - 18:00" }, // Tuesday
+    3: { isOpen: true, hours: "09:00 - 18:00" }, // Wednesday
+    4: { isOpen: true, hours: "09:00 - 18:00" }, // Thursday
+    5: { isOpen: true, hours: "09:00 - 18:00" }, // Friday
+    6: { isOpen: true, hours: "09:00 - 16:00" }, // Saturday
+  }
 }: WeekViewProps) => {
   // Get all days of the week
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
@@ -25,17 +36,44 @@ export const WeekView = ({
         // Get appointments for this day
         const dayAppointments = weekAppointments.filter(app => isSameDay(app.date, day));
         const hasAppointments = dayAppointments.length > 0;
+        const dayOfWeek = day.getDay();
+        const isOpen = businessHours[dayOfWeek]?.isOpen;
         
         return (
-          <div key={index} className="border border-gray-200 rounded-lg">
-            <div className="p-2 bg-gray-50 border-b border-gray-200">
-              <h3 className="text-sm font-medium text-gray-700">
+          <div 
+            key={index} 
+            className={cn(
+              "border rounded-lg",
+              isOpen ? "border-gray-200" : "border-gray-100 bg-gray-50"
+            )}
+          >
+            <div className={cn(
+              "p-2 border-b flex justify-between items-center",
+              isOpen ? "bg-gray-50 border-gray-200" : "bg-gray-100 border-gray-200"
+            )}>
+              <h3 className={cn(
+                "text-sm font-medium",
+                isOpen ? "text-gray-700" : "text-gray-500"
+              )}>
                 {format(day, "EEEE, dd/MM", { locale: ptBR })}
               </h3>
+              {!isOpen && (
+                <span className="text-xs font-medium bg-gray-200 px-2 py-0.5 rounded text-gray-600">
+                  Fechado
+                </span>
+              )}
+              {isOpen && businessHours[dayOfWeek]?.hours && (
+                <span className="text-xs text-gray-500">
+                  {businessHours[dayOfWeek]?.hours}
+                </span>
+              )}
             </div>
             
-            <div className="divide-y divide-gray-100">
-              {hasAppointments ? (
+            <div className={cn(
+              "divide-y divide-gray-100",
+              !isOpen && "opacity-50"
+            )}>
+              {isOpen && hasAppointments ? (
                 dayAppointments
                   .sort((a, b) => a.date.getTime() - b.date.getTime())
                   .map(appointment => (
@@ -54,16 +92,20 @@ export const WeekView = ({
                           </div>
                         </div>
                         <div className="flex flex-col items-end">
-                          <div className="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-1 rounded-full mb-1">
+                          <div className="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full mb-1">
                             {format(appointment.date, "HH:mm")}
                           </div>
                         </div>
                       </div>
                     </div>
                   ))
-              ) : (
+              ) : isOpen ? (
                 <div className="p-3 text-center text-gray-500 text-sm">
                   Nenhum agendamento
+                </div>
+              ) : (
+                <div className="p-3 text-center text-gray-500 text-sm">
+                  Estabelecimento fechado
                 </div>
               )}
             </div>

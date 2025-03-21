@@ -34,7 +34,7 @@ export const CalendarFilter = ({
   return (
     <div>
       <div className="flex items-center">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">Filtrar por tipo de serviço</h3>
+        <h3 className="text-sm text-gray-700 mb-2">Filtrar por tipo de serviço</h3>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {Object.entries(serviceTypes).map(([type, label]) => (
@@ -43,7 +43,7 @@ export const CalendarFilter = ({
             className={cn(
               "flex items-center gap-1 px-2 py-1 rounded-full text-xs transition-all whitespace-nowrap",
               serviceFilter === type
-                ? "bg-blue-100 text-blue-700 font-medium"
+                ? "bg-blue-600 text-white font-medium"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             )}
             onClick={() => onFilterChange(type as ServiceType)}
