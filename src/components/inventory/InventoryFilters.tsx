@@ -23,8 +23,8 @@ export const InventoryFilters = ({
   setSearchTerm
 }: InventoryFiltersProps) => {
   return (
-    <div className="space-y-5">
-      <div className="relative w-full">
+    <div className="space-y-4">
+      <div className="relative w-full max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Buscar produtos..."
@@ -35,8 +35,8 @@ export const InventoryFilters = ({
       </div>
       
       <Card className="border-none shadow-none bg-muted/30">
-        <CardContent className="p-5">
-          <div className="flex flex-wrap gap-5">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap gap-4">
             <div className="flex flex-col gap-2 w-full sm:w-auto min-w-[180px]">
               <Label htmlFor="category-filter" className="text-sm font-medium flex items-center gap-2">
                 <Tag className="h-4 w-4" />
@@ -104,13 +104,6 @@ export const InventoryFilters = ({
                   <SelectItem value="equipment">Equipamentos</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            
-            <div className="flex items-end ml-auto">
-              <Button variant="outline" size="default" className="h-10">
-                <Filter className="h-4 w-4 mr-2" />
-                Filtrar
-              </Button>
             </div>
           </div>
         </CardContent>

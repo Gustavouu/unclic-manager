@@ -26,7 +26,7 @@ export const InventorySummaryCards = ({ inventory }: InventorySummaryCardsProps)
   const outOfStockItems = inventory.filter(item => item.quantity === 0).length;
   
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <SummaryCard 
         title="Total em Estoque"
         value={`${totalItems} itens`}
@@ -68,13 +68,13 @@ interface SummaryCardProps {
 const SummaryCard = ({ title, value, icon, iconClass }: SummaryCardProps) => {
   return (
     <Card className="border shadow-sm hover:shadow transition-shadow duration-200">
-      <CardContent className="p-5 md:p-6 flex items-center space-x-4">
+      <CardContent className="p-5 flex items-center space-x-4">
         <div className={`p-3 rounded-full ${iconClass}`}>
           {icon}
         </div>
         <div>
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <h3 className="text-xl md:text-2xl font-semibold mt-1">{value}</h3>
+          <h3 className="text-xl font-semibold mt-1">{value}</h3>
         </div>
       </CardContent>
     </Card>

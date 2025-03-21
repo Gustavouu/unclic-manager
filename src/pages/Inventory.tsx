@@ -59,7 +59,7 @@ const Inventory = () => {
 
   return (
     <AppLayout title="Estoque">
-      <div className="w-full mx-auto px-1">
+      <div className="container py-6 mx-auto max-w-7xl">
         <InventoryLayout
           inventory={inventory}
           filteredInventory={filteredInventory}

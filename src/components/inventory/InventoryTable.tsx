@@ -90,10 +90,10 @@ export const InventoryTable = ({
                         <img 
                           src={item.image} 
                           alt={item.name} 
-                          className="h-10 w-10 rounded object-cover border border-muted"
+                          className="h-10 w-10 rounded-md object-cover border border-muted"
                         />
                       ) : (
-                        <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center">
                           <Package2 className="h-5 w-5 text-muted-foreground" />
                         </div>
                       )}

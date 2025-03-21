@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { InventoryHeader } from "./InventoryHeader";
 import { InventoryTable } from "./InventoryTable";
 import { InventoryFilters } from "./InventoryFilters";
 import { InventoryDetails } from "./InventoryDetails";
@@ -57,9 +56,10 @@ export const InventoryLayout = ({
   };
   
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <Button onClick={() => document.getElementById("new-inventory-trigger")?.click()} className="ml-auto">
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Gestão de Estoque</h1>
+        <Button onClick={() => document.getElementById("new-inventory-trigger")?.click()}>
           <Plus className="mr-2 h-4 w-4" />
           Adicionar Produto
         </Button>
@@ -83,8 +83,8 @@ export const InventoryLayout = ({
         />
       </div>
       
-      <div className="bg-white rounded-lg shadow-sm border">
-        <div className="p-4 border-b">
+      <div className="bg-white rounded-lg shadow border">
+        <div className="p-6 border-b">
           <InventoryFilters
             categories={categories}
             filterOptions={filterOptions}
