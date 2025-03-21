@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Grid2X2, List, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfessionalsLayout } from "@/components/professionals/ProfessionalsLayout";
+import { NewProfessionalDialog } from "@/components/professionals/NewProfessionalDialog";
 
 const Professionals = () => {
   const [view, setView] = useState<"grid" | "list">("grid");
