@@ -1,12 +1,11 @@
 
-import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarPlus } from "lucide-react";
 
 const Appointments = () => {
   return (
-    <AppLayout title="Agendamentos">
+    <div>
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-xl font-display font-medium">Gerenciamento de Agendamentos</h1>
         <Button className="gap-2">
@@ -23,7 +22,7 @@ const Appointments = () => {
           </div>
         </CardContent>
       </Card>
-    </AppLayout>
+    </div>
   );
 };
 
