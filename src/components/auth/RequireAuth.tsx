@@ -15,7 +15,13 @@ const RequireAuth = () => {
     if (path.includes('appointments')) return 'Agendamentos';
     if (path.includes('clients')) return 'Clientes';
     if (path.includes('professionals')) return 'Colaboradores';
+    if (path.includes('inventory')) return 'Estoque';
+    if (path.includes('finance')) return 'Financeiro';
     if (path.includes('services')) return 'Serviços';
+    if (path.includes('messages')) return 'Mensagens';
+    if (path.includes('reports')) return 'Relatórios';
+    if (path.includes('settings')) return 'Configurações';
+    if (path.includes('help')) return 'Ajuda';
     
     return 'Unclic';
   };
