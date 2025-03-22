@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -70,6 +71,42 @@ export const PaymentDialog = ({
     }
   };
 
+  const createAppointment = async (transactionId: string) => {
+    // This function would be called when payment is successful
+    // and there's no appointmentId yet (meaning we need to create a new appointment)
+    if (appointmentId) return; // If we already have an appointment, no need to create
+    
+    try {
+      // Logic to create a new appointment
+      const { data, error } = await supabase
+        .from('agendamentos')
+        .insert({
+          id_servico: serviceId,
+          id_cliente: customerId,
+          valor: amount,
+          status: 'confirmado',
+          data: appointmentDate ? new Date(appointmentDate).toISOString().split('T')[0] : null,
+          forma_pagamento: form.getValues('paymentMethod')
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      toast.success("Agendamento confirmado com sucesso!");
+      
+      // Update the transaction with the new appointment ID
+      await supabase
+        .from('transacoes')
+        .update({ id_agendamento: data.id })
+        .eq('id', transactionId);
+        
+    } catch (error) {
+      console.error("Erro ao criar agendamento:", error);
+      toast.error("O pagamento foi aprovado, mas não foi possível finalizar o agendamento. Entre em contato com o suporte.");
+    }
+  };
+
   const onSubmit = async (values: PaymentFormValues) => {
     setStep("processing");
     
@@ -92,6 +129,13 @@ export const PaymentDialog = ({
       
       if (result.status === "approved") {
         toast.success("Pagamento realizado com sucesso!");
+        
+        // If payment is approved and we don't have an appointmentId,
+        // we need to create the appointment
+        if (result.transactionId && !appointmentId) {
+          await createAppointment(result.id);
+        }
+        
         if (onSuccess) onSuccess();
       } else if (result.status === "rejected") {
         toast.error("Pagamento recusado. Verifique os dados e tente novamente.");

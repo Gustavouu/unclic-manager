@@ -26,7 +26,18 @@ export const PaymentService = {
    */
   async createPayment(payment: PaymentRequest): Promise<PaymentResponse> {
     try {
-      // Primeiro, registra a transação no nosso banco de dados
+      // Primeiro, busca as configurações da Efi Bank
+      const { data: efiConfig, error: configError } = await supabase
+        .from('efi_bank_integrations')
+        .select('*')
+        .eq('business_id', "1") // Este deve ser o ID do negócio atual
+        .single();
+      
+      if (configError && configError.code !== 'PGRST116') {
+        console.error("Erro ao buscar configurações da Efi Bank:", configError);
+      }
+      
+      // Registra a transação no nosso banco de dados
       const { data: dbTransaction, error: dbError } = await supabase
         .from('transacoes')
         .insert({
@@ -45,21 +56,31 @@ export const PaymentService = {
 
       if (dbError) throw dbError;
       
-      // Simula a chamada para a API do Efi Bank
-      // Em produção, essa seria uma chamada real para a API do Efi Bank
-      const efiPaymentData = await simulateEfiBankAPICall({
-        amount: payment.amount,
-        description: payment.description || "Pagamento de serviço",
-        paymentMethod: payment.paymentMethod,
-        referenceId: dbTransaction.id
-      });
+      // Configura os dados para a chamada da API do Efi Bank
+      const efiPaymentData = efiConfig 
+        ? await callEfiBankAPI({
+            amount: payment.amount,
+            description: payment.description || "Pagamento de serviço",
+            paymentMethod: payment.paymentMethod,
+            referenceId: dbTransaction.id,
+            merchantId: efiConfig.merchant_id,
+            apiKey: efiConfig.api_key,
+            isTestMode: efiConfig.is_test_mode
+          })
+        : await simulateEfiBankAPICall({
+            amount: payment.amount,
+            description: payment.description || "Pagamento de serviço",
+            paymentMethod: payment.paymentMethod,
+            referenceId: dbTransaction.id
+          });
       
       // Atualiza a transação com os dados retornados pelo Efi Bank
       if (efiPaymentData.transactionId) {
         await supabase
           .from('transacoes')
           .update({ 
-            comprovante_url: efiPaymentData.paymentUrl,
+            efi_bank_transaction_id: efiPaymentData.transactionId,
+            payment_url: efiPaymentData.paymentUrl,
             status: mapEfiBankStatus(efiPaymentData.status)
           })
           .eq('id', dbTransaction.id);
@@ -87,15 +108,27 @@ export const PaymentService = {
     try {
       const { data, error } = await supabase
         .from('transacoes')
-        .select('id, status, metodo_pagamento, valor, criado_em, comprovante_url')
+        .select('id, status, metodo_pagamento, valor, criado_em, payment_url, efi_bank_transaction_id')
         .eq('id', paymentId)
         .single();
 
       if (error) throw error;
       
-      // Simula consulta ao status na API do Efi Bank
-      // Em produção, essa seria uma chamada real para a API do Efi Bank
-      const efiStatusData = await simulateEfiBankStatusCheck(paymentId);
+      // Busca as configurações da Efi Bank
+      const { data: efiConfig, error: configError } = await supabase
+        .from('efi_bank_integrations')
+        .select('*')
+        .eq('business_id', "1") // Este deve ser o ID do negócio atual
+        .single();
+      
+      if (configError && configError.code !== 'PGRST116') {
+        console.error("Erro ao buscar configurações da Efi Bank:", configError);
+      }
+      
+      // Consulta o status na API do Efi Bank ou simula a consulta
+      const efiStatusData = efiConfig && data.efi_bank_transaction_id
+        ? await checkEfiBankStatus(data.efi_bank_transaction_id, efiConfig.merchant_id, efiConfig.api_key)
+        : await simulateEfiBankStatusCheck(paymentId);
       
       // Atualiza o status se houver mudança
       if (data.status !== mapEfiBankStatus(efiStatusData.status)) {
@@ -112,7 +145,7 @@ export const PaymentService = {
         id: data.id,
         status: mapEfiBankStatus(efiStatusData.status),
         transactionId: efiStatusData.transactionId,
-        paymentUrl: data.comprovante_url || efiStatusData.paymentUrl,
+        paymentUrl: data.payment_url || efiStatusData.paymentUrl,
         amount: data.valor,
         paymentMethod: data.metodo_pagamento,
         createdAt: data.criado_em
@@ -123,6 +156,57 @@ export const PaymentService = {
     }
   }
 };
+
+// Função para fazer as chamadas reais para a API do Efi Bank
+async function callEfiBankAPI(data: {
+  amount: number;
+  description: string;
+  paymentMethod: string;
+  referenceId: string;
+  merchantId: string;
+  apiKey: string;
+  isTestMode: boolean;
+}): Promise<{
+  status: string;
+  transactionId: string;
+  paymentUrl: string;
+}> {
+  // Em produção, isso seria uma chamada real para a API da Efi Bank
+  // Por enquanto, vamos simular
+  console.log("Chamando API da Efi Bank com configurações reais:", data.merchantId, data.isTestMode);
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  return {
+    status: "pending",
+    transactionId: "EFI-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
+    paymentUrl: `https://pay.efibank.com.br/${data.referenceId}?test=${data.isTestMode ? 'true' : 'false'}`
+  };
+}
+
+// Função para verificar o status de um pagamento na API do Efi Bank
+async function checkEfiBankStatus(
+  transactionId: string,
+  merchantId: string,
+  apiKey: string
+): Promise<{
+  status: string;
+  transactionId: string;
+  paymentUrl?: string;
+}> {
+  // Em produção, isso seria uma chamada real para a API da Efi Bank
+  // Por enquanto, vamos simular
+  console.log("Verificando status na API da Efi Bank para:", transactionId);
+  await new Promise(resolve => setTimeout(resolve, 600));
+  
+  const possibleStatuses = ["pending", "processing", "approved", "rejected", "cancelled"];
+  const randomStatus = possibleStatuses[Math.floor(Math.random() * possibleStatuses.length)];
+  
+  return {
+    status: randomStatus,
+    transactionId: transactionId,
+    paymentUrl: `https://pay.efibank.com.br/${transactionId}`
+  };
+}
 
 // Função auxiliar para mapear status do Efi Bank para o nosso sistema
 function mapEfiBankStatus(efiBankStatus: string): PaymentResponse['status'] {
