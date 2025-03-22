@@ -22,7 +22,7 @@ export const StockStatus = ({ product }: StockStatusProps) => {
   
   if (isLowStock) {
     return (
-      <Badge variant="warning" className="bg-orange-100 text-orange-800 hover:bg-orange-200 text-[10px] px-1.5 py-0.5">
+      <Badge variant="secondary" className="bg-orange-100 text-orange-800 hover:bg-orange-200 text-[10px] px-1.5 py-0.5">
         Estoque baixo
       </Badge>
     );
