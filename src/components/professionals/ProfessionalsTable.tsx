@@ -11,15 +11,22 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ProfessionalStatusBadge } from "./ProfessionalStatusBadge";
-import { MoreHorizontal } from "lucide-react";
+import { Pencil, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ProfessionalsTableProps {
   professionals: Professional[];
   onProfessionalClick: (id: string) => void;
+  onEditClick?: (professional: Professional, e: React.MouseEvent) => void;
+  onDeleteClick?: (professional: Professional, e: React.MouseEvent) => void;
 }
 
-export const ProfessionalsTable = ({ professionals, onProfessionalClick }: ProfessionalsTableProps) => {
+export const ProfessionalsTable = ({ 
+  professionals, 
+  onProfessionalClick,
+  onEditClick,
+  onDeleteClick 
+}: ProfessionalsTableProps) => {
   if (professionals.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -38,7 +45,7 @@ export const ProfessionalsTable = ({ professionals, onProfessionalClick }: Profe
             <TableHead>Contato</TableHead>
             <TableHead>Data de Contratação</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="w-[50px]"></TableHead>
+            <TableHead className="w-[100px] text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -51,7 +58,7 @@ export const ProfessionalsTable = ({ professionals, onProfessionalClick }: Profe
               <TableCell className="font-medium">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={professional.photoUrl} />
+                    <AvatarImage src={professional.photoUrl} alt={professional.name} />
                     <AvatarFallback className="bg-blue-100 text-blue-700">
                       {professional.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)}
                     </AvatarFallback>
@@ -86,10 +93,35 @@ export const ProfessionalsTable = ({ professionals, onProfessionalClick }: Profe
               <TableCell>
                 <ProfessionalStatusBadge status={professional.status} />
               </TableCell>
-              <TableCell>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
-                  <MoreHorizontal size={16} />
-                </Button>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-1">
+                  {onEditClick && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-gray-500 hover:text-blue-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditClick(professional, e);
+                      }}
+                    >
+                      <Pencil size={16} />
+                    </Button>
+                  )}
+                  {onDeleteClick && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-gray-500 hover:text-red-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteClick(professional, e);
+                      }}
+                    >
+                      <Trash size={16} />
+                    </Button>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           ))}

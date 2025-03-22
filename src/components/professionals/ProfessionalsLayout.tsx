@@ -6,6 +6,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ProfessionalDetailsDialog } from "./ProfessionalDetailsDialog";
+import { Professional } from "@/hooks/professionals/types";
+import { EditProfessionalDialog } from "./EditProfessionalDialog";
+import { DeleteProfessionalDialog } from "./DeleteProfessionalDialog";
 
 interface ProfessionalsLayoutProps {
   view: "grid" | "list";
@@ -16,9 +19,14 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   
   // Forçar uma atualização quando os profissionais mudarem
   const [key, setKey] = useState(0);
-  // Estado para controlar a abertura do diálogo de detalhes
+  
+  // Estado para controlar dialogs
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [professionalToEdit, setProfessionalToEdit] = useState<Professional | null>(null);
+  const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
   
   useEffect(() => {
     // Incrementar a key para forçar a renderização quando professionals mudar
@@ -30,6 +38,20 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   const handleProfessionalClick = (id: string) => {
     setSelectedProfessionalId(id);
     setDetailsOpen(true);
+  };
+  
+  // Função para lidar com o clique em editar
+  const handleEditClick = (professional: Professional, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setProfessionalToEdit(professional);
+    setEditOpen(true);
+  };
+  
+  // Função para lidar com o clique em excluir
+  const handleDeleteClick = (professional: Professional, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setProfessionalToDelete(professional);
+    setDeleteOpen(true);
   };
   
   if (isLoading) {
@@ -58,12 +80,16 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
         {view === "grid" ? (
           <ProfessionalsGrid 
             professionals={professionals} 
-            onProfessionalClick={handleProfessionalClick} 
+            onProfessionalClick={handleProfessionalClick}
+            onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
           />
         ) : (
           <ProfessionalsTable 
             professionals={professionals} 
-            onProfessionalClick={handleProfessionalClick} 
+            onProfessionalClick={handleProfessionalClick}
+            onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
           />
         )}
       </div>
@@ -75,6 +101,20 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
           onOpenChange={setDetailsOpen}
         />
       )}
+      
+      {professionalToEdit && (
+        <EditProfessionalDialog
+          professional={professionalToEdit}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+      )}
+      
+      <DeleteProfessionalDialog
+        professional={professionalToDelete}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      />
     </>
   );
 };

@@ -2,16 +2,24 @@
 import { Professional } from "@/hooks/professionals/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Mail, Phone } from "lucide-react";
+import { Calendar, Mail, Phone, Pencil, Trash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ProfessionalStatusBadge } from "./ProfessionalStatusBadge";
 
 interface ProfessionalsGridProps {
   professionals: Professional[];
   onProfessionalClick: (id: string) => void;
+  onEditClick?: (professional: Professional, e: React.MouseEvent) => void;
+  onDeleteClick?: (professional: Professional, e: React.MouseEvent) => void;
 }
 
-export const ProfessionalsGrid = ({ professionals, onProfessionalClick }: ProfessionalsGridProps) => {
+export const ProfessionalsGrid = ({ 
+  professionals, 
+  onProfessionalClick,
+  onEditClick,
+  onDeleteClick
+}: ProfessionalsGridProps) => {
   if (professionals.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -25,24 +33,53 @@ export const ProfessionalsGrid = ({ professionals, onProfessionalClick }: Profes
       {professionals.map((professional) => (
         <Card 
           key={professional.id} 
-          className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+          className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
           onClick={() => onProfessionalClick(professional.id)}
         >
-          <div className="h-24 bg-gradient-to-r from-blue-500 to-blue-600"></div>
-          <CardContent className="pt-0 relative">
-            <div className="flex justify-center -mt-10 mb-3">
-              <Avatar className="h-20 w-20 border-4 border-white">
-                <AvatarImage src={professional.photoUrl} />
+          <CardContent className="p-6 relative">
+            <div className="flex justify-between mb-4">
+              <Avatar className="h-16 w-16 border-2 border-white ring-2 ring-gray-100">
+                <AvatarImage src={professional.photoUrl} alt={professional.name} />
                 <AvatarFallback className="text-lg bg-blue-100 text-blue-700">
                   {professional.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)}
                 </AvatarFallback>
               </Avatar>
+              
+              <div className="flex gap-1">
+                {onEditClick && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-gray-500 hover:text-blue-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditClick(professional, e);
+                    }}
+                  >
+                    <Pencil size={16} />
+                  </Button>
+                )}
+                
+                {onDeleteClick && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-gray-500 hover:text-red-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteClick(professional, e);
+                    }}
+                  >
+                    <Trash size={16} />
+                  </Button>
+                )}
+              </div>
             </div>
             
-            <div className="text-center mb-4">
+            <div className="mb-4">
               <h3 className="font-medium text-lg">{professional.name}</h3>
               <p className="text-muted-foreground text-sm">{professional.role}</p>
-              <div className="mt-2 flex justify-center">
+              <div className="mt-2">
                 <ProfessionalStatusBadge status={professional.status} />
               </div>
             </div>

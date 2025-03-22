@@ -24,4 +24,5 @@ export interface ProfessionalCreateForm {
   specialties: string[];
   bio?: string;
   commissionPercentage?: number;
+  photoUrl?: string;
 }

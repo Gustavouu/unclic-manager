@@ -9,6 +9,7 @@ export const professionalSchema = z.object({
   bio: z.string().optional().or(z.literal("")),
   specialties: z.array(z.string()).min(1, "Selecione uma especialização"),
   commissionPercentage: z.coerce.number().min(0).max(100).optional(),
+  photoUrl: z.string().optional().or(z.literal("")),
 });
 
 export type ProfessionalFormValues = z.infer<typeof professionalSchema>;
