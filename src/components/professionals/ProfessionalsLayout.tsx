@@ -1,95 +1,52 @@
 
-import { useMemo, useState } from "react";
+import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { ProfessionalsGrid } from "./ProfessionalsGrid";
 import { ProfessionalsTable } from "./ProfessionalsTable";
-import { Input } from "@/components/ui/input";
-import { ProfessionalFilters } from "./ProfessionalFilters";
-import { useProfessionals } from "@/hooks/professionals/useProfessionals";
-import { Search, Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ProfessionalDetailsDialog } from "./ProfessionalDetailsDialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface ProfessionalsLayoutProps {
   view: "grid" | "list";
 }
 
 export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
+  const { professionals, isLoading } = useProfessionals();
   
-  const { professionals, isLoading, specialties } = useProfessionals();
+  // Forçar uma atualização quando os profissionais mudarem
+  const [key, setKey] = useState(0);
   
-  const filteredProfessionals = useMemo(() => {
-    if (!searchTerm.trim()) return professionals;
-    
-    const term = searchTerm.toLowerCase();
-    return professionals.filter(
-      professional => 
-        professional.name.toLowerCase().includes(term) || 
-        professional.specialties.some(s => s.toLowerCase().includes(term)) ||
-        professional.email?.toLowerCase().includes(term)
-    );
-  }, [professionals, searchTerm]);
-
-  const handleProfessionalClick = (id: string) => {
-    setSelectedProfessionalId(id);
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-          <Input
-            placeholder="Buscar colaboradores..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Button 
-          variant="outline" 
-          className="flex gap-2"
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <Filter size={16} />
-          Filtros
-        </Button>
+  useEffect(() => {
+    // Incrementar a key para forçar a renderização quando professionals mudar
+    setKey(prev => prev + 1);
+  }, [professionals]);
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
-
-      {showFilters && (
-        <ProfessionalFilters specialties={specialties} />
-      )}
-
-      {isLoading ? (
-        <div className="flex justify-center p-8">
-          <p>Carregando colaboradores...</p>
-        </div>
+    );
+  }
+  
+  if (!professionals || professionals.length === 0) {
+    return (
+      <Alert variant="destructive" className="border-orange-400 bg-orange-50 text-orange-800">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Nenhum colaborador encontrado</AlertTitle>
+        <AlertDescription>
+          Adicione colaboradores clicando no botão "Novo Colaborador".
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  
+  return (
+    <div key={key}>
+      {view === "grid" ? (
+        <ProfessionalsGrid professionals={professionals} />
       ) : (
-        <>
-          {view === "grid" ? (
-            <ProfessionalsGrid 
-              professionals={filteredProfessionals} 
-              onProfessionalClick={handleProfessionalClick}
-            />
-          ) : (
-            <ProfessionalsTable 
-              professionals={filteredProfessionals} 
-              onProfessionalClick={handleProfessionalClick}
-            />
-          )}
-        </>
-      )}
-
-      {selectedProfessionalId && (
-        <ProfessionalDetailsDialog
-          professionalId={selectedProfessionalId}
-          open={!!selectedProfessionalId}
-          onOpenChange={(open) => {
-            if (!open) setSelectedProfessionalId(null);
-          }}
-        />
+        <ProfessionalsTable professionals={professionals} />
       )}
     </div>
   );

@@ -65,13 +65,20 @@ export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
         specialties: Array.isArray(data.specialties) ? data.specialties : []
       };
       
+      console.log("Enviando dados do formulário:", formData);
+      
       await addProfessional(formData);
       toast({
         title: "Colaborador adicionado",
         description: "O colaborador foi adicionado com sucesso.",
       });
       form.reset();
-      onClose();
+      
+      // Aguardar um curto intervalo antes de fechar o diálogo
+      // para permitir que o estado seja atualizado
+      setTimeout(() => {
+        onClose();
+      }, 100);
     } catch (error) {
       console.error("Erro ao adicionar profissional:", error);
       toast({

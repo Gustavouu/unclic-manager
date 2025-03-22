@@ -1,6 +1,8 @@
 
 import { useProfessionalOperations } from "./professionalOperations";
 import { useProfessionalUtils } from "./professionalUtils";
+import { useEffect, useState } from "react";
+import { Professional } from "./types";
 
 export const useProfessionals = () => {
   const {
@@ -12,10 +14,13 @@ export const useProfessionals = () => {
     removeProfessional
   } = useProfessionalOperations();
   
-  const { specialties, getProfessionalById } = useProfessionalUtils(professionals);
+  // Garantir que os profissionais estão sempre como um array
+  const safeProfessionals = Array.isArray(professionals) ? professionals : [] as Professional[];
+  
+  const { specialties, getProfessionalById } = useProfessionalUtils(safeProfessionals);
   
   return {
-    professionals,
+    professionals: safeProfessionals,
     isLoading,
     specialties,
     getProfessionalById,

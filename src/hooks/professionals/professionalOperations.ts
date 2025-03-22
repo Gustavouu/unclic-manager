@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { Professional, ProfessionalCreateForm, ProfessionalStatus } from "./types";
 import { v4 as uuidv4 } from "uuid";
@@ -22,16 +21,20 @@ export const useProfessionalOperations = () => {
         id: uuidv4(),
         name: data.name,
         role: data.role,
-        email: data.email,
-        phone: data.phone,
-        specialties: data.specialties,
-        bio: data.bio,
+        email: data.email || "",
+        phone: data.phone || "",
+        specialties: Array.isArray(data.specialties) ? data.specialties : [],
+        bio: data.bio || "",
         status: "active",
         commissionPercentage: data.commissionPercentage || 0,
         hireDate: new Date().toISOString().split('T')[0]
       };
       
+      // Atualizar o estado com o novo profissional
       setProfessionals(prev => [...prev, newProfessional]);
+      
+      console.log("Profissional adicionado:", newProfessional);
+      console.log("Lista atualizada:", [...professionals, newProfessional]);
       
       toast({
         title: "Colaborador adicionado",
@@ -40,6 +43,7 @@ export const useProfessionalOperations = () => {
       
       return newProfessional;
     } catch (error) {
+      console.error("Erro ao adicionar profissional:", error);
       toast({
         title: "Erro",
         description: "Ocorreu um erro ao adicionar o colaborador.",
@@ -49,7 +53,7 @@ export const useProfessionalOperations = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [professionals, toast]);
   
   // Atualizar profissional
   const updateProfessional = useCallback(async (id: string, data: Partial<Professional>) => {
