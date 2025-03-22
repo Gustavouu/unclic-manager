@@ -23,6 +23,7 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   useEffect(() => {
     // Incrementar a key para forçar a renderização quando professionals mudar
     setKey(prev => prev + 1);
+    console.log("Profissionais atualizados na interface:", professionals);
   }, [professionals]);
   
   // Função para lidar com o clique em um profissional

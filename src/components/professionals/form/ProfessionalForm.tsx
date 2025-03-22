@@ -78,7 +78,7 @@ export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
       // para garantir que o estado seja atualizado completamente
       setTimeout(() => {
         onClose();
-      }, 500);
+      }, 1000);
     } catch (error) {
       console.error("Erro ao adicionar profissional:", error);
       toast({
