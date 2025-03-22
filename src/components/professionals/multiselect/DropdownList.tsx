@@ -1,6 +1,6 @@
 
 import * as React from "react";
-import { CommandGroup, CommandEmpty } from "@/components/ui/command";
+import { CommandEmpty, CommandGroup, CommandList } from "@/components/ui/command";
 import { SelectableItem } from "./SelectableItem";
 import { Option } from "./types";
 
@@ -9,7 +9,7 @@ interface DropdownListProps {
   options: Option[];
   onSelect: (option: Option) => void;
   inputValue: string;
-  emptyMessage: string;
+  emptyMessage?: string;
 }
 
 export const DropdownList = React.memo(({
@@ -17,29 +17,27 @@ export const DropdownList = React.memo(({
   options,
   onSelect,
   inputValue,
-  emptyMessage
+  emptyMessage = "No options available"
 }: DropdownListProps) => {
   if (!open) return null;
 
   return (
-    <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
-      {options.length > 0 ? (
-        <CommandGroup className="h-full overflow-auto max-h-60">
+    <div className="absolute top-0 z-10 w-full bg-popover text-popover-foreground shadow-md rounded-md border animate-in fade-in-0 zoom-in-95">
+      <CommandList>
+        <CommandEmpty className="py-6 text-center text-sm">
+          {emptyMessage}
+        </CommandEmpty>
+        <CommandGroup>
           {options.map((option) => (
             <SelectableItem 
               key={option.value} 
               option={option} 
-              onSelect={onSelect} 
+              onSelect={onSelect}
+              inputValue={inputValue}
             />
           ))}
         </CommandGroup>
-      ) : (
-        <CommandEmpty className="py-3 px-4 text-sm text-center text-muted-foreground">
-          {inputValue.length > 0 
-            ? `Nenhum resultado para "${inputValue}"` 
-            : emptyMessage}
-        </CommandEmpty>
-      )}
+      </CommandList>
     </div>
   );
 });
