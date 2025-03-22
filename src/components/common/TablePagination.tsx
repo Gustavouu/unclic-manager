@@ -120,7 +120,7 @@ export const TablePagination = ({
             
             <PaginationItem>
               <PaginationNext 
-                onClick={() => onPageChange(prev => Math.min(prev + 1, totalPages))}
+                onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
                 className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
               />
             </PaginationItem>

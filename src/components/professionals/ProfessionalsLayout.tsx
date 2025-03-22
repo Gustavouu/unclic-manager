@@ -8,6 +8,7 @@ import { ProfessionalsDialogs } from "./ProfessionalsDialogs";
 import { ProfessionalsContent } from "./ProfessionalsContent";
 import { TablePagination } from "@/components/common/TablePagination";
 import { usePagination } from "@/hooks/professionals/usePagination";
+import { Card } from "@/components/ui/card";
 
 interface ProfessionalsLayoutProps {
   view: "grid" | "list";
