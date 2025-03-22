@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+import { ChevronRight } from "lucide-react";
 
 const Clients = () => {
   const [showDetails, setShowDetails] = useState(false);
@@ -50,13 +51,11 @@ const Clients = () => {
     }
   };
 
-  // Pagination logic
   const indexOfLastClient = currentPage * itemsPerPage;
   const indexOfFirstClient = indexOfLastClient - itemsPerPage;
   const currentClients = filteredClients.slice(indexOfFirstClient, indexOfLastClient);
   const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
 
-  // Generate page numbers
   const pageNumbers = [];
   const maxPagesToShow = 5;
   
