@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from 'lucide-react';
 import { NewProductDialog } from './NewProductDialog';
 import { useInventory } from '@/hooks/inventory/useInventory';
-import { WebhookTable } from './WebhookTable';
+import { WebhookTable } from './webhook/WebhookTable';
 
 export const InventoryContent = () => {
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
