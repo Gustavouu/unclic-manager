@@ -116,6 +116,7 @@ export const ProfessionalFormFields = ({ form, specialties = [] }: ProfessionalF
               <Select 
                 onValueChange={(value) => field.onChange([value])}
                 value={Array.isArray(field.value) && field.value.length > 0 ? field.value[0] : ""}
+                defaultValue=""
               >
                 <FormControl>
                   <SelectTrigger>
@@ -123,11 +124,17 @@ export const ProfessionalFormFields = ({ form, specialties = [] }: ProfessionalF
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {safeSpecialties.map((specialty) => (
-                    <SelectItem key={specialty} value={specialty}>
-                      {specialty}
+                  {safeSpecialties.length > 0 ? (
+                    safeSpecialties.map((specialty) => (
+                      <SelectItem key={specialty} value={specialty}>
+                        {specialty}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>
+                      Sem especializações disponíveis
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
               <FormDescription>

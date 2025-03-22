@@ -8,7 +8,7 @@ import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { ProfessionalCreateForm } from "@/hooks/professionals/types";
 import { ProfessionalFormFields } from "./ProfessionalFormFields";
 import { professionalSchema } from "../schemas/professionalFormSchema";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -19,8 +19,29 @@ interface ProfessionalFormProps {
 export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  // Obter dados dos profissionais com especialidades inicializadas com segurança
+  
+  // Obter dados dos profissionais e garantir que specialties é inicializado corretamente
   const { specialties = [], addProfessional } = useProfessionals();
+  
+  // Garantir que temos valores de especialidades para exibir no formulário
+  const [availableSpecialties, setAvailableSpecialties] = useState<string[]>([]);
+  
+  useEffect(() => {
+    // Inicializar com valores padrão se não houver especialidades
+    if (!specialties || specialties.length === 0) {
+      setAvailableSpecialties([
+        "Cabeleireiro", 
+        "Manicure", 
+        "Pedicure", 
+        "Esteticista", 
+        "Massagista", 
+        "Barbeiro", 
+        "Maquiador"
+      ]);
+    } else {
+      setAvailableSpecialties(specialties);
+    }
+  }, [specialties]);
   
   const form = useForm<ProfessionalCreateForm>({
     resolver: zodResolver(professionalSchema),
@@ -72,7 +93,7 @@ export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <ProfessionalFormFields 
           form={form} 
-          specialties={Array.isArray(specialties) ? specialties : []} 
+          specialties={availableSpecialties}
         />
         
         <DialogFooter className="pt-2">
