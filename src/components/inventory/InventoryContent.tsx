@@ -41,7 +41,7 @@ export const InventoryContent = () => {
     setEditingProduct(null);
   };
 
-  // Map products to AnalyticsProduct format for the InventoryAnalytics component
+  // Mapeia produtos para o formato AnalyticsProduct para o componente InventoryAnalytics
   const bestSellers = analytics.bestSellers.map(product => ({
     ...product,
     data: product.salesCount || 0
@@ -54,7 +54,7 @@ export const InventoryContent = () => {
   
   const slowMoving = analytics.slowMoving.map(product => ({
     ...product,
-    // Format the date as a string or use a default value
+    // Formata a data como uma string ou usa um valor padrão
     data: product.lastSoldAt ? getFormattedDate(product.lastSoldAt.toString()) : 'Nunca vendido'
   }));
   
@@ -64,11 +64,31 @@ export const InventoryContent = () => {
         <InventoryStats products={products} />
       </div>
       
-      <div className="mt-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
         <InventoryAnalytics 
-          bestSellers={bestSellers} 
-          needsRestock={needsRestock} 
-          slowMoving={slowMoving} 
+          title="Produtos Mais Vendidos"
+          icon="trending-up"
+          iconColor="text-green-500"
+          products={bestSellers} 
+          valueLabel="vendas"
+          showProgress
+        />
+        
+        <InventoryAnalytics 
+          title="Alerta de Reposição"
+          icon="alert-triangle"
+          iconColor="text-orange-500"
+          products={needsRestock} 
+          valueLabel="unidades"
+          showMinThreshold
+        />
+        
+        <InventoryAnalytics 
+          title="Produtos com Baixa Rotatividade"
+          icon="clock"
+          iconColor="text-blue-500"
+          products={slowMoving} 
+          valuePrefix="Última venda:"
         />
       </div>
       
