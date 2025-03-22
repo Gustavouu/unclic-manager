@@ -14,7 +14,7 @@ export const PaymentStatusBadge = ({ status, className = "" }: PaymentStatusBadg
       case "approved":
         return { 
           label: "Aprovado", 
-          variant: "success" as const,
+          variant: "default" as const,
           className: "bg-green-100 text-green-800 border-green-200"
         };
       case "rejected":
