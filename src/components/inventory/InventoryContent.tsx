@@ -39,6 +39,22 @@ export const InventoryContent = () => {
     setIsNewProductOpen(false);
     setEditingProduct(null);
   };
+
+  // Map products to AnalyticsProduct format for the InventoryAnalytics component
+  const bestSellers = analytics.bestSellers.map(product => ({
+    ...product,
+    data: product.salesCount || 0
+  }));
+  
+  const needsRestock = analytics.needsRestock.map(product => ({
+    ...product,
+    data: product.quantity
+  }));
+  
+  const slowMoving = analytics.slowMoving.map(product => ({
+    ...product,
+    data: product.lastSaleDate || 'Nunca vendido'
+  }));
   
   return (
     <div className="space-y-4">
@@ -49,9 +65,9 @@ export const InventoryContent = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-4">
         <div className="lg:col-span-3 xl:col-span-2">
           <InventoryAnalytics 
-            bestSellers={analytics.bestSellers} 
-            needsRestock={analytics.needsRestock} 
-            slowMoving={analytics.slowMoving} 
+            bestSellers={bestSellers} 
+            needsRestock={needsRestock} 
+            slowMoving={slowMoving} 
           />
         </div>
       </div>
