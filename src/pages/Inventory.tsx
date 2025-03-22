@@ -15,7 +15,7 @@ export default function Inventory() {
       ]} />
       
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Controle de Estoque</h1>
+        <h1 className="text-2xl font-bold">Configuração Webhook</h1>
         
         <Popover>
           <PopoverTrigger asChild>
@@ -31,11 +31,10 @@ export default function Inventory() {
                   <span className="bg-blue-100 text-blue-700 p-1 rounded-full">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                   </span>
-                  O que é controle de estoque?
+                  O que é Webhook?
                 </h3>
                 <p className="text-sm text-muted-foreground ml-7">
-                  O controle de estoque permite acompanhar todos os produtos, 
-                  monitorar quantidades e receber alertas quando for necessário reabastecer.
+                  Esta solução possibilita a comunicação entre sistemas on-line de forma automática, sempre que houverem novas atualizações.
                 </p>
               </div>
               
@@ -47,8 +46,7 @@ export default function Inventory() {
                   Benefícios
                 </h3>
                 <p className="text-sm text-muted-foreground ml-7">
-                  Controle mais eficiente dos produtos, redução de perdas, 
-                  melhor planejamento de compras e maior satisfação dos clientes.
+                  Autonomia para configurar novas atualizações dos seus produtos.
                 </p>
               </div>
               
@@ -60,8 +58,7 @@ export default function Inventory() {
                   Atenção
                 </h3>
                 <p className="text-sm text-muted-foreground ml-7">
-                  Configure corretamente as quantidades mínimas de estoque 
-                  para receber alertas quando for necessário repor produtos.
+                  A configuração do Webhook dos seus produtos é importante para que possa receber atualizações em tempo real.
                 </p>
               </div>
             </div>
