@@ -2,10 +2,16 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MultiSelect } from "../MultiSelect";
 import { UseFormReturn } from "react-hook-form";
 import { ProfessionalCreateForm } from "@/hooks/professionals/types";
 import React from "react";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
 interface ProfessionalFormFieldsProps {
   form: UseFormReturn<ProfessionalCreateForm>;
@@ -17,15 +23,6 @@ export const ProfessionalFormFields = ({ form, specialties = [] }: ProfessionalF
   const safeSpecialties = React.useMemo(() => 
     Array.isArray(specialties) ? specialties : [], 
     [specialties]
-  );
-  
-  // Criar opções para o MultiSelect
-  const specialtyOptions = React.useMemo(() => 
-    safeSpecialties.map(specialty => ({
-      label: specialty,
-      value: specialty
-    })),
-    [safeSpecialties]
   );
   
   return (
@@ -113,36 +110,32 @@ export const ProfessionalFormFields = ({ form, specialties = [] }: ProfessionalF
         <FormField
           control={form.control}
           name="specialties"
-          render={({ field }) => {
-            // Garantir que field.value é sempre um array
-            const selectedValues = Array.isArray(field.value) ? field.value : [];
-            
-            // Converter o array de strings para o formato esperado pelo MultiSelect
-            const selectedOptions = selectedValues.map(value => ({
-              label: value,
-              value
-            }));
-            
-            return (
-              <FormItem>
-                <FormLabel>Especializações *</FormLabel>
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Especialização *</FormLabel>
+              <Select 
+                onValueChange={(value) => field.onChange([value])}
+                value={Array.isArray(field.value) && field.value.length > 0 ? field.value[0] : ""}
+              >
                 <FormControl>
-                  <MultiSelect
-                    placeholder="Selecione as especializações"
-                    options={specialtyOptions}
-                    value={selectedOptions}
-                    onChange={(newValue) => {
-                      field.onChange(newValue.map(item => item.value));
-                    }}
-                  />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma especialização" />
+                  </SelectTrigger>
                 </FormControl>
-                <FormDescription>
-                  Selecione os serviços que este profissional realiza
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            );
-          }}
+                <SelectContent>
+                  {safeSpecialties.map((specialty) => (
+                    <SelectItem key={specialty} value={specialty}>
+                      {specialty}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Selecione a especialização principal deste profissional
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
         />
       </div>
       

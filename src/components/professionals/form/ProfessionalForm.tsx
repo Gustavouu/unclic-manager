@@ -10,6 +10,7 @@ import { ProfessionalFormFields } from "./ProfessionalFormFields";
 import { professionalSchema } from "../schemas/professionalFormSchema";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ProfessionalFormProps {
   onClose: () => void;
@@ -17,6 +18,7 @@ interface ProfessionalFormProps {
 
 export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
   // Obter dados dos profissionais com especialidades inicializadas com segurança
   const { specialties = [], addProfessional } = useProfessionals();
   
@@ -43,10 +45,19 @@ export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
       };
       
       await addProfessional(formData);
+      toast({
+        title: "Colaborador adicionado",
+        description: "O colaborador foi adicionado com sucesso.",
+      });
       form.reset();
       onClose();
     } catch (error) {
       console.error("Erro ao adicionar profissional:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao adicionar o colaborador.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
