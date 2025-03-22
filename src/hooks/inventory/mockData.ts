@@ -1,133 +1,146 @@
 
 import { Product } from "./types";
-import { v4 as uuidv4 } from "uuid";
 
-// Helper function to create dates in the past
-const daysAgo = (days: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() - days);
-  return date;
-};
-
+// Mock data with sales information for testing
 export const mockProducts: Product[] = [
   {
-    id: uuidv4(),
-    name: "Shampoo Profissional",
-    description: "Shampoo profissional para todos os tipos de cabelo",
+    id: "1",
+    name: "Shampoo Premium",
+    description: "Shampoo de alta qualidade para todos os tipos de cabelo",
     category: "hair",
     price: 45.90,
-    quantity: 25,
+    quantity: 20,
     minQuantity: 10,
-    supplier: "Fornecedor ABC",
-    createdAt: daysAgo(30),
-    updatedAt: daysAgo(15)
+    supplier: "Beauty Supplies Inc.",
+    createdAt: new Date("2023-10-05"),
+    updatedAt: new Date("2023-11-15"),
+    salesCount: 128,
+    lastSoldAt: new Date("2023-12-15")
   },
   {
-    id: uuidv4(),
+    id: "2",
     name: "Condicionador Hidratante",
-    description: "Condicionador hidratante para cabelos secos",
+    description: "Condicionador com fórmula hidratante avançada",
     category: "hair",
-    price: 42.50,
-    quantity: 18,
-    minQuantity: 10,
-    supplier: "Fornecedor ABC",
-    createdAt: daysAgo(30),
-    updatedAt: daysAgo(15)
-  },
-  {
-    id: uuidv4(),
-    name: "Máscara Capilar",
-    description: "Máscara de tratamento intensivo para cabelos danificados",
-    category: "hair",
-    price: 65.00,
-    quantity: 12,
+    price: 39.90,
+    quantity: 15,
     minQuantity: 8,
-    supplier: "Fornecedor XYZ",
-    createdAt: daysAgo(25),
-    updatedAt: daysAgo(10)
+    supplier: "Beauty Supplies Inc.",
+    createdAt: new Date("2023-10-05"),
+    updatedAt: new Date("2023-11-15"),
+    salesCount: 115,
+    lastSoldAt: new Date("2023-12-10")
   },
   {
-    id: uuidv4(),
-    name: "Óleo de Argan",
-    description: "Óleo de argan puro para finalização",
+    id: "3",
+    name: "Máscara Capilar",
+    description: "Tratamento intensivo para cabelos danificados",
     category: "hair",
-    price: 78.90,
+    price: 58.50,
     quantity: 8,
-    minQuantity: 5,
-    supplier: "Fornecedor XYZ",
-    createdAt: daysAgo(20),
-    updatedAt: daysAgo(5)
+    minQuantity: 10,
+    supplier: "Hair Care Specialists",
+    createdAt: new Date("2023-09-20"),
+    updatedAt: new Date("2023-10-30"),
+    salesCount: 72,
+    lastSoldAt: new Date("2023-12-05")
   },
   {
-    id: uuidv4(),
-    name: "Base Líquida Matte",
-    description: "Base líquida de alta cobertura com acabamento matte",
+    id: "4",
+    name: "Base Matte",
+    description: "Base de longa duração com acabamento matte",
     category: "makeup",
     price: 89.90,
-    quantity: 15,
+    quantity: 25,
     minQuantity: 10,
-    supplier: "Fornecedor Makeup",
-    createdAt: daysAgo(18),
-    updatedAt: daysAgo(3)
+    supplier: "Makeup World",
+    createdAt: new Date("2023-08-15"),
+    updatedAt: new Date("2023-09-25"),
+    salesCount: 95,
+    lastSoldAt: new Date("2023-12-12")
   },
   {
-    id: uuidv4(),
-    name: "Batom Cremoso",
-    description: "Batom cremoso de longa duração",
+    id: "5",
+    name: "Batom Líquido",
+    description: "Batom líquido de longa duração",
     category: "makeup",
-    price: 35.00,
-    quantity: 24,
+    price: 45.00,
+    quantity: 4,
     minQuantity: 15,
-    supplier: "Fornecedor Makeup",
-    createdAt: daysAgo(15),
-    updatedAt: daysAgo(2)
+    supplier: "Makeup World",
+    createdAt: new Date("2023-07-10"),
+    updatedAt: new Date("2023-08-20"),
+    salesCount: 210,
+    lastSoldAt: new Date("2023-12-16")
   },
   {
-    id: uuidv4(),
+    id: "6",
+    name: "Creme Antissinais",
+    description: "Creme facial para tratamento de rugas e linhas de expressão",
+    category: "skincare",
+    price: 129.90,
+    quantity: 12,
+    minQuantity: 5,
+    supplier: "Skin Health Company",
+    createdAt: new Date("2023-11-01"),
+    updatedAt: new Date("2023-11-25"),
+    salesCount: 35,
+    lastSoldAt: new Date("2023-12-01")
+  },
+  {
+    id: "7",
     name: "Esmalte Hipoalergênico",
-    description: "Esmalte hipoalergênico de secagem rápida",
+    description: "Esmalte sem químicos agressivos",
     category: "nail",
-    price: 22.90,
+    price: 24.90,
     quantity: 30,
-    minQuantity: 20,
-    supplier: "Fornecedor Nails",
-    createdAt: daysAgo(10),
-    updatedAt: daysAgo(1)
-  },
-  {
-    id: uuidv4(),
-    name: "Creme Hidratante Facial",
-    description: "Creme hidratante para todos os tipos de pele",
-    category: "skincare",
-    price: 65.50,
-    quantity: 10,
     minQuantity: 10,
-    supplier: "Fornecedor Skin",
-    createdAt: daysAgo(5),
-    updatedAt: daysAgo(1)
+    supplier: "Nail Art Supplies",
+    createdAt: new Date("2023-05-12"),
+    updatedAt: new Date("2023-06-15"),
+    salesCount: 10,
+    lastSoldAt: new Date("2023-10-10")
   },
   {
-    id: uuidv4(),
-    name: "Protetor Solar Facial",
-    description: "Protetor solar facial FPS 50",
+    id: "8",
+    name: "Kit Manicure Profissional",
+    description: "Kit completo para manicure e pedicure",
+    category: "nail",
+    price: 189.90,
+    quantity: 7,
+    minQuantity: 3,
+    supplier: "Nail Art Supplies",
+    createdAt: new Date("2023-06-20"),
+    updatedAt: new Date("2023-07-30"),
+    salesCount: 8,
+    lastSoldAt: new Date("2023-09-05")
+  },
+  {
+    id: "9",
+    name: "Sérum Facial Vitamina C",
+    description: "Sérum concentrado com vitamina C",
     category: "skincare",
-    price: 73.90,
-    quantity: 5,
+    price: 112.00,
+    quantity: 2,
     minQuantity: 8,
-    supplier: "Fornecedor Skin",
-    createdAt: daysAgo(5),
-    updatedAt: daysAgo(1)
+    supplier: "Skin Health Company",
+    createdAt: new Date("2023-10-10"),
+    updatedAt: new Date("2023-11-15"),
+    salesCount: 48,
+    lastSoldAt: new Date("2023-12-14")
   },
   {
-    id: uuidv4(),
-    name: "Gel Modelador",
-    description: "Gel modelador para cabelo com fixação forte",
+    id: "10",
+    name: "Escova de Cabelo Profissional",
+    description: "Escova redonda para modelagem",
     category: "hair",
-    price: 32.00,
-    quantity: 0,
-    minQuantity: 15,
-    supplier: "Fornecedor ABC",
-    createdAt: daysAgo(45),
-    updatedAt: daysAgo(20)
+    price: 79.90,
+    quantity: 10,
+    minQuantity: 4,
+    supplier: "Professional Tools Co.",
+    createdAt: new Date("2023-04-15"),
+    updatedAt: new Date("2023-05-20"),
+    salesCount: 3,
+    lastSoldAt: new Date("2023-08-10")
   }
 ];

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Dialog, 
@@ -20,7 +21,6 @@ import {
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Product } from '@/hooks/inventory/types';
 import { 
   Form, 
   FormControl, 
@@ -64,7 +64,18 @@ export const NewProductDialog = ({ open, onOpenChange, onAddProduct }: NewProduc
   });
 
   const onSubmit = (data: ProductFormValues) => {
-    onAddProduct(data as NewProduct);
+    // Make sure all required fields are present
+    const newProduct: NewProduct = {
+      name: data.name,
+      description: data.description,
+      category: data.category,
+      price: data.price,
+      quantity: data.quantity,
+      minQuantity: data.minQuantity,
+      supplier: data.supplier,
+    };
+    
+    onAddProduct(newProduct);
     form.reset();
     onOpenChange(false);
   };

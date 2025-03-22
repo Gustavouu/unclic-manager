@@ -10,4 +10,13 @@ export interface Product {
   supplier?: string;
   createdAt: Date;
   updatedAt: Date;
+  salesCount?: number; // Number of times this product was sold
+  lastSoldAt?: Date; // Last time this product was sold
+}
+
+// For analytics display
+export interface ProductAnalytics {
+  bestSellers: Product[];
+  needsRestock: Product[];
+  slowMoving: Product[];
 }

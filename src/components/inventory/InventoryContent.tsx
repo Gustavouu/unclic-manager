@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Plus } from 'lucide-react';
 import { NewProductDialog } from './NewProductDialog';
 import { useInventory } from '@/hooks/inventory/useInventory';
+import { InventoryAnalytics } from './InventoryAnalytics';
 
 export const InventoryContent = () => {
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
-  const { products, isLoading, addProduct } = useInventory();
+  const { products, isLoading, addProduct, getInventoryAnalytics } = useInventory();
+  
+  const { bestSellers, needsRestock, slowMoving } = getInventoryAnalytics();
 
   return (
     <div className="space-y-6">
@@ -26,6 +29,13 @@ export const InventoryContent = () => {
           </Button>
         </div>
       </div>
+
+      {/* Analytics section with bestselling, restock alerts, and slow-moving products */}
+      <InventoryAnalytics 
+        bestSellers={bestSellers}
+        needsRestock={needsRestock}
+        slowMoving={slowMoving}
+      />
 
       <InventoryFilters />
       
