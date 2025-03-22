@@ -1,5 +1,4 @@
-
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -9,6 +8,7 @@ import { usePayment } from "@/hooks/usePayment";
 import { PaymentForm, PaymentFormValues } from "./PaymentForm";
 import PaymentProcessing from "./PaymentProcessing";
 import { PaymentResult } from "./PaymentResult";
+import PaymentDialogHeader from "./PaymentDialogHeader";
 
 const paymentSchema = z.object({
   paymentMethod: z.string({ required_error: "Selecione uma forma de pagamento" }),
@@ -109,18 +109,7 @@ export const PaymentDialog = ({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>
-            {step === "form" && "Realizar Pagamento"}
-            {step === "processing" && "Processando Pagamento"}
-            {step === "result" && "Resultado do Pagamento"}
-          </DialogTitle>
-          <DialogDescription>
-            {step === "form" && "Preencha os dados para concluir o pagamento do serviço."}
-            {step === "processing" && "Aguarde enquanto processamos seu pagamento..."}
-            {step === "result" && "Confira o resultado do seu pagamento abaixo."}
-          </DialogDescription>
-        </DialogHeader>
+        <PaymentDialogHeader step={step} />
 
         {step === "form" && (
           <PaymentForm
