@@ -19,12 +19,36 @@ const RequireAuth = () => {
       return [...baseBreadcrumb, { label: 'Agendamentos' }];
     }
     if (path.includes('clients')) {
+      if (path.includes('/details/')) {
+        const clientId = path.split('/details/')[1];
+        return [
+          ...baseBreadcrumb, 
+          { label: 'Clientes', path: '/clients' },
+          { label: 'Detalhes do Cliente' }
+        ];
+      }
       return [...baseBreadcrumb, { label: 'Clientes' }];
     }
     if (path.includes('professionals')) {
+      if (path.includes('/details/')) {
+        const profId = path.split('/details/')[1];
+        return [
+          ...baseBreadcrumb,
+          { label: 'Colaboradores', path: '/professionals' },
+          { label: 'Detalhes do Colaborador' }
+        ];
+      }
       return [...baseBreadcrumb, { label: 'Colaboradores' }];
     }
     if (path.includes('inventory')) {
+      if (path.includes('/details/')) {
+        const productId = path.split('/details/')[1];
+        return [
+          ...baseBreadcrumb,
+          { label: 'Estoque', path: '/inventory' },
+          { label: 'Detalhes do Produto' }
+        ];
+      }
       return [...baseBreadcrumb, { label: 'Estoque' }];
     }
     if (path.includes('finance')) {

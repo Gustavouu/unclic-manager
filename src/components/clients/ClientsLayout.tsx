@@ -7,7 +7,7 @@ type ClientsLayoutProps = {
 
 export const ClientsLayout = ({ children }: ClientsLayoutProps) => {
   return (
-    <div className="container mx-auto py-6 px-4 max-w-7xl">
+    <div className="space-y-4">
       {children}
     </div>
   );
