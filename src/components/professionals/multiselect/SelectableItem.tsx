@@ -3,6 +3,7 @@ import * as React from "react";
 import { Check } from "lucide-react";
 import { CommandItem } from "@/components/ui/command";
 import { Option } from "./types";
+import { cn } from "@/lib/utils";
 
 interface SelectableItemProps {
   option: Option;

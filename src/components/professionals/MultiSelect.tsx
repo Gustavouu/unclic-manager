@@ -1,7 +1,7 @@
 
 import * as React from "react";
-import { ChevronsUpDown } from "lucide-react";
-import { Command, CommandPrimitive } from "@/components/ui/command";
+import { ChevronsUpDown, Search } from "lucide-react";
+import { Command } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { SelectedItem } from "./multiselect/SelectedItem";
 import { DropdownList } from "./multiselect/DropdownList";
@@ -41,13 +41,20 @@ export function MultiSelect({
     [value]
   );
 
-  // Memoize available options that haven't been selected
-  const selectableOptions = React.useMemo(() => 
-    safeOptions.filter(option => 
-      !safeValue.some(item => item.value === option.value)
-    ), 
-    [safeOptions, safeValue]
-  );
+  // Filter options based on input value
+  const filteredOptions = React.useMemo(() => {
+    if (!inputValue.trim()) {
+      return safeOptions.filter(option => 
+        !safeValue.some(item => item.value === option.value)
+      );
+    }
+    
+    const searchTerm = inputValue.toLowerCase().trim();
+    return safeOptions.filter(option => 
+      !safeValue.some(item => item.value === option.value) && 
+      option.label.toLowerCase().includes(searchTerm)
+    );
+  }, [safeOptions, safeValue, inputValue]);
 
   // Handle removing an option
   const handleUnselect = React.useCallback((option: Option) => {
@@ -81,6 +88,13 @@ export function MultiSelect({
     }
   }, [safeValue, onChange]);
 
+  // Clear input when dropdown closes
+  React.useEffect(() => {
+    if (!open) {
+      setInputValue("");
+    }
+  }, [open]);
+
   return (
     <div 
       className={cn(
@@ -92,6 +106,7 @@ export function MultiSelect({
       <Command
         onKeyDown={handleKeyDown}
         className="overflow-visible bg-transparent"
+        shouldFilter={false} // We handle filtering ourselves
       >
         <div 
           className={cn(
@@ -116,16 +131,21 @@ export function MultiSelect({
                 ))}
               </div>
             )}
-            <CommandPrimitive.Input
-              ref={inputRef}
-              value={inputValue}
-              onValueChange={setInputValue}
-              onBlur={() => setOpen(false)}
-              onFocus={() => setOpen(true)}
-              placeholder={safeValue.length > 0 ? "" : placeholder}
-              className="ml-1 bg-transparent outline-none placeholder:text-muted-foreground flex-1 pl-1 min-w-[120px]"
-              disabled={disabled}
-            />
+            <div className="flex items-center gap-1 flex-1">
+              {safeValue.length === 0 && inputValue.length === 0 && (
+                <Search className="h-4 w-4 opacity-50 mr-1" />
+              )}
+              <input
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onBlur={() => setTimeout(() => setOpen(false), 150)}
+                onFocus={() => setOpen(true)}
+                placeholder={safeValue.length > 0 ? "" : placeholder}
+                className="bg-transparent outline-none placeholder:text-muted-foreground flex-1 h-6 min-w-[120px]"
+                disabled={disabled}
+              />
+            </div>
           </div>
           <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
         </div>
@@ -133,7 +153,7 @@ export function MultiSelect({
         <div className="relative mt-1">
           <DropdownList
             open={open}
-            options={selectableOptions}
+            options={filteredOptions}
             onSelect={handleSelect}
             inputValue={inputValue}
             emptyMessage={emptyMessage}
