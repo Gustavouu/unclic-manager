@@ -64,14 +64,12 @@ export const InventoryContent = () => {
         <InventoryStats products={products} />
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-4">
-        <div className="lg:col-span-3 xl:col-span-2">
-          <InventoryAnalytics 
-            bestSellers={bestSellers} 
-            needsRestock={needsRestock} 
-            slowMoving={slowMoving} 
-          />
-        </div>
+      <div className="mt-4">
+        <InventoryAnalytics 
+          bestSellers={bestSellers} 
+          needsRestock={needsRestock} 
+          slowMoving={slowMoving} 
+        />
       </div>
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-4 mb-2">
