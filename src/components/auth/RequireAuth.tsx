@@ -7,25 +7,6 @@ const RequireAuth = () => {
   const { user, loading } = useAuth();
   const location = useLocation();
   
-  // Get the page title based on the current path
-  const getPageTitle = () => {
-    const path = location.pathname;
-    
-    if (path.includes('dashboard')) return 'Dashboard';
-    if (path.includes('appointments')) return 'Agendamentos';
-    if (path.includes('clients')) return 'Clientes';
-    if (path.includes('professionals')) return 'Colaboradores';
-    if (path.includes('inventory')) return 'Estoque';
-    if (path.includes('finance')) return 'Financeiro';
-    if (path.includes('services')) return 'Serviços';
-    if (path.includes('messages')) return 'Mensagens';
-    if (path.includes('reports')) return 'Relatórios';
-    if (path.includes('settings')) return 'Configurações';
-    if (path.includes('help')) return 'Ajuda';
-    
-    return 'Unclic';
-  };
-  
   // Get breadcrumb items based on the current path
   const getBreadcrumbItems = () => {
     const path = location.pathname;
@@ -77,7 +58,7 @@ const RequireAuth = () => {
   }
 
   return (
-    <AppLayout title={getPageTitle()} breadcrumb={getBreadcrumbItems()}>
+    <AppLayout breadcrumb={getBreadcrumbItems()}>
       <Outlet />
     </AppLayout>
   );

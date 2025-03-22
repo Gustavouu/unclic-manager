@@ -22,18 +22,36 @@ import {
 } from "@/components/ui/breadcrumb";
 
 interface HeaderProps {
-  title: string;
   breadcrumb?: { label: string; path?: string }[];
 }
 
-export const Header = ({ title, breadcrumb = [] }: HeaderProps) => {
+export const Header = ({ breadcrumb = [] }: HeaderProps) => {
   const isMobile = useIsMobile();
   
   return (
     <header className="flex flex-col border-b border-border/50 py-4 px-6 bg-background/50 backdrop-blur-sm">
       <div className="flex items-center justify-between h-8">
         <div>
-          <h1 className="text-xl font-display font-medium">{title}</h1>
+          {breadcrumb.length > 0 && (
+            <Breadcrumb>
+              <BreadcrumbList>
+                {breadcrumb.map((item, index) => (
+                  <React.Fragment key={index}>
+                    {index > 0 && <BreadcrumbSeparator />}
+                    {index === breadcrumb.length - 1 ? (
+                      <BreadcrumbItem>
+                        <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                      </BreadcrumbItem>
+                    ) : (
+                      <BreadcrumbItem>
+                        <BreadcrumbLink href={item.path || '#'}>{item.label}</BreadcrumbLink>
+                      </BreadcrumbItem>
+                    )}
+                  </React.Fragment>
+                ))}
+              </BreadcrumbList>
+            </Breadcrumb>
+          )}
         </div>
         
         <div className="flex items-center gap-2">
@@ -72,29 +90,6 @@ export const Header = ({ title, breadcrumb = [] }: HeaderProps) => {
           </DropdownMenu>
         </div>
       </div>
-      
-      {breadcrumb.length > 0 && (
-        <div className="mt-2">
-          <Breadcrumb>
-            <BreadcrumbList>
-              {breadcrumb.map((item, index) => (
-                <React.Fragment key={index}>
-                  {index > 0 && <BreadcrumbSeparator />}
-                  {index === breadcrumb.length - 1 ? (
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  ) : (
-                    <BreadcrumbItem>
-                      <BreadcrumbLink href={item.path || '#'}>{item.label}</BreadcrumbLink>
-                    </BreadcrumbItem>
-                  )}
-                </React.Fragment>
-              ))}
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-      )}
     </header>
   );
 };
