@@ -8,14 +8,14 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 
 export default function Inventory() {
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto py-8">
       <Breadcrumb items={[
         { label: "Início", active: false },
-        { label: "Produtos", active: true }
+        { label: "Estoque", active: true }
       ]} />
       
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Configuração Webhook</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold">Configuração de Webhook</h1>
         
         <Popover>
           <PopoverTrigger asChild>

@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MoreHorizontal, ChevronUp, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -147,13 +147,13 @@ export const WebhookTable = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="border rounded-md overflow-hidden">
+    <div className="space-y-6">
+      <div className="border rounded-md shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead 
-                className="cursor-pointer" 
+                className="cursor-pointer font-medium text-sm" 
                 onClick={() => handleSort('date')}
               >
                 <div className="flex items-center">
@@ -163,7 +163,7 @@ export const WebhookTable = () => {
                 </div>
               </TableHead>
               <TableHead 
-                className="cursor-pointer"
+                className="cursor-pointer font-medium text-sm"
                 onClick={() => handleSort('product')}
               >
                 <div className="flex items-center">
@@ -172,14 +172,14 @@ export const WebhookTable = () => {
                   ) : null}
                 </div>
               </TableHead>
-              <TableHead>URL</TableHead>
-              <TableHead>Autenticação</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead className="font-medium text-sm">URL</TableHead>
+              <TableHead className="font-medium text-sm">Autenticação</TableHead>
+              <TableHead className="text-right font-medium text-sm">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {currentItems.map((webhook) => (
-              <TableRow key={webhook.id}>
+              <TableRow key={webhook.id} className="text-sm">
                 <TableCell>{webhook.date}</TableCell>
                 <TableCell>{webhook.product}</TableCell>
                 <TableCell className="max-w-[200px] truncate">{webhook.url}</TableCell>
@@ -204,7 +204,7 @@ export const WebhookTable = () => {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between mt-4">
+      <div className="flex items-center justify-between mt-6">
         <div className="text-sm text-muted-foreground">
           Exibindo {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, webhooksData.length)} de {webhooksData.length} registros
         </div>

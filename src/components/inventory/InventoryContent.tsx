@@ -10,12 +10,15 @@ import { WebhookTable } from './WebhookTable';
 
 export const InventoryContent = () => {
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
-  const { products, isLoading, addProduct } = useInventory();
+  const { products, isLoading, addProduct, getInventoryAnalytics } = useInventory();
+  const analytics = getInventoryAnalytics();
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      <InventoryStats products={products} />
+      
       <div className="flex justify-between items-center mb-4">
-        <div></div>
+        <h2 className="text-xl font-semibold">Configurações de Webhook</h2>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
           Nova Chave
