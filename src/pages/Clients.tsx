@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ClientsLayout } from "@/components/clients/ClientsLayout";
 import { ClientsHeader } from "@/components/clients/ClientsHeader";
@@ -14,7 +15,6 @@ import {
 } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { ChevronRight } from "lucide-react";
 
 const Clients = () => {
   const [showDetails, setShowDetails] = useState(false);
@@ -92,12 +92,6 @@ const Clients = () => {
 
   return (
     <ClientsLayout>
-      <div className="flex items-center text-sm text-muted-foreground mb-4">
-        <span>Início</span>
-        <ChevronRight className="h-4 w-4 mx-1" />
-        <span className="font-medium text-foreground">Clientes</span>
-      </div>
-      
       <ClientsHeader 
         searchTerm={searchTerm} 
         setSearchTerm={setSearchTerm} 
