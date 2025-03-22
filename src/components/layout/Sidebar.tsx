@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/useAuth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type SidebarItemProps = {
@@ -55,6 +56,7 @@ const SidebarItem = ({ icon, label, to, isActive }: SidebarItemProps) => {
 export const Sidebar = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(!isMobile);
   
   const pathName = location.pathname;
@@ -75,6 +77,10 @@ export const Sidebar = () => {
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (
@@ -121,39 +127,42 @@ export const Sidebar = () => {
           ))}
         </nav>
         
-        {isOpen && (
-          <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center gap-3">
+        <div className="p-4 border-t border-gray-200">
+          {isOpen ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium">
+                  U
+                </div>
+                <div>
+                  <p className="text-gray-800 font-medium text-sm">Salão Exemplo</p>
+                  <p className="text-gray-500 text-xs">Admin</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleSignOut}
+                className="p-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                title="Sair"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-4">
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium">
                 U
               </div>
-              <div>
-                <p className="text-gray-800 font-medium text-sm">Salão Exemplo</p>
-                <p className="text-gray-500 text-xs">Admin</p>
-              </div>
+              {!isMobile && (
+                <button 
+                  onClick={handleSignOut}
+                  className="p-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                  title="Sair"
+                >
+                  <LogOut size={18} />
+                </button>
+              )}
             </div>
-          </div>
-        )}
-
-        {!isOpen && !isMobile && (
-          <div className="p-4 border-t border-gray-200 flex justify-center">
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-medium">
-              U
-            </div>
-          </div>
-        )}
-        
-        <div className={cn(
-          "p-3 border-t border-gray-200",
-          !isOpen && !isMobile && "flex justify-center"
-        )}>
-          <button className={cn(
-            "w-full py-2 px-3 rounded-md flex items-center gap-2 text-gray-700 hover:bg-gray-50 transition-colors",
-            !isOpen && !isMobile && "justify-center p-2"
-          )}>
-            <LogOut size={18} />
-            {(isOpen || isMobile) && <span className="text-sm">Sair</span>}
-          </button>
+          )}
         </div>
       </aside>
       
