@@ -98,15 +98,26 @@ export const InventoryAnalytics = ({
                     </>
                   ) : showMinThreshold ? (
                     <div className="border rounded-md p-2">
-                      <div className="flex items-center justify-between mb-1">
+                      <div className={icon === "clock" ? "mb-1" : "flex items-center justify-between mb-1"}>
                         <span className="font-medium">{product.name}</span>
-                        <Badge variant="outline" className={typeof product.data === 'string' ? "bg-blue-100 text-blue-800 text-[10px]" : "bg-orange-100 text-orange-800 text-[10px]"}>
-                          {product.data} {valueLabel && valueLabel}
-                        </Badge>
+                        {icon !== "clock" && (
+                          <Badge variant="outline" className="bg-orange-100 text-orange-800 text-[10px]">
+                            {product.data} {valueLabel}
+                          </Badge>
+                        )}
                       </div>
                       <Separator className="my-1.5" />
                       <div className="text-muted-foreground text-[10px]">
-                        {typeof product.data === 'string' ? 'Produto com baixa rotatividade' : 'Estoque mínimo recomendado: 10'}
+                        {icon === "clock" ? (
+                          <div className="flex justify-between items-center">
+                            <span>Última venda:</span>
+                            <Badge variant="outline" className="bg-blue-100 text-blue-800 text-[10px]">
+                              {product.data}
+                            </Badge>
+                          </div>
+                        ) : (
+                          'Estoque mínimo recomendado: 10'
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -143,15 +154,26 @@ export const InventoryAnalytics = ({
                         </>
                       ) : showMinThreshold ? (
                         <div className="border rounded-md p-2">
-                          <div className="flex items-center justify-between mb-1">
+                          <div className={icon === "clock" ? "mb-1" : "flex items-center justify-between mb-1"}>
                             <span className="font-medium">{product.name}</span>
-                            <Badge variant="outline" className={typeof product.data === 'string' ? "bg-blue-100 text-blue-800 text-[10px]" : "bg-orange-100 text-orange-800 text-[10px]"}>
-                              {product.data} {valueLabel && valueLabel}
-                            </Badge>
+                            {icon !== "clock" && (
+                              <Badge variant="outline" className="bg-orange-100 text-orange-800 text-[10px]">
+                                {product.data} {valueLabel}
+                              </Badge>
+                            )}
                           </div>
                           <Separator className="my-1.5" />
                           <div className="text-muted-foreground text-[10px]">
-                            {typeof product.data === 'string' ? 'Produto com baixa rotatividade' : 'Estoque mínimo recomendado: 10'}
+                            {icon === "clock" ? (
+                              <div className="flex justify-between items-center">
+                                <span>Última venda:</span>
+                                <Badge variant="outline" className="bg-blue-100 text-blue-800 text-[10px]">
+                                  {product.data}
+                                </Badge>
+                              </div>
+                            ) : (
+                              'Estoque mínimo recomendado: 10'
+                            )}
                           </div>
                         </div>
                       ) : (
