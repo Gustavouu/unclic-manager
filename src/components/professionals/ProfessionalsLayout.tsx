@@ -13,8 +13,10 @@ import {
   Pagination, 
   PaginationContent, 
   PaginationItem, 
+  PaginationLink,
   PaginationNext, 
-  PaginationPrevious 
+  PaginationPrevious,
+  PaginationEllipsis
 } from "@/components/ui/pagination";
 
 interface ProfessionalsLayoutProps {
@@ -75,17 +77,72 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   // Total de páginas
   const totalPages = Math.ceil((professionals?.length || 0) / itemsPerPage);
   
-  // Funções de navegação
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+  // Função para gerar os números de página
+  const generatePaginationItems = () => {
+    let items = [];
+    
+    // Define quantos números exibir antes e depois da página atual
+    const maxPagesDisplayed = 5;
+    const sidePages = Math.floor(maxPagesDisplayed / 2);
+    
+    let startPage = Math.max(1, currentPage - sidePages);
+    let endPage = Math.min(totalPages, startPage + maxPagesDisplayed - 1);
+    
+    // Ajustar startPage se estivermos próximos ao final
+    if (endPage - startPage + 1 < maxPagesDisplayed) {
+      startPage = Math.max(1, endPage - maxPagesDisplayed + 1);
     }
-  };
-  
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+    
+    // Primeira página e ellipsis se necessário
+    if (startPage > 1) {
+      items.push(
+        <PaginationItem key="first">
+          <PaginationLink onClick={() => setCurrentPage(1)} isActive={currentPage === 1}>
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+      
+      if (startPage > 2) {
+        items.push(
+          <PaginationItem key="start-ellipsis">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
     }
+    
+    // Páginas intermediárias
+    for (let i = startPage; i <= endPage; i++) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    // Última página e ellipsis se necessário
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        items.push(
+          <PaginationItem key="end-ellipsis">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+      
+      items.push(
+        <PaginationItem key="last">
+          <PaginationLink onClick={() => setCurrentPage(totalPages)} isActive={currentPage === totalPages}>
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    return items;
   };
   
   if (isLoading) {
@@ -128,24 +185,20 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
         )}
         
         {totalPages > 1 && (
-          <Pagination className="mt-4">
+          <Pagination className="mt-6">
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious 
-                  onClick={handlePrevPage} 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
                   className={currentPage === 1 ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
                 />
               </PaginationItem>
               
-              <PaginationItem className="flex items-center">
-                <span className="text-sm">
-                  Página {currentPage} de {totalPages}
-                </span>
-              </PaginationItem>
+              {generatePaginationItems()}
               
               <PaginationItem>
                 <PaginationNext 
-                  onClick={handleNextPage}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   className={currentPage === totalPages ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
                 />
               </PaginationItem>
