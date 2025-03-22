@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { InventoryTable } from './InventoryTable';
 import { InventoryStats } from './InventoryStats';
@@ -41,7 +40,6 @@ export const InventoryContent = () => {
     setEditingProduct(null);
   };
 
-  // Mapeia produtos para o formato AnalyticsProduct para o componente InventoryAnalytics
   const bestSellers = analytics.bestSellers.map(product => ({
     ...product,
     data: product.salesCount || 0
@@ -54,7 +52,6 @@ export const InventoryContent = () => {
   
   const slowMoving = analytics.slowMoving.map(product => ({
     ...product,
-    // Formata a data como uma string ou usa um valor padrão
     data: product.lastSoldAt ? getFormattedDate(product.lastSoldAt.toString()) : 'Nunca vendido'
   }));
   
@@ -88,7 +85,8 @@ export const InventoryContent = () => {
           icon="clock"
           iconColor="text-blue-500"
           products={slowMoving} 
-          valuePrefix="Última venda:"
+          valueLabel="última venda"
+          showMinThreshold
         />
       </div>
       

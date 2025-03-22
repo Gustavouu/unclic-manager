@@ -100,13 +100,13 @@ export const InventoryAnalytics = ({
                     <div className="border rounded-md p-2">
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-medium">{product.name}</span>
-                        <Badge variant="outline" className="bg-orange-100 text-orange-800 text-[10px]">
-                          {product.data}
+                        <Badge variant="outline" className={typeof product.data === 'string' ? "bg-blue-100 text-blue-800 text-[10px]" : "bg-orange-100 text-orange-800 text-[10px]"}>
+                          {product.data} {valueLabel && valueLabel}
                         </Badge>
                       </div>
                       <Separator className="my-1.5" />
                       <div className="text-muted-foreground text-[10px]">
-                        Estoque mínimo recomendado: 10
+                        {typeof product.data === 'string' ? 'Produto com baixa rotatividade' : 'Estoque mínimo recomendado: 10'}
                       </div>
                     </div>
                   ) : (
@@ -145,13 +145,13 @@ export const InventoryAnalytics = ({
                         <div className="border rounded-md p-2">
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-medium">{product.name}</span>
-                            <Badge variant="outline" className="bg-orange-100 text-orange-800 text-[10px]">
-                              {product.data}
+                            <Badge variant="outline" className={typeof product.data === 'string' ? "bg-blue-100 text-blue-800 text-[10px]" : "bg-orange-100 text-orange-800 text-[10px]"}>
+                              {product.data} {valueLabel && valueLabel}
                             </Badge>
                           </div>
                           <Separator className="my-1.5" />
                           <div className="text-muted-foreground text-[10px]">
-                            Estoque mínimo recomendado: 10
+                            {typeof product.data === 'string' ? 'Produto com baixa rotatividade' : 'Estoque mínimo recomendado: 10'}
                           </div>
                         </div>
                       ) : (
