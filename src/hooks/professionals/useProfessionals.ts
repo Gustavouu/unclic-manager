@@ -6,7 +6,7 @@ import { Professional } from "./types";
 
 export const useProfessionals = () => {
   const {
-    professionals,
+    professionals: fetchedProfessionals,
     isLoading,
     addProfessional,
     updateProfessional,
@@ -15,7 +15,7 @@ export const useProfessionals = () => {
   } = useProfessionalOperations();
   
   // Garantir que os profissionais estão sempre como um array
-  const safeProfessionals = Array.isArray(professionals) ? professionals : [] as Professional[];
+  const safeProfessionals = Array.isArray(fetchedProfessionals) ? fetchedProfessionals : [] as Professional[];
   
   // Adicionar um estado local para rastrear mudanças
   const [trackedProfessionals, setTrackedProfessionals] = useState<Professional[]>(safeProfessionals);

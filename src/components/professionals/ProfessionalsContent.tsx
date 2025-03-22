@@ -18,7 +18,10 @@ export const ProfessionalsContent = ({
   onEditClick,
   onDeleteClick
 }: ProfessionalsContentProps) => {
-  if (professionals.length === 0) {
+  // Ensure professionals is always an array
+  const safeProfessionals = Array.isArray(professionals) ? professionals : [];
+  
+  if (safeProfessionals.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         Nenhum colaborador encontrado.
@@ -28,14 +31,14 @@ export const ProfessionalsContent = ({
   
   return view === "grid" ? (
     <ProfessionalsGrid 
-      professionals={professionals} 
+      professionals={safeProfessionals} 
       onProfessionalClick={onProfessionalClick}
       onEditClick={onEditClick}
       onDeleteClick={onDeleteClick}
     />
   ) : (
     <ProfessionalsTable 
-      professionals={professionals} 
+      professionals={safeProfessionals} 
       onProfessionalClick={onProfessionalClick}
       onEditClick={onEditClick}
       onDeleteClick={onDeleteClick}

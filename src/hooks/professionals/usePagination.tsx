@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 interface UsePaginationProps {
   totalItems: number;
@@ -14,16 +14,16 @@ export const usePagination = ({
 }: UsePaginationProps) => {
   const [currentPage, setCurrentPage] = useState(initialPage);
   
-  // Calculate total pages
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  // Calculate total pages - minimum 1 page even if no items
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
   
   // Make sure current page is valid
-  const safePage = Math.max(1, Math.min(currentPage, totalPages || 1));
-  
-  // If safePage is different from currentPage, update it
-  if (safePage !== currentPage) {
-    setCurrentPage(safePage);
-  }
+  useEffect(() => {
+    const safePage = Math.max(1, Math.min(currentPage, totalPages));
+    if (safePage !== currentPage) {
+      setCurrentPage(safePage);
+    }
+  }, [currentPage, totalPages]);
   
   // Calculate indices
   const indexOfLastItem = currentPage * itemsPerPage;

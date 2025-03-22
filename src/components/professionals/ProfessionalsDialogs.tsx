@@ -45,11 +45,13 @@ export const ProfessionalsDialogs = ({
         />
       )}
       
-      <DeleteProfessionalDialog
-        professional={professionalToDelete}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-      />
+      {professionalToDelete && (
+        <DeleteProfessionalDialog
+          professional={professionalToDelete}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      )}
     </>
   );
 };
