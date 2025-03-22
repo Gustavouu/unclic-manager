@@ -1,8 +1,16 @@
 
-import { ChevronRight } from "lucide-react";
+import {
+  Breadcrumb as ShadcnBreadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface BreadcrumbItem {
   label: string;
+  path?: string;
   active?: boolean;
 }
 
@@ -12,15 +20,23 @@ interface BreadcrumbProps {
 
 export const Breadcrumb = ({ items }: BreadcrumbProps) => {
   return (
-    <div className="flex items-center text-sm text-muted-foreground mb-4">
-      {items.map((item, index) => (
-        <div key={index} className="flex items-center">
-          {index > 0 && <ChevronRight className="h-4 w-4 mx-1" />}
-          <span className={item.active ? "font-medium text-foreground" : ""}>
-            {item.label}
-          </span>
-        </div>
-      ))}
-    </div>
+    <ShadcnBreadcrumb className="mb-4">
+      <BreadcrumbList>
+        {items.map((item, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && <BreadcrumbSeparator />}
+            {item.active ? (
+              <BreadcrumbItem>
+                <BreadcrumbPage>{item.label}</BreadcrumbPage>
+              </BreadcrumbItem>
+            ) : (
+              <BreadcrumbItem>
+                <BreadcrumbLink href={item.path || '#'}>{item.label}</BreadcrumbLink>
+              </BreadcrumbItem>
+            )}
+          </React.Fragment>
+        ))}
+      </BreadcrumbList>
+    </ShadcnBreadcrumb>
   );
 };

@@ -25,6 +25,48 @@ const RequireAuth = () => {
     
     return 'Unclic';
   };
+  
+  // Get breadcrumb items based on the current path
+  const getBreadcrumbItems = () => {
+    const path = location.pathname;
+    const baseBreadcrumb = [{ label: 'Início', path: '/dashboard' }];
+    
+    if (path.includes('dashboard')) {
+      return [...baseBreadcrumb, { label: 'Dashboard' }];
+    }
+    if (path.includes('appointments')) {
+      return [...baseBreadcrumb, { label: 'Agendamentos' }];
+    }
+    if (path.includes('clients')) {
+      return [...baseBreadcrumb, { label: 'Clientes' }];
+    }
+    if (path.includes('professionals')) {
+      return [...baseBreadcrumb, { label: 'Colaboradores' }];
+    }
+    if (path.includes('inventory')) {
+      return [...baseBreadcrumb, { label: 'Estoque' }];
+    }
+    if (path.includes('finance')) {
+      return [...baseBreadcrumb, { label: 'Financeiro' }];
+    }
+    if (path.includes('services')) {
+      return [...baseBreadcrumb, { label: 'Serviços' }];
+    }
+    if (path.includes('messages')) {
+      return [...baseBreadcrumb, { label: 'Mensagens' }];
+    }
+    if (path.includes('reports')) {
+      return [...baseBreadcrumb, { label: 'Relatórios' }];
+    }
+    if (path.includes('settings')) {
+      return [...baseBreadcrumb, { label: 'Configurações' }];
+    }
+    if (path.includes('help')) {
+      return [...baseBreadcrumb, { label: 'Ajuda' }];
+    }
+    
+    return baseBreadcrumb;
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Carregando...</div>;
@@ -35,7 +77,7 @@ const RequireAuth = () => {
   }
 
   return (
-    <AppLayout title={getPageTitle()}>
+    <AppLayout title={getPageTitle()} breadcrumb={getBreadcrumbItems()}>
       <Outlet />
     </AppLayout>
   );

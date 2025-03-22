@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { InventoryContent } from "@/components/inventory/InventoryContent";
-import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { Button } from "@/components/ui/button";
 import { HelpCircle } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -9,11 +8,6 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 export default function Inventory() {
   return (
     <div className="container mx-auto px-0 py-4">
-      <Breadcrumb items={[
-        { label: "Início", active: false },
-        { label: "Estoque", active: true }
-      ]} />
-      
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Gestão de Estoque</h1>
         
