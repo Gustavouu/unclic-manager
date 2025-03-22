@@ -2,6 +2,9 @@
 import React from 'react';
 import { InventoryContent } from "@/components/inventory/InventoryContent";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
+import { Button } from "@/components/ui/button";
+import { HelpCircle } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 export default function Inventory() {
   return (
@@ -11,16 +14,17 @@ export default function Inventory() {
         { label: "Produtos", active: true }
       ]} />
       
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="w-full lg:w-3/4">
-          <h1 className="text-2xl font-bold mb-6">Controle de Estoque</h1>
-          <InventoryContent />
-        </div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Controle de Estoque</h1>
         
-        <div className="w-full lg:w-1/4 mt-6 lg:mt-0">
-          <div className="border rounded-md p-4 bg-white">
-            <h2 className="text-lg font-semibold mb-4">Dicas gerais</h2>
-            
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <HelpCircle className="h-4 w-4" />
+              Dicas gerais
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-4" side="left">
             <div className="space-y-4">
               <div>
                 <h3 className="font-medium flex items-center gap-2">
@@ -61,9 +65,11 @@ export default function Inventory() {
                 </p>
               </div>
             </div>
-          </div>
-        </div>
+          </PopoverContent>
+        </Popover>
       </div>
+      
+      <InventoryContent />
     </div>
   );
 }
