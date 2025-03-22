@@ -1,23 +1,13 @@
 
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
-import { ProfessionalsGrid } from "./ProfessionalsGrid";
-import { ProfessionalsTable } from "./ProfessionalsTable";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { ProfessionalDetailsDialog } from "./ProfessionalDetailsDialog";
 import { Professional } from "@/hooks/professionals/types";
-import { EditProfessionalDialog } from "./EditProfessionalDialog";
-import { DeleteProfessionalDialog } from "./DeleteProfessionalDialog";
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink,
-  PaginationNext, 
-  PaginationPrevious,
-  PaginationEllipsis
-} from "@/components/ui/pagination";
+import { ProfessionalsDialogs } from "./ProfessionalsDialogs";
+import { ProfessionalsContent } from "./ProfessionalsContent";
+import { ProfessionalsPagination } from "./ProfessionalsPagination";
+import { usePagination } from "@/hooks/professionals/usePagination";
 
 interface ProfessionalsLayoutProps {
   view: "grid" | "list";
@@ -26,10 +16,10 @@ interface ProfessionalsLayoutProps {
 export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   const { professionals, isLoading } = useProfessionals();
   
-  // Forçar uma atualização quando os profissionais mudarem
+  // Force rerender when professionals change
   const [key, setKey] = useState(0);
   
-  // Estado para controlar dialogs
+  // Dialog state
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -37,112 +27,50 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   const [professionalToEdit, setProfessionalToEdit] = useState<Professional | null>(null);
   const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
   
-  // Paginação
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6; // Quantidade de itens por página
+  // Items per page
+  const itemsPerPage = 6;
+  
+  // Pagination hook
+  const { 
+    currentPage, 
+    totalPages,
+    indexOfFirstItem,
+    indexOfLastItem,
+    setCurrentPage
+  } = usePagination({
+    totalItems: professionals?.length || 0,
+    itemsPerPage
+  });
+  
+  // Current professionals to display
+  const currentProfessionals = Array.isArray(professionals) 
+    ? professionals.slice(indexOfFirstItem, indexOfLastItem) 
+    : [];
   
   useEffect(() => {
-    // Incrementar a key para forçar a renderização quando professionals mudar
+    // Increment key to force rerender when professionals change
     setKey(prev => prev + 1);
     console.log("Profissionais atualizados na interface:", professionals);
   }, [professionals]);
   
-  // Função para lidar com o clique em um profissional
+  // Handle professional click
   const handleProfessionalClick = (id: string) => {
     setSelectedProfessionalId(id);
     setDetailsOpen(true);
   };
   
-  // Função para lidar com o clique em editar
+  // Handle edit click
   const handleEditClick = (professional: Professional, e: React.MouseEvent) => {
     e.stopPropagation();
     setProfessionalToEdit(professional);
     setEditOpen(true);
   };
   
-  // Função para lidar com o clique em excluir
+  // Handle delete click
   const handleDeleteClick = (professional: Professional, e: React.MouseEvent) => {
     e.stopPropagation();
     setProfessionalToDelete(professional);
     setDeleteOpen(true);
-  };
-  
-  // Paginação - calcular índices
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentProfessionals = Array.isArray(professionals) 
-    ? professionals.slice(indexOfFirstItem, indexOfLastItem) 
-    : [];
-  
-  // Total de páginas
-  const totalPages = Math.ceil((professionals?.length || 0) / itemsPerPage);
-  
-  // Função para gerar os números de página
-  const generatePaginationItems = () => {
-    let items = [];
-    
-    // Define quantos números exibir antes e depois da página atual
-    const maxPagesDisplayed = 5;
-    const sidePages = Math.floor(maxPagesDisplayed / 2);
-    
-    let startPage = Math.max(1, currentPage - sidePages);
-    let endPage = Math.min(totalPages, startPage + maxPagesDisplayed - 1);
-    
-    // Ajustar startPage se estivermos próximos ao final
-    if (endPage - startPage + 1 < maxPagesDisplayed) {
-      startPage = Math.max(1, endPage - maxPagesDisplayed + 1);
-    }
-    
-    // Primeira página e ellipsis se necessário
-    if (startPage > 1) {
-      items.push(
-        <PaginationItem key="first">
-          <PaginationLink onClick={() => setCurrentPage(1)} isActive={currentPage === 1}>
-            1
-          </PaginationLink>
-        </PaginationItem>
-      );
-      
-      if (startPage > 2) {
-        items.push(
-          <PaginationItem key="start-ellipsis">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      }
-    }
-    
-    // Páginas intermediárias
-    for (let i = startPage; i <= endPage; i++) {
-      items.push(
-        <PaginationItem key={i}>
-          <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
-            {i}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-    
-    // Última página e ellipsis se necessário
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        items.push(
-          <PaginationItem key="end-ellipsis">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      }
-      
-      items.push(
-        <PaginationItem key="last">
-          <PaginationLink onClick={() => setCurrentPage(totalPages)} isActive={currentPage === totalPages}>
-            {totalPages}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-    
-    return items;
   };
   
   if (isLoading) {
@@ -168,65 +96,33 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   return (
     <>
       <div key={key} className="space-y-6">
-        {view === "grid" ? (
-          <ProfessionalsGrid 
-            professionals={currentProfessionals} 
-            onProfessionalClick={handleProfessionalClick}
-            onEditClick={handleEditClick}
-            onDeleteClick={handleDeleteClick}
-          />
-        ) : (
-          <ProfessionalsTable 
-            professionals={currentProfessionals} 
-            onProfessionalClick={handleProfessionalClick}
-            onEditClick={handleEditClick}
-            onDeleteClick={handleDeleteClick}
-          />
-        )}
+        <ProfessionalsContent 
+          view={view}
+          professionals={currentProfessionals}
+          onProfessionalClick={handleProfessionalClick}
+          onEditClick={handleEditClick}
+          onDeleteClick={handleDeleteClick}
+        />
         
         {totalPages > 1 && (
-          <Pagination className="mt-6">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious 
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
-                  className={currentPage === 1 ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-              
-              {generatePaginationItems()}
-              
-              <PaginationItem>
-                <PaginationNext 
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  className={currentPage === totalPages ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+          <ProfessionalsPagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         )}
       </div>
       
-      {selectedProfessionalId && (
-        <ProfessionalDetailsDialog
-          professionalId={selectedProfessionalId}
-          open={detailsOpen}
-          onOpenChange={setDetailsOpen}
-        />
-      )}
-      
-      {professionalToEdit && (
-        <EditProfessionalDialog
-          professional={professionalToEdit}
-          open={editOpen}
-          onOpenChange={setEditOpen}
-        />
-      )}
-      
-      <DeleteProfessionalDialog
-        professional={professionalToDelete}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
+      <ProfessionalsDialogs 
+        selectedProfessionalId={selectedProfessionalId}
+        detailsOpen={detailsOpen}
+        setDetailsOpen={setDetailsOpen}
+        professionalToEdit={professionalToEdit}
+        editOpen={editOpen}
+        setEditOpen={setEditOpen}
+        professionalToDelete={professionalToDelete}
+        deleteOpen={deleteOpen}
+        setDeleteOpen={setDeleteOpen}
       />
     </>
   );
