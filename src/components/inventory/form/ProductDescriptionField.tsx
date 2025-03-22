@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { useFormContext } from "react-hook-form";
 
@@ -16,11 +16,15 @@ export const ProductDescriptionField = () => {
           <FormLabel>Descrição</FormLabel>
           <FormControl>
             <Textarea 
-              placeholder="Descrição do produto" 
-              className="min-h-20" 
+              placeholder="Descrição detalhada do produto" 
+              className="min-h-24 resize-none" 
               {...field} 
+              value={field.value || ''}
             />
           </FormControl>
+          <FormDescription>
+            Inclua informações relevantes sobre o produto como características, uso recomendado, etc.
+          </FormDescription>
           <FormMessage />
         </FormItem>
       )}

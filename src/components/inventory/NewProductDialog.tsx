@@ -4,7 +4,8 @@ import {
   Dialog, 
   DialogContent, 
   DialogHeader, 
-  DialogTitle
+  DialogTitle,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { NewProduct } from '@/hooks/inventory/useInventory';
 import { ProductForm } from './form/ProductForm';
@@ -27,9 +28,12 @@ export const NewProductDialog = ({ open, onOpenChange, onAddProduct }: NewProduc
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Novo Produto</DialogTitle>
+          <DialogDescription>
+            Preencha os dados do produto para adicioná-lo ao inventário.
+          </DialogDescription>
         </DialogHeader>
         
         <ProductForm 
