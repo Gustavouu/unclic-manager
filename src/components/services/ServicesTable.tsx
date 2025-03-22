@@ -3,7 +3,6 @@ import { ServiceIndicator } from "./ServiceIndicator";
 import { ServiceData } from "./servicesData";
 import { Clock, DollarSign, TrendingUp, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -14,12 +13,20 @@ import {
 } from "@/components/ui/table";
 import { TablePagination } from "@/components/common/TablePagination";
 import { useState } from "react";
+import { EditServiceDialog } from "./EditServiceDialog";
+import { DeleteServiceDialog } from "./DeleteServiceDialog";
 
 interface ServicesTableProps {
   services: ServiceData[];
+  onServiceUpdated: (updatedService: ServiceData) => void;
+  onServiceDeleted: (serviceId: string) => void;
 }
 
-export const ServicesTable = ({ services }: ServicesTableProps) => {
+export const ServicesTable = ({ 
+  services, 
+  onServiceUpdated, 
+  onServiceDeleted 
+}: ServicesTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
   
@@ -82,9 +89,16 @@ export const ServicesTable = ({ services }: ServicesTableProps) => {
                 </div>
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="sm">
-                  Editar
-                </Button>
+                <div className="flex justify-end">
+                  <EditServiceDialog 
+                    service={service} 
+                    onServiceUpdated={onServiceUpdated} 
+                  />
+                  <DeleteServiceDialog 
+                    serviceName={service.name} 
+                    onConfirm={() => onServiceDeleted(service.id)} 
+                  />
+                </div>
               </TableCell>
             </TableRow>
           ))}

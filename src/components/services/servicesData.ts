@@ -7,6 +7,7 @@ export interface ServiceData {
   category: string;
   isPopular: boolean;
   isFeatured: boolean;
+  description?: string;
 }
 
 // Sample services data
@@ -19,6 +20,7 @@ export const services: ServiceData[] = [
     category: "Cabelo",
     isPopular: true,
     isFeatured: true,
+    description: "Corte personalizado para todos os tipos de cabelo feminino, incluindo lavagem e finalização."
   },
   {
     id: "2",
@@ -28,6 +30,7 @@ export const services: ServiceData[] = [
     category: "Cabelo",
     isPopular: true,
     isFeatured: false,
+    description: "Corte moderno e rápido para cabelo masculino, inclui lavagem."
   },
   {
     id: "3",
@@ -37,6 +40,7 @@ export const services: ServiceData[] = [
     category: "Cabelo",
     isPopular: false,
     isFeatured: true,
+    description: "Coloração completa com produtos de alta qualidade, inclui tratamento pós-coloração."
   },
   {
     id: "4",
@@ -46,6 +50,7 @@ export const services: ServiceData[] = [
     category: "Tratamento",
     isPopular: false,
     isFeatured: false,
+    description: "Tratamento intensivo para cabelos danificados, inclui produtos especiais de reconstrução."
   },
   {
     id: "5",
@@ -55,6 +60,7 @@ export const services: ServiceData[] = [
     category: "Unhas",
     isPopular: true,
     isFeatured: false,
+    description: "Cuidado completo para unhas das mãos, inclui esfoliação, hidratação e esmalte."
   },
   {
     id: "6",
@@ -64,6 +70,7 @@ export const services: ServiceData[] = [
     category: "Unhas",
     isPopular: false,
     isFeatured: false,
+    description: "Tratamento completo para os pés, inclui esfoliação, hidratação e esmalte."
   },
   {
     id: "7",
@@ -73,6 +80,7 @@ export const services: ServiceData[] = [
     category: "Rosto",
     isPopular: false,
     isFeatured: true,
+    description: "Limpeza profunda com extração de cravos e aplicação de máscara hidratante."
   },
   {
     id: "8",
@@ -82,5 +90,6 @@ export const services: ServiceData[] = [
     category: "Rosto",
     isPopular: true,
     isFeatured: false,
+    description: "Modelagem e design personalizado de sobrancelhas com linha ou pinça."
   },
 ];
