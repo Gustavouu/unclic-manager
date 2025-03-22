@@ -53,7 +53,7 @@ export const InventoryContent = () => {
   
   const slowMoving = analytics.slowMoving.map(product => ({
     ...product,
-    data: product.lastSaleDate || 'Nunca vendido'
+    data: product.lastSoldAt || 'Nunca vendido'
   }));
   
   return (

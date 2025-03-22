@@ -29,4 +29,4 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-} from './sidebar';
+} from './sidebar/index'
