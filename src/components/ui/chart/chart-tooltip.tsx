@@ -8,8 +8,8 @@ import { getPayloadConfigFromPayload } from "./utils"
 export const ChartTooltip = RechartsPrimitive.Tooltip
 
 export interface ChartTooltipContentProps 
-  extends React.ComponentProps<typeof RechartsPrimitive.Tooltip>,
-    React.ComponentProps<"div"> {
+  extends Omit<React.ComponentProps<typeof RechartsPrimitive.Tooltip>, 'content'>,
+    React.HTMLAttributes<HTMLDivElement> {
   hideLabel?: boolean
   hideIndicator?: boolean
   indicator?: "line" | "dot" | "dashed"
