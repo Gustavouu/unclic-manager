@@ -30,7 +30,7 @@ export const InventoryTable = ({ products, isLoading }: InventoryTableProps) => 
     if (product.quantity <= 0) {
       return <Badge variant="destructive">Sem estoque</Badge>;
     } else if (product.quantity <= product.minQuantity) {
-      return <Badge variant="warning" className="bg-orange-500">Estoque baixo</Badge>;
+      return <Badge variant="outline" className="bg-orange-500 text-white border-orange-500">Estoque baixo</Badge>;
     } else {
       return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Em estoque</Badge>;
     }

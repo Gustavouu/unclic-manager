@@ -9,7 +9,6 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -31,6 +30,7 @@ import {
   FormLabel, 
   FormMessage 
 } from "@/components/ui/form";
+import { NewProduct } from '@/hooks/inventory/useInventory';
 
 const productFormSchema = z.object({
   name: z.string().min(1, "O nome é obrigatório"),
@@ -47,7 +47,7 @@ type ProductFormValues = z.infer<typeof productFormSchema>;
 interface NewProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddProduct: (product: Omit<Product, "id">) => void;
+  onAddProduct: (product: NewProduct) => void;
 }
 
 export const NewProductDialog = ({ open, onOpenChange, onAddProduct }: NewProductDialogProps) => {
