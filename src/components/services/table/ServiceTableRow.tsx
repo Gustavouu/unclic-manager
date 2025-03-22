@@ -1,7 +1,7 @@
 
 import { ServiceData } from "../servicesData";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Clock, DollarSign } from "lucide-react";
+import { Clock, DollarSign, Star, TrendingUp } from "lucide-react";
 import { ServiceIndicator } from "../ServiceIndicator";
 import { ServiceCategoryBadge } from "./ServiceCategoryBadge";
 import { ServiceActions } from "./ServiceActions";
