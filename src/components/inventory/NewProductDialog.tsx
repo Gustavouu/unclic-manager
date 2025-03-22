@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Dialog, 
@@ -65,7 +64,7 @@ export const NewProductDialog = ({ open, onOpenChange, onAddProduct }: NewProduc
   });
 
   const onSubmit = (data: ProductFormValues) => {
-    onAddProduct(data);
+    onAddProduct(data as NewProduct);
     form.reset();
     onOpenChange(false);
   };

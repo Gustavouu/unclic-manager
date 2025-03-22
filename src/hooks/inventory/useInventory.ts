@@ -4,7 +4,16 @@ import { Product } from "./types";
 import { v4 as uuidv4 } from "uuid";
 import { mockProducts } from "./mockData";
 
-export type NewProduct = Omit<Product, "id" | "createdAt" | "updatedAt">;
+// Updated NewProduct type to be more explicit about required fields
+export type NewProduct = {
+  name: string;
+  description?: string;
+  category: string;
+  price: number;
+  quantity: number;
+  minQuantity: number;
+  supplier?: string;
+};
 
 export const useInventory = () => {
   const [products, setProducts] = useState<Product[]>(mockProducts);
