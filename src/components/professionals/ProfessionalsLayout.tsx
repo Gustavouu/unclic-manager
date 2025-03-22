@@ -9,6 +9,13 @@ import { ProfessionalDetailsDialog } from "./ProfessionalDetailsDialog";
 import { Professional } from "@/hooks/professionals/types";
 import { EditProfessionalDialog } from "./EditProfessionalDialog";
 import { DeleteProfessionalDialog } from "./DeleteProfessionalDialog";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 
 interface ProfessionalsLayoutProps {
   view: "grid" | "list";
@@ -27,6 +34,10 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [professionalToEdit, setProfessionalToEdit] = useState<Professional | null>(null);
   const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
+  
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6; // Quantidade de itens por página
   
   useEffect(() => {
     // Incrementar a key para forçar a renderização quando professionals mudar
@@ -54,6 +65,29 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
     setDeleteOpen(true);
   };
   
+  // Paginação - calcular índices
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProfessionals = Array.isArray(professionals) 
+    ? professionals.slice(indexOfFirstItem, indexOfLastItem) 
+    : [];
+  
+  // Total de páginas
+  const totalPages = Math.ceil((professionals?.length || 0) / itemsPerPage);
+  
+  // Funções de navegação
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -76,21 +110,47 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   
   return (
     <>
-      <div key={key}>
+      <div key={key} className="space-y-6">
         {view === "grid" ? (
           <ProfessionalsGrid 
-            professionals={professionals} 
+            professionals={currentProfessionals} 
             onProfessionalClick={handleProfessionalClick}
             onEditClick={handleEditClick}
             onDeleteClick={handleDeleteClick}
           />
         ) : (
           <ProfessionalsTable 
-            professionals={professionals} 
+            professionals={currentProfessionals} 
             onProfessionalClick={handleProfessionalClick}
             onEditClick={handleEditClick}
             onDeleteClick={handleDeleteClick}
           />
+        )}
+        
+        {totalPages > 1 && (
+          <Pagination className="mt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={handlePrevPage} 
+                  className={currentPage === 1 ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              
+              <PaginationItem className="flex items-center">
+                <span className="text-sm">
+                  Página {currentPage} de {totalPages}
+                </span>
+              </PaginationItem>
+              
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={handleNextPage}
+                  className={currentPage === totalPages ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         )}
       </div>
       

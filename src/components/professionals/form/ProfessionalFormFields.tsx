@@ -6,7 +6,7 @@ import { UseFormReturn } from "react-hook-form";
 import { ProfessionalCreateForm } from "@/hooks/professionals/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImagePlus } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Select,
   SelectContent,
@@ -35,7 +35,14 @@ export const ProfessionalFormFields = ({
     [specialties]
   );
   
-  const [previewUrl, setPreviewUrl] = useState<string>(initialPhotoUrl || "");
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  
+  // Atualizar o preview com a URL inicial quando disponível
+  useEffect(() => {
+    if (initialPhotoUrl) {
+      setPreviewUrl(initialPhotoUrl);
+    }
+  }, [initialPhotoUrl]);
   
   // Manipular o upload de imagem
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,7 +53,7 @@ export const ProfessionalFormFields = ({
       reader.onloadend = () => {
         const result = reader.result as string;
         setPreviewUrl(result);
-        form.setValue("photoUrl", result);
+        form.setValue("photoUrl", result, { shouldValidate: true, shouldDirty: true });
       };
       reader.readAsDataURL(file);
     }
@@ -67,7 +74,7 @@ export const ProfessionalFormFields = ({
         <div className="relative">
           <Avatar className="h-24 w-24 border-2 border-gray-200">
             <AvatarImage src={previewUrl} alt={name} />
-            <AvatarFallback className="bg-blue-100 text-blue-700 text-xl">
+            <AvatarFallback className="bg-slate-100 text-slate-700 text-xl">
               {getInitials(name)}
             </AvatarFallback>
           </Avatar>
@@ -98,6 +105,7 @@ export const ProfessionalFormFields = ({
                     </Button>
                   </div>
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />

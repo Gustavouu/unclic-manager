@@ -29,18 +29,18 @@ export const ProfessionalsGrid = ({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {professionals.map((professional) => (
         <Card 
           key={professional.id} 
-          className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
+          className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer border border-gray-200 hover:border-gray-300"
           onClick={() => onProfessionalClick(professional.id)}
         >
           <CardContent className="p-6 relative">
             <div className="flex justify-between mb-4">
-              <Avatar className="h-16 w-16 border-2 border-white ring-2 ring-gray-100">
+              <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
                 <AvatarImage src={professional.photoUrl} alt={professional.name} />
-                <AvatarFallback className="text-lg bg-blue-100 text-blue-700">
+                <AvatarFallback className="text-lg bg-slate-100 text-slate-700">
                   {professional.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)}
                 </AvatarFallback>
               </Avatar>
@@ -101,7 +101,7 @@ export const ProfessionalsGrid = ({
             
             <div className="mt-4 flex flex-wrap gap-1">
               {professional.specialties.map((specialty, index) => (
-                <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
+                <Badge key={index} variant="outline" className="bg-slate-50 text-slate-700 hover:bg-slate-100">
                   {specialty}
                 </Badge>
               ))}

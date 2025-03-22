@@ -93,7 +93,7 @@ export const ProfessionalForm = ({
       // para garantir que o estado seja atualizado completamente
       setTimeout(() => {
         onClose();
-      }, 1500);
+      }, 2000); // Aumentamos o tempo para 2s
     } catch (error) {
       console.error("Erro ao processar profissional:", error);
       toast({
@@ -108,7 +108,7 @@ export const ProfessionalForm = ({
 
   return (
     <Form {...form}>
-      <DialogDescription className="mb-5">
+      <DialogDescription className="mb-5 text-slate-600">
         {editMode 
           ? "Edite as informações do colaborador abaixo." 
           : "Preencha as informações do novo colaborador abaixo."
@@ -123,7 +123,7 @@ export const ProfessionalForm = ({
           initialPhotoUrl={professional?.photoUrl}
         />
         
-        <DialogFooter className="pt-2">
+        <DialogFooter className="pt-6">
           <Button 
             type="button" 
             variant="outline" 
@@ -135,6 +135,7 @@ export const ProfessionalForm = ({
           <Button 
             type="submit"
             disabled={isSubmitting}
+            className="bg-primary"
           >
             {isSubmitting ? (
               <>
