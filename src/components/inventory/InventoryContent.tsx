@@ -9,6 +9,7 @@ import { useInventory } from '@/hooks/inventory/useInventory';
 import { InventoryAnalytics } from './InventoryAnalytics';
 import { InventoryFilters } from './InventoryFilters';
 import { Product } from '@/hooks/inventory/types';
+import { getFormattedDate } from './details/formatters';
 
 export const InventoryContent = () => {
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
@@ -53,7 +54,8 @@ export const InventoryContent = () => {
   
   const slowMoving = analytics.slowMoving.map(product => ({
     ...product,
-    data: product.lastSoldAt || 'Nunca vendido'
+    // Format the date as a string or use a default value
+    data: product.lastSoldAt ? getFormattedDate(product.lastSoldAt.toString()) : 'Nunca vendido'
   }));
   
   return (
