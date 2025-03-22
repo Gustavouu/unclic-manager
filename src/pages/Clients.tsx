@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ClientsLayout } from "@/components/clients/ClientsLayout";
 import { ClientsHeader } from "@/components/clients/ClientsHeader";
@@ -15,7 +14,6 @@ import {
 } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { ChevronRight } from "lucide-react";
 
 const Clients = () => {
   const [showDetails, setShowDetails] = useState(false);
