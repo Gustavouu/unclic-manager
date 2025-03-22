@@ -10,6 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { ServiceData } from "./servicesData";
 import { v4 as uuidv4 } from "uuid";
+import { InfoIcon, PlusCircle } from "lucide-react";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useState } from "react";
 
 const serviceFormSchema = z.object({
   name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
@@ -19,6 +27,7 @@ const serviceFormSchema = z.object({
   isPopular: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
   description: z.string().optional(),
+  newCategory: z.string().optional(),
 });
 
 type ServiceFormValues = z.infer<typeof serviceFormSchema>;
@@ -29,11 +38,24 @@ interface ServiceFormProps {
   onCancel: () => void;
 }
 
+const DEFAULT_CATEGORIES = [
+  "Corte de Cabelo", 
+  "Barba", 
+  "Combo (Cabelo + Barba)", 
+  "Acabamento", 
+  "Pigmentação", 
+  "Tratamento Capilar", 
+  "Coloração",
+  "Sobrancelha"
+];
+
 export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
+  const [showNewCategory, setShowNewCategory] = useState(false);
+
   const form = useForm<ServiceFormValues>({
     resolver: zodResolver(serviceFormSchema),
     defaultValues: service 
-      ? { ...service } 
+      ? { ...service, newCategory: "" } 
       : {
           name: "",
           duration: 30,
@@ -42,17 +64,21 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
           isPopular: false,
           isFeatured: false,
           description: "",
+          newCategory: "",
         },
   });
 
   const handleSubmit = (data: ServiceFormValues) => {
+    // Determine the final category (either selected or new)
+    const finalCategory = showNewCategory && data.newCategory ? data.newCategory : data.category;
+
     // Ensure all required fields are present by creating a complete ServiceData object
     const completeServiceData: ServiceData = {
       id: service?.id || uuidv4(),
       name: data.name,
       duration: data.duration,
       price: data.price,
-      category: data.category,
+      category: finalCategory,
       isPopular: data.isPopular,
       isFeatured: data.isFeatured,
       description: data.description,
@@ -63,7 +89,7 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
         <FormField
           control={form.control}
           name="name"
@@ -71,7 +97,7 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
             <FormItem>
               <FormLabel>Nome do serviço</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: Corte de Cabelo Feminino" {...field} />
+                <Input placeholder="Ex: Corte Degradê" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -108,30 +134,71 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
           />
         </div>
         
-        <FormField
-          control={form.control}
-          name="category"
-          render={({ field }) => (
-            <FormItem>
+        {!showNewCategory ? (
+          <div className="space-y-1">
+            <div className="flex justify-between items-center">
               <FormLabel>Categoria</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma categoria" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Cabelo">Cabelo</SelectItem>
-                  <SelectItem value="Unhas">Unhas</SelectItem>
-                  <SelectItem value="Rosto">Rosto</SelectItem>
-                  <SelectItem value="Tratamento">Tratamento</SelectItem>
-                  <SelectItem value="Estética">Estética</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 text-xs"
+                onClick={() => setShowNewCategory(true)}
+              >
+                <PlusCircle className="h-3.5 w-3.5 mr-1" />
+                Nova Categoria
+              </Button>
+            </div>
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma categoria" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {DEFAULT_CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <div className="flex justify-between items-center">
+              <FormLabel>Nova Categoria</FormLabel>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 text-xs"
+                onClick={() => setShowNewCategory(false)}
+              >
+                Usar categorias existentes
+              </Button>
+            </div>
+            <FormField
+              control={form.control}
+              name="newCategory"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input placeholder="Ex: Design de Barba" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
         
         <FormField
           control={form.control}
@@ -140,7 +207,7 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
             <FormItem>
               <FormLabel>Descrição (opcional)</FormLabel>
               <FormControl>
-                <Textarea placeholder="Descreva o serviço..." {...field} />
+                <Textarea placeholder="Descreva o serviço..." {...field} className="resize-none" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -152,9 +219,19 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
             control={form.control}
             name="isPopular"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Serviço Popular</FormLabel>
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 space-y-0">
+                <div className="space-y-0.5 flex items-center">
+                  <FormLabel className="text-sm mr-2">Serviço Popular</FormLabel>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <InfoIcon className="h-4 w-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="w-56">Serviços populares são destacados na página inicial e recebem prioridade nas recomendações aos clientes.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 <FormControl>
                   <Switch
@@ -170,9 +247,19 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
             control={form.control}
             name="isFeatured"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Serviço Destacado</FormLabel>
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 space-y-0">
+                <div className="space-y-0.5 flex items-center">
+                  <FormLabel className="text-sm mr-2">Serviço Destacado</FormLabel>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <InfoIcon className="h-4 w-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="w-56">Serviços destacados aparecem em promoções especiais e são apresentados com visual diferenciado no catálogo de serviços.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
                 <FormControl>
                   <Switch
