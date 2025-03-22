@@ -93,7 +93,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans text-sm;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -103,15 +103,15 @@
 
 @layer components {
   .sidebar-item {
-    @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ease-in-out relative;
+    @apply flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 ease-in-out relative text-xs;
   }
 
   .sidebar-item.active {
-    @apply bg-blue-50 text-blue-700 font-medium before:absolute before:w-1 before:h-6 before:left-1 before:bg-blue-600 before:rounded-full;
+    @apply bg-blue-50 text-blue-700 font-medium before:absolute before:w-0.5 before:h-5 before:left-0.5 before:bg-blue-600 before:rounded-full;
   }
 
   .sidebar-icon {
-    @apply flex items-center justify-center min-w-5;
+    @apply flex items-center justify-center min-w-4;
   }
 
   .sidebar-label {
@@ -119,14 +119,14 @@
   }
 
   .stat-card {
-    @apply bg-white rounded-xl shadow-sm border border-border/40 p-6 flex flex-col transition-all duration-300 hover:shadow-md hover:border-border/60;
+    @apply bg-white rounded-lg shadow-sm border border-border/40 p-4 flex flex-col transition-all duration-300 hover:shadow-md hover:border-border/60;
   }
 
   .glass-card {
-    @apply bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-white/20 transition-all duration-300;
+    @apply bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border border-white/20 transition-all duration-300;
   }
 
   .animated-border {
-    @apply relative before:absolute before:inset-0 before:rounded-xl before:p-[1px] before:bg-gradient-to-r before:from-primary/30 before:via-primary/40 before:to-primary/30 before:opacity-0 hover:before:opacity-100 before:transition-opacity;
+    @apply relative before:absolute before:inset-0 before:rounded-lg before:p-[1px] before:bg-gradient-to-r before:from-primary/30 before:via-primary/40 before:to-primary/30 before:opacity-0 hover:before:opacity-100 before:transition-opacity;
   }
 }

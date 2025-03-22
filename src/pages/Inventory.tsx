@@ -8,56 +8,56 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 
 export default function Inventory() {
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto px-0 py-4">
       <Breadcrumb items={[
         { label: "Início", active: false },
         { label: "Estoque", active: true }
       ]} />
       
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Gestão de Estoque</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">Gestão de Estoque</h1>
         
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <HelpCircle className="h-4 w-4" />
+            <Button variant="outline" size="sm" className="gap-1 text-xs h-8">
+              <HelpCircle className="h-3 w-3" />
               Dicas gerais
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-4" side="left">
-            <div className="space-y-4">
+          <PopoverContent className="w-72 p-3" side="left">
+            <div className="space-y-3 text-xs">
               <div>
-                <h3 className="font-medium flex items-center gap-2">
+                <h3 className="font-medium flex items-center gap-1.5">
                   <span className="bg-blue-100 text-blue-700 p-1 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                   </span>
                   Controle de Estoque
                 </h3>
-                <p className="text-sm text-muted-foreground ml-7">
-                  Monitore seus produtos, defina alertas de estoque baixo e gerencie seu inventário de forma eficiente.
+                <p className="text-xs text-muted-foreground ml-6">
+                  Monitore seus produtos, defina alertas de estoque baixo e gerencie seu inventário.
                 </p>
               </div>
               
               <div>
-                <h3 className="font-medium flex items-center gap-2">
+                <h3 className="font-medium flex items-center gap-1.5">
                   <span className="bg-green-100 text-green-700 p-1 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
                   </span>
                   Benefícios
                 </h3>
-                <p className="text-sm text-muted-foreground ml-7">
-                  Evite quebras de estoque, reduza custos e otimize seu investimento em produtos.
+                <p className="text-xs text-muted-foreground ml-6">
+                  Evite quebras de estoque, reduza custos e otimize seu investimento.
                 </p>
               </div>
               
               <div>
-                <h3 className="font-medium flex items-center gap-2">
+                <h3 className="font-medium flex items-center gap-1.5">
                   <span className="bg-yellow-100 text-yellow-700 p-1 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-alert-triangle"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-alert-triangle"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
                   </span>
                   Atenção
                 </h3>
-                <p className="text-sm text-muted-foreground ml-7">
+                <p className="text-xs text-muted-foreground ml-6">
                   Produtos com estoque abaixo do mínimo estão destacados com indicadores visuais.
                 </p>
               </div>

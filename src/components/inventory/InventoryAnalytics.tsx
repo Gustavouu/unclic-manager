@@ -1,114 +1,108 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Product } from '@/hooks/inventory/types';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, TrendingUp, Clock } from 'lucide-react';
+import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Progress } from '@/components/ui/progress';
+import { TrendingUp, AlertTriangle, Clock } from "lucide-react";
 
-interface InventoryAnalyticsProps {
-  bestSellers: Product[];
-  needsRestock: Product[];
-  slowMoving: Product[];
+interface AnalyticsProduct {
+  id: string;
+  name: string;
+  data: string | number;
 }
 
-export const InventoryAnalytics = ({ bestSellers, needsRestock, slowMoving }: InventoryAnalyticsProps) => {
-  // Find the highest sales count to normalize progress bars
-  const maxSales = bestSellers.length > 0 
-    ? Math.max(...bestSellers.map(p => p.salesCount || 0)) 
-    : 0;
+interface InventoryAnalyticsProps {
+  bestSellers: AnalyticsProduct[];
+  needsRestock: AnalyticsProduct[];
+  slowMoving: AnalyticsProduct[];
+}
 
+export const InventoryAnalytics = ({ 
+  bestSellers, 
+  needsRestock, 
+  slowMoving 
+}: InventoryAnalyticsProps) => {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-      {/* Bestselling Products */}
-      <Card className="col-span-1">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2 text-green-500" />
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <Card className="shadow-sm">
+        <CardHeader className="pb-2 pt-4 px-4">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-green-500" />
             Produtos Mais Vendidos
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          {bestSellers.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-2">Nenhum dado de vendas disponível</p>
+        <CardContent className="px-4 pb-3 text-xs">
+          {bestSellers.map((product, index) => (
+            <div key={product.id} className="mb-2 last:mb-0">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">{product.name}</span>
+                <span className="text-muted-foreground">{product.data} vendas</span>
+              </div>
+              <div className="relative w-full h-1.5 bg-gray-100 rounded-full mt-1">
+                <div 
+                  className="absolute h-1.5 bg-green-500 rounded-full" 
+                  style={{ 
+                    width: `${Math.min(100, (Number(product.data) / (bestSellers[0]?.data ? Number(bestSellers[0].data) : 1)) * 100)}%` 
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+      
+      <Card className="shadow-sm">
+        <CardHeader className="pb-2 pt-4 px-4">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-orange-500" />
+            Alerta de Reposição
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 pb-3">
+          {needsRestock.length === 0 ? (
+            <p className="text-muted-foreground text-xs">Todos os produtos estão com estoque adequado.</p>
           ) : (
-            <div className="space-y-4">
-              {bestSellers.map(product => (
-                <div key={product.id} className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{product.name}</span>
-                    <span className="text-sm text-muted-foreground">{product.salesCount} vendas</span>
+            <div className="space-y-2">
+              {needsRestock.map((product) => (
+                <div key={product.id} className="border rounded-md p-2 text-xs">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium">{product.name}</span>
+                    <Badge variant="outline" className="bg-orange-100 text-orange-800 text-[10px]">
+                      {product.data}
+                    </Badge>
                   </div>
-                  <Progress value={((product.salesCount || 0) / maxSales) * 100} className="h-2" />
+                  <Separator className="my-1.5" />
+                  <div className="text-muted-foreground text-[10px]">
+                    Estoque mínimo recomendado: 10
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Restock Alerts */}
-      <Card className="col-span-1">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center">
-            <AlertCircle className="w-5 h-5 mr-2 text-orange-500" />
-            Alerta de Reposição
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {needsRestock.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-2">Todos os produtos têm estoque suficiente</p>
-          ) : (
-            <div className="space-y-2">
-              {needsRestock.map(product => (
-                <Alert key={product.id} className="py-3 bg-orange-50">
-                  <AlertTitle className="text-sm font-medium">{product.name}</AlertTitle>
-                  <AlertDescription className="text-xs">
-                    Estoque atual: <Badge variant="outline" className="ml-1 bg-orange-100">{product.quantity}</Badge> 
-                    <span className="mx-1">|</span> 
-                    Mínimo: <Badge variant="outline" className="ml-1">{product.minQuantity}</Badge>
-                  </AlertDescription>
-                </Alert>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Slow Moving Products */}
-      <Card className="col-span-1">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center">
-            <Clock className="w-5 h-5 mr-2 text-blue-500" />
+      
+      <Card className="shadow-sm">
+        <CardHeader className="pb-2 pt-4 px-4">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Clock className="h-4 w-4 text-blue-500" />
             Produtos com Baixa Rotatividade
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 pb-3">
           {slowMoving.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-2">Todos os produtos têm boa rotatividade</p>
+            <p className="text-muted-foreground text-xs">Nenhum produto com baixa rotatividade identificado.</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Última Venda</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {slowMoving.slice(0, 5).map(product => (
-                  <TableRow key={product.id}>
-                    <TableCell className="py-2">{product.name}</TableCell>
-                    <TableCell className="py-2 text-muted-foreground">
-                      {product.lastSoldAt 
-                        ? new Date(product.lastSoldAt).toLocaleDateString('pt-BR')
-                        : 'Nunca vendido'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="space-y-2">
+              {slowMoving.map((product) => (
+                <div key={product.id} className="flex items-center justify-between text-xs">
+                  <span>{product.name}</span>
+                  <Badge variant="outline" className="bg-gray-100 text-[10px]">
+                    Última venda: {product.data}
+                  </Badge>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

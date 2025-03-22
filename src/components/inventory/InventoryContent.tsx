@@ -41,24 +41,31 @@ export const InventoryContent = () => {
   };
   
   return (
-    <div className="space-y-8">
-      <InventoryStats products={products} />
-      
-      <InventoryAnalytics 
-        bestSellers={analytics.bestSellers} 
-        needsRestock={analytics.needsRestock} 
-        slowMoving={analytics.slowMoving} 
-      />
-      
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-        <h2 className="text-xl font-semibold">Produtos em Estoque</h2>
-        <Button onClick={() => setIsNewProductOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Produto
-        </Button>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <InventoryStats products={products} />
       </div>
       
-      <InventoryFilters />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-4">
+        <div className="lg:col-span-3 xl:col-span-2">
+          <InventoryAnalytics 
+            bestSellers={analytics.bestSellers} 
+            needsRestock={analytics.needsRestock} 
+            slowMoving={analytics.slowMoving} 
+          />
+        </div>
+      </div>
+      
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-4 mb-2">
+        <h2 className="text-base font-semibold">Produtos em Estoque</h2>
+        <div className="flex items-center gap-2">
+          <InventoryFilters />
+          <Button onClick={() => setIsNewProductOpen(true)} size="sm" className="gap-1 h-8 text-xs">
+            <Plus className="h-3.5 w-3.5" />
+            Novo Produto
+          </Button>
+        </div>
+      </div>
       
       <InventoryTable 
         products={products} 

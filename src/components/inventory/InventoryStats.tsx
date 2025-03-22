@@ -20,36 +20,36 @@ export const InventoryStats = ({ products }: InventoryStatsProps) => {
   );
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
-      <Card>
-        <CardContent className="flex items-center p-4">
-          <Package className="w-8 h-8 text-blue-500 mr-4" />
+    <>
+      <Card className="shadow-sm">
+        <CardContent className="flex items-center p-3">
+          <Package className="w-7 h-7 text-blue-500 mr-3" />
           <div>
-            <p className="text-sm text-muted-foreground">Total de Produtos</p>
-            <h3 className="text-2xl font-bold">{totalItems}</h3>
+            <p className="text-xs text-muted-foreground">Total de Produtos</p>
+            <h3 className="text-xl font-bold">{totalItems}</h3>
           </div>
         </CardContent>
       </Card>
       
-      <Card>
-        <CardContent className="flex items-center p-4">
-          <AlertCircle className="w-8 h-8 text-orange-500 mr-4" />
+      <Card className="shadow-sm">
+        <CardContent className="flex items-center p-3">
+          <AlertCircle className="w-7 h-7 text-orange-500 mr-3" />
           <div>
-            <p className="text-sm text-muted-foreground">Estoque Baixo</p>
-            <h3 className="text-2xl font-bold">{lowStockItems}</h3>
+            <p className="text-xs text-muted-foreground">Estoque Baixo</p>
+            <h3 className="text-xl font-bold">{lowStockItems}</h3>
           </div>
         </CardContent>
       </Card>
       
-      <Card>
-        <CardContent className="flex items-center p-4">
-          <DollarSign className="w-8 h-8 text-green-500 mr-4" />
+      <Card className="shadow-sm">
+        <CardContent className="flex items-center p-3">
+          <DollarSign className="w-7 h-7 text-green-500 mr-3" />
           <div>
-            <p className="text-sm text-muted-foreground">Valor Total</p>
-            <h3 className="text-2xl font-bold">R$ {totalValue.toFixed(2)}</h3>
+            <p className="text-xs text-muted-foreground">Valor Total</p>
+            <h3 className="text-xl font-bold">R$ {totalValue.toFixed(2)}</h3>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }
