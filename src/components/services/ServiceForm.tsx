@@ -46,10 +46,19 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
   });
 
   const handleSubmit = (data: ServiceFormValues) => {
-    onSubmit({
+    // Ensure all required fields are present by creating a complete ServiceData object
+    const completeServiceData: ServiceData = {
       id: service?.id || uuidv4(),
-      ...data,
-    });
+      name: data.name,
+      duration: data.duration,
+      price: data.price,
+      category: data.category,
+      isPopular: data.isPopular,
+      isFeatured: data.isFeatured,
+      description: data.description,
+    };
+    
+    onSubmit(completeServiceData);
   };
 
   return (
