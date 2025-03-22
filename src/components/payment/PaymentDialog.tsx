@@ -1,23 +1,18 @@
 
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useState } from "react";
-import { PaymentMethodSelect } from "./PaymentMethodSelect";
-import { PaymentSummary } from "./PaymentSummary";
-import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { toast } from "sonner";
-import { Loader2, ExternalLink } from "lucide-react";
 import { usePayment } from "@/hooks/usePayment";
+import { PaymentForm, PaymentFormValues } from "./PaymentForm";
+import PaymentProcessing from "./PaymentProcessing";
+import { PaymentResult } from "./PaymentResult";
 
 const paymentSchema = z.object({
   paymentMethod: z.string({ required_error: "Selecione uma forma de pagamento" }),
 });
-
-type PaymentFormValues = z.infer<typeof paymentSchema>;
 
 interface PaymentDialogProps {
   open: boolean;
@@ -128,102 +123,29 @@ export const PaymentDialog = ({
         </DialogHeader>
 
         {step === "form" && (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <PaymentMethodSelect form={form} />
-              
-              <PaymentSummary
-                amount={amount}
-                serviceName={serviceName}
-                appointmentDate={appointmentDate}
-                paymentMethod={form.watch("paymentMethod")}
-                className="mt-6"
-              />
-              
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={handleClose}>
-                  Cancelar
-                </Button>
-                <Button type="submit">
-                  Pagar Agora
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
+          <PaymentForm
+            form={form}
+            onSubmit={onSubmit}
+            onCancel={handleClose}
+            serviceName={serviceName}
+            amount={amount}
+            appointmentDate={appointmentDate}
+          />
         )}
 
-        {step === "processing" && (
-          <div className="flex flex-col items-center justify-center py-8">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-center text-muted-foreground">
-              Estamos processando seu pagamento. Por favor, não feche esta janela.
-            </p>
-          </div>
-        )}
+        {step === "processing" && <PaymentProcessing />}
 
         {step === "result" && paymentResult && (
-          <div className="space-y-6">
-            <div className="flex flex-col items-center justify-center py-4">
-              <PaymentStatusBadge 
-                status={paymentResult.status} 
-                className="text-base px-3 py-1 mb-4"
-              />
-              
-              {paymentResult.status === "approved" && (
-                <div className="text-center">
-                  <p className="text-green-600 font-medium mb-2">
-                    Pagamento aprovado com sucesso!
-                  </p>
-                  {paymentResult.transactionId && (
-                    <p className="text-sm text-muted-foreground">
-                      Código da transação: {paymentResult.transactionId}
-                    </p>
-                  )}
-                </div>
-              )}
-              
-              {paymentResult.status === "rejected" && (
-                <p className="text-center text-red-600">
-                  Não foi possível processar seu pagamento. Verifique os dados e tente novamente.
-                </p>
-              )}
-              
-              {paymentResult.status === "pending" && (
-                <p className="text-center text-amber-600">
-                  Seu pagamento está em análise. Acompanhe o status na área de pagamentos.
-                </p>
-              )}
-              
-              {paymentResult.status === "processing" && (
-                <p className="text-center text-blue-600">
-                  Seu pagamento está sendo processado pelo Efi Bank. Aguarde a confirmação.
-                </p>
-              )}
-              
-              {paymentUrl && (
-                <Button 
-                  variant="outline" 
-                  onClick={openPaymentUrl}
-                  className="mt-4 flex items-center"
-                >
-                  Abrir Página de Pagamento <ExternalLink className="ml-2 h-4 w-4" />
-                </Button>
-              )}
-            </div>
-            
-            <PaymentSummary
-              amount={amount}
-              serviceName={serviceName}
-              appointmentDate={appointmentDate}
-              paymentMethod={form.watch("paymentMethod")}
-            />
-            
-            <DialogFooter>
-              <Button onClick={handleClose}>
-                {paymentResult.status === "approved" ? "Concluir" : "Fechar"}
-              </Button>
-            </DialogFooter>
-          </div>
+          <PaymentResult
+            paymentResult={paymentResult}
+            paymentUrl={paymentUrl}
+            openPaymentUrl={openPaymentUrl}
+            onClose={handleClose}
+            amount={amount}
+            serviceName={serviceName}
+            appointmentDate={appointmentDate}
+            paymentMethod={form.watch("paymentMethod")}
+          />
         )}
       </DialogContent>
     </Dialog>
