@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,7 +16,6 @@ import { AuthProvider } from "./hooks/useAuth";
 import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
 import RequireAuth from "./components/auth/RequireAuth";
-import React from 'react';
 
 function App() {
   const queryClient = React.useMemo(() => new QueryClient(), []);
