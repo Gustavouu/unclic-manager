@@ -10,7 +10,7 @@ import { PaymentMethodSelect } from "./PaymentMethodSelect";
 import { PaymentSummary } from "./PaymentSummary";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, ExternalLink } from "lucide-react";
 import { usePayment } from "@/hooks/usePayment";
 
 const paymentSchema = z.object({
@@ -44,11 +44,17 @@ export const PaymentDialog = ({
 }: PaymentDialogProps) => {
   const [step, setStep] = useState<"form" | "processing" | "result">("form");
   const [paymentResult, setPaymentResult] = useState<{
-    status: "pending" | "approved" | "rejected" | "cancelled";
+    status: "pending" | "approved" | "rejected" | "cancelled" | "processing";
     transactionId?: string;
   } | null>(null);
   
-  const { processPayment } = usePayment();
+  const { 
+    processPayment, 
+    isLoading, 
+    error, 
+    paymentUrl, 
+    openPaymentUrl 
+  } = usePayment();
   
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
@@ -186,6 +192,22 @@ export const PaymentDialog = ({
                 <p className="text-center text-amber-600">
                   Seu pagamento está em análise. Acompanhe o status na área de pagamentos.
                 </p>
+              )}
+              
+              {paymentResult.status === "processing" && (
+                <p className="text-center text-blue-600">
+                  Seu pagamento está sendo processado pelo Efi Bank. Aguarde a confirmação.
+                </p>
+              )}
+              
+              {paymentUrl && (
+                <Button 
+                  variant="outline" 
+                  onClick={openPaymentUrl}
+                  className="mt-4 flex items-center"
+                >
+                  Abrir Página de Pagamento <ExternalLink className="ml-2 h-4 w-4" />
+                </Button>
               )}
             </div>
             
