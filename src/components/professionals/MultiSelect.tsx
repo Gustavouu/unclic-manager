@@ -1,16 +1,11 @@
 
 import * as React from "react";
-import { X, Check, ChevronsUpDown } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Command, CommandGroup, CommandItem, CommandEmpty } from "@/components/ui/command";
-import { Command as CommandPrimitive } from "cmdk";
+import { ChevronsUpDown } from "lucide-react";
+import { Command, CommandPrimitive } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-
-// Define types for our component
-export type Option = {
-  label: string;
-  value: string;
-};
+import { SelectedItem } from "./multiselect/SelectedItem";
+import { DropdownList } from "./multiselect/DropdownList";
+import { Option } from "./multiselect/types";
 
 interface MultiSelectProps {
   options: Option[];
@@ -22,38 +17,6 @@ interface MultiSelectProps {
   emptyMessage?: string;
 }
 
-// Selected option badge component
-const SelectedItem = React.memo(({ 
-  option, 
-  onUnselect
-}: { 
-  option: Option; 
-  onUnselect: (option: Option) => void;
-}) => (
-  <Badge key={option.value} variant="secondary" className="rounded-sm">
-    {option.label}
-    <button
-      className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          onUnselect(option);
-        }
-      }}
-      onMouseDown={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      onClick={() => onUnselect(option)}
-      aria-label={`Remove ${option.label}`}
-      type="button"
-    >
-      <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-    </button>
-  </Badge>
-));
-SelectedItem.displayName = "SelectedItem";
-
-// MultiSelect component
 export function MultiSelect({
   options,
   value,
@@ -168,37 +131,18 @@ export function MultiSelect({
         </div>
         
         <div className="relative mt-1">
-          {open && (
-            <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
-              {selectableOptions.length > 0 ? (
-                <CommandGroup className="h-full overflow-auto max-h-60">
-                  {selectableOptions.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onSelect={() => handleSelect(option)}
-                      className="cursor-pointer flex items-center justify-between"
-                      value={option.value}
-                    >
-                      <span>{option.label}</span>
-                      <Check className="h-4 w-4 opacity-0 group-data-[selected]:opacity-100" />
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              ) : (
-                <CommandEmpty className="py-3 px-4 text-sm text-center text-muted-foreground">
-                  {inputValue.length > 0 
-                    ? `Nenhum resultado para "${inputValue}"` 
-                    : emptyMessage}
-                </CommandEmpty>
-              )}
-            </div>
-          )}
+          <DropdownList
+            open={open}
+            options={selectableOptions}
+            onSelect={handleSelect}
+            inputValue={inputValue}
+            emptyMessage={emptyMessage}
+          />
         </div>
       </Command>
     </div>
   );
 }
+
+// Re-export the Option type for convenience
+export type { Option } from "./multiselect/types";
