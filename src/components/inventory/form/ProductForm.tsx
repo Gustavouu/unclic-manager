@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { 
@@ -21,13 +21,15 @@ import { ProductBasicInfoFields } from './ProductBasicInfoFields';
 import { ProductCategoryPriceFields } from './ProductCategoryPriceFields';
 import { ProductQuantityFields } from './ProductQuantityFields';
 import { ProductDescriptionField } from './ProductDescriptionField';
+import { Product } from '@/hooks/inventory/types';
 
 interface ProductFormProps {
   onSubmit: (product: NewProduct) => void;
   onCancel: () => void;
+  initialValues?: Product | null;
 }
 
-export const ProductForm = ({ onSubmit, onCancel }: ProductFormProps) => {
+export const ProductForm = ({ onSubmit, onCancel, initialValues }: ProductFormProps) => {
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
@@ -40,6 +42,21 @@ export const ProductForm = ({ onSubmit, onCancel }: ProductFormProps) => {
       supplier: "",
     },
   });
+
+  // Set form values when initialValues changes
+  useEffect(() => {
+    if (initialValues) {
+      form.reset({
+        name: initialValues.name,
+        description: initialValues.description || "",
+        category: initialValues.category,
+        price: initialValues.price,
+        quantity: initialValues.quantity,
+        minQuantity: initialValues.minQuantity,
+        supplier: initialValues.supplier || "",
+      });
+    }
+  }, [initialValues, form]);
 
   const handleSubmit = (data: ProductFormValues) => {
     const newProduct: NewProduct = {
@@ -68,7 +85,7 @@ export const ProductForm = ({ onSubmit, onCancel }: ProductFormProps) => {
           <DialogClose asChild>
             <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
           </DialogClose>
-          <Button type="submit">Salvar</Button>
+          <Button type="submit">{initialValues ? 'Atualizar' : 'Salvar'}</Button>
         </DialogFooter>
       </form>
     </Form>

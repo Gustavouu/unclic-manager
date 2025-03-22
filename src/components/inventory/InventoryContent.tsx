@@ -70,7 +70,7 @@ export const InventoryContent = () => {
       <NewProductDialog 
         open={isNewProductOpen} 
         onOpenChange={handleCloseDialog}
-        onSubmit={(data) => {
+        onAddProduct={(data) => {
           if (editingProduct) {
             updateProduct(editingProduct.id, data);
           } else {
