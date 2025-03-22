@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Professional } from "@/hooks/professionals/types";
 import { ProfessionalsDialogs } from "./ProfessionalsDialogs";
 import { ProfessionalsContent } from "./ProfessionalsContent";
-import { ProfessionalsPagination } from "./ProfessionalsPagination";
+import { TablePagination } from "@/components/common/TablePagination";
 import { usePagination } from "@/hooks/professionals/usePagination";
 
 interface ProfessionalsLayoutProps {
@@ -27,8 +27,8 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   const [professionalToEdit, setProfessionalToEdit] = useState<Professional | null>(null);
   const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
   
-  // Items per page
-  const itemsPerPage = 6;
+  // Items per page state
+  const [itemsPerPage, setItemsPerPage] = useState(6);
   
   // Pagination hook
   const { 
@@ -39,7 +39,8 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
     setCurrentPage
   } = usePagination({
     totalItems: professionals?.length || 0,
-    itemsPerPage
+    itemsPerPage,
+    initialPage: 1
   });
   
   // Current professionals to display
@@ -104,12 +105,23 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
           onDeleteClick={handleDeleteClick}
         />
         
-        {totalPages > 1 && (
-          <ProfessionalsPagination 
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
+        {professionals.length > 0 && (
+          <Card className="border shadow-sm">
+            <TablePagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              itemsPerPage={itemsPerPage}
+              totalItems={professionals.length}
+              indexOfFirstItem={indexOfFirstItem}
+              indexOfLastItem={indexOfLastItem}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={(value) => {
+                setItemsPerPage(value);
+                setCurrentPage(1); // Reset to first page when changing items per page
+              }}
+              itemsPerPageOptions={[6, 12, 24, 48]}
+            />
+          </Card>
         )}
       </div>
       
