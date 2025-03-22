@@ -5,6 +5,7 @@ import { ProfessionalsTable } from "./ProfessionalsTable";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ProfessionalDetailsDialog } from "./ProfessionalDetailsDialog";
 
 interface ProfessionalsLayoutProps {
   view: "grid" | "list";
@@ -15,11 +16,20 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   
   // Forçar uma atualização quando os profissionais mudarem
   const [key, setKey] = useState(0);
+  // Estado para controlar a abertura do diálogo de detalhes
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   
   useEffect(() => {
     // Incrementar a key para forçar a renderização quando professionals mudar
     setKey(prev => prev + 1);
   }, [professionals]);
+  
+  // Função para lidar com o clique em um profissional
+  const handleProfessionalClick = (id: string) => {
+    setSelectedProfessionalId(id);
+    setDetailsOpen(true);
+  };
   
   if (isLoading) {
     return (
@@ -42,12 +52,28 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   }
   
   return (
-    <div key={key}>
-      {view === "grid" ? (
-        <ProfessionalsGrid professionals={professionals} />
-      ) : (
-        <ProfessionalsTable professionals={professionals} />
+    <>
+      <div key={key}>
+        {view === "grid" ? (
+          <ProfessionalsGrid 
+            professionals={professionals} 
+            onProfessionalClick={handleProfessionalClick} 
+          />
+        ) : (
+          <ProfessionalsTable 
+            professionals={professionals} 
+            onProfessionalClick={handleProfessionalClick} 
+          />
+        )}
+      </div>
+      
+      {selectedProfessionalId && (
+        <ProfessionalDetailsDialog
+          professionalId={selectedProfessionalId}
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        />
       )}
-    </div>
+    </>
   );
 };
