@@ -17,10 +17,19 @@ export const useProfessionals = () => {
   // Garantir que os profissionais estão sempre como um array
   const safeProfessionals = Array.isArray(professionals) ? professionals : [] as Professional[];
   
-  const { specialties, getProfessionalById } = useProfessionalUtils(safeProfessionals);
+  // Adicionar um estado local para rastrear mudanças
+  const [trackedProfessionals, setTrackedProfessionals] = useState<Professional[]>(safeProfessionals);
+  
+  // Sincronizar os profissionais quando eles mudarem
+  useEffect(() => {
+    console.log("Atualizando profissionais no useProfessionals:", safeProfessionals);
+    setTrackedProfessionals(safeProfessionals);
+  }, [safeProfessionals]);
+  
+  const { specialties, getProfessionalById } = useProfessionalUtils(trackedProfessionals);
   
   return {
-    professionals: safeProfessionals,
+    professionals: trackedProfessionals,
     isLoading,
     specialties,
     getProfessionalById,

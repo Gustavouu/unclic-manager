@@ -74,11 +74,11 @@ export const ProfessionalForm = ({ onClose }: ProfessionalFormProps) => {
       });
       form.reset();
       
-      // Aguardar um curto intervalo antes de fechar o diálogo
-      // para permitir que o estado seja atualizado
+      // Aguardar um tempo maior antes de fechar o diálogo
+      // para garantir que o estado seja atualizado completamente
       setTimeout(() => {
         onClose();
-      }, 100);
+      }, 500);
     } catch (error) {
       console.error("Erro ao adicionar profissional:", error);
       toast({

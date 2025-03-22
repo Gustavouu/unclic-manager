@@ -30,11 +30,18 @@ export const useProfessionalOperations = () => {
         hireDate: new Date().toISOString().split('T')[0]
       };
       
-      // Atualizar o estado com o novo profissional
-      setProfessionals(prev => [...prev, newProfessional]);
-      
-      console.log("Profissional adicionado:", newProfessional);
-      console.log("Lista atualizada:", [...professionals, newProfessional]);
+      // Atualizar o estado com o novo profissional de forma imutável
+      setProfessionals(prevProfessionals => {
+        // Garantir que prevProfessionals é um array antes de adicionar
+        const safeArray = Array.isArray(prevProfessionals) ? prevProfessionals : [];
+        const updatedArray = [...safeArray, newProfessional];
+        
+        console.log("Profissional adicionado:", newProfessional);
+        console.log("Lista atual:", safeArray);
+        console.log("Lista atualizada:", updatedArray);
+        
+        return updatedArray;
+      });
       
       toast({
         title: "Colaborador adicionado",
@@ -53,7 +60,7 @@ export const useProfessionalOperations = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [professionals, toast]);
+  }, [toast]);
   
   // Atualizar profissional
   const updateProfessional = useCallback(async (id: string, data: Partial<Professional>) => {
