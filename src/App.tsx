@@ -8,7 +8,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Appointments from "./pages/Appointments";
 import Services from "./pages/Services";
-import Inventory from "./pages/Inventory";
 import Clients from "./pages/Clients";
 import Professionals from "./pages/Professionals";
 import NotFound from "./pages/NotFound";
@@ -37,7 +36,6 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/appointments" element={<Appointments />} />
                 <Route path="/services" element={<Services />} />
-                <Route path="/inventory" element={<Inventory />} />
                 <Route path="/clients" element={<Clients />} />
                 <Route path="/professionals" element={<Professionals />} />
               </Route>
