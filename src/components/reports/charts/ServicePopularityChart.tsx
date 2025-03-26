@@ -14,6 +14,9 @@ const data = [
 ];
 
 export function ServicePopularityChart({ dateRange }: ServicePopularityChartProps) {
+  // In a real application, we would use the dateRange to filter data
+  console.log(`Loading service popularity data for range: ${dateRange}`);
+  
   return (
     <ResponsiveContainer width="100%" height={300}>
       <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 25 }}>
