@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -24,10 +25,13 @@ export function PaymentTransactionsTable() {
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchTransactions = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const { data, error } = await supabase
         .from('transacoes')
         .select(`
@@ -38,8 +42,7 @@ export function PaymentTransactionsTable() {
           criado_em, 
           atualizado_em, 
           notas,
-          clientes(nome),
-          servicos(nome)
+          clientes(nome)
         `)
         .order('criado_em', { ascending: false })
         .limit(50);
@@ -56,12 +59,14 @@ export function PaymentTransactionsTable() {
         // Parse transaction ID and payment URL from notes
         let transaction_id = '';
         let payment_url = '';
+        let service_name = 'N/A';
         
         if (item.notas) {
           try {
             const notesData = JSON.parse(item.notas);
             transaction_id = notesData.transaction_id || '';
             payment_url = notesData.payment_url || '';
+            service_name = notesData.service_name || 'N/A';
           } catch (e) {
             console.log("Notes is not valid JSON");
           }
@@ -75,7 +80,7 @@ export function PaymentTransactionsTable() {
           created_at: item.criado_em,
           updated_at: item.atualizado_em,
           customer_name: item.clientes?.nome || "Cliente não identificado",
-          service_name: item.servicos?.nome || "N/A",
+          service_name: service_name,
           transaction_id,
           payment_url
         };
@@ -84,6 +89,7 @@ export function PaymentTransactionsTable() {
       setTransactions(formattedData);
     } catch (error) {
       console.error("Erro ao buscar transações:", error);
+      setError("Falha ao carregar transações. Por favor, tente novamente.");
       setTransactions([]);
     } finally {
       setLoading(false);
@@ -140,6 +146,10 @@ export function PaymentTransactionsTable() {
         {loading ? (
           <div className="flex justify-center py-8">
             <p>Carregando transações...</p>
+          </div>
+        ) : error ? (
+          <div className="flex justify-center py-8 text-red-500">
+            <p>{error}</p>
           </div>
         ) : (
           <Table>
