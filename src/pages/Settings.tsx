@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -25,34 +24,10 @@ import {
   Save,
   Upload,
   MapPin,
-  ChevronRight,
-  Check,
-  X,
-  Mail,
-  MessageSquare,
-  Smartphone,
-  BellRing,
-  Fingerprint,
-  UserPlus,
-  UserCheck,
-  ShieldCheck,
-  UserMinus,
-  KeyRound,
-  AlertTriangle,
-  AlertCircle,
-  Download,
-  UploadCloud,
-  Cloud,
-  Database,
   Cog,
-  RefreshCcw,
   Trash2,
   CreditCard,
-  Eye,
-  EyeOff,
-  Shield,
-  UserCog,
-  FileText
+  UserMinus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -934,6 +909,74 @@ const Settings = () => {
               <Button variant="outline">Cancelar</Button>
               <Button>Salvar Alterações</Button>
             </CardFooter>
+          </Card>
+        </TabsContent>
+
+        {/* Notifications Tab */}
+        <TabsContent value="notifications" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Notificações</CardTitle>
+              <CardDescription>
+                Configure como e quando receber notificações
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <p>Configurações de notificações em desenvolvimento.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Integrations Tab */}
+        <TabsContent value="integrations" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Integrações</CardTitle>
+              <CardDescription>
+                Conecte sua aplicação com outros serviços
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <p>Configurações de integrações em desenvolvimento.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Permissions Tab */}
+        <TabsContent value="permissions" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Permissões</CardTitle>
+              <CardDescription>
+                Gerencie as permissões dos usuários
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <p>Configurações de permissões em desenvolvimento.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Other Tab */}
+        <TabsContent value="other" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Outras Configurações</CardTitle>
+              <CardDescription>
+                Configurações adicionais do sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <p>Outras configurações em desenvolvimento.</p>
+              </div>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
