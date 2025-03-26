@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { ArrowLeft, ArrowRight, Save } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export const OnboardingControls: React.FC = () => {
   const { 
@@ -13,6 +14,7 @@ export const OnboardingControls: React.FC = () => {
     saveProgress,
     businessData
   } = useOnboarding();
+  const navigate = useNavigate();
   
   const handleNext = () => {
     // Validar dados do estabelecimento antes de avançar
@@ -50,7 +52,10 @@ export const OnboardingControls: React.FC = () => {
           success: "Estabelecimento configurado com sucesso!",
           error: "Erro ao finalizar configuração"
         }
-      );
+      ).then(() => {
+        // Após finalizar com sucesso, redirecionar para o dashboard
+        navigate("/dashboard");
+      });
     } else {
       toast.error("Preencha todas as informações obrigatórias antes de finalizar");
     }
