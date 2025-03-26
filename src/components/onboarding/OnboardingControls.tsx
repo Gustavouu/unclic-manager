@@ -46,16 +46,18 @@ export const OnboardingControls: React.FC = () => {
     if (isComplete()) {
       // Simulação de envio dos dados
       toast.promise(
-        new Promise(resolve => setTimeout(resolve, 1500)),
+        new Promise<void>((resolve) => {
+          setTimeout(() => resolve(), 1500);
+        }),
         {
           loading: "Finalizando configuração do estabelecimento...",
-          success: "Estabelecimento configurado com sucesso!",
+          success: () => {
+            navigate("/dashboard");
+            return "Estabelecimento configurado com sucesso!";
+          },
           error: "Erro ao finalizar configuração"
         }
-      ).then(() => {
-        // Após finalizar com sucesso, redirecionar para o dashboard
-        navigate("/dashboard");
-      });
+      );
     } else {
       toast.error("Preencha todas as informações obrigatórias antes de finalizar");
     }
