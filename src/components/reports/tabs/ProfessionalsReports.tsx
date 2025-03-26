@@ -4,7 +4,11 @@ import { ProfessionalProductivityChart } from "../charts/ProfessionalProductivit
 import { ProfessionalRevenueChart } from "../charts/ProfessionalRevenueChart";
 import { ProfessionalPerformanceSection } from "../sections/ProfessionalPerformanceSection";
 
-export function ProfessionalsReports() {
+interface ProfessionalsReportsProps {
+  dateRange: string;
+}
+
+export function ProfessionalsReports({ dateRange }: ProfessionalsReportsProps) {
   return (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
       <Card className="md:col-span-2">
@@ -13,7 +17,7 @@ export function ProfessionalsReports() {
           <CardDescription>Análise de desempenho dos profissionais</CardDescription>
         </CardHeader>
         <CardContent>
-          <ProfessionalPerformanceSection />
+          <ProfessionalPerformanceSection dateRange={dateRange} />
         </CardContent>
       </Card>
       
@@ -23,7 +27,7 @@ export function ProfessionalsReports() {
           <CardDescription>Atendimentos por profissional</CardDescription>
         </CardHeader>
         <CardContent>
-          <ProfessionalProductivityChart />
+          <ProfessionalProductivityChart dateRange={dateRange} />
         </CardContent>
       </Card>
       
@@ -33,7 +37,7 @@ export function ProfessionalsReports() {
           <CardDescription>Receita por profissional</CardDescription>
         </CardHeader>
         <CardContent>
-          <ProfessionalRevenueChart />
+          <ProfessionalRevenueChart dateRange={dateRange} />
         </CardContent>
       </Card>
     </div>

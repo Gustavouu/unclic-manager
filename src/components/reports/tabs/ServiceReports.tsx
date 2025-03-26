@@ -4,7 +4,11 @@ import { ServicePopularityChart } from "../charts/ServicePopularityChart";
 import { ServiceOccupancyChart } from "../charts/ServiceOccupancyChart";
 import { ServicePerformanceSection } from "../sections/ServicePerformanceSection";
 
-export function ServiceReports() {
+interface ServiceReportsProps {
+  dateRange: string;
+}
+
+export function ServiceReports({ dateRange }: ServiceReportsProps) {
   return (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
       <Card className="md:col-span-2">
@@ -13,7 +17,7 @@ export function ServiceReports() {
           <CardDescription>Análise de desempenho dos serviços oferecidos</CardDescription>
         </CardHeader>
         <CardContent>
-          <ServicePerformanceSection />
+          <ServicePerformanceSection dateRange={dateRange} />
         </CardContent>
       </Card>
       
@@ -23,7 +27,7 @@ export function ServiceReports() {
           <CardDescription>Serviços mais agendados</CardDescription>
         </CardHeader>
         <CardContent>
-          <ServicePopularityChart />
+          <ServicePopularityChart dateRange={dateRange} />
         </CardContent>
       </Card>
       
@@ -33,7 +37,7 @@ export function ServiceReports() {
           <CardDescription>Ocupação por horário e dia da semana</CardDescription>
         </CardHeader>
         <CardContent>
-          <ServiceOccupancyChart />
+          <ServiceOccupancyChart dateRange={dateRange} />
         </CardContent>
       </Card>
     </div>
