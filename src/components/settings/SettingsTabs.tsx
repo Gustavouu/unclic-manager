@@ -32,6 +32,10 @@ export const settingsTabs: SettingsTab[] = [
   { id: "other", label: "Outras", icon: SettingsIcon },
 ];
 
+// Split tabs into two rows
+const firstRowTabs = settingsTabs.slice(0, 5);
+const secondRowTabs = settingsTabs.slice(5);
+
 interface SettingsTabsProps {
   activeTab: string;
   onTabChange: (value: string) => void;
@@ -39,13 +43,29 @@ interface SettingsTabsProps {
 
 export const SettingsTabs = ({ activeTab, onTabChange }: SettingsTabsProps) => {
   return (
-    <div className="overflow-x-auto">
-      <TabsList className="flex justify-start w-max p-1 mb-4 border rounded-lg">
-        {settingsTabs.map((tab) => (
+    <div className="space-y-2">
+      {/* First row of tabs */}
+      <TabsList className="flex justify-start w-full p-1 border rounded-lg">
+        {firstRowTabs.map((tab) => (
           <TabsTrigger 
             key={tab.id} 
             value={tab.id} 
-            className="flex items-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            className="flex items-center gap-2 px-3 py-2 flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            onClick={() => onTabChange(tab.id)}
+          >
+            <tab.icon className="h-4 w-4" />
+            <span className="hidden sm:inline">{tab.label}</span>
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      
+      {/* Second row of tabs */}
+      <TabsList className="flex justify-start w-full p-1 border rounded-lg">
+        {secondRowTabs.map((tab) => (
+          <TabsTrigger 
+            key={tab.id} 
+            value={tab.id} 
+            className="flex items-center gap-2 px-3 py-2 flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             onClick={() => onTabChange(tab.id)}
           >
             <tab.icon className="h-4 w-4" />
