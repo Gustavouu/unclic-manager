@@ -1,80 +1,38 @@
 
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
-} from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+
+interface ServiceOccupancyChartProps {
+  dateRange: string;
+}
 
 const data = [
-  { hora: '08:00', segunda: 60, terca: 45, quarta: 55, quinta: 70, sexta: 80, sabado: 85 },
-  { hora: '10:00', segunda: 75, terca: 65, quarta: 70, quinta: 80, sexta: 85, sabado: 95 },
-  { hora: '12:00', segunda: 50, terca: 40, quarta: 45, quinta: 55, sexta: 60, sabado: 70 },
-  { hora: '14:00', segunda: 85, terca: 70, quarta: 75, quinta: 80, sexta: 90, sabado: 90 },
-  { hora: '16:00', segunda: 90, terca: 85, quarta: 80, quinta: 85, sexta: 95, sabado: 80 },
-  { hora: '18:00', segunda: 65, terca: 70, quarta: 75, quinta: 80, sexta: 70, sabado: 60 },
+  { time: "9h", segunda: 30, terca: 40, quarta: 45, quinta: 30, sexta: 50, sabado: 80 },
+  { time: "10h", segunda: 50, terca: 60, quarta: 65, quinta: 55, sexta: 70, sabado: 90 },
+  { time: "11h", segunda: 70, terca: 75, quarta: 80, quinta: 65, sexta: 85, sabado: 95 },
+  { time: "12h", segunda: 40, terca: 45, quarta: 50, quinta: 40, sexta: 55, sabado: 60 },
+  { time: "13h", segunda: 50, terca: 55, quarta: 60, quinta: 50, sexta: 65, sabado: 70 },
+  { time: "14h", segunda: 80, terca: 85, quarta: 90, quinta: 80, sexta: 95, sabado: 100 },
+  { time: "15h", segunda: 85, terca: 90, quarta: 95, quinta: 85, sexta: 100, sabado: 100 },
+  { time: "16h", segunda: 70, terca: 75, quarta: 80, quinta: 70, sexta: 85, sabado: 90 },
+  { time: "17h", segunda: 60, terca: 65, quarta: 70, quinta: 60, sexta: 75, sabado: 80 },
+  { time: "18h", segunda: 40, terca: 45, quarta: 50, quinta: 40, sexta: 55, sabado: 60 },
 ];
 
-export function ServiceOccupancyChart() {
-  const config = {
-    segunda: {
-      label: "Segunda",
-      theme: { light: "#4f46e5", dark: "#818cf8" },
-    },
-    terca: {
-      label: "Terça",
-      theme: { light: "#ec4899", dark: "#f472b6" },
-    },
-    quarta: {
-      label: "Quarta",
-      theme: { light: "#10b981", dark: "#34d399" },
-    },
-    quinta: {
-      label: "Quinta",
-      theme: { light: "#f59e0b", dark: "#fbbf24" },
-    },
-    sexta: {
-      label: "Sexta",
-      theme: { light: "#06b6d4", dark: "#22d3ee" },
-    },
-    sabado: {
-      label: "Sábado",
-      theme: { light: "#8b5cf6", dark: "#a78bfa" },
-    },
-  };
-
+export function ServiceOccupancyChart({ dateRange }: ServiceOccupancyChartProps) {
   return (
-    <ChartContainer config={config} className="h-[300px]">
-      <LineChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis 
-          dataKey="hora" 
-          axisLine={false}
-          tickLine={false}
-          tick={{ fontSize: 12 }}
-        />
-        <YAxis 
-          axisLine={false}
-          tickLine={false}
-          tick={{ fontSize: 12 }}
-          width={30}
-          domain={[0, 100]}
-          tickFormatter={(value) => `${value}%`}
-        />
-        <ChartTooltip content={<ChartTooltipContent formatter={(value: number) => `${value}%`} />} />
-        <Legend />
-        <Line type="monotone" dataKey="segunda" stroke="var(--color-segunda)" strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="terca" stroke="var(--color-terca)" strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="quarta" stroke="var(--color-quarta)" strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="quinta" stroke="var(--color-quinta)" strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="sexta" stroke="var(--color-sexta)" strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="sabado" stroke="var(--color-sabado)" strokeWidth={2} dot={false} />
-      </LineChart>
-    </ChartContainer>
+    <ResponsiveContainer width="100%" height={300}>
+      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 25 }}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="time" />
+        <YAxis />
+        <Tooltip />
+        <Area type="monotone" dataKey="segunda" stackId="1" stroke="#8884d8" fill="#8884d8" />
+        <Area type="monotone" dataKey="terca" stackId="1" stroke="#82ca9d" fill="#82ca9d" />
+        <Area type="monotone" dataKey="quarta" stackId="1" stroke="#ffc658" fill="#ffc658" />
+        <Area type="monotone" dataKey="quinta" stackId="1" stroke="#ff8042" fill="#ff8042" />
+        <Area type="monotone" dataKey="sexta" stackId="1" stroke="#0088fe" fill="#0088fe" />
+        <Area type="monotone" dataKey="sabado" stackId="1" stroke="#00C49F" fill="#00C49F" />
+      </AreaChart>
+    </ResponsiveContainer>
   );
 }

@@ -1,61 +1,33 @@
 
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
-} from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+
+interface ProfessionalProductivityChartProps {
+  dateRange: string;
+}
 
 const data = [
-  { name: 'Ana Silva', atendimentos: 95 },
-  { name: 'João Pereira', atendimentos: 85 },
-  { name: 'Maria Oliveira', atendimentos: 78 },
-  { name: 'Carlos Santos', atendimentos: 62 },
-  { name: 'Paula Souza', atendimentos: 45 },
+  { name: "Ana Silva", count: 125 },
+  { name: "Carlos Oliveira", count: 115 },
+  { name: "Mariana Santos", count: 98 },
+  { name: "Bruno Costa", count: 87 },
+  { name: "Juliana Lima", count: 75 },
 ];
 
-export function ProfessionalProductivityChart() {
-  const config = {
-    atendimentos: {
-      label: "Atendimentos",
-      theme: { light: "#4f46e5", dark: "#818cf8" },
-    },
-  };
-
+export function ProfessionalProductivityChart({ dateRange }: ProfessionalProductivityChartProps) {
   return (
-    <ChartContainer config={config} className="h-[300px]">
-      <BarChart 
-        layout="vertical" 
-        data={data} 
-        margin={{ top: 10, right: 10, left: 90, bottom: 10 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+    <ResponsiveContainer width="100%" height={300}>
+      <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 25 }}>
+        <CartesianGrid strokeDasharray="3 3" />
         <XAxis 
-          type="number" 
-          axisLine={false}
-          tickLine={false}
-          tick={{ fontSize: 12 }}
-        />
-        <YAxis 
-          type="category" 
           dataKey="name" 
-          axisLine={false}
-          tickLine={false}
+          angle={-45} 
+          textAnchor="end" 
           tick={{ fontSize: 12 }}
-          width={80}
         />
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar 
-          dataKey="atendimentos" 
-          fill="var(--color-atendimentos)" 
-          barSize={20} 
-          radius={[0, 4, 4, 0]} 
-        />
+        <YAxis />
+        <Tooltip />
+        <Bar dataKey="count" fill="#3b82f6" />
       </BarChart>
-    </ChartContainer>
+    </ResponsiveContainer>
   );
 }
