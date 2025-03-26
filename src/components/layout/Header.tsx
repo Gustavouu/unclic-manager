@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useMobile } from "@/hooks/use-mobile";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,7 +26,7 @@ interface HeaderProps {
 }
 
 export const Header = ({ breadcrumb = [] }: HeaderProps) => {
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
   
   return (
     <header className="flex flex-col border-b border-border/50 py-4 px-6 bg-background/50 backdrop-blur-sm">

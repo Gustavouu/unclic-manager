@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -76,7 +75,7 @@ export function PaymentTransactionsTable() {
           created_at: item.criado_em,
           updated_at: item.atualizado_em,
           customer_name: item.clientes?.nome || "Cliente não identificado",
-          service_name: item.servicos?.nome || "Serviço não identificado",
+          service_name: item.servicos?.nome || "N/A",
           transaction_id,
           payment_url
         };
