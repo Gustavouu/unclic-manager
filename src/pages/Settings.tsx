@@ -710,3 +710,122 @@ const Settings = () => {
                           <SelectItem value="48">48 horas antes</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <Label htmlFor="follow-up">Mensagem pós-atendimento</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Enviar mensagem após o serviço para feedback
+                      </p>
+                      <Select defaultValue="2">
+                        <SelectTrigger id="follow-up">
+                          <SelectValue placeholder="Selecione o tempo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">Não enviar</SelectItem>
+                          <SelectItem value="1">1 hora depois</SelectItem>
+                          <SelectItem value="2">2 horas depois</SelectItem>
+                          <SelectItem value="24">24 horas depois</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Políticas de Cancelamento</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="cancellation-policy">Política de cancelamento</Label>
+                    <Select defaultValue="24">
+                      <SelectTrigger id="cancellation-policy">
+                        <SelectValue placeholder="Selecione a política" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">Cancelamento a qualquer momento</SelectItem>
+                        <SelectItem value="2">Até 2 horas antes</SelectItem>
+                        <SelectItem value="12">Até 12 horas antes</SelectItem>
+                        <SelectItem value="24">Até 24 horas antes</SelectItem>
+                        <SelectItem value="48">Até 48 horas antes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="no-show-fee">Taxa por não comparecimento</Label>
+                    <div className="flex items-center gap-2">
+                      <div className="relative w-full">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">R$</span>
+                        <Input id="no-show-fee" type="number" className="pl-8" defaultValue="0" />
+                      </div>
+                      <span className="text-sm text-muted-foreground">ou</span>
+                      <div className="w-20">
+                        <Input type="number" className="text-right" defaultValue="0" />
+                      </div>
+                      <span className="text-sm text-muted-foreground">%</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="cancellation-message">Mensagem de cancelamento</Label>
+                  <Textarea 
+                    id="cancellation-message" 
+                    placeholder="Mensagem exibida quando um agendamento é cancelado"
+                    defaultValue="Lamentamos informar que seu agendamento foi cancelado. Entre em contato conosco para mais informações."
+                  />
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
+              <Button variant="outline">Cancelar</Button>
+              <Button>Salvar Alterações</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        {/* Financial Tab */}
+        <TabsContent value="financial" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações Financeiras</CardTitle>
+              <CardDescription>
+                Defina as configurações financeiras do seu negócio
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Formas de Pagamento</h3>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Cartão de Crédito</p>
+                          <span className="text-sm text-muted-foreground">Taxa: 2.99%</span>
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Cartão de Débito</p>
+                          <span className="text-sm text-muted-foreground">Taxa: 1.99%</span>
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <DollarSign className="h-5 w-5 text-primary" />
+                        <div>
