@@ -14,12 +14,37 @@ import { NotificationsTab } from "@/components/settings/tabs/NotificationsTab";
 import { IntegrationsTab } from "@/components/settings/tabs/IntegrationsTab";
 import { PermissionsTab } from "@/components/settings/tabs/PermissionsTab";
 import { OtherTab } from "@/components/settings/tabs/OtherTab";
+import { mockSaveFunction, showSuccessToast, showErrorToast } from "@/utils/formUtils";
+import { Toaster } from "sonner";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("business");
+  const [isSaving, setIsSaving] = useState(false);
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+  };
+
+  const handleGlobalSave = async () => {
+    setIsSaving(true);
+    
+    try {
+      const success = await mockSaveFunction();
+      
+      if (success) {
+        showSuccessToast("Todas as configurações foram salvas com sucesso!");
+      } else {
+        showErrorToast();
+      }
+    } catch (error) {
+      showErrorToast();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTutorial = () => {
+    showSuccessToast("Tutorial iniciado! Explore as diferentes abas para configurar seu negócio.");
   };
 
   return (
@@ -27,13 +52,13 @@ const Settings = () => {
       <div className="flex items-center justify-between py-4">
         <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
         <div className="flex items-center gap-4">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleTutorial}>
             <HelpCircle className="mr-2 h-4 w-4" />
             Tutorial de Configuração
           </Button>
-          <Button>
+          <Button onClick={handleGlobalSave} disabled={isSaving}>
             <Save className="mr-2 h-4 w-4" />
-            Salvar Alterações
+            {isSaving ? "Salvando..." : "Salvar Alterações"}
           </Button>
         </div>
       </div>
@@ -81,6 +106,8 @@ const Settings = () => {
           <OtherTab />
         </TabsContent>
       </Tabs>
+      
+      <Toaster position="top-right" />
     </div>
   );
 };
