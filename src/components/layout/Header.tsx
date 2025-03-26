@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { Bell, Calendar, ChevronDown } from "lucide-react";
+import React from "react";
+import { Bell, Calendar, ChevronDown, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,6 +21,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Input } from "@/components/ui/input";
 
 interface HeaderProps {
   breadcrumb?: { label: string; path?: string }[];
@@ -27,11 +29,12 @@ interface HeaderProps {
 
 export const Header = ({ breadcrumb = [] }: HeaderProps) => {
   const isMobile = useMobile();
+  const navigate = useNavigate();
   
   return (
-    <header className="flex flex-col border-b border-border/50 py-4 px-6 bg-background/50 backdrop-blur-sm">
-      <div className="flex items-center justify-between h-8">
-        <div>
+    <header className="sticky top-0 z-30 flex flex-col border-b border-border/50 py-2 px-4 md:px-6 bg-background/95 backdrop-blur-sm">
+      <div className="flex items-center justify-between h-12">
+        <div className="flex items-center gap-4">
           {breadcrumb.length > 0 && (
             <Breadcrumb>
               <BreadcrumbList>
@@ -52,20 +55,31 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
               </BreadcrumbList>
             </Breadcrumb>
           )}
+          
+          {!isMobile && (
+            <div className="relative w-full max-w-sm">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Buscar..."
+                className="w-full pl-9 bg-muted/40 border-muted focus-visible:ring-primary"
+              />
+            </div>
+          )}
         </div>
         
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="rounded-full border-none bg-muted/70">
-            <Bell size={19} className="text-muted-foreground" />
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Bell size={18} className="text-muted-foreground" />
           </Button>
           
-          <Button variant="outline" size="icon" className="rounded-full border-none bg-muted/70">
-            <Calendar size={19} className="text-muted-foreground" />
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Calendar size={18} className="text-muted-foreground" />
           </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2 ml-2 p-1 pr-2 hover:bg-muted/70">
+              <Button variant="ghost" className="flex items-center gap-2 ml-2 p-1 pr-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="" />
                   <AvatarFallback className="bg-primary/10 text-primary font-medium">SA</AvatarFallback>
@@ -85,11 +99,13 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
               <DropdownMenuItem>Configurações</DropdownMenuItem>
               <DropdownMenuItem>Assinatura</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Sair</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/login")}>
+                Sair
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
     </header>
   );
-};
+}

@@ -12,10 +12,8 @@ type AppLayoutProps = {
 export const AppLayout = ({ children, breadcrumb }: AppLayoutProps) => {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
-      {/* Sidebar */}
       <Sidebar />
       
-      {/* Main content area with proper margin to account for sidebar */}
       <main className="flex-1 flex flex-col ml-16 md:ml-60 h-screen overflow-hidden">
         <Header breadcrumb={breadcrumb} />
         <div className="flex-1 overflow-auto p-4 sm:p-6">

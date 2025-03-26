@@ -11,15 +11,6 @@ interface SidebarProps extends React.ComponentProps<"div"> {}
 
 export function Sidebar({ className }: SidebarProps) {
   const isMobile = useMobile();
-  const [open, setOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    if (isMobile) {
-      setOpen(false);
-    } else {
-      setOpen(true);
-    }
-  }, [isMobile]);
 
   if (isMobile) {
     return <MobileSidebar />;
@@ -41,5 +32,4 @@ export function Sidebar({ className }: SidebarProps) {
   );
 }
 
-// Export the MobileSidebar component for use in other files
 export { MobileSidebar } from "./sidebar/MobileSidebar";

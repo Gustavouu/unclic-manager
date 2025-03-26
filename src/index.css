@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.cdnfonts.com/css/sf-pro-display');
 
@@ -16,7 +17,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 27%;
 
-    --primary: 215 50% 23%;
+    --primary: 221 83% 53%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 214 32% 91%;
@@ -25,7 +26,7 @@
     --muted: 214 32% 91%;
     --muted-foreground: 215 25% 40%;
 
-    --accent: 215 50% 23%;
+    --accent: 221 83% 53%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
@@ -33,31 +34,31 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 215 50% 23%;
+    --ring: 221 83% 53%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 215 25% 27%;
     --sidebar-primary: 210 40% 98%;
-    --sidebar-primary-foreground: 215 50% 23%;
-    --sidebar-accent: 215 31% 31%;
+    --sidebar-primary-foreground: 221 83% 53%;
+    --sidebar-accent: 221 83% 53%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 215 31% 31%;
-    --sidebar-ring: 214 95% 93%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 221 83% 53%;
   }
 
   .dark {
-    --background: 225 25% 11%;
+    --background: 225 25% 9%;
     --foreground: 210 40% 98%;
 
-    --card: 225 25% 14%;
+    --card: 225 25% 12%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 225 25% 14%;
+    --popover: 225 25% 12%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 213 100% 73%;
+    --primary: 217 91% 60%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -74,16 +75,16 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 224.3 76.3% 48%;
     
-    --sidebar-background: 225 25% 14%;
+    --sidebar-background: 225 25% 12%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 213 100% 73%;
-    --sidebar-primary-foreground: 225 25% 14%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 225 25% 12%;
     --sidebar-accent: 225 21% 22%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 225 21% 22%;
-    --sidebar-ring: 213 100% 73%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -107,7 +108,7 @@
   }
 
   .sidebar-item.active {
-    @apply bg-blue-50 text-blue-700 font-medium before:absolute before:w-0.5 before:h-5 before:left-0.5 before:bg-blue-600 before:rounded-full;
+    @apply bg-primary/10 text-primary font-medium;
   }
 
   .sidebar-icon {
@@ -119,11 +120,11 @@
   }
 
   .stat-card {
-    @apply bg-white rounded-lg shadow-sm border border-border/40 p-4 flex flex-col transition-all duration-300 hover:shadow-md hover:border-border/60;
+    @apply bg-white dark:bg-card rounded-lg shadow-sm border border-border/40 p-4 flex flex-col transition-all duration-300 hover:shadow-md hover:border-border/60;
   }
 
   .glass-card {
-    @apply bg-white/80 backdrop-blur-sm rounded-lg shadow-sm border border-white/20 transition-all duration-300;
+    @apply bg-white/80 dark:bg-black/20 backdrop-blur-sm rounded-lg shadow-sm border border-white/20 transition-all duration-300;
   }
 
   .animated-border {

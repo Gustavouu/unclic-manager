@@ -1,12 +1,13 @@
 
 import * as React from "react";
+import { cn } from "@/lib/utils";
 
 interface SidebarMainProps extends React.HTMLAttributes<HTMLElement> {}
 
-export function SidebarMain({ className, ...props }: SidebarMainProps) {
+export function SidebarMain({ className, children, ...props }: SidebarMainProps) {
   return (
-    <div className="flex flex-col space-y-4 py-4" {...props}>
-      {props.children}
+    <div className={cn("flex-1 overflow-auto px-3", className)} {...props}>
+      {children}
     </div>
   );
 }

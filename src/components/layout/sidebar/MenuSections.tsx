@@ -8,75 +8,72 @@ import {
   UserRound,
   Users,
   WalletCards,
+  Settings,
 } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { SidebarGroup } from "./SidebarGroup";
-import { SidebarMenuItem } from "./SidebarMenu";
-import { SettingsCollapsible } from "./SettingsCollapsible";
+import { cn } from "@/lib/utils";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 
 export function MenuSections() {
-  const pathname = useLocation().pathname;
+  const { pathname } = useLocation();
+
+  const menuItems = [
+    {
+      group: "Menu",
+      items: [
+        { icon: LayoutDashboard, title: "Dashboard", path: "/dashboard" }
+      ]
+    },
+    {
+      group: "Gestão",
+      items: [
+        { icon: CalendarRange, title: "Agenda", path: "/appointments" },
+        { icon: UserRound, title: "Clientes", path: "/clients" },
+        { icon: Scissors, title: "Serviços", path: "/services" },
+        { icon: Users, title: "Profissionais", path: "/professionals" },
+        { icon: Package, title: "Estoque", path: "/inventory" },
+        { icon: WalletCards, title: "Financeiro", path: "/finance" }
+      ]
+    }
+  ];
   
   return (
     <>
-      <SidebarGroup title="Menu">
-        <SidebarMenuItem
-          icon={LayoutDashboard}
-          title="Dashboard"
-          isLink
-          to="/dashboard"
-          active={pathname === "/dashboard"}
-        />
-      </SidebarGroup>
-
-      <SidebarGroup title="Gestão">
-        <SidebarMenuItem
-          icon={CalendarRange}
-          title="Agenda"
-          isLink
-          to="/appointments"
-          active={pathname === "/appointments"}
-        />
-        <SidebarMenuItem
-          icon={UserRound}
-          title="Clientes"
-          isLink
-          to="/clients"
-          active={pathname === "/clients"}
-        />
-        <SidebarMenuItem
-          icon={Scissors}
-          title="Serviços"
-          isLink
-          to="/services"
-          active={pathname === "/services"}
-        />
-        <SidebarMenuItem
-          icon={Users}
-          title="Profissionais"
-          isLink
-          to="/professionals"
-          active={pathname === "/professionals"}
-        />
-        <SidebarMenuItem
-          icon={Package}
-          title="Estoque"
-          isLink
-          to="/inventory"
-          active={pathname === "/inventory"}
-        />
-        <SidebarMenuItem
-          icon={WalletCards}
-          title="Financeiro"
-          isLink
-          to="/finance"
-          active={pathname === "/finance"}
-        />
-      </SidebarGroup>
-
-      <SidebarGroup title="Configurações">
-        <SettingsCollapsible />
-      </SidebarGroup>
+      {menuItems.map((section) => (
+        <SidebarGroup title={section.group} key={section.group}>
+          <div className="space-y-1">
+            {section.items.map((item) => {
+              const isActive = pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                    isActive 
+                      ? "bg-primary text-primary-foreground" 
+                      : "hover:bg-muted"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.title}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </SidebarGroup>
+      ))}
+      
+      <div className="mt-auto px-3 py-2">
+        <div className="flex items-center justify-between rounded-md p-2">
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            <span className="text-sm">Tema</span>
+          </div>
+          <ThemeSwitcher />
+        </div>
+      </div>
     </>
   );
 }
