@@ -12,17 +12,29 @@ export function PaymentIntegrationDashboard() {
   useEffect(() => {
     const checkConfiguration = async () => {
       try {
+        // Check if any transaction has Efi Bank information in its notes
         const { data, error } = await supabase
-          .from('efi_bank_integrations')
-          .select('*')
-          .eq('business_id', "1") // This should be the actual business ID
-          .single();
+          .from('transacoes')
+          .select('notas')
+          .eq('id_negocio', "1")
+          .not('notas', 'is', null)
+          .limit(1);
 
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.error("Erro ao verificar configuração da Efi Bank:", error);
         }
 
-        setIsConfigured(!!data);
+        // Check if any transaction has Efi Bank config in notes
+        if (data && data.length > 0) {
+          try {
+            const notes = data[0].notas;
+            if (notes && notes.includes('efi_integration')) {
+              setIsConfigured(true);
+            }
+          } catch (parseError) {
+            console.error("Error parsing notes JSON:", parseError);
+          }
+        }
       } catch (error) {
         console.error("Erro ao verificar configuração:", error);
       } finally {

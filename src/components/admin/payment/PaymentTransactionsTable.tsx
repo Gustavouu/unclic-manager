@@ -1,7 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PaymentStatusBadge } from "@/components/payment/PaymentStatusBadge";
 import { formatCurrency } from "@/lib/formatters";
@@ -18,8 +17,8 @@ type PaymentTransaction = {
   updated_at: string;
   customer_name: string;
   service_name: string;
-  efi_bank_transaction_id: string;
-  payment_url: string;
+  transaction_id?: string;
+  payment_url?: string;
 };
 
 export function PaymentTransactionsTable() {
@@ -39,7 +38,7 @@ export function PaymentTransactionsTable() {
           metodo_pagamento, 
           criado_em, 
           atualizado_em, 
-          efi_bank_transaction_id, 
+          transaction_id,
           payment_url,
           clientes(nome),
           servicos(nome)
@@ -48,6 +47,12 @@ export function PaymentTransactionsTable() {
         .limit(50);
 
       if (error) throw error;
+
+      // Handle potential null data
+      if (!data) {
+        setTransactions([]);
+        return;
+      }
 
       const formattedData = data.map(item => ({
         id: item.id,
@@ -58,13 +63,14 @@ export function PaymentTransactionsTable() {
         updated_at: item.atualizado_em,
         customer_name: item.clientes?.nome || "Cliente não identificado",
         service_name: item.servicos?.nome || "Serviço não identificado",
-        efi_bank_transaction_id: item.efi_bank_transaction_id,
+        transaction_id: item.transaction_id,
         payment_url: item.payment_url
       }));
 
       setTransactions(formattedData);
     } catch (error) {
       console.error("Erro ao buscar transações:", error);
+      setTransactions([]);
     } finally {
       setLoading(false);
     }
@@ -154,7 +160,7 @@ export function PaymentTransactionsTable() {
                       <PaymentStatusBadge status={transaction.status as any} />
                     </TableCell>
                     <TableCell>
-                      {transaction.efi_bank_transaction_id || "N/A"}
+                      {transaction.transaction_id || "N/A"}
                     </TableCell>
                     <TableCell className="text-right">
                       {transaction.payment_url && (

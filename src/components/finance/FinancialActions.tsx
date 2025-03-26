@@ -60,11 +60,20 @@ export function FinancialActions() {
   
   const onSubmit = async (data: z.infer<typeof transactionSchema>) => {
     try {
+      // Ensure valor is a number
+      const valor = typeof data.valor === 'number' ? data.valor : 0;
+      
       // Registrar a transação no banco de dados
       const { error } = await supabase
         .from('transacoes')
         .insert({
-          ...data,
+          tipo: data.tipo,
+          valor: valor,
+          descricao: data.descricao,
+          metodo_pagamento: data.metodo_pagamento,
+          id_categoria: data.id_categoria,
+          data_pagamento: data.data_pagamento,
+          status: data.status,
           id_negocio: "1", // Substituir pelo ID real do negócio
           criado_em: new Date().toISOString()
         });

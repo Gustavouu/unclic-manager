@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -77,6 +78,12 @@ export const PaymentDialog = ({
     if (appointmentId) return; // If we already have an appointment, no need to create
     
     try {
+      // We need to adjust this to match our database schema requirements
+      const appointmentDate = new Date();
+      const currentTime = new Date();
+      const hourStart = `${currentTime.getHours()}:${currentTime.getMinutes()}`;
+      const hourEnd = `${currentTime.getHours() + 1}:${currentTime.getMinutes()}`;
+      
       // Logic to create a new appointment
       const { data, error } = await supabase
         .from('agendamentos')
@@ -85,7 +92,12 @@ export const PaymentDialog = ({
           id_cliente: customerId,
           valor: amount,
           status: 'confirmado',
-          data: appointmentDate ? new Date(appointmentDate).toISOString().split('T')[0] : null,
+          data: appointmentDate.toISOString().split('T')[0],
+          hora_inicio: hourStart,
+          hora_fim: hourEnd,
+          duracao: 60, // Default 1 hour
+          id_negocio: "1", // Example business ID
+          id_funcionario: "1", // Example professional ID (should be dynamically chosen)
           forma_pagamento: form.getValues('paymentMethod')
         })
         .select()

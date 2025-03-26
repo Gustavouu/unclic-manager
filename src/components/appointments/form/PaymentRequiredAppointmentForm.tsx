@@ -11,11 +11,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-// Import existing form components
-import { ServiceSelect } from "./ServiceSelect";
+// Import form component wrappers that handle the service select props correctly
+import ServiceSelectWrapper from "./ServiceSelectWrapper";
+import ProfessionalSelectWrapper from "./ProfessionalSelectWrapper";
+import ClientSelectWrapper from "./ClientSelectWrapper";
 import { DateTimeSelect } from "./DateTimeSelect";
-import { ClientSelect } from "./ClientSelect";
-import { ProfessionalSelect } from "./ProfessionalSelect";
 import { NotesField } from "./NotesField";
 
 interface PaymentRequiredAppointmentFormProps {
@@ -98,12 +98,12 @@ export function PaymentRequiredAppointmentForm({ onSuccess, customerId }: Paymen
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card className="p-6 space-y-4">
           <div className="grid gap-6 sm:grid-cols-2">
-            <ServiceSelect form={form} />
-            <ProfessionalSelect form={form} serviceId={form.watch("serviceId")} />
+            <ServiceSelectWrapper form={form} />
+            <ProfessionalSelectWrapper form={form} serviceId={form.watch("serviceId")} />
           </div>
           
           <div className="grid gap-6 sm:grid-cols-2">
-            <ClientSelect form={form} disabled={!!customerId} />
+            <ClientSelectWrapper form={form} disabled={!!customerId} />
             <DateTimeSelect form={form} />
           </div>
           

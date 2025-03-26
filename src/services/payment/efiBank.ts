@@ -11,14 +11,14 @@ export const EfiBankService = {
    */
   async getConfiguration(businessId: string = "1") {
     try {
-      // Check if efi_bank_integrations table exists first
+      // Check if the table exists first
       const { data: tableExists } = await supabase
         .from('transacoes')
         .select('id')
         .limit(1);
       
       if (!tableExists) {
-        console.warn("Transacoes table does not exist yet");
+        console.warn("Transactions table does not exist yet");
         return null;
       }
       
@@ -26,8 +26,9 @@ export const EfiBankService = {
       // In production, you would need to create a proper table for this
       const { data, error } = await supabase
         .from('transacoes')
-        .select('id')
+        .select('notas')
         .eq('id_negocio', businessId)
+        .eq('tipo', 'config')
         .limit(1);
       
       if (error) {
@@ -35,8 +36,23 @@ export const EfiBankService = {
         return null;
       }
       
+      // Try to parse JSON from notes if available
+      if (data && data.length > 0 && data[0].notas) {
+        try {
+          const configData = JSON.parse(data[0].notas);
+          if (configData.efi_integration) {
+            return {
+              merchant_id: configData.efi_integration.merchant_id,
+              api_key: configData.efi_integration.api_key,
+              is_test_mode: configData.efi_integration.is_test_mode
+            };
+          }
+        } catch (e) {
+          console.error("Error parsing configuration:", e);
+        }
+      }
+      
       // For demo purposes, return mock configuration
-      // In production, this would come from a proper table
       return {
         merchant_id: "MERCHANT_" + Math.random().toString(36).substring(2, 10).toUpperCase(),
         api_key: "API_KEY_" + Math.random().toString(36).substring(2, 10).toUpperCase(),

@@ -4,18 +4,19 @@ import { PaymentRequest, PaymentResponse } from "./types";
 import { EfiBankService } from "./efiBank";
 import { mapEfiBankStatus } from "./utils";
 
-export { PaymentRequest, PaymentResponse } from "./types";
-
+/**
+ * Service for handling payment processing with Efi Bank
+ */
 export const PaymentService = {
   /**
-   * Envia uma solicitação de pagamento para o Efi Bank
+   * Creates a new payment request
    */
   async createPayment(payment: PaymentRequest): Promise<PaymentResponse> {
     try {
-      // Primeiro, busca as configurações da Efi Bank
+      // First, get the Efi Bank configuration
       const efiConfig = await EfiBankService.getConfiguration();
       
-      // Registra a transação no nosso banco de dados
+      // Register the transaction in our database
       const { data: dbTransaction, error: dbError } = await supabase
         .from('transacoes')
         .insert({
@@ -27,14 +28,14 @@ export const PaymentService = {
           descricao: payment.description || "Pagamento de serviço",
           tipo: "receita",
           status: "pendente",
-          id_negocio: "1" // Exemplo: ID do negócio atual (deve ser dinâmico em prod)
+          id_negocio: "1" // Example: current business ID (should be dynamic in prod)
         })
         .select('id, status, metodo_pagamento, valor, criado_em')
         .single();
 
       if (dbError) throw dbError;
       
-      // Configura os dados para a chamada da API do Efi Bank
+      // Configure the data for the Efi Bank API call
       const efiPaymentData = efiConfig 
         ? await EfiBankService.callEfiBankAPI({
             amount: payment.amount,
@@ -52,13 +53,15 @@ export const PaymentService = {
             referenceId: dbTransaction.id
           });
       
-      // Atualiza a transação com os dados retornados pelo Efi Bank
+      // Update the transaction with the data returned by Efi Bank
       if (efiPaymentData.transactionId) {
         try {
           await supabase
             .from('transacoes')
             .update({ 
-              status: mapEfiBankStatus(efiPaymentData.status)
+              status: mapEfiBankStatus(efiPaymentData.status),
+              transaction_id: efiPaymentData.transactionId,
+              payment_url: efiPaymentData.paymentUrl
             })
             .eq('id', dbTransaction.id);
         } catch (error) {
@@ -83,25 +86,26 @@ export const PaymentService = {
   },
 
   /**
-   * Consulta o status de um pagamento no Efi Bank
+   * Checks the status of a payment in Efi Bank
    */
   async getPaymentStatus(paymentId: string): Promise<PaymentResponse> {
     try {
       const { data, error } = await supabase
         .from('transacoes')
-        .select('id, status, metodo_pagamento, valor, criado_em')
+        .select('id, status, metodo_pagamento, valor, criado_em, transaction_id, payment_url')
         .eq('id', paymentId)
         .single();
 
       if (error) throw error;
       
-      // Busca as configurações da Efi Bank
+      // Get the Efi Bank configuration
       const efiConfig = await EfiBankService.getConfiguration();
       
-      // Consulta o status na API do Efi Bank ou simula a consulta
-      const efiStatusData = await EfiBankService.simulateEfiBankStatusCheck(paymentId);
+      // Query the status in the Efi Bank API or simulate the query
+      const transactionId = data.transaction_id || paymentId;
+      const efiStatusData = await EfiBankService.simulateEfiBankStatusCheck(transactionId);
       
-      // Atualiza o status se houver mudança
+      // Update the status if there's a change
       if (data.status !== mapEfiBankStatus(efiStatusData.status)) {
         try {
           await supabase
@@ -120,8 +124,8 @@ export const PaymentService = {
       return {
         id: data.id,
         status: mapEfiBankStatus(efiStatusData.status),
-        transactionId: efiStatusData.transactionId,
-        paymentUrl: efiStatusData.paymentUrl,
+        transactionId: transactionId,
+        paymentUrl: data.payment_url || efiStatusData.paymentUrl,
         amount: data.valor,
         paymentMethod: data.metodo_pagamento,
         createdAt: data.criado_em

@@ -1,20 +1,22 @@
+
 import {
   createBrowserRouter,
   RouterProvider,
   useNavigate,
 } from "react-router-dom";
-import { Index } from "./pages/Index";
-import { Login } from "./pages/Login";
-import { SignUp } from "./pages/SignUp";
-import { NotFound } from "./pages/NotFound";
-import { Dashboard } from "./pages/Dashboard";
-import { Appointments } from "./pages/Appointments";
-import { Clients } from "./pages/Clients";
-import { Services } from "./pages/Services";
-import { Professionals } from "./pages/Professionals";
-import { Inventory } from "./pages/Inventory";
+import Index from "./pages/Index";
+import { Login } from "./pages/auth/Login";
+import { SignUp } from "./pages/auth/SignUp";
+import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/Dashboard";
+import Appointments from "./pages/Appointments";
+import Clients from "./pages/Clients";
+import Services from "./pages/Services";
+import Professionals from "./pages/Professionals";
+import Inventory from "./pages/Inventory";
 import { useEffect, useState } from "react";
-import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSession } from "@supabase/auth-js";
+import { supabase } from "./integrations/supabase/client";
 import { AppLayout } from "./components/layout/AppLayout";
 import Finance from "./pages/Finance";
 
