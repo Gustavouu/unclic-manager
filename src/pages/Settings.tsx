@@ -48,6 +48,7 @@ import {
   Trash2,
   CreditCard
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("business");
@@ -824,4 +825,4 @@ const Settings = () => {
                         <DollarSign className="h-5 w-5 text-primary" />
                         <div>
                           <p className="font-medium">Dinheiro</p>
-                          <span className="text-sm text-muted-foreground">Taxa: 0%
+                          <span className
