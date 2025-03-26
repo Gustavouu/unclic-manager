@@ -25,14 +25,18 @@ export const formatCEP = (cep: string): string => {
   return `${numericCEP.slice(0, 5)}-${numericCEP.slice(5, 8)}`;
 };
 
-// Busca endereço pelo CEP usando a API ViaCEP
-export const fetchAddressByCEP = async (cep: string): Promise<{
+// Interface para os dados de endereço
+export interface AddressData {
   street?: string;
   neighborhood?: string;
   city?: string;
   state?: string;
+  zipCode?: string;
   error?: string;
-}> => {
+}
+
+// Busca endereço pelo CEP usando a API ViaCEP
+export const fetchAddressByCEP = async (cep: string): Promise<AddressData> => {
   try {
     // Remove caracteres não numéricos
     const cleanCEP = cep.replace(/\D/g, '');
@@ -53,10 +57,24 @@ export const fetchAddressByCEP = async (cep: string): Promise<{
       street: data.logradouro,
       neighborhood: data.bairro,
       city: data.localidade,
-      state: data.uf
+      state: data.uf,
+      zipCode: cleanCEP
     };
   } catch (error) {
     console.error("Erro ao buscar CEP:", error);
     return { error: "Erro ao buscar informações do CEP" };
   }
+};
+
+// Função para gerar endereço formatado
+export const formatAddress = (addressData: AddressData): string => {
+  const { street, neighborhood, city, state } = addressData;
+  
+  const parts = [
+    street,
+    neighborhood ? neighborhood : null,
+    city && state ? `${city} - ${state}` : city || state
+  ].filter(Boolean);
+  
+  return parts.join(', ');
 };
