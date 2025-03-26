@@ -1,9 +1,14 @@
 
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { ReactNode } from "react";
 
-const RequireAuth = () => {
+interface RequireAuthProps {
+  children: ReactNode;
+}
+
+const RequireAuth = ({ children }: RequireAuthProps) => {
   const { user, loading } = useAuth();
   const location = useLocation();
   
@@ -78,12 +83,12 @@ const RequireAuth = () => {
   }
 
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return (
     <AppLayout breadcrumb={getBreadcrumbItems()}>
-      <Outlet />
+      {children}
     </AppLayout>
   );
 };

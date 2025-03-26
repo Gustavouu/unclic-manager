@@ -2,6 +2,10 @@
 import {
   createBrowserRouter,
   RouterProvider,
+  createRoutesFromElements,
+  Route,
+  useNavigate,
+  Routes,
 } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
@@ -18,76 +22,22 @@ import RequireAuth from "./components/auth/RequireAuth";
 
 function App() {
   return (
-    <RouterProvider router={router} />
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<SignUp />} />
+      
+      <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+      <Route path="/appointments" element={<RequireAuth><Appointments /></RequireAuth>} />
+      <Route path="/clients" element={<RequireAuth><Clients /></RequireAuth>} />
+      <Route path="/services" element={<RequireAuth><Services /></RequireAuth>} />
+      <Route path="/professionals" element={<RequireAuth><Professionals /></RequireAuth>} />
+      <Route path="/inventory" element={<RequireAuth><Inventory /></RequireAuth>} />
+      <Route path="/finance" element={<RequireAuth><Finance /></RequireAuth>} />
+      
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
 export default App;
-
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Index />
-  },
-  {
-    path: "/dashboard",
-    element: <RequireAuth />,
-    children: [
-      { path: "", element: <Dashboard /> }
-    ]
-  },
-  {
-    path: "/appointments",
-    element: <RequireAuth />,
-    children: [
-      { path: "", element: <Appointments /> }
-    ]
-  },
-  {
-    path: "/clients",
-    element: <RequireAuth />,
-    children: [
-      { path: "", element: <Clients /> }
-    ]
-  },
-  {
-    path: "/services",
-    element: <RequireAuth />,
-    children: [
-      { path: "", element: <Services /> }
-    ]
-  },
-  {
-    path: "/professionals",
-    element: <RequireAuth />,
-    children: [
-      { path: "", element: <Professionals /> }
-    ]
-  },
-  {
-    path: "/inventory",
-    element: <RequireAuth />,
-    children: [
-      { path: "", element: <Inventory /> }
-    ]
-  },
-  {
-    path: "/finance",
-    element: <RequireAuth />,
-    children: [
-      { path: "", element: <Finance /> }
-    ]
-  },
-  {
-    path: "/login",
-    element: <Login />,
-  },
-  {
-    path: "/signup",
-    element: <SignUp />,
-  },
-  {
-    path: "*",
-    element: <NotFound />,
-  },
-]);
