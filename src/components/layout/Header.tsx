@@ -48,6 +48,7 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
                   }
                   
                   return (
+                    // Using React.Fragment properly - only with key
                     <React.Fragment key={index}>
                       <BreadcrumbItem>
                         <BreadcrumbLink href={item.path || '#'}>{item.label}</BreadcrumbLink>
