@@ -21,6 +21,7 @@ import Finance from "./pages/Finance";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Payments from "./pages/Payments";
+import OnboardingPage from "./pages/Onboarding";
 import RequireAuth from "./components/auth/RequireAuth";
 import { AppLayout } from "./components/layout/AppLayout";
 
@@ -99,6 +100,11 @@ function App() {
           <AppLayout breadcrumb={[{ label: "Configurações" }]}>
             <Settings />
           </AppLayout>
+        </RequireAuth>
+      } />
+      <Route path="/onboarding" element={
+        <RequireAuth>
+          <OnboardingPage />
         </RequireAuth>
       } />
       
