@@ -18,7 +18,6 @@ import Services from "./pages/Services";
 import Professionals from "./pages/Professionals";
 import Inventory from "./pages/Inventory";
 import Finance from "./pages/Finance";
-import Reports from "./pages/Reports";
 import RequireAuth from "./components/auth/RequireAuth";
 
 function App() {
@@ -35,7 +34,6 @@ function App() {
       <Route path="/professionals" element={<RequireAuth><Professionals /></RequireAuth>} />
       <Route path="/inventory" element={<RequireAuth><Inventory /></RequireAuth>} />
       <Route path="/finance" element={<RequireAuth><Finance /></RequireAuth>} />
-      <Route path="/reports" element={<RequireAuth><Reports /></RequireAuth>} />
       
       <Route path="*" element={<NotFound />} />
     </Routes>

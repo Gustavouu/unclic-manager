@@ -9,7 +9,6 @@ import {
   Users,
   WalletCards,
   Settings,
-  BarChart3,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { SidebarGroup } from "./SidebarGroup";
@@ -34,8 +33,7 @@ export function MenuSections() {
         { icon: Scissors, title: "Serviços", path: "/services" },
         { icon: Users, title: "Profissionais", path: "/professionals" },
         { icon: Package, title: "Estoque", path: "/inventory" },
-        { icon: WalletCards, title: "Financeiro", path: "/finance" },
-        { icon: BarChart3, title: "Relatórios", path: "/reports" }
+        { icon: WalletCards, title: "Financeiro", path: "/finance" }
       ]
     }
   ];
