@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -829,3 +830,115 @@ const Settings = () => {
                       <div className="flex items-center gap-3">
                         <DollarSign className="h-5 w-5 text-primary" />
                         <div>
+                          <p className="font-medium">Dinheiro</p>
+                          <span className="text-sm text-muted-foreground">Taxa: 0%</span>
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <Smartphone className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Pix</p>
+                          <span className="text-sm text-muted-foreground">Taxa: 0.99%</span>
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Integração de Pagamentos</h3>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Cielo</p>
+                          <Badge variant="outline" className="ml-2">Não configurado</Badge>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Configurar</Button>
+                    </div>
+                    
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">PagSeguro</p>
+                          <Badge variant="outline" className="ml-2">Não configurado</Badge>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Configurar</Button>
+                    </div>
+                    
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Mercado Pago</p>
+                          <Badge variant="outline" className="ml-2">Não configurado</Badge>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Configurar</Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Configurações Avançadas</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="currency">Moeda</Label>
+                    <Select defaultValue="BRL">
+                      <SelectTrigger id="currency">
+                        <SelectValue placeholder="Selecione a moeda" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="BRL">Real (BRL)</SelectItem>
+                        <SelectItem value="USD">Dólar (USD)</SelectItem>
+                        <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="tax-rate">Taxa de impostos padrão</Label>
+                    <div className="flex items-center gap-2">
+                      <Input id="tax-rate" type="number" className="text-right" defaultValue="0" />
+                      <span className="text-sm text-muted-foreground">%</span>
+                    </div>
+                  </div>
+                  
+                  <div className="col-span-1 md:col-span-2 space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Switch id="auto-receipt" />
+                      <Label htmlFor="auto-receipt">Enviar recibos automaticamente</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Enviar recibos por email automaticamente após cada pagamento
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
+              <Button variant="outline">Cancelar</Button>
+              <Button>Salvar Alterações</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default Settings;
