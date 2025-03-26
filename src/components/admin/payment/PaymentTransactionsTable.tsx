@@ -38,8 +38,7 @@ export function PaymentTransactionsTable() {
           metodo_pagamento, 
           criado_em, 
           atualizado_em, 
-          transaction_id,
-          payment_url,
+          notas,
           clientes(nome),
           servicos(nome)
         `)
@@ -54,18 +53,34 @@ export function PaymentTransactionsTable() {
         return;
       }
 
-      const formattedData = data.map(item => ({
-        id: item.id,
-        status: item.status,
-        amount: item.valor,
-        payment_method: item.metodo_pagamento,
-        created_at: item.criado_em,
-        updated_at: item.atualizado_em,
-        customer_name: item.clientes?.nome || "Cliente não identificado",
-        service_name: item.servicos?.nome || "Serviço não identificado",
-        transaction_id: item.transaction_id,
-        payment_url: item.payment_url
-      }));
+      const formattedData = data.map(item => {
+        // Parse transaction ID and payment URL from notes
+        let transaction_id = '';
+        let payment_url = '';
+        
+        if (item.notas) {
+          try {
+            const notesData = JSON.parse(item.notas);
+            transaction_id = notesData.transaction_id || '';
+            payment_url = notesData.payment_url || '';
+          } catch (e) {
+            console.log("Notes is not valid JSON");
+          }
+        }
+        
+        return {
+          id: item.id,
+          status: item.status,
+          amount: item.valor,
+          payment_method: item.metodo_pagamento,
+          created_at: item.criado_em,
+          updated_at: item.atualizado_em,
+          customer_name: item.clientes?.nome || "Cliente não identificado",
+          service_name: item.servicos?.nome || "Serviço não identificado",
+          transaction_id,
+          payment_url
+        };
+      });
 
       setTransactions(formattedData);
     } catch (error) {

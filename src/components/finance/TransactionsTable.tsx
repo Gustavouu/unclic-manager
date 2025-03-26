@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PaymentStatusBadge } from "@/components/payment/PaymentStatusBadge";
-import { DotsHorizontalIcon } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatCurrency } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,12 +64,10 @@ export function TransactionsTable({ isLoading, filterType = "all", period = "30d
           `)
           .order('criado_em', { ascending: false });
         
-        // Filtrar por tipo se necessário
         if (filterType !== "all") {
           query = query.eq('tipo', filterType);
         }
         
-        // Filtrar por período se necessário
         if (period === "7days") {
           const sevenDaysAgo = new Date();
           sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -180,7 +177,7 @@ export function TransactionsTable({ isLoading, filterType = "all", period = "30d
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
                           <span className="sr-only">Abrir menu</span>
-                          <DotsHorizontalIcon className="h-4 w-4" />
+                          <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">

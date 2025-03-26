@@ -1,7 +1,8 @@
+
 import * as React from "react";
 import {
   CalendarRange,
-  Dashboard as DashboardIcon,
+  LayoutDashboard,
   Package,
   Scissors,
   UserRound,
@@ -20,9 +21,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
+  SheetTrigger,
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +40,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useTheme } from "@/components/theme-provider";
+import { cn } from "@/lib/utils";
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {}
 
@@ -68,8 +71,7 @@ function SidebarMenuAdvanced({
   return (
     <Button
       variant="ghost"
-      className="justify-start px-4"
-      active={active}
+      className={cn("justify-start px-4", active ? "bg-accent" : "")}
       asChild={isLink}
     >
       <a href={to}>
@@ -128,7 +130,7 @@ export function Sidebar({ className }: React.ComponentProps<"div">) {
         <SidebarMain>
           <SidebarGroup title="Menu">
             <SidebarMenuAdvanced
-              icon={DashboardIcon}
+              icon={LayoutDashboard}
               title="Dashboard"
               isLink
               to="/dashboard"
@@ -295,7 +297,7 @@ export function MobileSidebar({ className }: React.ComponentProps<"div">) {
           <SidebarMain>
             <SidebarGroup title="Menu">
               <SidebarMenuAdvanced
-                icon={DashboardIcon}
+                icon={LayoutDashboard}
                 title="Dashboard"
                 isLink
                 to="/dashboard"

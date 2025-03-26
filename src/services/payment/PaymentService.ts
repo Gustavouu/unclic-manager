@@ -30,10 +30,17 @@ export const PaymentService = {
           status: "pendente",
           id_negocio: "1" // Example: current business ID (should be dynamic in prod)
         })
-        .select('id, status, metodo_pagamento, valor, criado_em')
+        .select('id, status, metodo_pagamento, valor, criado_em, notas')
         .single();
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error("Database error:", dbError);
+        throw new Error("Erro ao registrar transação no banco de dados");
+      }
+      
+      if (!dbTransaction) {
+        throw new Error("Nenhuma transação retornada após a inserção");
+      }
       
       // Configure the data for the Efi Bank API call
       const efiPaymentData = efiConfig 
@@ -56,12 +63,19 @@ export const PaymentService = {
       // Update the transaction with the data returned by Efi Bank
       if (efiPaymentData.transactionId) {
         try {
+          // Since we don't have transaction_id and payment_url columns,
+          // store this information in the notas field as JSON
+          const efiDataJSON = JSON.stringify({
+            transaction_id: efiPaymentData.transactionId,
+            payment_url: efiPaymentData.paymentUrl,
+            provider: 'efi_bank'
+          });
+          
           await supabase
             .from('transacoes')
             .update({ 
               status: mapEfiBankStatus(efiPaymentData.status),
-              transaction_id: efiPaymentData.transactionId,
-              payment_url: efiPaymentData.paymentUrl
+              notas: efiDataJSON
             })
             .eq('id', dbTransaction.id);
         } catch (error) {
@@ -70,11 +84,30 @@ export const PaymentService = {
         }
       }
 
+      // Parse the transaction notes to get payment data
+      let transactionId = efiPaymentData.transactionId;
+      let paymentUrl = efiPaymentData.paymentUrl;
+      
+      // Try to parse the notes if it contains Efi Bank data
+      if (dbTransaction.notas) {
+        try {
+          const notesData = JSON.parse(dbTransaction.notas);
+          if (notesData.transaction_id) {
+            transactionId = notesData.transaction_id;
+          }
+          if (notesData.payment_url) {
+            paymentUrl = notesData.payment_url;
+          }
+        } catch (e) {
+          console.log("Notes is not valid JSON:", e);
+        }
+      }
+
       return {
         id: dbTransaction.id,
         status: mapEfiBankStatus(efiPaymentData.status),
-        transactionId: efiPaymentData.transactionId,
-        paymentUrl: efiPaymentData.paymentUrl,
+        transactionId,
+        paymentUrl,
         amount: dbTransaction.valor,
         paymentMethod: dbTransaction.metodo_pagamento,
         createdAt: dbTransaction.criado_em
@@ -92,18 +125,38 @@ export const PaymentService = {
     try {
       const { data, error } = await supabase
         .from('transacoes')
-        .select('id, status, metodo_pagamento, valor, criado_em, transaction_id, payment_url')
+        .select('id, status, metodo_pagamento, valor, criado_em, notas')
         .eq('id', paymentId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error:", error);
+        throw new Error("Erro ao consultar transação no banco de dados");
+      }
+      
+      if (!data) {
+        throw new Error("Transação não encontrada");
+      }
+      
+      // Parse transaction notes to get Efi Bank data
+      let transactionId = '';
+      let paymentUrl = '';
+      
+      if (data.notas) {
+        try {
+          const notesData = JSON.parse(data.notas);
+          transactionId = notesData.transaction_id || '';
+          paymentUrl = notesData.payment_url || '';
+        } catch (e) {
+          console.log("Notes is not valid JSON:", e);
+        }
+      }
       
       // Get the Efi Bank configuration
       const efiConfig = await EfiBankService.getConfiguration();
       
       // Query the status in the Efi Bank API or simulate the query
-      const transactionId = data.transaction_id || paymentId;
-      const efiStatusData = await EfiBankService.simulateEfiBankStatusCheck(transactionId);
+      const efiStatusData = await EfiBankService.simulateEfiBankStatusCheck(transactionId || paymentId);
       
       // Update the status if there's a change
       if (data.status !== mapEfiBankStatus(efiStatusData.status)) {
@@ -124,8 +177,8 @@ export const PaymentService = {
       return {
         id: data.id,
         status: mapEfiBankStatus(efiStatusData.status),
-        transactionId: transactionId,
-        paymentUrl: data.payment_url || efiStatusData.paymentUrl,
+        transactionId: transactionId || efiStatusData.transactionId,
+        paymentUrl: paymentUrl || efiStatusData.paymentUrl,
         amount: data.valor,
         paymentMethod: data.metodo_pagamento,
         createdAt: data.criado_em
