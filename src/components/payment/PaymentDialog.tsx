@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -10,6 +9,7 @@ import { PaymentForm, PaymentFormValues } from "./PaymentForm";
 import PaymentProcessing from "./PaymentProcessing";
 import { PaymentResult } from "./PaymentResult";
 import PaymentDialogHeader from "./PaymentDialogHeader";
+import { supabase } from "@/integrations/supabase/client";
 
 const paymentSchema = z.object({
   paymentMethod: z.string({ required_error: "Selecione uma forma de pagamento" }),
