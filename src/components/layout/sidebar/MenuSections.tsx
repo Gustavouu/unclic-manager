@@ -10,6 +10,7 @@ import {
   WalletCards,
   Settings,
   BarChart3,
+  CreditCard,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { SidebarGroup } from "./SidebarGroup";
@@ -35,6 +36,7 @@ export function MenuSections() {
         { icon: Users, title: "Profissionais", path: "/professionals" },
         { icon: Package, title: "Estoque", path: "/inventory" },
         { icon: WalletCards, title: "Financeiro", path: "/finance" },
+        { icon: CreditCard, title: "Pagamentos", path: "/payments" },
         { icon: BarChart3, title: "Relatórios", path: "/reports" },
         { icon: Settings, title: "Configurações", path: "/settings" }
       ]

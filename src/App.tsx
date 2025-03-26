@@ -20,6 +20,7 @@ import Inventory from "./pages/Inventory";
 import Finance from "./pages/Finance";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Payments from "./pages/Payments";
 import RequireAuth from "./components/auth/RequireAuth";
 import { AppLayout } from "./components/layout/AppLayout";
 
@@ -76,6 +77,13 @@ function App() {
         <RequireAuth>
           <AppLayout breadcrumb={[{ label: "Financeiro" }]}>
             <Finance />
+          </AppLayout>
+        </RequireAuth>
+      } />
+      <Route path="/payments" element={
+        <RequireAuth>
+          <AppLayout breadcrumb={[{ label: "Pagamentos" }]}>
+            <Payments />
           </AppLayout>
         </RequireAuth>
       } />
