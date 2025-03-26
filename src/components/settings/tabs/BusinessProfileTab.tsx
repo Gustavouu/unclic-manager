@@ -6,7 +6,14 @@ import { Separator } from "@/components/ui/separator";
 import { Upload, MapPin } from "lucide-react";
 import { FormField } from "@/components/ui/form-field";
 import { useFormValidation } from "@/hooks/useFormValidation";
-import { validateRequired, validateEmail, validatePhone, mockSaveFunction, showSuccessToast, showErrorToast } from "@/utils/formUtils";
+import { 
+  validateEmail, 
+  validatePhone, 
+  createRequiredValidator, 
+  mockSaveFunction, 
+  showSuccessToast, 
+  showErrorToast 
+} from "@/utils/formUtils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
@@ -21,10 +28,10 @@ export const BusinessProfileTab = () => {
     hasFieldBeenTouched,
     resetForm
   } = useFormValidation([
-    { name: "businessName", value: "Salão de Beleza", validators: [validateRequired] },
-    { name: "businessEmail", value: "contato@salaodebeleza.com", validators: [validateRequired, validateEmail] },
-    { name: "businessPhone", value: "(11) 99999-9999", validators: [validateRequired, validatePhone] },
-    { name: "businessAddress", value: "Rua Exemplo, 123", validators: [validateRequired] },
+    { name: "businessName", value: "Salão de Beleza", validators: [createRequiredValidator("Nome do Negócio")] },
+    { name: "businessEmail", value: "contato@salaodebeleza.com", validators: [createRequiredValidator("Email de Contato"), validateEmail] },
+    { name: "businessPhone", value: "(11) 99999-9999", validators: [createRequiredValidator("Telefone"), validatePhone] },
+    { name: "businessAddress", value: "Rua Exemplo, 123", validators: [createRequiredValidator("Endereço")] },
     { name: "facebookLink", value: "", validators: [] },
     { name: "instagramLink", value: "", validators: [] },
     { name: "linkedinLink", value: "", validators: [] },

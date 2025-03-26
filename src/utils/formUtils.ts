@@ -9,6 +9,11 @@ export const validateRequired = (value: string, fieldName: string): string | nul
   return null;
 };
 
+// Adaptadores para useFormValidation (aceitam apenas um argumento)
+export const createRequiredValidator = (fieldName: string) => {
+  return (value: string): string | null => validateRequired(value, fieldName);
+};
+
 // Função para validar email
 export const validateEmail = (email: string): string | null => {
   if (!email) return null;
