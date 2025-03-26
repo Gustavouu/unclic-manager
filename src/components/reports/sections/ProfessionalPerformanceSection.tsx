@@ -6,6 +6,9 @@ interface ProfessionalPerformanceSectionProps {
 }
 
 export function ProfessionalPerformanceSection({ dateRange }: ProfessionalPerformanceSectionProps) {
+  // In a real application, we would use the dateRange to filter data
+  console.log(`Loading professional performance data for range: ${dateRange}`);
+  
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
       <div className="border rounded-lg p-4 bg-card">

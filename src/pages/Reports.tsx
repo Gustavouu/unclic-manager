@@ -1,9 +1,9 @@
 
 import { useState } from "react";
-import { AppLayout } from "@/components/layout/AppLayout";
 import { ReportsHeader } from "@/components/reports/ReportsHeader";
 import { ReportsTabs } from "@/components/reports/ReportsTabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 export default function Reports() {
   const [dateRange, setDateRange] = useState("last30days");
