@@ -10,6 +10,10 @@ import {
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
+interface ClientAcquisitionChartProps {
+  dateRange: string;
+}
+
 const data = [
   { name: 'Jan', novosClientes: 28 },
   { name: 'Fev', novosClientes: 32 },
@@ -19,7 +23,10 @@ const data = [
   { name: 'Jun', novosClientes: 42 },
 ];
 
-export function ClientAcquisitionChart() {
+export function ClientAcquisitionChart({ dateRange }: ClientAcquisitionChartProps) {
+  // In a real application, we would use the dateRange to filter data
+  console.log(`Loading client acquisition data for range: ${dateRange}`);
+  
   const config = {
     novosClientes: {
       label: "Novos Clientes",

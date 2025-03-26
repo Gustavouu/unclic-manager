@@ -11,6 +11,10 @@ import {
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
+interface ClientRetentionChartProps {
+  dateRange: string;
+}
+
 const data = [
   { name: 'Jan', taxa: 78 },
   { name: 'Fev', taxa: 80 },
@@ -20,7 +24,10 @@ const data = [
   { name: 'Jun', taxa: 87 },
 ];
 
-export function ClientRetentionChart() {
+export function ClientRetentionChart({ dateRange }: ClientRetentionChartProps) {
+  // In a real application, we would use the dateRange to filter data
+  console.log(`Loading client retention data for range: ${dateRange}`);
+  
   const config = {
     taxa: {
       label: "Taxa de Retenção",

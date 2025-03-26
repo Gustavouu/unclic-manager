@@ -10,6 +10,10 @@ import {
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
+interface RevenueChartProps {
+  dateRange: string;
+}
+
 const data = [
   { name: 'Jan', receita: 4500, despesa: 2300 },
   { name: 'Fev', receita: 5200, despesa: 2500 },
@@ -19,7 +23,10 @@ const data = [
   { name: 'Jun', receita: 6800, despesa: 2900 },
 ];
 
-export function RevenueChart() {
+export function RevenueChart({ dateRange }: RevenueChartProps) {
+  // In a real application, we would use the dateRange to filter data
+  console.log(`Loading revenue data for range: ${dateRange}`);
+  
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', { 
       style: 'currency', 

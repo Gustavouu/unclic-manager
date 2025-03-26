@@ -8,6 +8,10 @@ import {
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 
+interface SalesDistributionChartProps {
+  dateRange: string;
+}
+
 const data = [
   { name: 'Corte', value: 35 },
   { name: 'Coloração', value: 25 },
@@ -16,7 +20,10 @@ const data = [
   { name: 'Outros', value: 5 },
 ];
 
-export function SalesDistributionChart() {
+export function SalesDistributionChart({ dateRange }: SalesDistributionChartProps) {
+  // In a real application, we would use the dateRange to filter data
+  console.log(`Loading sales distribution data for range: ${dateRange}`);
+  
   const config = {
     Corte: {
       label: "Corte",

@@ -11,6 +11,10 @@ import {
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
+interface PaymentMethodsChartProps {
+  dateRange: string;
+}
+
 const data = [
   { name: 'Cartão de Crédito', valor: 45 },
   { name: 'Cartão de Débito', valor: 25 },
@@ -19,7 +23,10 @@ const data = [
   { name: 'Outros', valor: 3 },
 ];
 
-export function PaymentMethodsChart() {
+export function PaymentMethodsChart({ dateRange }: PaymentMethodsChartProps) {
+  // In a real application, we would use the dateRange to filter data
+  console.log(`Loading payment methods data for range: ${dateRange}`);
+  
   const config = {
     valor: {
       label: "Percentual",

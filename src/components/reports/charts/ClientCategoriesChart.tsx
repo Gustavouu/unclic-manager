@@ -7,6 +7,10 @@ import {
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
 
+interface ClientCategoriesChartProps {
+  dateRange: string;
+}
+
 const data = [
   { name: 'Frequentes', value: 35 },
   { name: 'Regulares', value: 45 },
@@ -14,7 +18,10 @@ const data = [
   { name: 'Novos', value: 5 },
 ];
 
-export function ClientCategoriesChart() {
+export function ClientCategoriesChart({ dateRange }: ClientCategoriesChartProps) {
+  // In a real application, we would use the dateRange to filter data
+  console.log(`Loading client categories data for range: ${dateRange}`);
+  
   const config = {
     Frequentes: {
       label: "Frequentes",
