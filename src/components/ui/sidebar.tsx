@@ -5,8 +5,8 @@
  */
 
 export {
-  useSidebar,
   SidebarProvider,
+  useSidebar,
   Sidebar,
   SidebarContent,
   SidebarFooter,

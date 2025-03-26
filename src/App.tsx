@@ -2,7 +2,6 @@
 import {
   createBrowserRouter,
   RouterProvider,
-  useNavigate,
 } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
@@ -14,50 +13,8 @@ import Clients from "./pages/Clients";
 import Services from "./pages/Services";
 import Professionals from "./pages/Professionals";
 import Inventory from "./pages/Inventory";
-import { useEffect, useState } from "react";
-import { Session } from "@supabase/supabase-js";
-import { supabase } from "./integrations/supabase/client";
-import { AppLayout } from "./components/layout/AppLayout";
 import Finance from "./pages/Finance";
-
-function RequireAuth({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Get session
-    const getSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setLoading(false);
-      
-      if (!data.session) {
-        navigate("/login");
-      }
-    };
-    
-    getSession();
-    
-    // Set up auth state listener
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (!session) {
-        navigate("/login");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  return <>{children}</>;
-}
+import RequireAuth from "./components/auth/RequireAuth";
 
 function App() {
   return (
@@ -74,73 +31,52 @@ const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    element: (
-      <RequireAuth>
-        <AppLayout>
-          <Dashboard />
-        </AppLayout>
-      </RequireAuth>
-    ),
+    element: <RequireAuth />,
+    children: [
+      { path: "", element: <Dashboard /> }
+    ]
   },
   {
     path: "/appointments",
-    element: (
-      <RequireAuth>
-        <AppLayout>
-          <Appointments />
-        </AppLayout>
-      </RequireAuth>
-    ),
+    element: <RequireAuth />,
+    children: [
+      { path: "", element: <Appointments /> }
+    ]
   },
   {
     path: "/clients",
-    element: (
-      <RequireAuth>
-        <AppLayout>
-          <Clients />
-        </AppLayout>
-      </RequireAuth>
-    ),
+    element: <RequireAuth />,
+    children: [
+      { path: "", element: <Clients /> }
+    ]
   },
   {
     path: "/services",
-    element: (
-      <RequireAuth>
-        <AppLayout>
-          <Services />
-        </AppLayout>
-      </RequireAuth>
-    ),
+    element: <RequireAuth />,
+    children: [
+      { path: "", element: <Services /> }
+    ]
   },
   {
     path: "/professionals",
-    element: (
-      <RequireAuth>
-        <AppLayout>
-          <Professionals />
-        </AppLayout>
-      </RequireAuth>
-    ),
+    element: <RequireAuth />,
+    children: [
+      { path: "", element: <Professionals /> }
+    ]
   },
   {
     path: "/inventory",
-    element: (
-      <RequireAuth>
-        <AppLayout>
-          <Inventory />
-        </AppLayout>
-      </RequireAuth>
-    ),
+    element: <RequireAuth />,
+    children: [
+      { path: "", element: <Inventory /> }
+    ]
   },
   {
     path: "/finance",
-    element: (
-      <RequireAuth>
-        <AppLayout>
-          <Finance />
-        </AppLayout>
-      </RequireAuth>
-    ),
+    element: <RequireAuth />,
+    children: [
+      { path: "", element: <Finance /> }
+    ]
   },
   {
     path: "/login",

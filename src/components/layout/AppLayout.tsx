@@ -1,6 +1,6 @@
 
 import { ReactNode } from "react";
-import { Sidebar } from "@/components/ui/sidebar";
+import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "./Header";
 import { cn } from "@/lib/utils";
 

@@ -1,31 +1,21 @@
 
 import * as React from "react";
-import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { SidebarTrigger } from "@/components/sidebar/sidebar-trigger";
+import { PanelLeft } from "lucide-react";
 import { SidebarMain } from "./SidebarMain";
 import { MenuSections } from "./MenuSections";
 import { UserDropdown } from "./UserDropdown";
 
 export function MobileSidebar({ className }: React.ComponentProps<"div">) {
-  const isMobile = useMobile();
   const [open, setOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    if (isMobile) {
-      setOpen(false);
-    } else {
-      setOpen(true);
-    }
-  }, [isMobile]);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="md:hidden">
-          <SidebarTrigger />
+        <Button variant="ghost" size="sm" className="md:hidden fixed top-3 left-3 z-40">
+          <PanelLeft className="h-4 w-4" />
+          <span className="sr-only">Toggle sidebar</span>
         </Button>
       </SheetTrigger>
       <SheetContent
