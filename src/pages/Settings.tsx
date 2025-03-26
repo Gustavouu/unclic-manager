@@ -45,7 +45,8 @@ import {
   Database,
   Cog,
   RefreshCcw,
-  Trash2
+  Trash2,
+  CreditCard
 } from "lucide-react";
 
 const Settings = () => {
@@ -823,5 +824,4 @@ const Settings = () => {
                         <DollarSign className="h-5 w-5 text-primary" />
                         <div>
                           <p className="font-medium">Dinheiro</p>
-                          <span className="text-sm text-muted-foreground">Taxa: 0%</span>
-                        </div>
+                          <span className="text-sm text-muted-foreground">Taxa: 0%
