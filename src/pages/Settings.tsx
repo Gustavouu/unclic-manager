@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -766,22 +767,46 @@ const Settings = () => {
                 <Button>Salvar</Button>
               </CardFooter>
             </Card>
+          </div>
+        </TabsContent>
 
+        {/* Remaining tabs */}
+        {["appointments", "financial", "notifications", "integrations", "permissions", "other"].map((tabId) => (
+          <TabsContent key={tabId} value={tabId} className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Intervalos de Atendimento</CardTitle>
+                <CardTitle>
+                  {settingsTabs.find(tab => tab.id === tabId)?.label}
+                </CardTitle>
                 <CardDescription>
-                  Configure a duração dos slots de agendamento
+                  Configure as opções de {settingsTabs.find(tab => tab.id === tabId)?.label.toLowerCase()}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="appointment-duration">Duração padrão dos intervalos</Label>
-                    <Select defaultValue="30">
-                      <SelectTrigger id="appointment-duration">
-                        <SelectValue placeholder="Selecione a duração" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15">15 minutos</SelectItem>
-                        <SelectItem value="30">30 minutos</SelectItem>
+                <div className="border rounded-md p-6 text-center">
+                  <div className="mb-4">
+                    {(() => {
+                      const TabIcon = settingsTabs.find(tab => tab.id === tabId)?.icon;
+                      return TabIcon && <TabIcon className="h-12 w-12 mx-auto text-muted-foreground" />;
+                    })()}
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">Configurações de {settingsTabs.find(tab => tab.id === tabId)?.label}</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Este módulo está em desenvolvimento e estará disponível em breve.
+                  </p>
+                  <Button variant="outline">Saiba mais</Button>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end gap-2">
+                <Button variant="outline">Cancelar</Button>
+                <Button>Salvar</Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
+  );
+};
+
+export default Settings;
