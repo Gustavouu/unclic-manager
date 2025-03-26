@@ -1,54 +1,136 @@
+import {
+  createBrowserRouter,
+  RouterProvider,
+  useNavigate,
+} from "react-router-dom";
+import { Index } from "./pages/Index";
+import { Login } from "./pages/Login";
+import { SignUp } from "./pages/SignUp";
+import { NotFound } from "./pages/NotFound";
+import { Dashboard } from "./pages/Dashboard";
+import { Appointments } from "./pages/Appointments";
+import { Clients } from "./pages/Clients";
+import { Services } from "./pages/Services";
+import { Professionals } from "./pages/Professionals";
+import { Inventory } from "./pages/Inventory";
+import { useEffect, useState } from "react";
+import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { AppLayout } from "./components/layout/AppLayout";
+import Finance from "./pages/Finance";
 
-import React from 'react';
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
-import Appointments from "./pages/Appointments";
-import Services from "./pages/Services";
-import Inventory from "./pages/Inventory";
-import Clients from "./pages/Clients";
-import Professionals from "./pages/Professionals";
-import NotFound from "./pages/NotFound";
-import { AuthProvider } from "./hooks/useAuth";
-import Login from "./pages/auth/Login";
-import SignUp from "./pages/auth/SignUp";
-import RequireAuth from "./components/auth/RequireAuth";
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const session = useSession();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!session) {
+      navigate("/login");
+    } else {
+      setLoading(false);
+    }
+  }, [session, navigate]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  return <>{children}</>;
+}
 
 function App() {
-  const queryClient = React.useMemo(() => new QueryClient(), []);
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Login />} />
-              <Route path="/signup" element={<SignUp />} />
-              
-              {/* Protected routes */}
-              <Route element={<RequireAuth />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/appointments" element={<Appointments />} />
-                <Route path="/services" element={<Services />} />
-                <Route path="/inventory" element={<Inventory />} />
-                <Route path="/clients" element={<Clients />} />
-                <Route path="/professionals" element={<Professionals />} />
-              </Route>
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <RouterProvider router={router} />
   );
 }
 
 export default App;
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Index />
+  },
+  {
+    path: "/dashboard",
+    element: (
+      <RequireAuth>
+        <AppLayout>
+          <Dashboard />
+        </AppLayout>
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/appointments",
+    element: (
+      <RequireAuth>
+        <AppLayout>
+          <Appointments />
+        </AppLayout>
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/clients",
+    element: (
+      <RequireAuth>
+        <AppLayout>
+          <Clients />
+        </AppLayout>
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/services",
+    element: (
+      <RequireAuth>
+        <AppLayout>
+          <Services />
+        </AppLayout>
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/professionals",
+    element: (
+      <RequireAuth>
+        <AppLayout>
+          <Professionals />
+        </AppLayout>
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/inventory",
+    element: (
+      <RequireAuth>
+        <AppLayout>
+          <Inventory />
+        </AppLayout>
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/finance",
+    element: (
+      <RequireAuth>
+        <AppLayout>
+          <Finance />
+        </AppLayout>
+      </RequireAuth>
+    ),
+  },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/signup",
+    element: <SignUp />,
+  },
+  {
+    path: "*",
+    element: <NotFound />,
+  },
+]);
