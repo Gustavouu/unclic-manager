@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { OnboardingSteps } from "./OnboardingSteps";
-import { BusinessInfoStep } from "./steps/BusinessInfoStep";
+import { BusinessInfoStep } from "./steps/business-info";
 import { ServicesStep } from "./steps/ServicesStep";
 import { StaffStep } from "./steps/StaffStep";
 import { HoursStep } from "./steps/HoursStep";
