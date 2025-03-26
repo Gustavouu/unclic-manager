@@ -39,8 +39,6 @@ import {
   KeyRound,
   AlertTriangle,
   AlertCircle,
-  Check,
-  X,
   Download,
   UploadCloud,
   Cloud,
@@ -781,45 +779,49 @@ const Settings = () => {
               <Button>Salvar Alterações</Button>
             </CardFooter>
           </Card>
-          
+        </TabsContent>
+
+        {/* Financial Tab */}
+        <TabsContent value="financial" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Formulário de Agendamento</CardTitle>
+              <CardTitle>Configurações Financeiras</CardTitle>
               <CardDescription>
-                Configure os campos e informações solicitadas aos clientes
+                Defina as configurações financeiras do seu negócio
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Campos Obrigatórios</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center justify-between border p-3 rounded-md">
-                    <div>
-                      <p className="font-medium">Nome</p>
-                      <span className="text-sm text-muted-foreground">Nome completo do cliente</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded mr-2">Obrigatório</span>
-                      <Lock className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Formas de Pagamento</h3>
                   
-                  <div className="flex items-center justify-between border p-3 rounded-md">
-                    <div>
-                      <p className="font-medium">Email</p>
-                      <span className="text-sm text-muted-foreground">Email de contato</span>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Cartão de Crédito</p>
+                          <span className="text-sm text-muted-foreground">Taxa: 2.99%</span>
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
                     </div>
-                    <div className="flex items-center">
-                      <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded mr-2">Obrigatório</span>
-                      <Lock className="h-4 w-4 text-muted-foreground" />
+                    
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Cartão de Débito</p>
+                          <span className="text-sm text-muted-foreground">Taxa: 1.99%</span>
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between border p-3 rounded-md">
-                    <div>
-                      <p className="font-medium">Telefone</p>
-                      <span className="text-sm text-muted-foreground">Número para contato</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Select defaultValue="required">
+                    
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <DollarSign className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Dinheiro</p>
+                          <span className="text-sm text-muted-foreground">Taxa: 0%</span>
+                        </div>
