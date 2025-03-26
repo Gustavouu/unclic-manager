@@ -27,7 +27,8 @@ import {
   Cog,
   Trash2,
   CreditCard,
-  UserMinus
+  UserMinus,
+  Smartphone
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
