@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Save } from "lucide-react";
-import { SettingsTabs, settingsTabs } from "@/components/settings/SettingsTabs";
+import { SettingsTabs } from "@/components/settings/SettingsTabs";
 import { BusinessProfileTab } from "@/components/settings/tabs/BusinessProfileTab";
 import { HoursTab } from "@/components/settings/tabs/HoursTab";
 import { ServicesTab } from "@/components/settings/tabs/ServicesTab";
