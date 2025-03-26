@@ -35,7 +35,8 @@ export function MenuSections() {
         { icon: Users, title: "Profissionais", path: "/professionals" },
         { icon: Package, title: "Estoque", path: "/inventory" },
         { icon: WalletCards, title: "Financeiro", path: "/finance" },
-        { icon: BarChart3, title: "Relatórios", path: "/reports" }
+        { icon: BarChart3, title: "Relatórios", path: "/reports" },
+        { icon: Settings, title: "Configurações", path: "/settings" }
       ]
     }
   ];

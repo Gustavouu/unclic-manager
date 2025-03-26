@@ -19,6 +19,7 @@ import Professionals from "./pages/Professionals";
 import Inventory from "./pages/Inventory";
 import Finance from "./pages/Finance";
 import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 import RequireAuth from "./components/auth/RequireAuth";
 import { AppLayout } from "./components/layout/AppLayout";
 
@@ -82,6 +83,13 @@ function App() {
         <RequireAuth>
           <AppLayout breadcrumb={[{ label: "Relatórios" }]}>
             <Reports />
+          </AppLayout>
+        </RequireAuth>
+      } />
+      <Route path="/settings" element={
+        <RequireAuth>
+          <AppLayout breadcrumb={[{ label: "Configurações" }]}>
+            <Settings />
           </AppLayout>
         </RequireAuth>
       } />
