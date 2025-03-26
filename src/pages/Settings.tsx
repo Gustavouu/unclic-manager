@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { HelpCircle, Save } from "lucide-react";
+import { HelpCircle, Save, Rocket } from "lucide-react";
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
 import { BusinessProfileTab } from "@/components/settings/tabs/BusinessProfileTab";
 import { HoursTab } from "@/components/settings/tabs/HoursTab";
@@ -16,10 +16,12 @@ import { PermissionsTab } from "@/components/settings/tabs/PermissionsTab";
 import { OtherTab } from "@/components/settings/tabs/OtherTab";
 import { mockSaveFunction, showSuccessToast, showErrorToast } from "@/utils/formUtils";
 import { Toaster } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("business");
   const [isSaving, setIsSaving] = useState(false);
+  const navigate = useNavigate();
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -43,8 +45,8 @@ const Settings = () => {
     }
   };
 
-  const handleTutorial = () => {
-    showSuccessToast("Tutorial iniciado! Explore as diferentes abas para configurar seu negócio.");
+  const handleOnboarding = () => {
+    navigate("/onboarding");
   };
 
   return (
@@ -52,9 +54,9 @@ const Settings = () => {
       <div className="flex items-center justify-between py-4">
         <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={handleTutorial}>
-            <HelpCircle className="mr-2 h-4 w-4" />
-            Tutorial de Configuração
+          <Button variant="outline" onClick={handleOnboarding}>
+            <Rocket className="mr-2 h-4 w-4" />
+            Onboarding
           </Button>
           <Button onClick={handleGlobalSave} disabled={isSaving}>
             <Save className="mr-2 h-4 w-4" />
