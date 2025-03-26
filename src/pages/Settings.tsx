@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -825,4 +826,300 @@ const Settings = () => {
                         <DollarSign className="h-5 w-5 text-primary" />
                         <div>
                           <p className="font-medium">Dinheiro</p>
-                          <span className
+                          <span className="text-sm text-muted-foreground">Taxa: 0%</span>
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Pix</p>
+                          <span className="text-sm text-muted-foreground">Taxa: 0.99%</span>
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Configurações Fiscais</h3>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="emit-receipt">Emitir Recibo</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Gerar recibo automaticamente após pagamento
+                        </p>
+                      </div>
+                      <Switch id="emit-receipt" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="emit-invoice">Emitir Nota Fiscal</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Gerar nota fiscal automaticamente após pagamento
+                        </p>
+                      </div>
+                      <Switch id="emit-invoice" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="tax-id">CNPJ</Label>
+                      <Input id="tax-id" placeholder="00.000.000/0001-00" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="tax-regime">Regime Tributário</Label>
+                      <Select defaultValue="simples">
+                        <SelectTrigger id="tax-regime">
+                          <SelectValue placeholder="Selecione o regime" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="simples">Simples Nacional</SelectItem>
+                          <SelectItem value="lucro-presumido">Lucro Presumido</SelectItem>
+                          <SelectItem value="lucro-real">Lucro Real</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Integrações de Pagamento</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between border p-3 rounded-md">
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="font-medium">PayPal</p>
+                        <span className="text-sm text-muted-foreground">Integração de pagamento online</span>
+                      </div>
+                    </div>
+                    <Badge variant="outline">Não Conectado</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between border p-3 rounded-md">
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="font-medium">Stripe</p>
+                        <span className="text-sm text-muted-foreground">Processamento de cartão de crédito</span>
+                      </div>
+                    </div>
+                    <Badge variant="outline">Não Conectado</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between border p-3 rounded-md">
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="font-medium">MercadoPago</p>
+                        <span className="text-sm text-muted-foreground">Pagamentos para América Latina</span>
+                      </div>
+                    </div>
+                    <Badge>Conectado</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between border p-3 rounded-md">
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="font-medium">PagSeguro</p>
+                        <span className="text-sm text-muted-foreground">Pagamentos online no Brasil</span>
+                      </div>
+                    </div>
+                    <Badge variant="outline">Não Conectado</Badge>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
+              <Button variant="outline">Cancelar</Button>
+              <Button>Salvar Alterações</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        {/* Notifications Tab */}
+        <TabsContent value="notifications" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Notificações</CardTitle>
+              <CardDescription>
+                Personalize as notificações enviadas para clientes e equipe
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Canais de Notificação</h3>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <Mail className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Email</p>
+                          <span className="text-sm text-muted-foreground">Notificações via email</span>
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <MessageSquare className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">SMS</p>
+                          <span className="text-sm text-muted-foreground">Notificações via SMS</span>
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <Smartphone className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Push</p>
+                          <span className="text-sm text-muted-foreground">Notificações push no app</span>
+                        </div>
+                      </div>
+                      <Switch />
+                    </div>
+                    
+                    <div className="flex items-center justify-between border p-3 rounded-md">
+                      <div className="flex items-center gap-3">
+                        <MessageSquare className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">WhatsApp</p>
+                          <span className="text-sm text-muted-foreground">Notificações via WhatsApp</span>
+                        </div>
+                      </div>
+                      <Switch defaultChecked />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Tipos de Notificação</h3>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="notify-new-appointment">Novo Agendamento</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Quando um novo agendamento é feito
+                        </p>
+                      </div>
+                      <Switch id="notify-new-appointment" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="notify-appointment-change">Alteração de Agendamento</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Quando um agendamento é modificado
+                        </p>
+                      </div>
+                      <Switch id="notify-appointment-change" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="notify-appointment-cancel">Cancelamento de Agendamento</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Quando um agendamento é cancelado
+                        </p>
+                      </div>
+                      <Switch id="notify-appointment-cancel" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="notify-payment">Pagamento Recebido</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Quando um pagamento é processado
+                        </p>
+                      </div>
+                      <Switch id="notify-payment" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="notify-stock">Alerta de Estoque</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Quando um produto está acabando
+                        </p>
+                      </div>
+                      <Switch id="notify-stock" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2">
+              <Button variant="outline">Cancelar</Button>
+              <Button>Salvar Alterações</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        {/* Placeholders for remaining tabs */}
+        <TabsContent value="integrations" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Integrações</CardTitle>
+              <CardDescription>
+                Gerencie integrações com outros sistemas e aplicativos
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Conteúdo da configuração de Integrações em breve.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="permissions" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Permissões</CardTitle>
+              <CardDescription>
+                Configure as permissões de acesso para usuários do sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Conteúdo da configuração de Permissões em breve.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="other" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Outras Configurações</CardTitle>
+              <CardDescription>
+                Configurações adicionais do sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>Outras configurações em breve.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default Settings;
