@@ -38,20 +38,24 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
           {breadcrumb.length > 0 && (
             <Breadcrumb>
               <BreadcrumbList>
-                {breadcrumb.map((item, index) => (
-                  <React.Fragment key={index}>
-                    {index > 0 && <BreadcrumbSeparator />}
-                    {index === breadcrumb.length - 1 ? (
-                      <BreadcrumbItem>
+                {breadcrumb.map((item, index) => {
+                  if (index === breadcrumb.length - 1) {
+                    return (
+                      <BreadcrumbItem key={index}>
                         <BreadcrumbPage>{item.label}</BreadcrumbPage>
                       </BreadcrumbItem>
-                    ) : (
+                    );
+                  }
+                  
+                  return (
+                    <React.Fragment key={index}>
                       <BreadcrumbItem>
                         <BreadcrumbLink href={item.path || '#'}>{item.label}</BreadcrumbLink>
                       </BreadcrumbItem>
-                    )}
-                  </React.Fragment>
-                ))}
+                      {index < breadcrumb.length - 1 && <BreadcrumbSeparator />}
+                    </React.Fragment>
+                  );
+                })}
               </BreadcrumbList>
             </Breadcrumb>
           )}
@@ -108,4 +112,4 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
       </div>
     </header>
   );
-}
+};

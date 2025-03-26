@@ -1,7 +1,14 @@
 
 import { Users, UserPlus, UserCheck, Calendar } from "lucide-react";
 
-export function ClientStatisticsSection() {
+interface ClientStatisticsSectionProps {
+  dateRange: string;
+}
+
+export function ClientStatisticsSection({ dateRange }: ClientStatisticsSectionProps) {
+  // No real application, we would use the dateRange to filter data
+  console.log(`Loading client statistics for range: ${dateRange}`);
+  
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
       <div className="border rounded-lg p-4 bg-card">

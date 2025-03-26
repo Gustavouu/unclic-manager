@@ -5,7 +5,11 @@ import { SalesDistributionChart } from "../charts/SalesDistributionChart";
 import { PaymentMethodsChart } from "../charts/PaymentMethodsChart";
 import { FinancialSummarySection } from "../sections/FinancialSummarySection";
 
-export function FinancialReports() {
+interface FinancialReportsProps {
+  dateRange: string;
+}
+
+export function FinancialReports({ dateRange }: FinancialReportsProps) {
   return (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
       <Card className="md:col-span-2">
@@ -14,7 +18,7 @@ export function FinancialReports() {
           <CardDescription>Visão geral das suas finanças nos últimos 30 dias</CardDescription>
         </CardHeader>
         <CardContent>
-          <FinancialSummarySection />
+          <FinancialSummarySection dateRange={dateRange} />
         </CardContent>
       </Card>
       
@@ -24,7 +28,7 @@ export function FinancialReports() {
           <CardDescription>Receitas nos últimos 6 meses</CardDescription>
         </CardHeader>
         <CardContent>
-          <RevenueChart />
+          <RevenueChart dateRange={dateRange} />
         </CardContent>
       </Card>
       
@@ -34,7 +38,7 @@ export function FinancialReports() {
           <CardDescription>Por categoria de serviço</CardDescription>
         </CardHeader>
         <CardContent>
-          <SalesDistributionChart />
+          <SalesDistributionChart dateRange={dateRange} />
         </CardContent>
       </Card>
       
@@ -44,7 +48,7 @@ export function FinancialReports() {
           <CardDescription>Distribuição por forma de pagamento</CardDescription>
         </CardHeader>
         <CardContent>
-          <PaymentMethodsChart />
+          <PaymentMethodsChart dateRange={dateRange} />
         </CardContent>
       </Card>
     </div>

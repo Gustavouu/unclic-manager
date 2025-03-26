@@ -5,7 +5,11 @@ import { ClientRetentionChart } from "../charts/ClientRetentionChart";
 import { ClientCategoriesChart } from "../charts/ClientCategoriesChart";
 import { ClientStatisticsSection } from "../sections/ClientStatisticsSection";
 
-export function ClientReports() {
+interface ClientReportsProps {
+  dateRange: string;
+}
+
+export function ClientReports({ dateRange }: ClientReportsProps) {
   return (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
       <Card className="md:col-span-2">
@@ -14,7 +18,7 @@ export function ClientReports() {
           <CardDescription>Dados consolidados da sua base de clientes</CardDescription>
         </CardHeader>
         <CardContent>
-          <ClientStatisticsSection />
+          <ClientStatisticsSection dateRange={dateRange} />
         </CardContent>
       </Card>
       
@@ -24,7 +28,7 @@ export function ClientReports() {
           <CardDescription>Novos clientes por mês</CardDescription>
         </CardHeader>
         <CardContent>
-          <ClientAcquisitionChart />
+          <ClientAcquisitionChart dateRange={dateRange} />
         </CardContent>
       </Card>
       
@@ -34,7 +38,7 @@ export function ClientReports() {
           <CardDescription>Taxa de retorno de clientes</CardDescription>
         </CardHeader>
         <CardContent>
-          <ClientRetentionChart />
+          <ClientRetentionChart dateRange={dateRange} />
         </CardContent>
       </Card>
       
@@ -44,7 +48,7 @@ export function ClientReports() {
           <CardDescription>Segmentação por perfil de consumo</CardDescription>
         </CardHeader>
         <CardContent>
-          <ClientCategoriesChart />
+          <ClientCategoriesChart dateRange={dateRange} />
         </CardContent>
       </Card>
     </div>

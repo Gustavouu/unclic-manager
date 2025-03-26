@@ -1,7 +1,14 @@
 
 import { ArrowUpRight, ArrowDownRight, DollarSign, CreditCard, ShoppingBag, AlertCircle } from "lucide-react";
 
-export function FinancialSummarySection() {
+interface FinancialSummarySectionProps {
+  dateRange: string;
+}
+
+export function FinancialSummarySection({ dateRange }: FinancialSummarySectionProps) {
+  // No real application, we would use the dateRange to filter data
+  console.log(`Loading financial summary for range: ${dateRange}`);
+  
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
       <div className="border rounded-lg p-4 bg-card">
