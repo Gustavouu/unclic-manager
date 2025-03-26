@@ -378,7 +378,10 @@ const Settings = () => {
               <CardContent>
                 <div className="border rounded-md p-6 text-center">
                   <div className="mb-4">
-                    <settingsTabs.find(tab => tab.id === tabId)?.icon className="h-12 w-12 mx-auto text-muted-foreground" />
+                    {(() => {
+                      const TabIcon = settingsTabs.find(tab => tab.id === tabId)?.icon;
+                      return TabIcon ? <TabIcon className="h-12 w-12 mx-auto text-muted-foreground" /> : null;
+                    })()}
                   </div>
                   <h3 className="text-lg font-medium mb-2">Configurações de {settingsTabs.find(tab => tab.id === tabId)?.label}</h3>
                   <p className="text-muted-foreground mb-4">
