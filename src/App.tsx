@@ -20,6 +20,7 @@ import Inventory from "./pages/Inventory";
 import Finance from "./pages/Finance";
 import Reports from "./pages/Reports";
 import RequireAuth from "./components/auth/RequireAuth";
+import { AppLayout } from "./components/layout/AppLayout";
 
 function App() {
   return (
@@ -28,14 +29,62 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
       
-      <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-      <Route path="/appointments" element={<RequireAuth><Appointments /></RequireAuth>} />
-      <Route path="/clients" element={<RequireAuth><Clients /></RequireAuth>} />
-      <Route path="/services" element={<RequireAuth><Services /></RequireAuth>} />
-      <Route path="/professionals" element={<RequireAuth><Professionals /></RequireAuth>} />
-      <Route path="/inventory" element={<RequireAuth><Inventory /></RequireAuth>} />
-      <Route path="/finance" element={<RequireAuth><Finance /></RequireAuth>} />
-      <Route path="/reports" element={<RequireAuth><Reports /></RequireAuth>} />
+      <Route path="/dashboard" element={
+        <RequireAuth>
+          <AppLayout breadcrumb={[{ label: "Dashboard" }]}>
+            <Dashboard />
+          </AppLayout>
+        </RequireAuth>
+      } />
+      <Route path="/appointments" element={
+        <RequireAuth>
+          <AppLayout breadcrumb={[{ label: "Agenda" }]}>
+            <Appointments />
+          </AppLayout>
+        </RequireAuth>
+      } />
+      <Route path="/clients" element={
+        <RequireAuth>
+          <AppLayout breadcrumb={[{ label: "Clientes" }]}>
+            <Clients />
+          </AppLayout>
+        </RequireAuth>
+      } />
+      <Route path="/services" element={
+        <RequireAuth>
+          <AppLayout breadcrumb={[{ label: "Serviços" }]}>
+            <Services />
+          </AppLayout>
+        </RequireAuth>
+      } />
+      <Route path="/professionals" element={
+        <RequireAuth>
+          <AppLayout breadcrumb={[{ label: "Profissionais" }]}>
+            <Professionals />
+          </AppLayout>
+        </RequireAuth>
+      } />
+      <Route path="/inventory" element={
+        <RequireAuth>
+          <AppLayout breadcrumb={[{ label: "Estoque" }]}>
+            <Inventory />
+          </AppLayout>
+        </RequireAuth>
+      } />
+      <Route path="/finance" element={
+        <RequireAuth>
+          <AppLayout breadcrumb={[{ label: "Financeiro" }]}>
+            <Finance />
+          </AppLayout>
+        </RequireAuth>
+      } />
+      <Route path="/reports" element={
+        <RequireAuth>
+          <AppLayout breadcrumb={[{ label: "Relatórios" }]}>
+            <Reports />
+          </AppLayout>
+        </RequireAuth>
+      } />
       
       <Route path="*" element={<NotFound />} />
     </Routes>
