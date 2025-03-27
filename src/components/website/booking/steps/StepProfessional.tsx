@@ -2,15 +2,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { StaffData } from "@/contexts/onboarding/types";
-import { BookingData } from "../WebsiteBookingFlow";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { BookingData, ExtendedStaffData } from "../WebsiteBookingFlow";
 
 interface StepProfessionalProps {
-  staff: StaffData[];
+  staff: ExtendedStaffData[];
   bookingData: BookingData;
   updateBookingData: (data: Partial<BookingData>) => void;
   nextStep: () => void;
@@ -27,7 +26,7 @@ export function StepProfessional({
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
-  const [filteredStaff, setFilteredStaff] = useState<StaffData[]>(staff);
+  const [filteredStaff, setFilteredStaff] = useState<ExtendedStaffData[]>(staff);
 
   // Extract all unique specialties from staff
   const allSpecialties = [...new Set(staff.flatMap(p => p.specialties || []))];
@@ -52,7 +51,7 @@ export function StepProfessional({
     setFilteredStaff(filtered);
   }, [searchQuery, selectedSpecialty, staff]);
 
-  const handleProfessionalSelect = (professional: StaffData) => {
+  const handleProfessionalSelect = (professional: ExtendedStaffData) => {
     setSelectedProfessional(professional.id);
     updateBookingData({
       professionalId: professional.id,

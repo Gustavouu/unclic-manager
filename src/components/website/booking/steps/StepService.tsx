@@ -2,16 +2,15 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ServiceData } from "@/contexts/onboarding/types";
-import { BookingData } from "../WebsiteBookingFlow";
 import { Search, Filter, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatPrice, formatDuration } from "@/components/website/WebsiteUtils";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BookingData, ExtendedServiceData } from "../WebsiteBookingFlow";
 
 interface StepServiceProps {
-  services: ServiceData[];
+  services: ExtendedServiceData[];
   bookingData: BookingData;
   updateBookingData: (data: Partial<BookingData>) => void;
   nextStep: () => void;
@@ -27,7 +26,7 @@ export function StepService({
   const [searchQuery, setSearchQuery] = useState("");
   const [priceFilter, setPriceFilter] = useState<string>("all");
   const [durationFilter, setDurationFilter] = useState<string>("all");
-  const [filteredServices, setFilteredServices] = useState<ServiceData[]>(services);
+  const [filteredServices, setFilteredServices] = useState<ExtendedServiceData[]>(services);
   
   // Extract unique service categories
   const categories = [...new Set(services.map(service => 
@@ -70,7 +69,7 @@ export function StepService({
     setFilteredServices(filtered);
   }, [searchQuery, priceFilter, durationFilter, services]);
 
-  const handleServiceSelect = (service: ServiceData) => {
+  const handleServiceSelect = (service: ExtendedServiceData) => {
     setSelectedService(service.id);
     updateBookingData({
       serviceId: service.id,

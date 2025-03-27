@@ -11,6 +11,16 @@ import { ServiceData, StaffData } from "@/contexts/onboarding/types";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
+// Extended types for booking flow components
+export interface ExtendedStaffData extends StaffData {
+  availability?: boolean;
+  bio?: string;
+}
+
+export interface ExtendedServiceData extends ServiceData {
+  category?: string;
+}
+
 export type BookingData = {
   serviceId: string;
   serviceName: string;
@@ -49,6 +59,10 @@ export function WebsiteBookingFlow({
     notes: ""
   });
 
+  // Cast services and staff to extended types for use in child components
+  const extendedServices = services as ExtendedServiceData[];
+  const extendedStaff = staff as ExtendedStaffData[];
+
   const updateBookingData = (data: Partial<BookingData>) => {
     setBookingData(prev => ({ ...prev, ...data }));
   };
@@ -75,7 +89,7 @@ export function WebsiteBookingFlow({
       case 1:
         return (
           <StepService 
-            services={services} 
+            services={extendedServices} 
             bookingData={bookingData}
             updateBookingData={updateBookingData}
             nextStep={nextStep}
@@ -84,7 +98,7 @@ export function WebsiteBookingFlow({
       case 2:
         return (
           <StepProfessional 
-            staff={staff.filter(s => 
+            staff={extendedStaff.filter(s => 
               !bookingData.serviceId || 
               !s.specialties?.length || 
               s.specialties.includes(bookingData.serviceName)
