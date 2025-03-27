@@ -22,11 +22,11 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   const { services, setServices, addService, removeService, updateService } = useServicesState();
   const { staffMembers, setStaffMembers, hasStaff, setHasStaff, addStaffMember, removeStaffMember, updateStaffMember } = useStaffState();
 
-  // Create a temporary saveProgress function that will be replaced
-  let saveProgressTemp = () => {};
+  // Create a reference for saveProgress function
+  const saveProgressRef = useRef<() => void>(() => {});
   
   // Business data state (needs the saveProgress reference)
-  const { businessData, setBusinessData, updateBusinessData } = useBusinessDataState(saveTimeoutRef, () => saveProgressTemp());
+  const { businessData, setBusinessData, updateBusinessData } = useBusinessDataState(saveTimeoutRef, () => saveProgressRef.current());
   
   // Persistence hook
   const { saveProgress, loadProgress } = usePersistence(
@@ -45,8 +45,10 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     setCurrentStep
   );
   
-  // Now we can assign the real function
-  saveProgressTemp = saveProgress;
+  // Assign the real function to the ref
+  useEffect(() => {
+    saveProgressRef.current = saveProgress;
+  }, [saveProgress]);
   
   // Completion hook
   const { isComplete } = useCompletion(businessData, services, staffMembers, hasStaff);

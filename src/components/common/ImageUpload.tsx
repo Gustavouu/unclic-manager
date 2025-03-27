@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { revokeFilePreview, fileToBase64 } from "@/contexts/onboarding/utils";
+import { revokeFilePreview, fileToBase64 } from "@/contexts/onboarding/utils/fileUtils";
 
 interface ImageUploadProps {
   imageUrl: string | null;
@@ -35,7 +35,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     setPreview(imageUrl);
   }, [imageUrl]);
   
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
     if (file) {
       // Clean up old URL if exists
@@ -47,14 +47,15 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       const newPreviewUrl = URL.createObjectURL(file);
       setPreview(newPreviewUrl);
       
-      // Convert to base64 for storage
-      fileToBase64(file).then(base64Data => {
+      try {
+        // Convert to base64 for storage
+        const base64Data = await fileToBase64(file);
         onImageChange(file, newPreviewUrl, base64Data);
-      }).catch(err => {
+      } catch (err) {
         console.error(`Error converting ${id} to base64:`, err);
         // Still update with the file even if base64 conversion fails
         onImageChange(file, newPreviewUrl);
-      });
+      }
     }
   };
   

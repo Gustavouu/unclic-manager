@@ -1,6 +1,8 @@
+
 import { useCallback, useRef } from "react";
 import { BusinessData, ServiceData, StaffData, BusinessHours } from "../types";
-import { prepareDataForStorage, base64ToFile } from "../utils";
+import { prepareDataForStorage } from "../utils/storageUtils";
+import { base64ToFile } from "../utils/fileUtils";
 import { initialBusinessHours } from "../initialValues";
 
 export const usePersistence = (
@@ -21,13 +23,13 @@ export const usePersistence = (
   const saveTimeoutRef = useRef<number | null>(null);
 
   // Save progress to localStorage
-  const saveProgress = useCallback(() => {
+  const saveProgress = useCallback(async () => {
     // Skip saving if initial load hasn't completed yet
     if (!hasLoaded.current) return;
     
     try {
       console.log("Saving progress, business data:", businessData);
-      const preparedBusinessData = prepareDataForStorage(businessData);
+      const preparedBusinessData = await prepareDataForStorage(businessData);
       
       const data = {
         businessData: preparedBusinessData,

@@ -1,8 +1,8 @@
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { BusinessData } from "../types";
 import { initialBusinessData } from "../initialValues";
-import { revokeFilePreview } from "../utils";
+import { revokeFilePreview } from "../utils/fileUtils";
 
 export const useBusinessDataState = (saveTimeoutRef: React.MutableRefObject<number | null>, saveProgress: () => void) => {
   const [businessData, setBusinessData] = useState<BusinessData>(initialBusinessData);
