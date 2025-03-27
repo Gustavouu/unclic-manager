@@ -7,14 +7,19 @@ import { revokeFilePreview } from "../utils/fileUtils";
 export const useBusinessDataState = (saveTimeoutRef: React.MutableRefObject<number | null>, saveProgress: () => void) => {
   const [businessData, setBusinessData] = useState<BusinessData>(initialBusinessData);
 
-  // Clean up blob URLs when component unmounts
+  // Clean up blob URLs when component unmounts or when URLs change
   useEffect(() => {
+    const currentLogoUrl = businessData.logoUrl;
+    const currentBannerUrl = businessData.bannerUrl;
+
     return () => {
-      if (businessData.logoUrl && businessData.logoUrl.startsWith('blob:')) {
-        revokeFilePreview(businessData.logoUrl);
+      // Clean up logo URL if it's a blob
+      if (currentLogoUrl?.startsWith('blob:')) {
+        revokeFilePreview(currentLogoUrl);
       }
-      if (businessData.bannerUrl && businessData.bannerUrl.startsWith('blob:')) {
-        revokeFilePreview(businessData.bannerUrl);
+      // Clean up banner URL if it's a blob
+      if (currentBannerUrl?.startsWith('blob:')) {
+        revokeFilePreview(currentBannerUrl);
       }
     };
   }, [businessData.logoUrl, businessData.bannerUrl]);
@@ -45,3 +50,4 @@ export const useBusinessDataState = (saveTimeoutRef: React.MutableRefObject<numb
     updateBusinessData
   };
 };
+

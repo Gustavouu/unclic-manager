@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { revokeFilePreview, fileToBase64 } from "@/contexts/onboarding/utils/fileUtils";
+import { revokeFilePreview } from "@/contexts/onboarding/utils/fileUtils";
 
 interface ImageUploadProps {
   imageUrl: string | null;
@@ -32,30 +32,37 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   
   // Initialize preview from imageUrl
   useEffect(() => {
-    setPreview(imageUrl);
+    if (imageUrl !== preview) {
+      setPreview(imageUrl);
+    }
   }, [imageUrl]);
   
-  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] || null;
-    if (file) {
-      // Clean up old URL if exists
+  // Cleanup preview URL when component unmounts or preview changes
+  useEffect(() => {
+    return () => {
       if (preview && preview.startsWith('blob:')) {
         revokeFilePreview(preview);
       }
-      
-      // Create a preview URL
+    };
+  }, [preview]);
+
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    
+    // Clean up old preview URL if it exists
+    if (preview && preview.startsWith('blob:')) {
+      revokeFilePreview(preview);
+    }
+    
+    if (file) {
+      // Create a new preview URL
       const newPreviewUrl = URL.createObjectURL(file);
       setPreview(newPreviewUrl);
       
-      try {
-        // Convert to base64 for storage
-        const base64Data = await fileToBase64(file);
-        onImageChange(file, newPreviewUrl, base64Data);
-      } catch (err) {
-        console.error(`Error converting ${id} to base64:`, err);
-        // Still update with the file even if base64 conversion fails
-        onImageChange(file, newPreviewUrl);
-      }
+      onImageChange(file, newPreviewUrl);
+    } else {
+      setPreview(null);
+      onImageChange(null, null);
     }
   };
   
@@ -65,10 +72,10 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       revokeFilePreview(preview);
     }
     
-    onImageChange(null, null);
     setPreview(null);
+    onImageChange(null, null);
   };
-  
+
   return (
     <div className={className}>
       {preview ? (
@@ -116,3 +123,4 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     </div>
   );
 };
+

@@ -1,4 +1,3 @@
-
 import { BusinessData } from "../types";
 import { fileToBase64, createFilePreview } from "./fileUtils";
 
@@ -14,11 +13,7 @@ export const prepareDataForStorage = async (data: BusinessData): Promise<Partial
   if (preparedData.logo instanceof File) {
     try {
       // Convert file to base64 for storage if not already done
-      if (!preparedData.logoData) {
-        preparedData.logoData = await fileToBase64(preparedData.logo);
-      }
-      
-      // Store metadata
+      preparedData.logoData = await fileToBase64(preparedData.logo);
       preparedData.logoName = preparedData.logo.name;
       
       // Create URL for preview if doesn't exist
@@ -31,17 +26,16 @@ export const prepareDataForStorage = async (data: BusinessData): Promise<Partial
     
     // Files can't be serialized, so set to null for storage
     preparedData.logo = null;
+  } else if (!preparedData.logo && preparedData.logoData) {
+    // If we have logoData but no File, keep the data for persistence
+    preparedData.logoUrl = preparedData.logoUrl || null;
   }
   
   // Handle banner file - convert to base64 if needed
   if (preparedData.banner instanceof File) {
     try {
       // Convert file to base64 for storage if not already done
-      if (!preparedData.bannerData) {
-        preparedData.bannerData = await fileToBase64(preparedData.banner);
-      }
-      
-      // Store metadata
+      preparedData.bannerData = await fileToBase64(preparedData.banner);
       preparedData.bannerName = preparedData.banner.name;
       
       // Create URL for preview if doesn't exist
@@ -54,6 +48,9 @@ export const prepareDataForStorage = async (data: BusinessData): Promise<Partial
     
     // Files can't be serialized, so set to null for storage
     preparedData.banner = null;
+  } else if (!preparedData.banner && preparedData.bannerData) {
+    // If we have bannerData but no File, keep the data for persistence
+    preparedData.bannerUrl = preparedData.bannerUrl || null;
   }
   
   return preparedData;
