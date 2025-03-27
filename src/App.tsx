@@ -111,7 +111,8 @@ function App() {
           </RequireAuth>
         } />
         
-        {/* Business website route */}
+        {/* Business website routes - two formats supported */}
+        <Route path="/:businessName" element={<BusinessWebsite />} /> 
         <Route path="/:businessName.unclic.com.br" element={<BusinessWebsite />} />
         
         <Route path="*" element={<NotFound />} />

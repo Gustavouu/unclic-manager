@@ -73,13 +73,20 @@ const BusinessWebsite = () => {
   const isCorrectBusiness = () => {
     if (!businessData || !businessData.name) return false;
     
-    const formattedName = businessData.name
+    // Extract business name from URL (remove the .unclic.com.br part)
+    const urlBusinessName = businessName ? businessName.replace(/\.unclic\.com\.br$/, "") : "";
+    
+    // Format the business name for comparison
+    const formattedBusinessName = businessData.name
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]/g, "");
     
-    return businessName === formattedName;
+    console.log("URL Business Name:", urlBusinessName);
+    console.log("Formatted Business Name:", formattedBusinessName);
+    
+    return urlBusinessName === formattedBusinessName;
   };
 
   // Debug
