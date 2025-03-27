@@ -30,13 +30,12 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 }) => {
   const [preview, setPreview] = useState<string | null>(imageUrl);
 
-  // Update preview when imageUrl changes
+  // Update preview when imageUrl prop changes
   useEffect(() => {
-    // Only update preview if it's different from current to prevent unnecessary re-renders
-    if (imageUrl !== preview) {
+    if (preview !== imageUrl) {
       setPreview(imageUrl);
     }
-  }, [imageUrl]);
+  }, [imageUrl, preview]);
   
   // Cleanup preview URL when component unmounts or preview changes
   useEffect(() => {
