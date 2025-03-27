@@ -2,36 +2,44 @@
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
+import { Upload, Image } from "lucide-react";
 import { toast } from "sonner";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 
 export const LogoImagesSection = () => {
-  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const { businessData, updateBusinessData } = useOnboarding();
   
   // Load logo and banner from onboarding if available
   useEffect(() => {
-    if (businessData) {
-      if (businessData.logo) {
-        setLogoFile(businessData.logo);
-        setLogoUrl(URL.createObjectURL(businessData.logo));
-      }
-      if (businessData.banner) {
-        setCoverFile(businessData.banner);
-        setCoverUrl(URL.createObjectURL(businessData.banner));
-      }
+    // Clean up previous object URLs
+    if (logoUrl) URL.revokeObjectURL(logoUrl);
+    if (coverUrl) URL.revokeObjectURL(coverUrl);
+    
+    // Create new object URLs if files exist
+    if (businessData.logo instanceof File) {
+      setLogoUrl(URL.createObjectURL(businessData.logo));
+    } else {
+      setLogoUrl(null);
     }
-  }, [businessData]);
+    
+    if (businessData.banner instanceof File) {
+      setCoverUrl(URL.createObjectURL(businessData.banner));
+    } else {
+      setCoverUrl(null);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (logoUrl) URL.revokeObjectURL(logoUrl);
+      if (coverUrl) URL.revokeObjectURL(coverUrl);
+    };
+  }, [businessData.logo, businessData.banner]);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setLogoFile(file);
-      setLogoUrl(URL.createObjectURL(file));
       updateBusinessData({ logo: file });
       toast.success("Logotipo selecionado com sucesso!");
     }
@@ -40,8 +48,6 @@ export const LogoImagesSection = () => {
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setCoverFile(file);
-      setCoverUrl(URL.createObjectURL(file));
       updateBusinessData({ banner: file });
       toast.success("Imagem de capa selecionada com sucesso!");
     }
@@ -62,7 +68,7 @@ export const LogoImagesSection = () => {
                 className="w-full h-full rounded-full object-cover" 
               />
             ) : (
-              <Upload className="h-6 w-6 text-gray-500" />
+              <Image className="h-6 w-6 text-gray-500" />
             )}
           </div>
           <div className="flex flex-col gap-2">
@@ -94,7 +100,7 @@ export const LogoImagesSection = () => {
                 className="w-full h-full rounded-md object-cover" 
               />
             ) : (
-              <Upload className="h-6 w-6 text-gray-500" />
+              <Image className="h-6 w-6 text-gray-500" />
             )}
           </div>
           <div className="flex flex-col gap-2">

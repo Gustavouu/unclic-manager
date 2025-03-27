@@ -26,14 +26,12 @@ export const prepareDataForStorage = (data: BusinessData): Partial<BusinessData>
   // Cria uma cópia para não modificar o original
   const preparedData = { ...data };
   
-  // Marca os arquivos para que possamos identificá-los posteriormente
+  // Excluímos o File do objeto, já que não pode ser salvo no localStorage
   if (preparedData.logo instanceof File) {
-    // No localStorage não podemos guardar o File, então marcamos como null
     preparedData.logo = null;
   }
   
   if (preparedData.banner instanceof File) {
-    // No localStorage não podemos guardar o File, então marcamos como null
     preparedData.banner = null;
   }
   

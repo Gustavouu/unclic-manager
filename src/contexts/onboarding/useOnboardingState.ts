@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { 
   BusinessData, 
   ServiceData, 
@@ -7,7 +7,7 @@ import {
   BusinessHours 
 } from "./types";
 import { initialBusinessData, initialBusinessHours } from "./initialValues";
-import { checkOnboardingComplete, prepareDataForStorage, serializeFile, deserializeFile } from "./utils";
+import { checkOnboardingComplete, prepareDataForStorage } from "./utils";
 
 export const useOnboardingState = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -16,6 +16,7 @@ export const useOnboardingState = () => {
   const [staffMembers, setStaffMembers] = useState<StaffData[]>([]);
   const [businessHours, setBusinessHours] = useState<BusinessHours>(initialBusinessHours);
   const [hasStaff, setHasStaff] = useState<boolean>(false);
+  const hasLoaded = useRef(false);
 
   // Atualiza os dados do estabelecimento
   const updateBusinessData = useCallback((data: Partial<BusinessData>) => {
@@ -67,6 +68,9 @@ export const useOnboardingState = () => {
 
   // Salva o progresso no localStorage
   const saveProgress = useCallback(() => {
+    // Skip saving if initial load hasn't completed yet
+    if (!hasLoaded.current) return;
+    
     const data = {
       businessData: prepareDataForStorage(businessData),
       services,
@@ -81,12 +85,15 @@ export const useOnboardingState = () => {
 
   // Carrega o progresso do localStorage
   const loadProgress = useCallback(() => {
+    // Skip loading if already loaded
+    if (hasLoaded.current) return;
+    
     const savedData = localStorage.getItem('onboardingData');
     
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
-        // Deserialize logo and banner if they exist
+        // Load business data without logo and banner (they can't be stored in localStorage)
         const loadedBusinessData = { ...parsed.businessData };
         
         setBusinessData(prev => ({ ...prev, ...loadedBusinessData }));
@@ -95,9 +102,14 @@ export const useOnboardingState = () => {
         setBusinessHours(parsed.businessHours || initialBusinessHours);
         setHasStaff(parsed.hasStaff || false);
         setCurrentStep(parsed.currentStep || 0);
+        
+        // Mark as loaded to prevent re-loading
+        hasLoaded.current = true;
       } catch (error) {
         console.error("Erro ao carregar dados do onboarding:", error);
       }
+    } else {
+      hasLoaded.current = true; // Mark as loaded even if no data found
     }
   }, []);
 

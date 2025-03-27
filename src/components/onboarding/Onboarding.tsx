@@ -26,7 +26,7 @@ export const Onboarding = () => {
     // Avoid saving during initial render
     const timeoutId = setTimeout(() => {
       saveProgress();
-    }, 100);
+    }, 500); // Increased timeout to reduce saving frequency
 
     return () => clearTimeout(timeoutId);
   }, [currentStep, saveProgress]);

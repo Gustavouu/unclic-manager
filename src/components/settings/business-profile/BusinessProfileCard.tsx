@@ -14,7 +14,12 @@ export const BusinessProfileCard = () => {
 
   // Load onboarding data when the component mounts
   useEffect(() => {
-    loadProgress();
+    // Use a single call to loadProgress to prevent infinite re-renders
+    const timer = setTimeout(() => {
+      loadProgress();
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [loadProgress]);
 
   return (
