@@ -1,13 +1,27 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 export const LogoImagesSection = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const { businessData } = useOnboarding();
+  
+  // Load logo and banner from onboarding if available
+  useEffect(() => {
+    if (businessData) {
+      if (businessData.logo) {
+        setLogoFile(businessData.logo);
+      }
+      if (businessData.banner) {
+        setCoverFile(businessData.banner);
+      }
+    }
+  }, [businessData]);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

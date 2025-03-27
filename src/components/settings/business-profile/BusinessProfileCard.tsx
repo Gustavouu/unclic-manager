@@ -5,9 +5,17 @@ import { GeneralInfoSection } from "./GeneralInfoSection";
 import { LogoImagesSection } from "./LogoImagesSection";
 import { SocialMediaSection } from "./SocialMediaSection";
 import { useBusinessProfileForm } from "@/hooks/useBusinessProfileForm";
+import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useEffect } from "react";
 
 export const BusinessProfileCard = () => {
   const { isSaving, handleSave, handleCancel, formProps } = useBusinessProfileForm();
+  const { loadProgress } = useOnboarding();
+
+  // Load onboarding data when the component mounts
+  useEffect(() => {
+    loadProgress();
+  }, []);
 
   return (
     <Card>
