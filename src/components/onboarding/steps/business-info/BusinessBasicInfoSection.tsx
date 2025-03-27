@@ -46,7 +46,7 @@ export const BusinessBasicInfoSection: React.FC = () => {
         id="business-phone"
         label="Telefone"
         type="tel"
-        value={businessData.phone}
+        value={businessData.phone || ""}
         onChange={handlePhoneChange}
         error={validatePhone(businessData.phone)}
         touched={true}

@@ -31,19 +31,25 @@ export const OnboardingControls: React.FC = () => {
     
     // Avançar para próximo passo
     if (currentStep < 4) {
-      setCurrentStep(currentStep + 1);
+      // Salva progresso antes de avançar
       saveProgress();
+      setCurrentStep(currentStep + 1);
     }
   };
   
   const handlePrevious = () => {
     if (currentStep > 0) {
+      // Salva progresso antes de voltar
+      saveProgress();
       setCurrentStep(currentStep - 1);
     }
   };
   
   const handleFinish = () => {
     if (isComplete()) {
+      // Salva progresso final
+      saveProgress();
+      
       // Simulação de envio dos dados
       toast.promise(
         new Promise<void>((resolve) => {

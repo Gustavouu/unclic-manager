@@ -18,12 +18,12 @@ export const Onboarding = () => {
   // Carrega dados salvos quando o componente é montado
   useEffect(() => {
     loadProgress();
-  }, []);
+  }, [loadProgress]);
 
   // Salva dados automaticamente quando steps são alterados
   useEffect(() => {
     saveProgress();
-  }, [currentStep]);
+  }, [currentStep, saveProgress]);
 
   return (
     <div className="container max-w-5xl mx-auto py-8 px-4">

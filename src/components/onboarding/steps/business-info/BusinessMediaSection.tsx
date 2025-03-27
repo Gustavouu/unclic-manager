@@ -1,16 +1,50 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Upload, Image } from "lucide-react";
+import { toast } from "sonner";
 
 export const BusinessMediaSection: React.FC = () => {
   const { businessData, updateBusinessData } = useOnboarding();
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+
+  // Create preview URLs for existing files
+  useEffect(() => {
+    if (businessData.logo instanceof File) {
+      setLogoPreview(URL.createObjectURL(businessData.logo));
+    }
+    
+    if (businessData.banner instanceof File) {
+      setBannerPreview(URL.createObjectURL(businessData.banner));
+    }
+    
+    // Cleanup URLs on unmount
+    return () => {
+      if (logoPreview) URL.revokeObjectURL(logoPreview);
+      if (bannerPreview) URL.revokeObjectURL(bannerPreview);
+    };
+  }, [businessData.logo, businessData.banner]);
 
   const handleFileChange = (field: 'logo' | 'banner', e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      updateBusinessData({ [field]: e.target.files[0] });
+      const file = e.target.files[0];
+      
+      // Update the file in businessData
+      updateBusinessData({ [field]: file });
+      
+      // Create and set preview URL
+      if (field === 'logo') {
+        if (logoPreview) URL.revokeObjectURL(logoPreview);
+        setLogoPreview(URL.createObjectURL(file));
+      } else {
+        if (bannerPreview) URL.revokeObjectURL(bannerPreview);
+        setBannerPreview(URL.createObjectURL(file));
+      }
+      
+      toast.success(`${field === 'logo' ? 'Logotipo' : 'Banner'} selecionado com sucesso!`);
     }
   };
 
@@ -22,9 +56,9 @@ export const BusinessMediaSection: React.FC = () => {
         <Label htmlFor="business-logo">Logotipo</Label>
         <div className="flex items-center gap-4">
           <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-            {businessData.logo ? (
+            {logoPreview ? (
               <img 
-                src={URL.createObjectURL(businessData.logo)} 
+                src={logoPreview}
                 alt="Logo Preview" 
                 className="w-full h-full object-cover"
               />
@@ -55,9 +89,9 @@ export const BusinessMediaSection: React.FC = () => {
         <Label htmlFor="business-banner">Banner</Label>
         <div className="flex items-center gap-4">
           <div className="w-48 h-24 rounded-md bg-gray-200 flex items-center justify-center overflow-hidden">
-            {businessData.banner ? (
+            {bannerPreview ? (
               <img 
-                src={URL.createObjectURL(businessData.banner)} 
+                src={bannerPreview}
                 alt="Banner Preview" 
                 className="w-full h-full object-cover"
               />
