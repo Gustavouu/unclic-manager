@@ -6,7 +6,7 @@ import { revokeFilePreview } from "@/contexts/onboarding/utils/fileUtils";
 
 interface ImageUploadProps {
   imageUrl: string | null;
-  onImageChange: (file: File | null, previewUrl: string | null, base64Data?: string) => void;
+  onImageChange: (file: File | null, previewUrl: string | null) => void;
   imageName?: string;
   height?: string;
   width?: string;
@@ -32,7 +32,10 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
   // Update preview when imageUrl changes
   useEffect(() => {
-    setPreview(imageUrl);
+    // Only update preview if it's different from current to prevent unnecessary re-renders
+    if (imageUrl !== preview) {
+      setPreview(imageUrl);
+    }
   }, [imageUrl]);
   
   // Cleanup preview URL when component unmounts or preview changes

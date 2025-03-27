@@ -9,12 +9,14 @@ export const SettingsLogoUpload: React.FC = () => {
   const { businessData, updateBusinessData } = useOnboarding();
   
   const handleLogoChange = (file: File | null, logoUrl: string | null) => {
-    // Only update state with the new file and URL, don't pass base64 here
-    updateBusinessData({ 
-      logo: file,
-      logoName: file ? file.name : null,
-      logoUrl: logoUrl
-    });
+    // Only update if values have changed
+    if (file !== businessData.logo || logoUrl !== businessData.logoUrl) {
+      updateBusinessData({ 
+        logo: file,
+        logoName: file ? file.name : null,
+        logoUrl: logoUrl
+      });
+    }
   };
   
   return (

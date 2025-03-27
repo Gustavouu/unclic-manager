@@ -27,6 +27,11 @@ export const useBusinessDataState = (saveTimeoutRef: React.MutableRefObject<numb
   const updateBusinessData = useCallback((data: Partial<BusinessData>) => {
     console.log("Updating business data:", data);
     setBusinessData(prev => {
+      // Don't update if the data is the same
+      if (Object.keys(data).every(key => prev[key as keyof BusinessData] === data[key as keyof BusinessData])) {
+        return prev;
+      }
+      
       const newData = { ...prev, ...data };
       
       // Schedule a save with debounce to avoid excessive saves

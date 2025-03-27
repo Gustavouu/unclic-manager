@@ -9,12 +9,14 @@ export const BannerUpload: React.FC = () => {
   const { businessData, updateBusinessData } = useOnboarding();
   
   const handleBannerChange = (file: File | null, bannerUrl: string | null) => {
-    // Only update state with the new file and URL, don't pass base64 here
-    updateBusinessData({ 
-      banner: file,
-      bannerName: file ? file.name : null,
-      bannerUrl: bannerUrl
-    });
+    // Only update if values have changed
+    if (file !== businessData.banner || bannerUrl !== businessData.bannerUrl) {
+      updateBusinessData({ 
+        banner: file,
+        bannerName: file ? file.name : null,
+        bannerUrl: bannerUrl
+      });
+    }
   };
   
   return (
