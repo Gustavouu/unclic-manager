@@ -25,16 +25,16 @@ export const WebsiteBookingModal: React.FC<WebsiteBookingModalProps> = ({
   
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-start justify-center pt-10 overflow-y-auto"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-start justify-center pt-4 pb-4 overflow-y-auto"
     >
-      <div className="relative w-full max-w-3xl">
+      <div className="relative w-full max-w-4xl">
         <Button 
           size="icon" 
           variant="outline" 
-          className="absolute right-4 top-4 z-10"
+          className="absolute right-6 top-6 z-10 bg-white"
           onClick={onClose}
         >
           <X className="h-4 w-4" />

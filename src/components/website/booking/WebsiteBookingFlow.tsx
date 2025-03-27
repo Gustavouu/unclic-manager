@@ -54,7 +54,7 @@ export function WebsiteBookingFlow({
   };
 
   const nextStep = () => setStep(prev => prev + 1);
-  const prevStep = () => setStep(prev => prev - 1);
+  const prevStep = () => setStep(prev => Math.max(0, prev - 1));
 
   // Animation variants
   const variants = {
@@ -136,12 +136,25 @@ export function WebsiteBookingFlow({
     );
   };
 
+  const getStepTitle = () => {
+    switch (step) {
+      case 0: return "Bem-vindo";
+      case 1: return "Escolha do Serviço";
+      case 2: return "Escolha do Profissional";
+      case 3: return "Data e Hora";
+      case 4: return "Pagamento";
+      case 5: return "Confirmação";
+      default: return "";
+    }
+  };
+
   return (
-    <div className="w-full max-w-3xl mx-auto mt-8 mb-16 px-4">
-      {step > 0 && (
-        <div className="mb-6">
-          {renderProgressBar()}
-          <div className="flex justify-between items-center">
+    <div className="w-full max-w-3xl mx-auto mt-8 mb-16 px-4 bg-white rounded-xl shadow-lg p-6">
+      <div className="mb-6">
+        {step > 0 && renderProgressBar()}
+        
+        <div className="flex justify-between items-center">
+          {step > 0 ? (
             <Button 
               variant="ghost" 
               onClick={prevStep}
@@ -151,12 +164,19 @@ export function WebsiteBookingFlow({
               <ArrowLeft className="h-4 w-4" />
               Voltar
             </Button>
-            <span className="text-sm text-muted-foreground">
-              Passo {step} de 5
-            </span>
-          </div>
+          ) : (
+            <div></div> // Empty div to maintain layout
+          )}
+          
+          <h2 className="text-xl font-bold text-center">
+            {getStepTitle()}
+          </h2>
+          
+          <span className="text-sm text-muted-foreground">
+            {step > 0 ? `Passo ${step} de 5` : ""}
+          </span>
         </div>
-      )}
+      </div>
       
       <AnimatePresence mode="wait">
         <motion.div
