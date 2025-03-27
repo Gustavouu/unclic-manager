@@ -13,7 +13,13 @@ export const initialBusinessData: BusinessData = {
   number: "",
   neighborhood: "",
   city: "",
-  state: ""
+  state: "",
+  socialMedia: {
+    facebook: "",
+    instagram: "",
+    linkedin: "",
+    twitter: ""
+  }
 };
 
 // Initial business hours

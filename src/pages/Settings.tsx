@@ -17,7 +17,7 @@ import { OtherTab } from "@/components/settings/tabs/OtherTab";
 import { mockSaveFunction, showSuccessToast, showErrorToast } from "@/utils/formUtils";
 import { Toaster } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { OnboardingProvider } from "@/contexts/OnboardingContext";
+import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("business");

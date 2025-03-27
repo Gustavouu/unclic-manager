@@ -1,4 +1,3 @@
-
 // Types for the onboarding context
 
 // Business data types
@@ -14,6 +13,12 @@ export interface BusinessData {
   neighborhood: string;
   city: string;
   state: string;
+  socialMedia?: {
+    facebook?: string;
+    instagram?: string;
+    linkedin?: string;
+    twitter?: string;
+  };
 }
 
 // Service types

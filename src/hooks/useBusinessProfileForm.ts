@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import { mockSaveFunction, showSuccessToast, showErrorToast, createRequiredValidator, validateEmail, validatePhone } from "@/utils/formUtils";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 
 export const useBusinessProfileForm = () => {
   const [isSaving, setIsSaving] = useState(false);
