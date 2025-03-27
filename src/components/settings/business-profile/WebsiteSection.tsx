@@ -52,8 +52,7 @@ export const WebsiteSection = ({
   };
   
   const handleOpenWebsite = () => {
-    const businessName = websiteUrl.replace(".unclic.com.br", "");
-    window.open(`/${businessName}.unclic.com.br`, "_blank");
+    window.open(`/${websiteUrl}`, "_blank");
   };
   
   return (
@@ -112,7 +111,7 @@ export const WebsiteSection = ({
       
       <div className="mt-4">
         <Link 
-          to={`/${websiteUrl.replace(".unclic.com.br", "")}.unclic.com.br`} 
+          to={`/${websiteUrl}`} 
           target="_blank"
           className="flex items-center gap-2 text-primary hover:underline"
         >

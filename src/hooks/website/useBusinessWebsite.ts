@@ -61,10 +61,10 @@ export const useBusinessWebsite = () => {
   const isCorrectBusiness = () => {
     if (!businessData || !businessData.name) return false;
     
-    // Extract business name from URL (remove the .unclic.com.br part)
+    // Extrair o nome do negócio da URL (remover a extensão .unclic.com.br)
     const urlBusinessName = businessName ? businessName.replace(/\.unclic\.com\.br$/, "") : "";
     
-    // Format the business name for comparison
+    // Formatar o nome do negócio para comparação
     const formattedBusinessName = businessData.name
       .toLowerCase()
       .normalize("NFD")
