@@ -2,13 +2,19 @@
 import React from "react";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { FormField } from "@/components/ui/form-field";
-import { validateEmail, validatePhone } from "@/utils/formUtils";
+import { validateEmail, validatePhone, formatPhone } from "@/utils/formUtils";
 
 export const BusinessBasicInfoSection: React.FC = () => {
   const { businessData, updateBusinessData } = useOnboarding();
 
   const handleChange = (field: string, value: string) => {
     updateBusinessData({ [field]: value });
+  };
+
+  const handlePhoneChange = (value: string) => {
+    // Aplica a máscara de formatação ao telefone
+    const formattedPhone = formatPhone(value);
+    updateBusinessData({ phone: formattedPhone });
   };
 
   return (
@@ -41,7 +47,7 @@ export const BusinessBasicInfoSection: React.FC = () => {
         label="Telefone"
         type="tel"
         value={businessData.phone}
-        onChange={(value) => handleChange("phone", value)}
+        onChange={handlePhoneChange}
         error={validatePhone(businessData.phone)}
         touched={true}
         required
