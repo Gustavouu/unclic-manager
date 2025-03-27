@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useFormValidation } from "@/hooks/useFormValidation";
-import { mockSaveFunction, showSuccessToast, showErrorToast, createRequiredValidator, validateEmail, validatePhone } from "@/utils/formUtils";
+import { mockSaveFunction, showSuccessToast, showErrorToast, createRequiredValidator, validateEmail, validatePhone, formatPhone } from "@/utils/formUtils";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 
 export const useBusinessProfileForm = () => {
@@ -40,7 +40,8 @@ export const useBusinessProfileForm = () => {
         updateField("businessEmail", businessData.email);
       }
       if (businessData.phone) {
-        updateField("businessPhone", businessData.phone);
+        // Format the phone number with mask
+        updateField("businessPhone", formatPhone(businessData.phone));
       }
       if (businessData.address) {
         const addressStr = `${businessData.address}, ${businessData.number || ''} - ${businessData.neighborhood || ''}, ${businessData.city || ''}, ${businessData.state || ''}`;
@@ -60,7 +61,7 @@ export const useBusinessProfileForm = () => {
         updateField("twitterLink", businessData.socialMedia.twitter);
       }
     }
-  }, [businessData]);
+  }, [businessData, updateField]);
 
   const handleSave = async () => {
     const isValid = validateAllFields();
@@ -77,7 +78,7 @@ export const useBusinessProfileForm = () => {
       updateBusinessData({
         name: getFieldValue("businessName"),
         email: getFieldValue("businessEmail"),
-        phone: getFieldValue("businessPhone"),
+        phone: getFieldValue("businessPhone").replace(/\D/g, ''), // Remove mask before saving
         // Note: we're not updating address here as it would require parsing the combined address field
         socialMedia: {
           facebook: getFieldValue("facebookLink"),

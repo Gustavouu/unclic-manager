@@ -25,6 +25,24 @@ export const validateEmail = (email: string): string | null => {
   return null;
 };
 
+// Função para formatar telefone com máscara (xx) xxxxx-xxxx
+export const formatPhone = (phone: string): string => {
+  // Remove todos os caracteres não numéricos
+  const numericValue = phone.replace(/\D/g, '');
+  
+  // Limita a 11 dígitos (DDD + 9 dígitos)
+  const limitedValue = numericValue.slice(0, 11);
+  
+  // Aplica a máscara conforme o tamanho
+  if (limitedValue.length <= 2) {
+    return limitedValue;
+  } else if (limitedValue.length <= 7) {
+    return `(${limitedValue.slice(0, 2)}) ${limitedValue.slice(2)}`;
+  } else {
+    return `(${limitedValue.slice(0, 2)}) ${limitedValue.slice(2, 7)}-${limitedValue.slice(7)}`;
+  }
+};
+
 // Função para validar telefone
 export const validatePhone = (phone: string): string | null => {
   if (!phone) return null;

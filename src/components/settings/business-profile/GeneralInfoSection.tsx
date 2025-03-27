@@ -7,6 +7,7 @@ import { MapPin } from "lucide-react";
 import { fetchAddressByCEP } from "@/utils/addressUtils";
 import { toast } from "sonner";
 import { useState } from "react";
+import { formatPhone } from "@/utils/formUtils";
 
 interface GeneralInfoSectionProps {
   updateField: (name: string, value: string) => void;
@@ -48,6 +49,11 @@ export const GeneralInfoSection = ({
     }
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedPhone = formatPhone(e.target.value);
+    updateField("businessPhone", formattedPhone);
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Informações Gerais</h3>
@@ -73,16 +79,22 @@ export const GeneralInfoSection = ({
         required
       />
       
-      <FormField
-        id="business-phone"
-        label="Telefone"
-        type="tel"
-        value={getFieldValue("businessPhone")}
-        onChange={(value) => updateField("businessPhone", value)}
-        error={getFieldError("businessPhone")}
-        touched={hasFieldBeenTouched("businessPhone")}
-        required
-      />
+      <div className="space-y-2">
+        <Label htmlFor="business-phone" className={hasFieldBeenTouched("businessPhone") && getFieldError("businessPhone") ? "text-destructive" : ""}>
+          Telefone<span className="text-destructive ml-1">*</span>
+        </Label>
+        <Input 
+          id="business-phone" 
+          type="tel"
+          value={getFieldValue("businessPhone")}
+          onChange={handlePhoneChange}
+          placeholder="(00) 00000-0000"
+          className={hasFieldBeenTouched("businessPhone") && getFieldError("businessPhone") ? "border-destructive" : ""}
+        />
+        {getFieldError("businessPhone") && hasFieldBeenTouched("businessPhone") && (
+          <p className="text-sm font-medium text-destructive">{getFieldError("businessPhone")}</p>
+        )}
+      </div>
       
       <div className="space-y-2">
         <Label htmlFor="business-address">Endereço</Label>

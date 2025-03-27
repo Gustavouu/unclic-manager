@@ -4,21 +4,25 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 
 export const LogoImagesSection = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
-  const { businessData } = useOnboarding();
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const { businessData, updateBusinessData } = useOnboarding();
   
   // Load logo and banner from onboarding if available
   useEffect(() => {
     if (businessData) {
       if (businessData.logo) {
         setLogoFile(businessData.logo);
+        setLogoUrl(URL.createObjectURL(businessData.logo));
       }
       if (businessData.banner) {
         setCoverFile(businessData.banner);
+        setCoverUrl(URL.createObjectURL(businessData.banner));
       }
     }
   }, [businessData]);
@@ -27,6 +31,8 @@ export const LogoImagesSection = () => {
     const file = e.target.files?.[0];
     if (file) {
       setLogoFile(file);
+      setLogoUrl(URL.createObjectURL(file));
+      updateBusinessData({ logo: file });
       toast.success("Logotipo selecionado com sucesso!");
     }
   };
@@ -35,6 +41,8 @@ export const LogoImagesSection = () => {
     const file = e.target.files?.[0];
     if (file) {
       setCoverFile(file);
+      setCoverUrl(URL.createObjectURL(file));
+      updateBusinessData({ banner: file });
       toast.success("Imagem de capa selecionada com sucesso!");
     }
   };
@@ -47,9 +55,9 @@ export const LogoImagesSection = () => {
         <Label htmlFor="business-logo">Logotipo</Label>
         <div className="flex items-center gap-4">
           <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-            {logoFile ? (
+            {logoUrl ? (
               <img 
-                src={URL.createObjectURL(logoFile)} 
+                src={logoUrl} 
                 alt="Logo Preview" 
                 className="w-full h-full rounded-full object-cover" 
               />
@@ -79,9 +87,9 @@ export const LogoImagesSection = () => {
         <Label htmlFor="business-cover">Imagem de Capa</Label>
         <div className="flex items-center gap-4">
           <div className="w-48 h-24 rounded-md bg-gray-200 flex items-center justify-center">
-            {coverFile ? (
+            {coverUrl ? (
               <img 
-                src={URL.createObjectURL(coverFile)} 
+                src={coverUrl} 
                 alt="Cover Preview" 
                 className="w-full h-full rounded-md object-cover" 
               />
