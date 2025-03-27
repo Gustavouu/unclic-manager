@@ -1,99 +1,30 @@
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ImageUpload } from "@/components/common/ImageUpload";
 import { Image, Upload } from "lucide-react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { createFilePreview, revokeFilePreview, fileToBase64 } from "@/contexts/onboarding/utils";
 
 export const LogoImagesSection = () => {
   const { businessData, updateBusinessData } = useOnboarding();
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   
-  // Initialize previews from businessData
-  useEffect(() => {
-    // Handle logo preview
-    if (businessData.logo instanceof File) {
-      const newLogoPreview = createFilePreview(businessData.logo);
-      setLogoPreview(newLogoPreview);
-    } else if (businessData.logoUrl) {
-      setLogoPreview(businessData.logoUrl);
-    }
-    
-    // Handle banner preview
-    if (businessData.banner instanceof File) {
-      const newBannerPreview = createFilePreview(businessData.banner);
-      setBannerPreview(newBannerPreview);
-    } else if (businessData.bannerUrl) {
-      setBannerPreview(businessData.bannerUrl);
-    }
-  }, [businessData.logo, businessData.logoUrl, businessData.banner, businessData.bannerUrl]);
-  
-  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] || null;
-    if (file) {
-      // Clean up old URL if exists
-      if (logoPreview && logoPreview.startsWith('blob:')) {
-        revokeFilePreview(logoPreview);
-      }
-      
-      // Create a preview URL
-      const newPreviewUrl = URL.createObjectURL(file);
-      setLogoPreview(newPreviewUrl);
-      
-      // Convert to base64 for storage
-      fileToBase64(file).then(base64Data => {
-        updateBusinessData({ 
-          logo: file,
-          logoName: file.name,
-          logoUrl: newPreviewUrl,
-          logoData: base64Data
-        });
-      }).catch(err => {
-        console.error("Error converting logo to base64:", err);
-        // Still update with the file even if base64 conversion fails
-        updateBusinessData({ 
-          logo: file,
-          logoName: file.name,
-          logoUrl: newPreviewUrl
-        });
-      });
-    }
+  const handleLogoChange = (file: File | null, logoUrl: string | null, logoData?: string) => {
+    updateBusinessData({ 
+      logo: file,
+      logoName: file ? file.name : undefined,
+      logoUrl,
+      logoData
+    });
   };
   
-  const handleBannerChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] || null;
-    if (file) {
-      // Clean up old URL if exists
-      if (bannerPreview && bannerPreview.startsWith('blob:')) {
-        revokeFilePreview(bannerPreview);
-      }
-      
-      // Create a preview URL
-      const newPreviewUrl = URL.createObjectURL(file);
-      setBannerPreview(newPreviewUrl);
-      
-      // Convert to base64 for storage
-      fileToBase64(file).then(base64Data => {
-        updateBusinessData({ 
-          banner: file,
-          bannerName: file.name,
-          bannerUrl: newPreviewUrl,
-          bannerData: base64Data
-        });
-      }).catch(err => {
-        console.error("Error converting banner to base64:", err);
-        // Still update with the file even if base64 conversion fails
-        updateBusinessData({ 
-          banner: file,
-          bannerName: file.name,
-          bannerUrl: newPreviewUrl
-        });
-      });
-    }
+  const handleBannerChange = (file: File | null, bannerUrl: string | null, bannerData?: string) => {
+    updateBusinessData({ 
+      banner: file,
+      bannerName: file ? file.name : undefined,
+      bannerUrl,
+      bannerData
+    });
   };
   
   return (
@@ -105,58 +36,15 @@ export const LogoImagesSection = () => {
           </Label>
           
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              {logoPreview ? (
-                <div className="w-32 h-32 rounded-md overflow-hidden border border-border">
-                  <img
-                    src={logoPreview}
-                    alt="Logo do negócio"
-                    className="w-full h-full object-cover"
-                  />
-                  <Button
-                    onClick={() => {
-                      // Clean up URL if exists
-                      if (logoPreview && logoPreview.startsWith('blob:')) {
-                        revokeFilePreview(logoPreview);
-                      }
-                      
-                      updateBusinessData({ 
-                        logo: null,
-                        logoName: undefined,
-                        logoUrl: undefined,
-                        logoData: undefined
-                      });
-                      
-                      setLogoPreview(null);
-                    }}
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-1 right-1 h-6 w-6 p-0"
-                  >
-                    ✕
-                  </Button>
-                </div>
-              ) : (
-                <label 
-                  htmlFor="business-logo" 
-                  className="flex items-center justify-center border border-dashed border-border rounded-md p-6 w-32 h-32 cursor-pointer"
-                >
-                  <div className="flex flex-col items-center">
-                    <Image className="w-8 h-8 text-muted-foreground mb-2" />
-                    <span className="text-xs text-muted-foreground text-center">
-                      Clique para adicionar
-                    </span>
-                  </div>
-                </label>
-              )}
-              <Input
-                id="business-logo"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleLogoChange}
-              />
-            </div>
+            <ImageUpload
+              id="business-logo"
+              imageUrl={businessData.logoUrl || null}
+              onImageChange={handleLogoChange}
+              icon={<Image className="w-8 h-8 text-muted-foreground mb-2" />}
+              label="Clique para adicionar"
+              width="w-32"
+              height="h-32"
+            />
             
             <div className="flex-1">
               <h4 className="text-sm font-medium">Logo do Negócio</h4>
@@ -176,58 +64,15 @@ export const LogoImagesSection = () => {
           </Label>
           
           <div className="flex flex-col space-y-2">
-            {bannerPreview ? (
-              <div className="relative w-full h-40 rounded-md overflow-hidden border border-border">
-                <img
-                  src={bannerPreview}
-                  alt="Banner do negócio"
-                  className="w-full h-full object-cover"
-                />
-                <Button
-                  onClick={() => {
-                    // Clean up URL if exists
-                    if (bannerPreview && bannerPreview.startsWith('blob:')) {
-                      revokeFilePreview(bannerPreview);
-                    }
-                    
-                    updateBusinessData({ 
-                      banner: null,
-                      bannerName: undefined,
-                      bannerUrl: undefined,
-                      bannerData: undefined
-                    });
-                    
-                    setBannerPreview(null);
-                  }}
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-1 right-1 h-6 w-6 p-0"
-                >
-                  ✕
-                </Button>
-              </div>
-            ) : (
-              <label 
-                htmlFor="business-banner" 
-                className="flex items-center justify-center border border-dashed border-border rounded-md p-6 w-full h-40 cursor-pointer"
-              >
-                <div className="flex flex-col items-center">
-                  <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">
-                    Clique para adicionar um banner
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    Dimensões recomendadas: 1200x300px
-                  </span>
-                </div>
-              </label>
-            )}
-            <Input
+            <ImageUpload
               id="business-banner"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleBannerChange}
+              imageUrl={businessData.bannerUrl || null}
+              onImageChange={handleBannerChange}
+              icon={<Upload className="w-8 h-8 text-muted-foreground mb-2" />}
+              label="Clique para adicionar um banner"
+              subLabel="Dimensões recomendadas: 1200x300px"
+              width="w-full"
+              height="h-40"
             />
             
             <p className="text-xs text-muted-foreground">
