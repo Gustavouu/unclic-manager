@@ -24,7 +24,7 @@ export const BusinessBasicInfoSection: React.FC = () => {
       <FormField
         id="business-name"
         label="Nome do Estabelecimento"
-        value={businessData.name}
+        value={businessData.name || ""}
         onChange={(value) => handleChange("name", value)}
         error={!businessData.name && "O nome do estabelecimento é obrigatório"}
         touched={true}
@@ -35,7 +35,7 @@ export const BusinessBasicInfoSection: React.FC = () => {
         id="business-email"
         label="Email de Contato"
         type="email"
-        value={businessData.email}
+        value={businessData.email || ""}
         onChange={(value) => handleChange("email", value)}
         error={validateEmail(businessData.email)}
         touched={true}

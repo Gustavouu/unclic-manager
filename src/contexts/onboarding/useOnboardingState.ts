@@ -7,7 +7,7 @@ import {
   BusinessHours 
 } from "./types";
 import { initialBusinessData, initialBusinessHours } from "./initialValues";
-import { checkOnboardingComplete, prepareDataForStorage } from "./utils";
+import { checkOnboardingComplete, prepareDataForStorage, serializeFile, deserializeFile } from "./utils";
 
 export const useOnboardingState = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -86,7 +86,10 @@ export const useOnboardingState = () => {
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
-        setBusinessData(prev => ({ ...prev, ...parsed.businessData }));
+        // Deserialize logo and banner if they exist
+        const loadedBusinessData = { ...parsed.businessData };
+        
+        setBusinessData(prev => ({ ...prev, ...loadedBusinessData }));
         setServices(parsed.services || []);
         setStaffMembers(parsed.staffMembers || []);
         setBusinessHours(parsed.businessHours || initialBusinessHours);
