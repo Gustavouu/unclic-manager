@@ -8,15 +8,7 @@ export const useBusinessProfileForm = () => {
   const [isSaving, setIsSaving] = useState(false);
   const { businessData, updateBusinessData } = useOnboarding();
   
-  const {
-    updateField,
-    validateAllFields,
-    getFieldValue,
-    getFieldError,
-    hasFieldBeenTouched,
-    resetForm,
-    setInitialValues
-  } = useFormValidation([
+  const formValidation = useFormValidation([
     { name: "businessName", value: "", validators: [createRequiredValidator("Nome do Negócio")] },
     { name: "businessEmail", value: "", validators: [createRequiredValidator("Email de Contato"), validateEmail] },
     { name: "businessPhone", value: "", validators: [createRequiredValidator("Telefone"), validatePhone] },
@@ -27,20 +19,46 @@ export const useBusinessProfileForm = () => {
     { name: "twitterLink", value: "", validators: [] },
   ]);
 
+  const {
+    updateField,
+    validateAllFields,
+    getFieldValue,
+    getFieldError,
+    hasFieldBeenTouched,
+    resetForm,
+    fields
+  } = formValidation;
+
   // Load business data from onboarding when component mounts
   useEffect(() => {
     if (businessData) {
-      setInitialValues({
-        businessName: businessData.name || "",
-        businessEmail: businessData.email || "",
-        businessPhone: businessData.phone || "",
-        businessAddress: businessData.address ? 
-          `${businessData.address}, ${businessData.number || ''} - ${businessData.neighborhood || ''}, ${businessData.city || ''}, ${businessData.state || ''}` : "",
-        facebookLink: "",
-        instagramLink: "",
-        linkedinLink: "",
-        twitterLink: ""
-      });
+      // Instead of using setInitialValues, we'll manually update each field
+      if (businessData.name) {
+        updateField("businessName", businessData.name);
+      }
+      if (businessData.email) {
+        updateField("businessEmail", businessData.email);
+      }
+      if (businessData.phone) {
+        updateField("businessPhone", businessData.phone);
+      }
+      if (businessData.address) {
+        const addressStr = `${businessData.address}, ${businessData.number || ''} - ${businessData.neighborhood || ''}, ${businessData.city || ''}, ${businessData.state || ''}`;
+        updateField("businessAddress", addressStr);
+      }
+      // Set social media links if they exist
+      if (businessData.socialMedia?.facebook) {
+        updateField("facebookLink", businessData.socialMedia.facebook);
+      }
+      if (businessData.socialMedia?.instagram) {
+        updateField("instagramLink", businessData.socialMedia.instagram);
+      }
+      if (businessData.socialMedia?.linkedin) {
+        updateField("linkedinLink", businessData.socialMedia.linkedin);
+      }
+      if (businessData.socialMedia?.twitter) {
+        updateField("twitterLink", businessData.socialMedia.twitter);
+      }
     }
   }, [businessData]);
 
@@ -59,8 +77,14 @@ export const useBusinessProfileForm = () => {
       updateBusinessData({
         name: getFieldValue("businessName"),
         email: getFieldValue("businessEmail"),
-        phone: getFieldValue("businessPhone")
+        phone: getFieldValue("businessPhone"),
         // Note: we're not updating address here as it would require parsing the combined address field
+        socialMedia: {
+          facebook: getFieldValue("facebookLink"),
+          instagram: getFieldValue("instagramLink"),
+          linkedin: getFieldValue("linkedinLink"),
+          twitter: getFieldValue("twitterLink")
+        }
       });
       
       const success = await mockSaveFunction();
