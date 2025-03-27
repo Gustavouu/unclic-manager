@@ -13,7 +13,7 @@ export const usePersistence = (
   hasStaff: boolean,
   currentStep: number,
   hasLoaded: React.MutableRefObject<boolean>,
-  setBusinessData: (data: Partial<BusinessData>) => void,
+  setBusinessData: React.Dispatch<React.SetStateAction<BusinessData>>,
   setServices: (services: ServiceData[]) => void,
   setStaffMembers: (staffMembers: StaffData[]) => void,
   setBusinessHours: (businessHours: BusinessHours) => void,

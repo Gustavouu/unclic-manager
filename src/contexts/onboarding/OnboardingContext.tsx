@@ -25,8 +25,26 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   // Create a reference for saveProgress function
   const saveProgressRef = useRef<() => void>(() => {});
   
-  // Business data state (needs the saveProgress reference)
-  const { businessData, setBusinessData, updateBusinessData } = useBusinessDataState(saveTimeoutRef, () => saveProgressRef.current());
+  // Create business data state directly with useState
+  const [businessData, setBusinessDataState] = useState<BusinessData>({
+    name: "",
+    email: "",
+    phone: "",
+    cep: "",
+    address: "",
+    number: "",
+    neighborhood: "",
+    city: "",
+    state: ""
+  });
+  
+  // Now use the useBusinessDataState hook with the correct parameters
+  const { updateBusinessData } = useBusinessDataState(
+    saveTimeoutRef, 
+    () => saveProgressRef.current(),
+    businessData,
+    setBusinessDataState
+  );
   
   // Persistence hook
   const { saveProgress, loadProgress } = usePersistence(
@@ -37,7 +55,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     hasStaff,
     currentStep,
     hasLoaded,
-    setBusinessData,
+    setBusinessDataState,
     setServices,
     setStaffMembers,
     setBusinessHours,

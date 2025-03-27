@@ -1,12 +1,14 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { BusinessData } from "../types";
-import { initialBusinessData } from "../initialValues";
 import { revokeFilePreview } from "../utils/fileUtils";
 
-export const useBusinessDataState = (saveTimeoutRef: React.MutableRefObject<number | null>, saveProgress: () => void) => {
-  const [businessData, setBusinessData] = useState<BusinessData>(initialBusinessData);
-
+export const useBusinessDataState = (
+  saveTimeoutRef: React.MutableRefObject<number | null>, 
+  saveProgress: () => void,
+  businessData: BusinessData,
+  setBusinessData: React.Dispatch<React.SetStateAction<BusinessData>>
+) => {
   // Clean up blob URLs when component unmounts or when URLs change
   useEffect(() => {
     const currentLogoUrl = businessData.logoUrl;
@@ -52,11 +54,9 @@ export const useBusinessDataState = (saveTimeoutRef: React.MutableRefObject<numb
       
       return newData;
     });
-  }, [saveTimeoutRef, saveProgress]);
+  }, [setBusinessData, saveTimeoutRef, saveProgress]);
 
   return {
-    businessData,
-    setBusinessData,
     updateBusinessData
   };
 };
