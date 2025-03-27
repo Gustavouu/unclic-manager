@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Clock } from "lucide-react";
+import { Clock, Sun, Cloud, Moon } from "lucide-react";
 
 interface StepDateTimeProps {
   bookingData: BookingData;
@@ -21,6 +21,8 @@ type TimeSlot = {
   time: string;
   period: "morning" | "afternoon" | "evening";
 };
+
+type Period = "morning" | "afternoon" | "evening" | "all";
 
 export function StepDateTime({
   bookingData,
@@ -36,6 +38,9 @@ export function StepDateTime({
   const [notes, setNotes] = useState<string>(
     bookingData.notes || ""
   );
+  
+  // Add state for the active period filter
+  const [activePeriod, setActivePeriod] = useState<Period>("morning");
 
   // Generate available time slots
   const timeSlots = useMemo(() => {
@@ -78,6 +83,37 @@ export function StepDateTime({
   const afternoonSlots = timeSlots.filter(slot => slot.period === "afternoon");
   const eveningSlots = timeSlots.filter(slot => slot.period === "evening");
 
+  // Set default active period when date is selected
+  const setDefaultActivePeriod = () => {
+    if (morningSlots.length > 0) {
+      setActivePeriod("morning");
+    } else if (afternoonSlots.length > 0) {
+      setActivePeriod("afternoon");
+    } else if (eveningSlots.length > 0) {
+      setActivePeriod("evening");
+    } else {
+      setActivePeriod("all");
+    }
+  };
+
+  // Set default period when date changes
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date) {
+      setDefaultActivePeriod();
+    }
+  };
+
+  // Should we display this period's slots?
+  const shouldShowPeriod = (period: "morning" | "afternoon" | "evening") => {
+    return activePeriod === "all" || activePeriod === period;
+  };
+
+  // Period button click handler
+  const handlePeriodClick = (period: Period) => {
+    setActivePeriod(period);
+  };
+
   return (
     <Card className="border-none shadow-none">
       <CardHeader className="px-0">
@@ -92,7 +128,7 @@ export function StepDateTime({
             <Calendar
               mode="single"
               selected={selectedDate}
-              onSelect={setSelectedDate}
+              onSelect={handleDateSelect}
               disabled={(date) => date < new Date() || date.getDay() === 0}
               initialFocus
               locale={ptBR}
@@ -106,11 +142,54 @@ export function StepDateTime({
                 Horários disponíveis para {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
               </h3>
               
+              {/* Period filter buttons */}
+              <div className="flex gap-2 mb-4">
+                <Button
+                  type="button"
+                  variant={activePeriod === "all" ? "default" : "outline"}
+                  className="flex items-center gap-1"
+                  onClick={() => handlePeriodClick("all")}
+                >
+                  <Clock className="h-4 w-4" />
+                  Todos
+                </Button>
+                <Button
+                  type="button"
+                  variant={activePeriod === "morning" ? "default" : "outline"}
+                  className="flex items-center gap-1"
+                  onClick={() => handlePeriodClick("morning")}
+                  disabled={morningSlots.length === 0}
+                >
+                  <Sun className="h-4 w-4" />
+                  Manhã
+                </Button>
+                <Button
+                  type="button"
+                  variant={activePeriod === "afternoon" ? "default" : "outline"}
+                  className="flex items-center gap-1"
+                  onClick={() => handlePeriodClick("afternoon")}
+                  disabled={afternoonSlots.length === 0}
+                >
+                  <Cloud className="h-4 w-4" />
+                  Tarde
+                </Button>
+                <Button
+                  type="button"
+                  variant={activePeriod === "evening" ? "default" : "outline"}
+                  className="flex items-center gap-1"
+                  onClick={() => handlePeriodClick("evening")}
+                  disabled={eveningSlots.length === 0}
+                >
+                  <Moon className="h-4 w-4" />
+                  Noite
+                </Button>
+              </div>
+              
               {/* Morning slots */}
-              {morningSlots.length > 0 && (
+              {morningSlots.length > 0 && shouldShowPeriod("morning") && (
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-2 text-sm font-medium text-muted-foreground">
-                    <Clock className="h-4 w-4" />
+                    <Sun className="h-4 w-4" />
                     <span>Manhã</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
@@ -133,10 +212,10 @@ export function StepDateTime({
               )}
               
               {/* Afternoon slots */}
-              {afternoonSlots.length > 0 && (
+              {afternoonSlots.length > 0 && shouldShowPeriod("afternoon") && (
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-2 text-sm font-medium text-muted-foreground">
-                    <Clock className="h-4 w-4" />
+                    <Cloud className="h-4 w-4" />
                     <span>Tarde</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
@@ -159,10 +238,10 @@ export function StepDateTime({
               )}
               
               {/* Evening slots */}
-              {eveningSlots.length > 0 && (
+              {eveningSlots.length > 0 && shouldShowPeriod("evening") && (
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-2 text-sm font-medium text-muted-foreground">
-                    <Clock className="h-4 w-4" />
+                    <Moon className="h-4 w-4" />
                     <span>Noite</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
