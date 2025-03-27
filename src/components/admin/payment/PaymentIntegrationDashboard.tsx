@@ -2,12 +2,23 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EfiIntegrationForm } from "./EfiIntegrationForm";
+import { WebhookConfigurationForm } from "./WebhookConfigurationForm";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export function PaymentIntegrationDashboard() {
+interface PaymentIntegrationDashboardProps {
+  initialTab?: string;
+}
+
+export function PaymentIntegrationDashboard({ initialTab = "efi-bank" }: PaymentIntegrationDashboardProps) {
   const [isConfigured, setIsConfigured] = useState(false);
+  const [isWebhookConfigured, setIsWebhookConfigured] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   useEffect(() => {
     const checkConfiguration = async () => {
@@ -25,11 +36,17 @@ export function PaymentIntegrationDashboard() {
         }
 
         // Check if any transaction has Efi Bank config in notes
-        if (data && data.length > 0) {
+        if (data && data.length > 0 && data[0].notas) {
           try {
             const notes = data[0].notas;
-            if (notes && notes.includes('efi_integration')) {
-              setIsConfigured(true);
+            if (typeof notes === 'string') {
+              const parsedNotes = JSON.parse(notes);
+              if (parsedNotes.efi_integration) {
+                setIsConfigured(true);
+              }
+              if (parsedNotes.webhook_config) {
+                setIsWebhookConfigured(true);
+              }
             }
           } catch (parseError) {
             console.error("Error parsing notes JSON:", parseError);
@@ -59,9 +76,10 @@ export function PaymentIntegrationDashboard() {
           <p>Carregando configurações...</p>
         </div>
       ) : (
-        <Tabs defaultValue="efi-bank" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-1">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="efi-bank">Efi Bank</TabsTrigger>
+            <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
           </TabsList>
           <TabsContent value="efi-bank" className="mt-6">
             {isConfigured ? (
@@ -83,6 +101,26 @@ export function PaymentIntegrationDashboard() {
               <EfiIntegrationForm />
             )}
           </TabsContent>
+          <TabsContent value="webhooks" className="mt-6">
+            {isWebhookConfigured ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <div className="h-6 w-6 rounded-full bg-green-500 mr-2"></div>
+                    Webhook Configurado
+                  </CardTitle>
+                  <CardDescription>
+                    A configuração de webhook está ativa. Você pode editar as configurações abaixo.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <WebhookConfigurationForm />
+                </CardContent>
+              </Card>
+            ) : (
+              <WebhookConfigurationForm />
+            )}
+          </TabsContent>
         </Tabs>
       )}
 
@@ -90,7 +128,7 @@ export function PaymentIntegrationDashboard() {
         <CardHeader>
           <CardTitle>Webhook para Notificações de Pagamento</CardTitle>
           <CardDescription>
-            Configure o seguinte endpoint como webhook na sua conta da Efi Bank para receber atualizações automáticas sobre o status dos pagamentos.
+            Configure o seguinte endpoint como webhook na sua conta para receber atualizações automáticas sobre o status dos pagamentos.
           </CardDescription>
         </CardHeader>
         <CardContent>

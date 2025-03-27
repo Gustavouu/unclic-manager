@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PaymentRequest, PaymentResponse } from "./types";
 import { EfiBankService } from "./efiBank";
 import { mapEfiBankStatus } from "./utils";
+import { WebhookService } from "./webhookService";
 
 /**
  * Service for handling payment processing with Efi Bank
@@ -103,7 +104,7 @@ export const PaymentService = {
         }
       }
 
-      return {
+      const paymentResponse = {
         id: dbTransaction.id,
         status: mapEfiBankStatus(efiPaymentData.status),
         transactionId,
@@ -112,6 +113,16 @@ export const PaymentService = {
         paymentMethod: dbTransaction.metodo_pagamento,
         createdAt: dbTransaction.criado_em
       };
+
+      // Enviar notificação de webhook, se estiver configurado
+      WebhookService.sendWebhookNotification('payment.created', {
+        payment_id: paymentResponse.id,
+        status: paymentResponse.status,
+        amount: paymentResponse.amount,
+        payment_method: paymentResponse.paymentMethod
+      });
+
+      return paymentResponse;
     } catch (error) {
       console.error("Erro ao processar pagamento com Efi Bank:", error);
       throw new Error("Não foi possível processar o pagamento. Tente novamente mais tarde.");
@@ -168,6 +179,13 @@ export const PaymentService = {
               data_pagamento: efiStatusData.status === "approved" ? new Date().toISOString() : null
             })
             .eq('id', paymentId);
+            
+          // Enviar notificação de webhook, se estiver configurado
+          WebhookService.sendWebhookNotification('payment.updated', {
+            payment_id: paymentId,
+            status: mapEfiBankStatus(efiStatusData.status),
+            updated_at: new Date().toISOString()
+          });
         } catch (updateError) {
           console.error("Error updating transaction status:", updateError);
           // Continue despite error, we'll return the latest status from API
