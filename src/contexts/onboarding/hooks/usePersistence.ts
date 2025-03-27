@@ -1,7 +1,7 @@
-
 import { useCallback, useRef } from "react";
 import { BusinessData, ServiceData, StaffData, BusinessHours } from "../types";
-import { prepareDataForStorage } from "../utils";
+import { prepareDataForStorage, base64ToFile } from "../utils";
+import { initialBusinessHours } from "../initialValues";
 
 export const usePersistence = (
   businessData: BusinessData,
@@ -111,6 +111,3 @@ export const usePersistence = (
     saveTimeoutRef
   };
 };
-
-// Importando a função base64ToFile da utilitária para manter compatibilidade
-import { base64ToFile } from "../utils";
