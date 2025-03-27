@@ -33,7 +33,7 @@ export const WebsiteSection = ({
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]/g, "-");
+      .replace(/[^a-z0-9]/g, ""); // Removidos os hifens
     
     return `${formattedName}.unclic.com.br`;
   };
@@ -74,7 +74,7 @@ export const WebsiteSection = ({
               value={websiteUrl}
               onChange={(e) => updateField("businessWebsite", e.target.value)}
               className="border-0 flex-1" 
-              placeholder="seu-negocio.unclic.com.br"
+              placeholder="seunegocio.unclic.com.br"
             />
           </div>
           <Button 

@@ -17,7 +17,7 @@ export const BusinessBasicInfoSection: React.FC = () => {
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9]/g, "-");
+        .replace(/[^a-z0-9]/g, ""); // Removidos os hifens
       
       updateBusinessData({ website: `${formattedName}.unclic.com.br` });
     }
@@ -88,7 +88,7 @@ export const BusinessBasicInfoSection: React.FC = () => {
             value={businessData.website || ""}
             onChange={(e) => handleWebsiteChange(e.target.value)}
             className="border-0" 
-            placeholder="seu-negocio.unclic.com.br"
+            placeholder="seunegocio.unclic.com.br"
           />
         </div>
         <p className="text-xs text-muted-foreground">
