@@ -13,11 +13,10 @@ export const useBusinessDataState = (saveTimeoutRef: React.MutableRefObject<numb
     const currentBannerUrl = businessData.bannerUrl;
 
     return () => {
-      // Clean up logo URL if it's a blob
+      // Only clean up URLs created by this component, not ones loaded from storage
       if (currentLogoUrl?.startsWith('blob:')) {
         revokeFilePreview(currentLogoUrl);
       }
-      // Clean up banner URL if it's a blob
       if (currentBannerUrl?.startsWith('blob:')) {
         revokeFilePreview(currentBannerUrl);
       }
@@ -50,4 +49,3 @@ export const useBusinessDataState = (saveTimeoutRef: React.MutableRefObject<numb
     updateBusinessData
   };
 };
-

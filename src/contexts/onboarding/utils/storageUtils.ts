@@ -16,7 +16,7 @@ export const prepareDataForStorage = async (data: BusinessData): Promise<Partial
       preparedData.logoData = await fileToBase64(preparedData.logo);
       preparedData.logoName = preparedData.logo.name;
       
-      // Create URL for preview if doesn't exist
+      // Keep the logoUrl as is if it already exists
       if (!preparedData.logoUrl) {
         preparedData.logoUrl = createFilePreview(preparedData.logo);
       }
@@ -38,7 +38,7 @@ export const prepareDataForStorage = async (data: BusinessData): Promise<Partial
       preparedData.bannerData = await fileToBase64(preparedData.banner);
       preparedData.bannerName = preparedData.banner.name;
       
-      // Create URL for preview if doesn't exist
+      // Keep the bannerUrl as is if it already exists
       if (!preparedData.bannerUrl) {
         preparedData.bannerUrl = createFilePreview(preparedData.banner);
       }

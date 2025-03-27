@@ -2,7 +2,7 @@
 import { useCallback, useRef } from "react";
 import { BusinessData, ServiceData, StaffData, BusinessHours } from "../types";
 import { prepareDataForStorage } from "../utils/storageUtils";
-import { base64ToFile } from "../utils/fileUtils";
+import { base64ToFile, createFilePreview } from "../utils/fileUtils";
 import { initialBusinessHours } from "../initialValues";
 
 export const usePersistence = (
@@ -72,8 +72,9 @@ export const usePersistence = (
           const logoFile = base64ToFile(loadedBusinessData.logoData, loadedBusinessData.logoName);
           if (logoFile) {
             loadedBusinessData.logo = logoFile;
+            // Only create new URL if one doesn't exist
             if (!loadedBusinessData.logoUrl) {
-              loadedBusinessData.logoUrl = URL.createObjectURL(logoFile);
+              loadedBusinessData.logoUrl = createFilePreview(logoFile);
             }
           }
         }
@@ -83,8 +84,9 @@ export const usePersistence = (
           const bannerFile = base64ToFile(loadedBusinessData.bannerData, loadedBusinessData.bannerName);
           if (bannerFile) {
             loadedBusinessData.banner = bannerFile;
+            // Only create new URL if one doesn't exist
             if (!loadedBusinessData.bannerUrl) {
-              loadedBusinessData.bannerUrl = URL.createObjectURL(bannerFile);
+              loadedBusinessData.bannerUrl = createFilePreview(bannerFile);
             }
           }
         }

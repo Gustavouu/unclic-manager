@@ -28,29 +28,27 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   id,
   className = "",
 }) => {
-  const [preview, setPreview] = useState<string | null>(null);
-  
-  // Initialize preview from imageUrl
+  const [preview, setPreview] = useState<string | null>(imageUrl);
+
+  // Update preview when imageUrl changes
   useEffect(() => {
-    if (imageUrl !== preview) {
-      setPreview(imageUrl);
-    }
+    setPreview(imageUrl);
   }, [imageUrl]);
   
   // Cleanup preview URL when component unmounts or preview changes
   useEffect(() => {
     return () => {
-      if (preview && preview.startsWith('blob:')) {
+      if (preview && preview.startsWith('blob:') && preview !== imageUrl) {
         revokeFilePreview(preview);
       }
     };
-  }, [preview]);
+  }, [preview, imageUrl]);
 
-  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
     
-    // Clean up old preview URL if it exists
-    if (preview && preview.startsWith('blob:')) {
+    // Clean up old preview URL if it exists and is different from imageUrl
+    if (preview && preview.startsWith('blob:') && preview !== imageUrl) {
       revokeFilePreview(preview);
     }
     
@@ -58,7 +56,6 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       // Create a new preview URL
       const newPreviewUrl = URL.createObjectURL(file);
       setPreview(newPreviewUrl);
-      
       onImageChange(file, newPreviewUrl);
     } else {
       setPreview(null);
@@ -67,8 +64,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   };
   
   const handleRemoveImage = () => {
-    // Clean up URL if exists
-    if (preview && preview.startsWith('blob:')) {
+    // Clean up URL if exists and is different from imageUrl
+    if (preview && preview.startsWith('blob:') && preview !== imageUrl) {
       revokeFilePreview(preview);
     }
     
@@ -123,4 +120,3 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     </div>
   );
 };
-

@@ -8,12 +8,12 @@ import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 export const SettingsBannerUpload: React.FC = () => {
   const { businessData, updateBusinessData } = useOnboarding();
   
-  const handleBannerChange = (file: File | null, bannerUrl: string | null, bannerData?: string) => {
+  const handleBannerChange = (file: File | null, bannerUrl: string | null) => {
+    // Only update state with the new file and URL, don't pass base64 here
     updateBusinessData({ 
       banner: file,
-      bannerName: file ? file.name : undefined,
-      bannerUrl,
-      bannerData
+      bannerName: file ? file.name : null,
+      bannerUrl: bannerUrl
     });
   };
   
