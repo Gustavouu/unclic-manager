@@ -19,6 +19,7 @@ import { WebsiteLoading } from "@/components/website/WebsiteLoading";
 import { formatWeekday, formatPrice, formatDuration } from "@/components/website/WebsiteUtils";
 import { WebsiteBookingFlow } from "@/components/website/booking/WebsiteBookingFlow";
 import { Button } from "@/components/ui/button";
+import { AppointmentSection } from "@/components/website/AppointmentSection";
 
 const BusinessWebsite = () => {
   const { businessData, loadProgress, services, staffMembers, businessHours } = useOnboarding();
@@ -101,6 +102,11 @@ const BusinessWebsite = () => {
     return <WebsiteLoading type="loading" />;
   }
 
+  // For debug purposes, show loaded business data
+  console.log("Business Data:", businessData);
+  console.log("Business Name:", businessName);
+
+  // If there's no business data or the business doesn't match, show not found
   if (!businessData.name || !isCorrectBusiness()) {
     return <WebsiteLoading type="not-found" />;
   }
