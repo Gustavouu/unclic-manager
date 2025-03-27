@@ -41,9 +41,9 @@ export const OnboardingSteps: React.FC = () => {
             <div 
               key={index} 
               className="flex items-center"
-              onClick={() => handleStepClick(index)}
             >
               <div 
+                onClick={() => handleStepClick(index)}
                 className={`
                   flex-1 min-w-[150px] rounded-md border p-3
                   ${isActive ? 'bg-primary/10 border-primary' : ''}

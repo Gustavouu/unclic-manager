@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { 
   BusinessData, 
   ServiceData, 
@@ -7,7 +7,7 @@ import {
   BusinessHours 
 } from "./types";
 import { initialBusinessData, initialBusinessHours } from "./initialValues";
-import { checkOnboardingComplete, prepareDataForStorage } from "./utils";
+import { checkOnboardingComplete, prepareDataForStorage, revokeFilePreview } from "./utils";
 
 export const useOnboardingState = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -17,11 +17,38 @@ export const useOnboardingState = () => {
   const [businessHours, setBusinessHours] = useState<BusinessHours>(initialBusinessHours);
   const [hasStaff, setHasStaff] = useState<boolean>(false);
   const hasLoaded = useRef(false);
+  const saveTimeoutRef = useRef<number | null>(null);
+
+  // Clean up blob URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      if (businessData.logoUrl) {
+        revokeFilePreview(businessData.logoUrl);
+      }
+      if (businessData.bannerUrl) {
+        revokeFilePreview(businessData.bannerUrl);
+      }
+    };
+  }, []);
 
   // Update business data
   const updateBusinessData = useCallback((data: Partial<BusinessData>) => {
     console.log("Updating business data:", data);
-    setBusinessData(prev => ({ ...prev, ...data }));
+    setBusinessData(prev => {
+      const newData = { ...prev, ...data };
+      
+      // Schedule a save with debounce to avoid excessive saves
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current);
+      }
+      
+      saveTimeoutRef.current = window.setTimeout(() => {
+        saveProgress();
+        saveTimeoutRef.current = null;
+      }, 500);
+      
+      return newData;
+    });
   }, []);
 
   // Service management functions
@@ -106,9 +133,8 @@ export const useOnboardingState = () => {
         const parsed = JSON.parse(savedData);
         console.log("Found saved data:", parsed);
         
-        // Load business data without logo and banner (they can't be stored in localStorage)
+        // Load business data
         const loadedBusinessData = { ...parsed.businessData };
-        
         setBusinessData(prev => ({ ...prev, ...loadedBusinessData }));
         setServices(parsed.services || []);
         setStaffMembers(parsed.staffMembers || []);

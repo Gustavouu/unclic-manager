@@ -7,9 +7,11 @@ export interface BusinessData {
   email: string;
   phone: string;
   logo?: File | null;
-  logoName?: string;  // Added to store the name of the logo file
+  logoUrl?: string;  // Added to store the URL of the logo preview
+  logoName?: string;  // Store the name of the logo file
   banner?: File | null;
-  bannerName?: string;  // Added to store the name of the banner file
+  bannerUrl?: string;  // Added to store the URL of the banner preview
+  bannerName?: string;  // Store the name of the banner file
   cep: string;
   address: string;
   number: string;

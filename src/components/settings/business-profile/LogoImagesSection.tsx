@@ -13,50 +13,95 @@ export const LogoImagesSection = () => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   
-  // Create previews when file objects change
+  // Initialize previews from businessData
+  useEffect(() => {
+    // Handle logo preview
+    if (businessData.logo instanceof File) {
+      const newLogoPreview = createFilePreview(businessData.logo);
+      setLogoPreview(newLogoPreview);
+    } else if (businessData.logoUrl) {
+      setLogoPreview(businessData.logoUrl);
+    }
+    
+    // Handle banner preview
+    if (businessData.banner instanceof File) {
+      const newBannerPreview = createFilePreview(businessData.banner);
+      setBannerPreview(newBannerPreview);
+    } else if (businessData.bannerUrl) {
+      setBannerPreview(businessData.bannerUrl);
+    }
+  }, []);
+  
+  // Update preview when file objects change
   useEffect(() => {
     // Handle logo preview
     if (businessData.logo instanceof File) {
       const newLogoPreview = createFilePreview(businessData.logo);
       setLogoPreview(newLogoPreview);
       
-      // Clean up previous preview
+      // If we're creating a new preview, update the businessData with the URL
+      if (newLogoPreview && newLogoPreview !== businessData.logoUrl) {
+        updateBusinessData({ logoUrl: newLogoPreview });
+      }
+      
+      // Clean up previous preview when component unmounts
       return () => {
-        if (newLogoPreview) revokeFilePreview(newLogoPreview);
+        if (newLogoPreview && newLogoPreview !== businessData.logoUrl) {
+          revokeFilePreview(newLogoPreview);
+        }
       };
     }
   }, [businessData.logo]);
   
-  // Create preview for banner
+  // Update preview when banner changes
   useEffect(() => {
     // Handle banner preview
     if (businessData.banner instanceof File) {
       const newBannerPreview = createFilePreview(businessData.banner);
       setBannerPreview(newBannerPreview);
       
-      // Clean up previous preview
+      // If we're creating a new preview, update the businessData with the URL
+      if (newBannerPreview && newBannerPreview !== businessData.bannerUrl) {
+        updateBusinessData({ bannerUrl: newBannerPreview });
+      }
+      
+      // Clean up previous preview when component unmounts
       return () => {
-        if (newBannerPreview) revokeFilePreview(newBannerPreview);
+        if (newBannerPreview && newBannerPreview !== businessData.bannerUrl) {
+          revokeFilePreview(newBannerPreview);
+        }
       };
     }
   }, [businessData.banner]);
   
-  // Clean up all previews on unmount
-  useEffect(() => {
-    return () => {
-      if (logoPreview) revokeFilePreview(logoPreview);
-      if (bannerPreview) revokeFilePreview(bannerPreview);
-    };
-  }, [logoPreview, bannerPreview]);
-  
   const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
-    updateBusinessData({ logo: file });
+    if (file) {
+      // Clean up old URL if exists
+      if (logoPreview && logoPreview.startsWith('blob:')) {
+        revokeFilePreview(logoPreview);
+      }
+      
+      updateBusinessData({ 
+        logo: file,
+        logoName: file.name
+      });
+    }
   };
   
   const handleBannerChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
-    updateBusinessData({ banner: file });
+    if (file) {
+      // Clean up old URL if exists
+      if (bannerPreview && bannerPreview.startsWith('blob:')) {
+        revokeFilePreview(bannerPreview);
+      }
+      
+      updateBusinessData({ 
+        banner: file,
+        bannerName: file.name
+      });
+    }
   };
   
   return (
@@ -78,8 +123,17 @@ export const LogoImagesSection = () => {
                   />
                   <Button
                     onClick={() => {
-                      updateBusinessData({ logo: null });
-                      revokeFilePreview(logoPreview);
+                      // Clean up URL if exists
+                      if (logoPreview && logoPreview.startsWith('blob:')) {
+                        revokeFilePreview(logoPreview);
+                      }
+                      
+                      updateBusinessData({ 
+                        logo: null,
+                        logoName: undefined,
+                        logoUrl: undefined
+                      });
+                      
                       setLogoPreview(null);
                     }}
                     variant="destructive"
@@ -90,7 +144,10 @@ export const LogoImagesSection = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center justify-center border border-dashed border-border rounded-md p-6 w-32 h-32">
+                <div 
+                  className="flex items-center justify-center border border-dashed border-border rounded-md p-6 w-32 h-32 cursor-pointer"
+                  onClick={() => document.getElementById('business-logo')?.click()}
+                >
                   <Label
                     htmlFor="business-logo"
                     className="flex flex-col items-center cursor-pointer"
@@ -138,8 +195,17 @@ export const LogoImagesSection = () => {
                 />
                 <Button
                   onClick={() => {
-                    updateBusinessData({ banner: null });
-                    revokeFilePreview(bannerPreview);
+                    // Clean up URL if exists
+                    if (bannerPreview && bannerPreview.startsWith('blob:')) {
+                      revokeFilePreview(bannerPreview);
+                    }
+                    
+                    updateBusinessData({ 
+                      banner: null,
+                      bannerName: undefined,
+                      bannerUrl: undefined
+                    });
+                    
                     setBannerPreview(null);
                   }}
                   variant="destructive"
@@ -150,7 +216,10 @@ export const LogoImagesSection = () => {
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center justify-center border border-dashed border-border rounded-md p-6 w-full h-40">
+              <div 
+                className="flex items-center justify-center border border-dashed border-border rounded-md p-6 w-full h-40 cursor-pointer"
+                onClick={() => document.getElementById('business-banner')?.click()}
+              >
                 <Label
                   htmlFor="business-banner"
                   className="flex flex-col items-center cursor-pointer"

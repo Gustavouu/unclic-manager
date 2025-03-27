@@ -28,14 +28,24 @@ export const prepareDataForStorage = (data: BusinessData): Partial<BusinessData>
   
   // We need to handle File objects specially since they can't be directly serialized
   if (preparedData.logo instanceof File) {
-    // We'll store a reference to the file's name but not the file itself
+    // Create a URL for the logo if it doesn't exist yet
+    if (!preparedData.logoUrl) {
+      preparedData.logoUrl = URL.createObjectURL(preparedData.logo);
+    }
+    // Store logo name for future reference
     preparedData.logoName = preparedData.logo.name;
+    // Files can't be serialized to JSON, so set to null for storage
     preparedData.logo = null;
   }
   
   if (preparedData.banner instanceof File) {
-    // We'll store a reference to the file's name but not the file itself
+    // Create a URL for the banner if it doesn't exist yet
+    if (!preparedData.bannerUrl) {
+      preparedData.bannerUrl = URL.createObjectURL(preparedData.banner);
+    }
+    // Store banner name for future reference
     preparedData.bannerName = preparedData.banner.name;
+    // Files can't be serialized to JSON, so set to null for storage
     preparedData.banner = null;
   }
   
@@ -61,7 +71,7 @@ export const revokeFilePreview = (url: string | null) => {
   }
 };
 
-// Função auxiliar para serializar um File para armazenamento (mantida para compatibilidade)
+// Helper function to serialize a File for storage (kept for compatibility)
 export const serializeFile = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -83,7 +93,7 @@ export const serializeFile = async (file: File): Promise<string> => {
   });
 };
 
-// Função auxiliar para deserializar um File a partir do armazenamento (mantida para compatibilidade)
+// Helper function to deserialize a File from storage (kept for compatibility)
 export const deserializeFile = (serialized: string): File | null => {
   try {
     const { type, name, lastModified, data } = JSON.parse(serialized);
