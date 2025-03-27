@@ -15,13 +15,16 @@ import { OnboardingControls } from "./OnboardingControls";
 export const Onboarding = () => {
   const { currentStep, loadProgress, saveProgress } = useOnboarding();
 
-  // Carrega dados salvos quando o componente é montado
+  // Load saved data when component mounts
   useEffect(() => {
-    loadProgress();
+    const timer = setTimeout(() => {
+      loadProgress();
+    }, 100);
+    return () => clearTimeout(timer);
     // This effect should run only once when component mounts
   }, [loadProgress]);
 
-  // Salva dados automaticamente quando steps são alterados
+  // Auto-save data when steps change
   useEffect(() => {
     // Avoid saving during initial render
     const timeoutId = setTimeout(() => {

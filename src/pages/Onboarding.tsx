@@ -5,7 +5,7 @@ import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { Toaster } from "sonner";
 
 const OnboardingPage = () => {
-  // Define título da página
+  // Define page title
   useEffect(() => {
     document.title = "Configuração Inicial | Unclic";
   }, []);

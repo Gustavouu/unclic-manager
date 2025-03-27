@@ -18,12 +18,12 @@ export const useOnboardingState = () => {
   const [hasStaff, setHasStaff] = useState<boolean>(false);
   const hasLoaded = useRef(false);
 
-  // Atualiza os dados do estabelecimento
+  // Update business data
   const updateBusinessData = useCallback((data: Partial<BusinessData>) => {
     setBusinessData(prev => ({ ...prev, ...data }));
   }, []);
 
-  // Funções para gerenciar serviços
+  // Service management functions
   const addService = useCallback((service: ServiceData) => {
     setServices(prev => [...prev, service]);
   }, []);
@@ -38,7 +38,7 @@ export const useOnboardingState = () => {
     );
   }, []);
 
-  // Funções para gerenciar funcionários
+  // Staff management functions
   const addStaffMember = useCallback((staff: StaffData) => {
     setStaffMembers(prev => [...prev, staff]);
   }, []);
@@ -53,7 +53,7 @@ export const useOnboardingState = () => {
     );
   }, []);
 
-  // Atualiza os horários de funcionamento
+  // Update business hours
   const updateBusinessHours = useCallback((day: string, data: Partial<BusinessHours[string]>) => {
     setBusinessHours(prev => ({
       ...prev,
@@ -61,37 +61,41 @@ export const useOnboardingState = () => {
     }));
   }, []);
 
-  // Verifica se todas as informações obrigatórias foram preenchidas
+  // Check if all required information is complete
   const isComplete = useCallback(() => {
     return checkOnboardingComplete(businessData, services, staffMembers, hasStaff);
   }, [businessData, services, staffMembers, hasStaff]);
 
-  // Salva o progresso no localStorage
+  // Save progress to localStorage
   const saveProgress = useCallback(() => {
     // Skip saving if initial load hasn't completed yet
     if (!hasLoaded.current) return;
     
-    const data = {
-      businessData: prepareDataForStorage(businessData),
-      services,
-      staffMembers,
-      businessHours,
-      hasStaff,
-      currentStep
-    };
-    
-    localStorage.setItem('onboardingData', JSON.stringify(data));
+    try {
+      const data = {
+        businessData: prepareDataForStorage(businessData),
+        services,
+        staffMembers,
+        businessHours,
+        hasStaff,
+        currentStep
+      };
+      
+      localStorage.setItem('onboardingData', JSON.stringify(data));
+    } catch (error) {
+      console.error("Error saving onboarding data:", error);
+    }
   }, [businessData, services, staffMembers, businessHours, hasStaff, currentStep]);
 
-  // Carrega o progresso do localStorage
+  // Load progress from localStorage
   const loadProgress = useCallback(() => {
     // Skip loading if already loaded
     if (hasLoaded.current) return;
     
-    const savedData = localStorage.getItem('onboardingData');
-    
-    if (savedData) {
-      try {
+    try {
+      const savedData = localStorage.getItem('onboardingData');
+      
+      if (savedData) {
         const parsed = JSON.parse(savedData);
         // Load business data without logo and banner (they can't be stored in localStorage)
         const loadedBusinessData = { ...parsed.businessData };
@@ -102,14 +106,13 @@ export const useOnboardingState = () => {
         setBusinessHours(parsed.businessHours || initialBusinessHours);
         setHasStaff(parsed.hasStaff || false);
         setCurrentStep(parsed.currentStep || 0);
-        
-        // Mark as loaded to prevent re-loading
-        hasLoaded.current = true;
-      } catch (error) {
-        console.error("Erro ao carregar dados do onboarding:", error);
       }
-    } else {
-      hasLoaded.current = true; // Mark as loaded even if no data found
+      
+      // Mark as loaded to prevent re-loading
+      hasLoaded.current = true;
+    } catch (error) {
+      console.error("Error loading onboarding data:", error);
+      hasLoaded.current = true; // Mark as loaded even if error occurs
     }
   }, []);
 
