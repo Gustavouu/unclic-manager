@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { ServiceCard } from "../cards/ServiceCard";
 import { Button } from "@/components/ui/button";
 import { ServiceDialog } from "../dialogs/ServiceDialog";

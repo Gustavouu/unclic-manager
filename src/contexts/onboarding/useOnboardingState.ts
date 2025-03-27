@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { 
   BusinessData, 
   ServiceData, 
@@ -18,55 +18,55 @@ export const useOnboardingState = () => {
   const [hasStaff, setHasStaff] = useState<boolean>(false);
 
   // Atualiza os dados do estabelecimento
-  const updateBusinessData = (data: Partial<BusinessData>) => {
+  const updateBusinessData = useCallback((data: Partial<BusinessData>) => {
     setBusinessData(prev => ({ ...prev, ...data }));
-  };
+  }, []);
 
   // Funções para gerenciar serviços
-  const addService = (service: ServiceData) => {
+  const addService = useCallback((service: ServiceData) => {
     setServices(prev => [...prev, service]);
-  };
+  }, []);
 
-  const removeService = (id: string) => {
+  const removeService = useCallback((id: string) => {
     setServices(prev => prev.filter(service => service.id !== id));
-  };
+  }, []);
 
-  const updateService = (id: string, data: Partial<ServiceData>) => {
+  const updateService = useCallback((id: string, data: Partial<ServiceData>) => {
     setServices(prev => 
       prev.map(service => service.id === id ? { ...service, ...data } : service)
     );
-  };
+  }, []);
 
   // Funções para gerenciar funcionários
-  const addStaffMember = (staff: StaffData) => {
+  const addStaffMember = useCallback((staff: StaffData) => {
     setStaffMembers(prev => [...prev, staff]);
-  };
+  }, []);
 
-  const removeStaffMember = (id: string) => {
+  const removeStaffMember = useCallback((id: string) => {
     setStaffMembers(prev => prev.filter(staff => staff.id !== id));
-  };
+  }, []);
 
-  const updateStaffMember = (id: string, data: Partial<StaffData>) => {
+  const updateStaffMember = useCallback((id: string, data: Partial<StaffData>) => {
     setStaffMembers(prev => 
       prev.map(staff => staff.id === id ? { ...staff, ...data } : staff)
     );
-  };
+  }, []);
 
   // Atualiza os horários de funcionamento
-  const updateBusinessHours = (day: string, data: Partial<BusinessHours[string]>) => {
+  const updateBusinessHours = useCallback((day: string, data: Partial<BusinessHours[string]>) => {
     setBusinessHours(prev => ({
       ...prev,
       [day]: { ...prev[day], ...data }
     }));
-  };
+  }, []);
 
   // Verifica se todas as informações obrigatórias foram preenchidas
-  const isComplete = () => {
+  const isComplete = useCallback(() => {
     return checkOnboardingComplete(businessData, services, staffMembers, hasStaff);
-  };
+  }, [businessData, services, staffMembers, hasStaff]);
 
   // Salva o progresso no localStorage
-  const saveProgress = () => {
+  const saveProgress = useCallback(() => {
     const data = {
       businessData: prepareDataForStorage(businessData),
       services,
@@ -77,10 +77,10 @@ export const useOnboardingState = () => {
     };
     
     localStorage.setItem('onboardingData', JSON.stringify(data));
-  };
+  }, [businessData, services, staffMembers, businessHours, hasStaff, currentStep]);
 
   // Carrega o progresso do localStorage
-  const loadProgress = () => {
+  const loadProgress = useCallback(() => {
     const savedData = localStorage.getItem('onboardingData');
     
     if (savedData) {
@@ -99,7 +99,7 @@ export const useOnboardingState = () => {
         console.error("Erro ao carregar dados do onboarding:", error);
       }
     }
-  };
+  }, []);
 
   return {
     currentStep,

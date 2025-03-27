@@ -18,11 +18,17 @@ export const Onboarding = () => {
   // Carrega dados salvos quando o componente é montado
   useEffect(() => {
     loadProgress();
+    // This effect should run only once when component mounts
   }, [loadProgress]);
 
   // Salva dados automaticamente quando steps são alterados
   useEffect(() => {
-    saveProgress();
+    // Avoid saving during initial render
+    const timeoutId = setTimeout(() => {
+      saveProgress();
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
   }, [currentStep, saveProgress]);
 
   return (

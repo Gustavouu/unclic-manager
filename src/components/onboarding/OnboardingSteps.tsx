@@ -1,7 +1,7 @@
 
 import React from "react";
 import { CheckCircle2 } from "lucide-react";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 
 export const OnboardingSteps: React.FC = () => {
   const { currentStep } = useOnboarding();

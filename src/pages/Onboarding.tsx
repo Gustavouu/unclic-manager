@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import { Onboarding } from "@/components/onboarding/Onboarding";
-import { OnboardingProvider } from "@/contexts/OnboardingContext";
+import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { Toaster } from "sonner";
 
 const OnboardingPage = () => {
