@@ -7,6 +7,7 @@ import { Globe, Copy, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
+import { Link } from "react-router-dom";
 
 interface WebsiteSectionProps {
   updateField: (name: string, value: string) => void;
@@ -51,7 +52,8 @@ export const WebsiteSection = ({
   };
   
   const handleOpenWebsite = () => {
-    window.open(`https://${websiteUrl}`, "_blank");
+    const businessName = websiteUrl.replace(".unclic.com.br", "");
+    window.open(`/${businessName}.unclic.com.br`, "_blank");
   };
   
   return (
@@ -106,6 +108,17 @@ export const WebsiteSection = ({
           <li>Compartilhe este link em suas redes sociais para que seus clientes possam fazer agendamentos.</li>
           <li>Adicione este link à sua biografia do Instagram e outros perfis sociais.</li>
         </ul>
+      </div>
+      
+      <div className="mt-4">
+        <Link 
+          to={`/${websiteUrl.replace(".unclic.com.br", "")}.unclic.com.br`} 
+          target="_blank"
+          className="flex items-center gap-2 text-primary hover:underline"
+        >
+          <Globe className="h-4 w-4" />
+          Visualizar o site (prévia)
+        </Link>
       </div>
     </div>
   );

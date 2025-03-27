@@ -22,94 +22,101 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Payments from "./pages/Payments";
 import OnboardingPage from "./pages/Onboarding";
+import BusinessWebsite from "./pages/BusinessWebsite";
 import RequireAuth from "./components/auth/RequireAuth";
 import { AppLayout } from "./components/layout/AppLayout";
+import { OnboardingProvider } from "./contexts/onboarding/OnboardingContext";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<SignUp />} />
-      
-      <Route path="/dashboard" element={
-        <RequireAuth>
-          <AppLayout breadcrumb={[{ label: "Dashboard" }]}>
-            <Dashboard />
-          </AppLayout>
-        </RequireAuth>
-      } />
-      <Route path="/appointments" element={
-        <RequireAuth>
-          <AppLayout breadcrumb={[{ label: "Agenda" }]}>
-            <Appointments />
-          </AppLayout>
-        </RequireAuth>
-      } />
-      <Route path="/clients" element={
-        <RequireAuth>
-          <AppLayout breadcrumb={[{ label: "Clientes" }]}>
-            <Clients />
-          </AppLayout>
-        </RequireAuth>
-      } />
-      <Route path="/services" element={
-        <RequireAuth>
-          <AppLayout breadcrumb={[{ label: "Serviços" }]}>
-            <Services />
-          </AppLayout>
-        </RequireAuth>
-      } />
-      <Route path="/professionals" element={
-        <RequireAuth>
-          <AppLayout breadcrumb={[{ label: "Profissionais" }]}>
-            <Professionals />
-          </AppLayout>
-        </RequireAuth>
-      } />
-      <Route path="/inventory" element={
-        <RequireAuth>
-          <AppLayout breadcrumb={[{ label: "Estoque" }]}>
-            <Inventory />
-          </AppLayout>
-        </RequireAuth>
-      } />
-      <Route path="/finance" element={
-        <RequireAuth>
-          <AppLayout breadcrumb={[{ label: "Financeiro" }]}>
-            <Finance />
-          </AppLayout>
-        </RequireAuth>
-      } />
-      <Route path="/payments" element={
-        <RequireAuth>
-          <AppLayout breadcrumb={[{ label: "Pagamentos" }]}>
-            <Payments />
-          </AppLayout>
-        </RequireAuth>
-      } />
-      <Route path="/reports" element={
-        <RequireAuth>
-          <AppLayout breadcrumb={[{ label: "Relatórios" }]}>
-            <Reports />
-          </AppLayout>
-        </RequireAuth>
-      } />
-      <Route path="/settings" element={
-        <RequireAuth>
-          <AppLayout breadcrumb={[{ label: "Configurações" }]}>
-            <Settings />
-          </AppLayout>
-        </RequireAuth>
-      } />
-      <Route path="/onboarding" element={
-        <RequireAuth>
-          <OnboardingPage />
-        </RequireAuth>
-      } />
-      
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <OnboardingProvider>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        
+        <Route path="/dashboard" element={
+          <RequireAuth>
+            <AppLayout breadcrumb={[{ label: "Dashboard" }]}>
+              <Dashboard />
+            </AppLayout>
+          </RequireAuth>
+        } />
+        <Route path="/appointments" element={
+          <RequireAuth>
+            <AppLayout breadcrumb={[{ label: "Agenda" }]}>
+              <Appointments />
+            </AppLayout>
+          </RequireAuth>
+        } />
+        <Route path="/clients" element={
+          <RequireAuth>
+            <AppLayout breadcrumb={[{ label: "Clientes" }]}>
+              <Clients />
+            </AppLayout>
+          </RequireAuth>
+        } />
+        <Route path="/services" element={
+          <RequireAuth>
+            <AppLayout breadcrumb={[{ label: "Serviços" }]}>
+              <Services />
+            </AppLayout>
+          </RequireAuth>
+        } />
+        <Route path="/professionals" element={
+          <RequireAuth>
+            <AppLayout breadcrumb={[{ label: "Profissionais" }]}>
+              <Professionals />
+            </AppLayout>
+          </RequireAuth>
+        } />
+        <Route path="/inventory" element={
+          <RequireAuth>
+            <AppLayout breadcrumb={[{ label: "Estoque" }]}>
+              <Inventory />
+            </AppLayout>
+          </RequireAuth>
+        } />
+        <Route path="/finance" element={
+          <RequireAuth>
+            <AppLayout breadcrumb={[{ label: "Financeiro" }]}>
+              <Finance />
+            </AppLayout>
+          </RequireAuth>
+        } />
+        <Route path="/payments" element={
+          <RequireAuth>
+            <AppLayout breadcrumb={[{ label: "Pagamentos" }]}>
+              <Payments />
+            </AppLayout>
+          </RequireAuth>
+        } />
+        <Route path="/reports" element={
+          <RequireAuth>
+            <AppLayout breadcrumb={[{ label: "Relatórios" }]}>
+              <Reports />
+            </AppLayout>
+          </RequireAuth>
+        } />
+        <Route path="/settings" element={
+          <RequireAuth>
+            <AppLayout breadcrumb={[{ label: "Configurações" }]}>
+              <Settings />
+            </AppLayout>
+          </RequireAuth>
+        } />
+        <Route path="/onboarding" element={
+          <RequireAuth>
+            <OnboardingPage />
+          </RequireAuth>
+        } />
+        
+        {/* Business website route */}
+        <Route path="/:businessName.unclic.com.br" element={<BusinessWebsite />} />
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </OnboardingProvider>
   );
 }
 
