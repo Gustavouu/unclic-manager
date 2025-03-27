@@ -1,72 +1,20 @@
 
-import { useState, useRef } from "react";
-import { useBusinessDataState } from "./hooks/useBusinessDataState";
-import { useServicesState } from "./hooks/useServicesState";
-import { useStaffState } from "./hooks/useStaffState";
-import { useBusinessHoursState } from "./hooks/useBusinessHoursState";
-import { usePersistence } from "./hooks/usePersistence";
-import { useCompletion } from "./hooks/useCompletion";
+// This file is no longer used since the state handling has been moved directly into OnboardingContext.tsx
+// It's kept as an empty file to avoid breaking existing imports until they're all updated
 
+// The code has been refactored into the following hooks:
+// - useBusinessDataState
+// - useServicesState
+// - useStaffState
+// - useBusinessHoursState
+// - usePersistence
+// - useCompletion
+
+/**
+ * @deprecated This hook has been refactored. Please use the OnboardingProvider directly.
+ */
 export const useOnboardingState = () => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const hasLoaded = useRef(false);
+  console.warn('useOnboardingState is deprecated. The functionality has been moved to OnboardingContext.tsx');
   
-  // Este hook é usado em outros hooks, então precisamos defini-lo primeiro
-  const saveTimeoutRef = useRef<number | null>(null);
-  
-  // Inicializa estados dos hooks separados
-  const { services, setServices, addService, removeService, updateService } = useServicesState();
-  const { staffMembers, setStaffMembers, hasStaff, setHasStaff, addStaffMember, removeStaffMember, updateStaffMember } = useStaffState();
-  const { businessHours, setBusinessHours, updateBusinessHours } = useBusinessHoursState();
-  
-  // Esse hook precisa de uma referência à função saveProgress que ainda não foi definida
-  // Vamos criar uma função temporária que será substituída depois
-  let saveProgressTemp = () => {};
-  
-  // Estado dos dados do negócio
-  const { businessData, setBusinessData, updateBusinessData } = useBusinessDataState(saveTimeoutRef, () => saveProgressTemp());
-  
-  // Hooks de persistência e validação de conclusão
-  const { saveProgress, loadProgress } = usePersistence(
-    businessData, 
-    services, 
-    staffMembers, 
-    businessHours, 
-    hasStaff, 
-    currentStep, 
-    hasLoaded,
-    setBusinessData,
-    setServices,
-    setStaffMembers,
-    setBusinessHours,
-    setHasStaff,
-    setCurrentStep
-  );
-  
-  // Agora podemos atribuir a função real
-  saveProgressTemp = saveProgress;
-  
-  const { isComplete } = useCompletion(businessData, services, staffMembers, hasStaff);
-
-  return {
-    currentStep,
-    setCurrentStep,
-    businessData,
-    updateBusinessData,
-    services,
-    addService,
-    removeService,
-    updateService,
-    staffMembers,
-    addStaffMember,
-    removeStaffMember,
-    updateStaffMember,
-    businessHours,
-    updateBusinessHours,
-    hasStaff,
-    setHasStaff,
-    isComplete,
-    saveProgress,
-    loadProgress
-  };
+  return {};
 };
