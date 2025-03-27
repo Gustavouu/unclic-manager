@@ -1,8 +1,7 @@
-
 import React from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { Card, CardContent } from "@/components/ui/card";
-import { Building, Scissors, Users, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Building, Scissors, Users, Clock, CheckCircle, AlertCircle, Globe } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +71,12 @@ export const SummaryStep: React.FC = () => {
                     <p><strong>Telefone:</strong> {businessData.phone}</p>
                     <p><strong>Endereço:</strong> {businessData.address}, {businessData.number} - {businessData.city}/{businessData.state}</p>
                     <p><strong>CEP:</strong> {businessData.cep}</p>
+                    {businessData.website && (
+                      <p className="flex items-center gap-1">
+                        <Globe className="h-3 w-3" />
+                        <strong>Site:</strong> https://{businessData.website}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

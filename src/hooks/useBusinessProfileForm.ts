@@ -13,6 +13,7 @@ export const useBusinessProfileForm = () => {
     { name: "businessEmail", value: "", validators: [createRequiredValidator("Email de Contato"), validateEmail] },
     { name: "businessPhone", value: "", validators: [createRequiredValidator("Telefone"), validatePhone] },
     { name: "businessAddress", value: "", validators: [createRequiredValidator("Endereço")] },
+    { name: "businessWebsite", value: "", validators: [] },
     { name: "facebookLink", value: "", validators: [] },
     { name: "instagramLink", value: "", validators: [] },
     { name: "linkedinLink", value: "", validators: [] },
@@ -47,6 +48,10 @@ export const useBusinessProfileForm = () => {
         const addressStr = `${businessData.address}, ${businessData.number || ''} - ${businessData.neighborhood || ''}, ${businessData.city || ''}, ${businessData.state || ''}`;
         updateField("businessAddress", addressStr);
       }
+      // Set website if it exists
+      if (businessData.website) {
+        updateField("businessWebsite", businessData.website);
+      }
       // Set social media links if they exist
       if (businessData.socialMedia?.facebook) {
         updateField("facebookLink", businessData.socialMedia.facebook);
@@ -79,6 +84,7 @@ export const useBusinessProfileForm = () => {
         name: getFieldValue("businessName"),
         email: getFieldValue("businessEmail"),
         phone: getFieldValue("businessPhone").replace(/\D/g, ''), // Remove mask before saving
+        website: getFieldValue("businessWebsite"),
         // Note: we're not updating address here as it would require parsing the combined address field
         socialMedia: {
           facebook: getFieldValue("facebookLink"),

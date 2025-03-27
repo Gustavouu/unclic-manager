@@ -20,6 +20,7 @@ export interface BusinessData {
   neighborhood: string;
   city: string;
   state: string;
+  website?: string;  // URL do site do estabelecimento
   socialMedia?: {
     facebook?: string;
     instagram?: string;

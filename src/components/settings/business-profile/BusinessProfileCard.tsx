@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { GeneralInfoSection } from "./GeneralInfoSection";
 import { LogoImagesSection } from "./LogoImagesSection";
 import { SocialMediaSection } from "./SocialMediaSection";
+import { WebsiteSection } from "./WebsiteSection";
 import { useBusinessProfileForm } from "@/hooks/useBusinessProfileForm";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { useEffect, useRef } from "react";
@@ -34,6 +35,8 @@ export const BusinessProfileCard = () => {
           <GeneralInfoSection {...formProps} />
           <LogoImagesSection />
         </div>
+        
+        <WebsiteSection {...formProps} />
         
         <SocialMediaSection {...formProps} />
       </CardContent>
