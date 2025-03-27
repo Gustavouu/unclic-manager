@@ -27,10 +27,16 @@ const BusinessWebsite = () => {
   const { professionals } = useProfessionals();
   const [isLoading, setIsLoading] = useState(true);
   
+  // Load onboarding data
   useEffect(() => {
     const load = async () => {
-      await loadProgress();
-      setIsLoading(false);
+      try {
+        await loadProgress();
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     load();
   }, [loadProgress]);
@@ -65,7 +71,7 @@ const BusinessWebsite = () => {
 
   // Check if this business exists
   const isCorrectBusiness = () => {
-    if (!businessData.name) return false;
+    if (!businessData || !businessData.name) return false;
     
     const formattedName = businessData.name
       .toLowerCase()
@@ -75,6 +81,12 @@ const BusinessWebsite = () => {
     
     return businessName === formattedName;
   };
+
+  // Debug
+  console.log("BusinessData:", businessData);
+  console.log("BusinessName param:", businessName);
+  console.log("Is correct business:", isCorrectBusiness());
+  console.log("Is loading:", isLoading);
 
   if (isLoading) {
     return <WebsiteLoading type="loading" />;
