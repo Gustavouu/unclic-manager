@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { BookingData } from "../WebsiteBookingFlow";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CreditCard, Cash, Smartphone } from "lucide-react";
+import { CreditCard, Banknote, Smartphone } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { formatPrice } from "@/components/website/WebsiteUtils";
@@ -107,7 +107,7 @@ export function StepPayment({
                   htmlFor="cash" 
                   className="flex items-center gap-2 cursor-pointer"
                 >
-                  <Cash className="h-4 w-4" />
+                  <Banknote className="h-4 w-4" />
                   Dinheiro no Local
                 </Label>
               </div>

@@ -19,6 +19,7 @@ import {
   LogIn,
   UserPlus,
   AlertCircle,
+  Banknote,
 } from "lucide-react";
 
 export const Icons = {
@@ -41,4 +42,5 @@ export const Icons = {
   login: LogIn,
   signup: UserPlus,
   warning: AlertCircle,
+  banknote: Banknote,
 };
