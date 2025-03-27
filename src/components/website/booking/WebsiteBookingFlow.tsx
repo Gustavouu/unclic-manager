@@ -138,7 +138,7 @@ export function WebsiteBookingFlow({
 
   const getStepTitle = () => {
     switch (step) {
-      case 0: return "Bem-vindo";
+      case 0: return "Agendamento";
       case 1: return "Escolha do Serviço";
       case 2: return "Escolha do Profissional";
       case 3: return "Data e Hora";
@@ -149,7 +149,7 @@ export function WebsiteBookingFlow({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto mt-8 mb-16 px-4 bg-white rounded-xl shadow-lg p-6">
+    <div className="w-full max-w-4xl mx-auto mt-8 mb-16 px-4 bg-white rounded-xl shadow-lg p-6">
       <div className="mb-6">
         {step > 0 && renderProgressBar()}
         

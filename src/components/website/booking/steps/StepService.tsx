@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServiceData } from "@/contexts/onboarding/types";
 import { BookingData } from "../WebsiteBookingFlow";
-import { Search } from "lucide-react";
+import { Search, Filter, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { formatPrice, formatDuration } from "@/components/website/WebsiteUtils";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface StepServiceProps {
   services: ServiceData[];
@@ -23,18 +25,50 @@ export function StepService({
 }: StepServiceProps) {
   const [selectedService, setSelectedService] = useState<string | null>(bookingData.serviceId || null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [priceFilter, setPriceFilter] = useState<string>("all");
+  const [durationFilter, setDurationFilter] = useState<string>("all");
   const [filteredServices, setFilteredServices] = useState<ServiceData[]>(services);
+  
+  // Extract unique service categories
+  const categories = [...new Set(services.map(service => 
+    service.category || "Sem categoria"
+  ))];
 
+  // Filter services based on search query and filters
   useEffect(() => {
+    let filtered = services;
+    
+    // Apply search filter
     if (searchQuery) {
-      const filtered = services.filter(service => 
+      filtered = filtered.filter(service => 
         service.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      setFilteredServices(filtered);
-    } else {
-      setFilteredServices(services);
     }
-  }, [searchQuery, services]);
+    
+    // Apply price filter
+    if (priceFilter !== "all") {
+      if (priceFilter === "low") {
+        filtered = filtered.filter(service => service.price <= 50);
+      } else if (priceFilter === "medium") {
+        filtered = filtered.filter(service => service.price > 50 && service.price <= 100);
+      } else if (priceFilter === "high") {
+        filtered = filtered.filter(service => service.price > 100);
+      }
+    }
+    
+    // Apply duration filter
+    if (durationFilter !== "all") {
+      if (durationFilter === "short") {
+        filtered = filtered.filter(service => service.duration <= 30);
+      } else if (durationFilter === "medium") {
+        filtered = filtered.filter(service => service.duration > 30 && service.duration <= 60);
+      } else if (durationFilter === "long") {
+        filtered = filtered.filter(service => service.duration > 60);
+      }
+    }
+    
+    setFilteredServices(filtered);
+  }, [searchQuery, priceFilter, durationFilter, services]);
 
   const handleServiceSelect = (service: ServiceData) => {
     setSelectedService(service.id);
@@ -60,14 +94,67 @@ export function StepService({
           Selecione o serviço que você deseja agendar
         </p>
 
-        <div className="relative mt-4">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar serviços..."
-            className="pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="space-y-4 mt-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar serviços..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <div className="w-full sm:w-auto">
+              <Select value={priceFilter} onValueChange={setPriceFilter}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <div className="flex items-center">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Preço" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os preços</SelectItem>
+                  <SelectItem value="low">Até R$ 50</SelectItem>
+                  <SelectItem value="medium">R$ 50 a R$ 100</SelectItem>
+                  <SelectItem value="high">Acima de R$ 100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="w-full sm:w-auto">
+              <Select value={durationFilter} onValueChange={setDurationFilter}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <div className="flex items-center">
+                    <Clock className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Duração" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Qualquer duração</SelectItem>
+                  <SelectItem value="short">Até 30 min</SelectItem>
+                  <SelectItem value="medium">30 a 60 min</SelectItem>
+                  <SelectItem value="long">Mais de 60 min</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {categories.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2 sm:mt-0">
+                {categories.map((category) => (
+                  <Badge 
+                    key={category} 
+                    variant="outline"
+                    className="cursor-pointer hover:bg-primary/10"
+                    onClick={() => setSearchQuery(category)}
+                  >
+                    {category}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
@@ -95,6 +182,11 @@ export function StepService({
                     <span className="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
                       {formatDuration(service.duration)}
                     </span>
+                    {service.category && (
+                      <Badge variant="outline" className="text-xs">
+                        {service.category}
+                      </Badge>
+                    )}
                   </div>
                   {service.description && (
                     <p className="mt-2 text-sm text-muted-foreground">

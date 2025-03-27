@@ -12,9 +12,9 @@ export function StepWelcome({ businessName, nextStep }: StepWelcomeProps) {
   return (
     <Card className="border-none shadow-none">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Bem-vindo ao {businessName}</CardTitle>
+        <CardTitle className="text-2xl">Agende seu serviço no {businessName}</CardTitle>
         <p className="text-muted-foreground mt-2">
-          Estamos felizes em recebê-lo. Agende seu serviço em poucos passos.
+          Agende seu atendimento em poucos passos e de forma prática.
         </p>
       </CardHeader>
       <CardContent className="space-y-8">
