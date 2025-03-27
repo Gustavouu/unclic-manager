@@ -9,7 +9,7 @@ interface WebsiteBannerProps {
 export const WebsiteBanner: React.FC<WebsiteBannerProps> = ({ businessData }) => {
   return (
     <div 
-      className="h-48 bg-gradient-to-r from-blue-500 to-purple-600 relative"
+      className="h-48 md:h-64 bg-gradient-to-r from-blue-500 to-purple-600 relative overflow-hidden"
       style={{
         backgroundImage: businessData.bannerUrl 
           ? `url(${businessData.bannerUrl})` 
@@ -18,7 +18,8 @@ export const WebsiteBanner: React.FC<WebsiteBannerProps> = ({ businessData }) =>
         backgroundPosition: 'center'
       }}
     >
-      <div className="container mx-auto px-4 h-full flex items-end">
+      <div className="absolute inset-0 bg-black opacity-30"></div>
+      <div className="container mx-auto px-4 h-full flex items-end relative z-10">
         <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-white rounded-full p-2 shadow-lg">
           {businessData.logoUrl ? (
             <img 
@@ -29,7 +30,7 @@ export const WebsiteBanner: React.FC<WebsiteBannerProps> = ({ businessData }) =>
           ) : (
             <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
               <span className="text-2xl font-bold text-gray-500">
-                {businessData.name.charAt(0)}
+                {businessData.name ? businessData.name.charAt(0).toUpperCase() : ""}
               </span>
             </div>
           )}

@@ -1,12 +1,13 @@
+
 import React, { useEffect, useState } from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { ServiceData, StaffData } from "@/contexts/onboarding/types";
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { services as mockServices } from "@/components/services/servicesData";
-import { MapPin } from "lucide-react";
+import { MapPin, Phone, Mail } from "lucide-react";
 
-// Import our new components
+// Import our components
 import { WebsiteBanner } from "@/components/website/WebsiteBanner";
 import { AboutSection } from "@/components/website/AboutSection";
 import { ServicesSection } from "@/components/website/ServicesSection";
@@ -24,9 +25,14 @@ const BusinessWebsite = () => {
   const [availableServices, setAvailableServices] = useState<ServiceData[]>([]);
   const [staff, setStaff] = useState<StaffData[]>([]);
   const { professionals } = useProfessionals();
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    loadProgress();
+    const load = async () => {
+      await loadProgress();
+      setIsLoading(false);
+    };
+    load();
   }, [loadProgress]);
 
   // Set services data - use onboarding services or mock if empty
@@ -70,11 +76,11 @@ const BusinessWebsite = () => {
     return businessName === formattedName;
   };
 
-  if (!businessData.name) {
+  if (isLoading) {
     return <WebsiteLoading type="loading" />;
   }
 
-  if (!isCorrectBusiness()) {
+  if (!businessData.name || !isCorrectBusiness()) {
     return <WebsiteLoading type="not-found" />;
   }
 
@@ -86,16 +92,32 @@ const BusinessWebsite = () => {
       <div className="container mx-auto px-4 pt-16 pb-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold">{businessData.name}</h1>
-          {businessData.address && (
-            <p className="text-muted-foreground mt-2 flex items-center justify-center gap-1">
-              <MapPin className="h-4 w-4" />
-              {businessData.address}
-              {businessData.number && `, ${businessData.number}`}
-              {businessData.neighborhood && ` - ${businessData.neighborhood}`}
-              {businessData.city && `, ${businessData.city}`}
-              {businessData.state && ` - ${businessData.state}`}
-            </p>
-          )}
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-3">
+            {businessData.address && (
+              <p className="text-muted-foreground flex items-center gap-1">
+                <MapPin className="h-4 w-4" />
+                {businessData.address}
+                {businessData.number && `, ${businessData.number}`}
+                {businessData.city && ` - ${businessData.city}`}
+                {businessData.state && `/${businessData.state}`}
+              </p>
+            )}
+            
+            {businessData.phone && (
+              <p className="text-muted-foreground flex items-center gap-1">
+                <Phone className="h-4 w-4" />
+                {businessData.phone}
+              </p>
+            )}
+            
+            {businessData.email && (
+              <p className="text-muted-foreground flex items-center gap-1">
+                <Mail className="h-4 w-4" />
+                {businessData.email}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
@@ -127,7 +149,7 @@ const BusinessWebsite = () => {
         </div>
         
         {/* Footer */}
-        <WebsiteFooter businessName={businessData.name} />
+        <WebsiteFooter businessName={businessData.name} businessData={businessData} />
       </div>
     </div>
   );

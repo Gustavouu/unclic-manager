@@ -38,3 +38,37 @@ export const formatDuration = (minutes: number): string => {
   
   return `${hours}h${remainingMinutes}min`;
 };
+
+// Format social media URLs
+export const formatSocialMediaUrl = (url: string): string => {
+  if (!url) return '';
+  
+  // Add http:// if it doesn't have a protocol
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return `https://${url}`;
+  }
+  
+  return url;
+};
+
+// Get social media icon
+export const getSocialMediaIcon = (type: string): string => {
+  const icons: Record<string, string> = {
+    facebook: "💬",
+    instagram: "📸",
+    twitter: "🐦",
+    linkedin: "🔗"
+  };
+  return icons[type] || "🌐";
+};
+
+// Create shareable links
+export const createShareableLink = (businessName: string): string => {
+  const formattedName = businessName
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+  
+  return `/${formattedName}.unclic.com.br`;
+};
