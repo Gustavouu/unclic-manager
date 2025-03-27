@@ -1,3 +1,4 @@
+
 // Types for the onboarding context
 
 // Business data types
@@ -6,7 +7,9 @@ export interface BusinessData {
   email: string;
   phone: string;
   logo?: File | null;
+  logoName?: string;  // Added to store the name of the logo file
   banner?: File | null;
+  bannerName?: string;  // Added to store the name of the banner file
   cep: string;
   address: string;
   number: string;

@@ -4,7 +4,7 @@ import { CheckCircle2 } from "lucide-react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 
 export const OnboardingSteps: React.FC = () => {
-  const { currentStep } = useOnboarding();
+  const { currentStep, setCurrentStep } = useOnboarding();
   
   const steps = [
     { name: "Informações do Negócio", description: "Dados básicos do estabelecimento" },
@@ -13,6 +13,14 @@ export const OnboardingSteps: React.FC = () => {
     { name: "Horários", description: "Horários de funcionamento" },
     { name: "Revisão", description: "Resumo das configurações" }
   ];
+
+  // Function to handle step click
+  const handleStepClick = (stepIndex: number) => {
+    // Only allow clicking on completed steps or the current step + 1
+    if (stepIndex <= currentStep + 1) {
+      setCurrentStep(stepIndex);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -27,14 +35,20 @@ export const OnboardingSteps: React.FC = () => {
         {steps.map((step, index) => {
           const isActive = currentStep === index;
           const isCompleted = currentStep > index;
+          const isClickable = index <= currentStep + 1;
           
           return (
-            <div key={index} className="flex items-center">
+            <div 
+              key={index} 
+              className="flex items-center"
+              onClick={() => handleStepClick(index)}
+            >
               <div 
                 className={`
                   flex-1 min-w-[150px] rounded-md border p-3
                   ${isActive ? 'bg-primary/10 border-primary' : ''}
                   ${isCompleted ? 'bg-primary/5 border-primary/50' : ''}
+                  ${isClickable ? 'cursor-pointer hover:bg-primary/5' : ''}
                 `}
               >
                 <div className="flex items-center gap-2">

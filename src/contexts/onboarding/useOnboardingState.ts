@@ -20,6 +20,7 @@ export const useOnboardingState = () => {
 
   // Update business data
   const updateBusinessData = useCallback((data: Partial<BusinessData>) => {
+    console.log("Updating business data:", data);
     setBusinessData(prev => ({ ...prev, ...data }));
   }, []);
 
@@ -72,6 +73,7 @@ export const useOnboardingState = () => {
     if (!hasLoaded.current) return;
     
     try {
+      console.log("Saving progress, business data:", businessData);
       const data = {
         businessData: prepareDataForStorage(businessData),
         services,
@@ -82,6 +84,7 @@ export const useOnboardingState = () => {
       };
       
       localStorage.setItem('onboardingData', JSON.stringify(data));
+      console.log("Data saved successfully");
     } catch (error) {
       console.error("Error saving onboarding data:", error);
     }
@@ -90,13 +93,19 @@ export const useOnboardingState = () => {
   // Load progress from localStorage
   const loadProgress = useCallback(() => {
     // Skip loading if already loaded
-    if (hasLoaded.current) return;
+    if (hasLoaded.current) {
+      console.log("Already loaded, skipping");
+      return;
+    }
     
     try {
+      console.log("Loading onboarding data");
       const savedData = localStorage.getItem('onboardingData');
       
       if (savedData) {
         const parsed = JSON.parse(savedData);
+        console.log("Found saved data:", parsed);
+        
         // Load business data without logo and banner (they can't be stored in localStorage)
         const loadedBusinessData = { ...parsed.businessData };
         
@@ -106,6 +115,8 @@ export const useOnboardingState = () => {
         setBusinessHours(parsed.businessHours || initialBusinessHours);
         setHasStaff(parsed.hasStaff || false);
         setCurrentStep(parsed.currentStep || 0);
+      } else {
+        console.log("No saved data found");
       }
       
       // Mark as loaded to prevent re-loading

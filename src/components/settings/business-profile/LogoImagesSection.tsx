@@ -1,125 +1,184 @@
 
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Upload, Image } from "lucide-react";
-import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Image, Upload } from "lucide-react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
+import { createFilePreview, revokeFilePreview } from "@/contexts/onboarding/utils";
 
 export const LogoImagesSection = () => {
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const { businessData, updateBusinessData } = useOnboarding();
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   
-  // Load logo and banner from onboarding if available
+  // Create previews when file objects change
   useEffect(() => {
-    // Clean up previous object URLs
-    if (logoUrl) URL.revokeObjectURL(logoUrl);
-    if (coverUrl) URL.revokeObjectURL(coverUrl);
-    
-    // Create new object URLs if files exist
+    // Handle logo preview
     if (businessData.logo instanceof File) {
-      setLogoUrl(URL.createObjectURL(businessData.logo));
-    } else {
-      setLogoUrl(null);
+      const newLogoPreview = createFilePreview(businessData.logo);
+      setLogoPreview(newLogoPreview);
+      
+      // Clean up previous preview
+      return () => {
+        if (newLogoPreview) revokeFilePreview(newLogoPreview);
+      };
     }
-    
+  }, [businessData.logo]);
+  
+  // Create preview for banner
+  useEffect(() => {
+    // Handle banner preview
     if (businessData.banner instanceof File) {
-      setCoverUrl(URL.createObjectURL(businessData.banner));
-    } else {
-      setCoverUrl(null);
+      const newBannerPreview = createFilePreview(businessData.banner);
+      setBannerPreview(newBannerPreview);
+      
+      // Clean up previous preview
+      return () => {
+        if (newBannerPreview) revokeFilePreview(newBannerPreview);
+      };
     }
-    
-    // Cleanup on unmount
+  }, [businessData.banner]);
+  
+  // Clean up all previews on unmount
+  useEffect(() => {
     return () => {
-      if (logoUrl) URL.revokeObjectURL(logoUrl);
-      if (coverUrl) URL.revokeObjectURL(coverUrl);
+      if (logoPreview) revokeFilePreview(logoPreview);
+      if (bannerPreview) revokeFilePreview(bannerPreview);
     };
-  }, [businessData.logo, businessData.banner]);
-
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      updateBusinessData({ logo: file });
-      toast.success("Logotipo selecionado com sucesso!");
-    }
+  }, [logoPreview, bannerPreview]);
+  
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    updateBusinessData({ logo: file });
   };
-
-  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      updateBusinessData({ banner: file });
-      toast.success("Imagem de capa selecionada com sucesso!");
-    }
+  
+  const handleBannerChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    updateBusinessData({ banner: file });
   };
-
+  
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium">Logotipo e Imagens</h3>
-      
-      <div className="space-y-2">
-        <Label htmlFor="business-logo">Logotipo</Label>
-        <div className="flex items-center gap-4">
-          <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-            {logoUrl ? (
-              <img 
-                src={logoUrl} 
-                alt="Logo Preview" 
-                className="w-full h-full rounded-full object-cover" 
+    <Card>
+      <CardContent className="space-y-6 pt-6">
+        <div>
+          <Label htmlFor="business-logo" className="mb-2 block">
+            Logo
+          </Label>
+          
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              {logoPreview ? (
+                <div className="w-32 h-32 rounded-md overflow-hidden border border-border">
+                  <img
+                    src={logoPreview}
+                    alt="Logo do negócio"
+                    className="w-full h-full object-cover"
+                  />
+                  <Button
+                    onClick={() => {
+                      updateBusinessData({ logo: null });
+                      revokeFilePreview(logoPreview);
+                      setLogoPreview(null);
+                    }}
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-1 right-1 h-6 w-6 p-0"
+                  >
+                    ✕
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center border border-dashed border-border rounded-md p-6 w-32 h-32">
+                  <Label
+                    htmlFor="business-logo"
+                    className="flex flex-col items-center cursor-pointer"
+                  >
+                    <Image className="w-8 h-8 text-muted-foreground mb-2" />
+                    <span className="text-xs text-muted-foreground text-center">
+                      Clique para adicionar
+                    </span>
+                  </Label>
+                </div>
+              )}
+              <Input
+                id="business-logo"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleLogoChange}
               />
-            ) : (
-              <Image className="h-6 w-6 text-gray-500" />
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            <Button variant="outline" type="button" asChild>
-              <label htmlFor="logo-upload" className="cursor-pointer">
-                <Upload className="h-4 w-4 mr-2" />
-                Alterar Logotipo
-                <input 
-                  id="logo-upload" 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*"
-                  onChange={handleLogoChange}
-                />
-              </label>
-            </Button>
+            </div>
+            
+            <div className="flex-1">
+              <h4 className="text-sm font-medium">Logo do Negócio</h4>
+              <p className="text-sm text-muted-foreground">
+                Carregue uma imagem quadrada para usar como logo do seu negócio.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                JPG ou PNG. Tamanho máximo de 1MB.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="business-cover">Imagem de Capa</Label>
-        <div className="flex items-center gap-4">
-          <div className="w-48 h-24 rounded-md bg-gray-200 flex items-center justify-center">
-            {coverUrl ? (
-              <img 
-                src={coverUrl} 
-                alt="Cover Preview" 
-                className="w-full h-full rounded-md object-cover" 
-              />
-            ) : (
-              <Image className="h-6 w-6 text-gray-500" />
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            <Button variant="outline" type="button" asChild>
-              <label htmlFor="cover-upload" className="cursor-pointer">
-                <Upload className="h-4 w-4 mr-2" />
-                Alterar Imagem
-                <input 
-                  id="cover-upload" 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*"
-                  onChange={handleCoverChange}
+        
+        <div>
+          <Label htmlFor="business-banner" className="mb-2 block">
+            Banner
+          </Label>
+          
+          <div className="flex flex-col space-y-2">
+            {bannerPreview ? (
+              <div className="relative w-full h-40 rounded-md overflow-hidden border border-border">
+                <img
+                  src={bannerPreview}
+                  alt="Banner do negócio"
+                  className="w-full h-full object-cover"
                 />
-              </label>
-            </Button>
+                <Button
+                  onClick={() => {
+                    updateBusinessData({ banner: null });
+                    revokeFilePreview(bannerPreview);
+                    setBannerPreview(null);
+                  }}
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-1 right-1 h-6 w-6 p-0"
+                >
+                  ✕
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center border border-dashed border-border rounded-md p-6 w-full h-40">
+                <Label
+                  htmlFor="business-banner"
+                  className="flex flex-col items-center cursor-pointer"
+                >
+                  <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                  <span className="text-sm text-muted-foreground">
+                    Clique para adicionar um banner
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Dimensões recomendadas: 1200x300px
+                  </span>
+                </Label>
+              </div>
+            )}
+            <Input
+              id="business-banner"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleBannerChange}
+            />
+            
+            <p className="text-xs text-muted-foreground">
+              Este banner será exibido no topo do perfil do seu negócio.
+            </p>
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

@@ -26,19 +26,42 @@ export const prepareDataForStorage = (data: BusinessData): Partial<BusinessData>
   // Cria uma cópia para não modificar o original
   const preparedData = { ...data };
   
-  // Excluímos o File do objeto, já que não pode ser salvo no localStorage
+  // We need to handle File objects specially since they can't be directly serialized
   if (preparedData.logo instanceof File) {
+    // We'll store a reference to the file's name but not the file itself
+    preparedData.logoName = preparedData.logo.name;
     preparedData.logo = null;
   }
   
   if (preparedData.banner instanceof File) {
+    // We'll store a reference to the file's name but not the file itself
+    preparedData.bannerName = preparedData.banner.name;
     preparedData.banner = null;
   }
   
   return preparedData;
 };
 
-// Função auxiliar para serializar um File para armazenamento
+// Function to create object URLs for files
+export const createFilePreview = (file: File | null): string | null => {
+  if (!file) return null;
+  
+  try {
+    return URL.createObjectURL(file);
+  } catch (error) {
+    console.error("Error creating file preview:", error);
+    return null;
+  }
+};
+
+// Function to safely revoke object URLs
+export const revokeFilePreview = (url: string | null) => {
+  if (url && url.startsWith('blob:')) {
+    URL.revokeObjectURL(url);
+  }
+};
+
+// Função auxiliar para serializar um File para armazenamento (mantida para compatibilidade)
 export const serializeFile = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -60,7 +83,7 @@ export const serializeFile = async (file: File): Promise<string> => {
   });
 };
 
-// Função auxiliar para deserializar um File a partir do armazenamento
+// Função auxiliar para deserializar um File a partir do armazenamento (mantida para compatibilidade)
 export const deserializeFile = (serialized: string): File | null => {
   try {
     const { type, name, lastModified, data } = JSON.parse(serialized);

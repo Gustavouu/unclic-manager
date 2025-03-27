@@ -6,20 +6,23 @@ import { LogoImagesSection } from "./LogoImagesSection";
 import { SocialMediaSection } from "./SocialMediaSection";
 import { useBusinessProfileForm } from "@/hooks/useBusinessProfileForm";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export const BusinessProfileCard = () => {
   const { isSaving, handleSave, handleCancel, formProps } = useBusinessProfileForm();
   const { loadProgress } = useOnboarding();
+  const initialized = useRef(false);
 
-  // Load onboarding data when the component mounts
+  // Load onboarding data when the component mounts - only once
   useEffect(() => {
-    // Use a single call to loadProgress to prevent infinite re-renders
-    const timer = setTimeout(() => {
-      loadProgress();
-    }, 100);
-    
-    return () => clearTimeout(timer);
+    if (!initialized.current) {
+      const timer = setTimeout(() => {
+        loadProgress();
+        initialized.current = true;
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
   }, [loadProgress]);
 
   return (
