@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, ReactNode, useState, useRef, useEffect } from "react";
-import { OnboardingContextType } from "./types";
+import { OnboardingContextType, BusinessData } from "./types";
 import { useBusinessDataState } from "./hooks/useBusinessDataState";
 import { useServicesState } from "./hooks/useServicesState";
 import { useStaffState } from "./hooks/useStaffState";
