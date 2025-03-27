@@ -29,7 +29,7 @@ export const OnboardingSteps: React.FC = () => {
           const isCompleted = currentStep > index;
           
           return (
-            <React.Fragment key={index}>
+            <div key={index} className="flex items-center">
               <div 
                 className={`
                   flex-1 min-w-[150px] rounded-md border p-3
@@ -57,7 +57,7 @@ export const OnboardingSteps: React.FC = () => {
                   <div className="h-[2px] w-4 bg-muted"></div>
                 </div>
               )}
-            </React.Fragment>
+            </div>
           );
         })}
       </div>

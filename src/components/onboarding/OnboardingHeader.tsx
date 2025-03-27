@@ -1,6 +1,6 @@
 
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 
 export const OnboardingHeader = () => {
   const { currentStep } = useOnboarding();

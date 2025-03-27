@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { FormField } from "@/components/ui/form-field";

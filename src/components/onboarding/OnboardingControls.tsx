@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { ArrowLeft, ArrowRight, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
