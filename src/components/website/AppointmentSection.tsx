@@ -3,13 +3,12 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, CheckCircle } from "lucide-react";
-import { toast } from "sonner";
 
-export const AppointmentSection: React.FC = () => {
-  const handleScheduleAppointment = () => {
-    toast.info("Agendamento não disponível neste momento");
-  };
-  
+interface AppointmentSectionProps {
+  onStartBooking: () => void;
+}
+
+export const AppointmentSection: React.FC<AppointmentSectionProps> = ({ onStartBooking }) => {
   return (
     <Card>
       <CardHeader>
@@ -42,7 +41,7 @@ export const AppointmentSection: React.FC = () => {
         </div>
         
         <Button 
-          onClick={handleScheduleAppointment} 
+          onClick={onStartBooking} 
           className="w-full"
           size="lg"
         >
