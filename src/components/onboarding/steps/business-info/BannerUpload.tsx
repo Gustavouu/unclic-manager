@@ -10,7 +10,10 @@ export const BannerUpload: React.FC = () => {
   
   const handleBannerChange = (file: File | null, bannerUrl: string | null) => {
     // Only update if values have changed
-    if (file !== businessData.banner || bannerUrl !== businessData.bannerUrl) {
+    const bannerChanged = file !== businessData.banner;
+    const urlChanged = bannerUrl !== businessData.bannerUrl;
+    
+    if (bannerChanged || urlChanged) {
       updateBusinessData({ 
         banner: file,
         bannerName: file ? file.name : null,

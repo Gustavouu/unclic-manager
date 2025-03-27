@@ -10,7 +10,10 @@ export const LogoUpload: React.FC = () => {
   
   const handleLogoChange = (file: File | null, logoUrl: string | null) => {
     // Only update if values have changed
-    if (file !== businessData.logo || logoUrl !== businessData.logoUrl) {
+    const logoChanged = file !== businessData.logo;
+    const urlChanged = logoUrl !== businessData.logoUrl;
+    
+    if (logoChanged || urlChanged) {
       updateBusinessData({ 
         logo: file,
         logoName: file ? file.name : null,

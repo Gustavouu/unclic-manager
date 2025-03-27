@@ -19,7 +19,7 @@ export const BusinessProfileCard = () => {
       loadProgress();
       initialized.current = true;
     }
-  }, []); // Remove loadProgress from dependency array to prevent infinite loops
+  }, [loadProgress]); // Add loadProgress to dependencies
 
   return (
     <Card>

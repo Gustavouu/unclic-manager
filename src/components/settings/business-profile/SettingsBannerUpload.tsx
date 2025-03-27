@@ -5,12 +5,15 @@ import { ImageUpload } from "@/components/common/ImageUpload";
 import { Upload } from "lucide-react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 
-export const SettingsBannerUpload: React.FC = () => {
+export const SettingsBannerUpload = () => {
   const { businessData, updateBusinessData } = useOnboarding();
   
   const handleBannerChange = (file: File | null, bannerUrl: string | null) => {
     // Only update if values have changed
-    if (file !== businessData.banner || bannerUrl !== businessData.bannerUrl) {
+    const bannerChanged = file !== businessData.banner;
+    const urlChanged = bannerUrl !== businessData.bannerUrl;
+    
+    if (bannerChanged || urlChanged) {
       updateBusinessData({ 
         banner: file,
         bannerName: file ? file.name : null,
@@ -21,13 +24,11 @@ export const SettingsBannerUpload: React.FC = () => {
   
   return (
     <div>
-      <Label htmlFor="business-banner" className="mb-2 block">
-        Banner
-      </Label>
+      <Label htmlFor="settings-banner-upload">Banner do Estabelecimento</Label>
       
-      <div className="flex flex-col space-y-2">
+      <div className="mt-2">
         <ImageUpload
-          id="business-banner"
+          id="settings-banner-upload"
           imageUrl={businessData.bannerUrl || null}
           onImageChange={handleBannerChange}
           icon={<Upload className="w-8 h-8 text-muted-foreground mb-2" />}
@@ -36,11 +37,11 @@ export const SettingsBannerUpload: React.FC = () => {
           width="w-full"
           height="h-40"
         />
-        
-        <p className="text-xs text-muted-foreground">
-          Este banner será exibido no topo do perfil do seu negócio.
-        </p>
       </div>
+      
+      <p className="text-xs text-muted-foreground mt-1">
+        O banner será exibido na parte superior da página do seu estabelecimento
+      </p>
     </div>
   );
 };

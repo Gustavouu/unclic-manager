@@ -23,18 +23,24 @@ export const useBusinessDataState = (saveTimeoutRef: React.MutableRefObject<numb
     };
   }, [businessData.logoUrl, businessData.bannerUrl]);
 
-  // Update business data
+  // Update business data with proper deep comparison to prevent unnecessary updates
   const updateBusinessData = useCallback((data: Partial<BusinessData>) => {
-    console.log("Updating business data:", data);
     setBusinessData(prev => {
-      // Don't update if the data is the same
-      if (Object.keys(data).every(key => prev[key as keyof BusinessData] === data[key as keyof BusinessData])) {
+      // Check if any of the data is different before updating
+      const hasChanges = Object.keys(data).some(key => {
+        const k = key as keyof BusinessData;
+        return prev[k] !== data[k];
+      });
+      
+      // Only update if something has changed
+      if (!hasChanges) {
         return prev;
       }
       
+      // Create new data object with updates
       const newData = { ...prev, ...data };
       
-      // Schedule a save with debounce to avoid excessive saves
+      // Schedule a save with debounce
       if (saveTimeoutRef.current) {
         window.clearTimeout(saveTimeoutRef.current);
       }

@@ -13,7 +13,7 @@ export const usePersistence = (
   hasStaff: boolean,
   currentStep: number,
   hasLoaded: React.MutableRefObject<boolean>,
-  setBusinessData: (data: BusinessData) => void,
+  setBusinessData: (data: Partial<BusinessData>) => void,
   setServices: (services: ServiceData[]) => void,
   setStaffMembers: (staffMembers: StaffData[]) => void,
   setBusinessHours: (businessHours: BusinessHours) => void,
@@ -28,7 +28,6 @@ export const usePersistence = (
     if (!hasLoaded.current) return;
     
     try {
-      console.log("Saving progress, business data:", businessData);
       const preparedBusinessData = await prepareDataForStorage(businessData);
       
       const data = {
@@ -41,7 +40,7 @@ export const usePersistence = (
       };
       
       localStorage.setItem('onboardingData', JSON.stringify(data));
-      console.log("Data saved successfully");
+      console.log("Onboarding data saved successfully");
     } catch (error) {
       console.error("Error saving onboarding data:", error);
     }
@@ -51,17 +50,14 @@ export const usePersistence = (
   const loadProgress = useCallback(() => {
     // Skip loading if already loaded
     if (hasLoaded.current) {
-      console.log("Already loaded, skipping");
       return;
     }
     
     try {
-      console.log("Loading onboarding data");
       const savedData = localStorage.getItem('onboardingData');
       
       if (savedData) {
         const parsed = JSON.parse(savedData);
-        console.log("Found saved data:", parsed);
         
         // Load business data
         const loadedBusinessData = { ...parsed.businessData };
@@ -91,14 +87,12 @@ export const usePersistence = (
           }
         }
         
-        setBusinessData({ ...loadedBusinessData });
+        setBusinessData(loadedBusinessData);
         setServices(parsed.services || []);
         setStaffMembers(parsed.staffMembers || []);
         setBusinessHours(parsed.businessHours || initialBusinessHours);
         setHasStaff(parsed.hasStaff || false);
         setCurrentStep(parsed.currentStep || 0);
-      } else {
-        console.log("No saved data found");
       }
       
       // Mark as loaded to prevent re-loading

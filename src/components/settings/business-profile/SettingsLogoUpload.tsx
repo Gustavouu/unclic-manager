@@ -5,12 +5,15 @@ import { ImageUpload } from "@/components/common/ImageUpload";
 import { Image } from "lucide-react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 
-export const SettingsLogoUpload: React.FC = () => {
+export const SettingsLogoUpload = () => {
   const { businessData, updateBusinessData } = useOnboarding();
   
   const handleLogoChange = (file: File | null, logoUrl: string | null) => {
     // Only update if values have changed
-    if (file !== businessData.logo || logoUrl !== businessData.logoUrl) {
+    const logoChanged = file !== businessData.logo;
+    const urlChanged = logoUrl !== businessData.logoUrl;
+    
+    if (logoChanged || urlChanged) {
       updateBusinessData({ 
         logo: file,
         logoName: file ? file.name : null,
@@ -21,13 +24,11 @@ export const SettingsLogoUpload: React.FC = () => {
   
   return (
     <div>
-      <Label htmlFor="business-logo" className="mb-2 block">
-        Logo
-      </Label>
+      <Label htmlFor="settings-logo-upload">Logo do Estabelecimento</Label>
       
-      <div className="flex items-center space-x-4">
+      <div className="mt-2">
         <ImageUpload
-          id="business-logo"
+          id="settings-logo-upload"
           imageUrl={businessData.logoUrl || null}
           onImageChange={handleLogoChange}
           icon={<Image className="w-8 h-8 text-muted-foreground mb-2" />}
@@ -35,17 +36,11 @@ export const SettingsLogoUpload: React.FC = () => {
           width="w-32"
           height="h-32"
         />
-        
-        <div className="flex-1">
-          <h4 className="text-sm font-medium">Logo do Negócio</h4>
-          <p className="text-sm text-muted-foreground">
-            Carregue uma imagem quadrada para usar como logo do seu negócio.
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            JPG ou PNG. Tamanho máximo de 1MB.
-          </p>
-        </div>
       </div>
+      
+      <p className="text-xs text-muted-foreground mt-1">
+        Formatos recomendados: PNG, JPG. Tamanho máximo: 2MB
+      </p>
     </div>
   );
 };
