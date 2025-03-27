@@ -16,6 +16,7 @@ export const BusinessProfileCard = () => {
   // Load onboarding data when the component mounts - only once
   useEffect(() => {
     if (!initialized.current) {
+      // Use a setTimeout to ensure this runs after the component is mounted
       const timer = setTimeout(() => {
         loadProgress();
         initialized.current = true;
@@ -23,7 +24,7 @@ export const BusinessProfileCard = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [loadProgress]);
+  }, []); // Empty dependency array to run only once
 
   return (
     <Card>

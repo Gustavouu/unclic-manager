@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Image, Upload } from "lucide-react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { createFilePreview, revokeFilePreview } from "@/contexts/onboarding/utils";
+import { createFilePreview, revokeFilePreview, fileToBase64 } from "@/contexts/onboarding/utils";
 
 export const LogoImagesSection = () => {
   const { businessData, updateBusinessData } = useOnboarding();
@@ -30,49 +30,7 @@ export const LogoImagesSection = () => {
     } else if (businessData.bannerUrl) {
       setBannerPreview(businessData.bannerUrl);
     }
-  }, []);
-  
-  // Update preview when file objects change
-  useEffect(() => {
-    // Handle logo preview
-    if (businessData.logo instanceof File) {
-      const newLogoPreview = createFilePreview(businessData.logo);
-      setLogoPreview(newLogoPreview);
-      
-      // If we're creating a new preview, update the businessData with the URL
-      if (newLogoPreview && newLogoPreview !== businessData.logoUrl) {
-        updateBusinessData({ logoUrl: newLogoPreview });
-      }
-      
-      // Clean up previous preview when component unmounts
-      return () => {
-        if (newLogoPreview && newLogoPreview !== businessData.logoUrl) {
-          revokeFilePreview(newLogoPreview);
-        }
-      };
-    }
-  }, [businessData.logo]);
-  
-  // Update preview when banner changes
-  useEffect(() => {
-    // Handle banner preview
-    if (businessData.banner instanceof File) {
-      const newBannerPreview = createFilePreview(businessData.banner);
-      setBannerPreview(newBannerPreview);
-      
-      // If we're creating a new preview, update the businessData with the URL
-      if (newBannerPreview && newBannerPreview !== businessData.bannerUrl) {
-        updateBusinessData({ bannerUrl: newBannerPreview });
-      }
-      
-      // Clean up previous preview when component unmounts
-      return () => {
-        if (newBannerPreview && newBannerPreview !== businessData.bannerUrl) {
-          revokeFilePreview(newBannerPreview);
-        }
-      };
-    }
-  }, [businessData.banner]);
+  }, [businessData.logo, businessData.logoUrl, businessData.banner, businessData.bannerUrl]);
   
   const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
@@ -82,9 +40,26 @@ export const LogoImagesSection = () => {
         revokeFilePreview(logoPreview);
       }
       
-      updateBusinessData({ 
-        logo: file,
-        logoName: file.name
+      // Create a preview URL
+      const newPreviewUrl = URL.createObjectURL(file);
+      setLogoPreview(newPreviewUrl);
+      
+      // Convert to base64 for storage
+      fileToBase64(file).then(base64Data => {
+        updateBusinessData({ 
+          logo: file,
+          logoName: file.name,
+          logoUrl: newPreviewUrl,
+          logoData: base64Data
+        });
+      }).catch(err => {
+        console.error("Error converting logo to base64:", err);
+        // Still update with the file even if base64 conversion fails
+        updateBusinessData({ 
+          logo: file,
+          logoName: file.name,
+          logoUrl: newPreviewUrl
+        });
       });
     }
   };
@@ -97,9 +72,26 @@ export const LogoImagesSection = () => {
         revokeFilePreview(bannerPreview);
       }
       
-      updateBusinessData({ 
-        banner: file,
-        bannerName: file.name
+      // Create a preview URL
+      const newPreviewUrl = URL.createObjectURL(file);
+      setBannerPreview(newPreviewUrl);
+      
+      // Convert to base64 for storage
+      fileToBase64(file).then(base64Data => {
+        updateBusinessData({ 
+          banner: file,
+          bannerName: file.name,
+          bannerUrl: newPreviewUrl,
+          bannerData: base64Data
+        });
+      }).catch(err => {
+        console.error("Error converting banner to base64:", err);
+        // Still update with the file even if base64 conversion fails
+        updateBusinessData({ 
+          banner: file,
+          bannerName: file.name,
+          bannerUrl: newPreviewUrl
+        });
       });
     }
   };
@@ -131,7 +123,8 @@ export const LogoImagesSection = () => {
                       updateBusinessData({ 
                         logo: null,
                         logoName: undefined,
-                        logoUrl: undefined
+                        logoUrl: undefined,
+                        logoData: undefined
                       });
                       
                       setLogoPreview(null);
@@ -144,20 +137,17 @@ export const LogoImagesSection = () => {
                   </Button>
                 </div>
               ) : (
-                <div 
+                <label 
+                  htmlFor="business-logo" 
                   className="flex items-center justify-center border border-dashed border-border rounded-md p-6 w-32 h-32 cursor-pointer"
-                  onClick={() => document.getElementById('business-logo')?.click()}
                 >
-                  <Label
-                    htmlFor="business-logo"
-                    className="flex flex-col items-center cursor-pointer"
-                  >
+                  <div className="flex flex-col items-center">
                     <Image className="w-8 h-8 text-muted-foreground mb-2" />
                     <span className="text-xs text-muted-foreground text-center">
                       Clique para adicionar
                     </span>
-                  </Label>
-                </div>
+                  </div>
+                </label>
               )}
               <Input
                 id="business-logo"
@@ -203,7 +193,8 @@ export const LogoImagesSection = () => {
                     updateBusinessData({ 
                       banner: null,
                       bannerName: undefined,
-                      bannerUrl: undefined
+                      bannerUrl: undefined,
+                      bannerData: undefined
                     });
                     
                     setBannerPreview(null);
@@ -216,14 +207,11 @@ export const LogoImagesSection = () => {
                 </Button>
               </div>
             ) : (
-              <div 
+              <label 
+                htmlFor="business-banner" 
                 className="flex items-center justify-center border border-dashed border-border rounded-md p-6 w-full h-40 cursor-pointer"
-                onClick={() => document.getElementById('business-banner')?.click()}
               >
-                <Label
-                  htmlFor="business-banner"
-                  className="flex flex-col items-center cursor-pointer"
-                >
+                <div className="flex flex-col items-center">
                   <Upload className="w-8 h-8 text-muted-foreground mb-2" />
                   <span className="text-sm text-muted-foreground">
                     Clique para adicionar um banner
@@ -231,8 +219,8 @@ export const LogoImagesSection = () => {
                   <span className="text-xs text-muted-foreground">
                     Dimensões recomendadas: 1200x300px
                   </span>
-                </Label>
-              </div>
+                </div>
+              </label>
             )}
             <Input
               id="business-banner"

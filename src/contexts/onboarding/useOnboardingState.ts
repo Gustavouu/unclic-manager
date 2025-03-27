@@ -7,7 +7,12 @@ import {
   BusinessHours 
 } from "./types";
 import { initialBusinessData, initialBusinessHours } from "./initialValues";
-import { checkOnboardingComplete, prepareDataForStorage, revokeFilePreview } from "./utils";
+import { 
+  checkOnboardingComplete, 
+  prepareDataForStorage, 
+  revokeFilePreview, 
+  base64ToFile 
+} from "./utils";
 
 export const useOnboardingState = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -22,10 +27,10 @@ export const useOnboardingState = () => {
   // Clean up blob URLs when component unmounts
   useEffect(() => {
     return () => {
-      if (businessData.logoUrl) {
+      if (businessData.logoUrl && businessData.logoUrl.startsWith('blob:')) {
         revokeFilePreview(businessData.logoUrl);
       }
-      if (businessData.bannerUrl) {
+      if (businessData.bannerUrl && businessData.bannerUrl.startsWith('blob:')) {
         revokeFilePreview(businessData.bannerUrl);
       }
     };
@@ -101,8 +106,10 @@ export const useOnboardingState = () => {
     
     try {
       console.log("Saving progress, business data:", businessData);
+      const preparedBusinessData = prepareDataForStorage(businessData);
+      
       const data = {
-        businessData: prepareDataForStorage(businessData),
+        businessData: preparedBusinessData,
         services,
         staffMembers,
         businessHours,
@@ -135,6 +142,30 @@ export const useOnboardingState = () => {
         
         // Load business data
         const loadedBusinessData = { ...parsed.businessData };
+        
+        // Handle restore of logo and banner from base64 data
+        if (loadedBusinessData.logoData && loadedBusinessData.logoName) {
+          // Restore File object from base64 string
+          const logoFile = base64ToFile(loadedBusinessData.logoData, loadedBusinessData.logoName);
+          if (logoFile) {
+            loadedBusinessData.logo = logoFile;
+            if (!loadedBusinessData.logoUrl) {
+              loadedBusinessData.logoUrl = URL.createObjectURL(logoFile);
+            }
+          }
+        }
+        
+        if (loadedBusinessData.bannerData && loadedBusinessData.bannerName) {
+          // Restore File object from base64 string
+          const bannerFile = base64ToFile(loadedBusinessData.bannerData, loadedBusinessData.bannerName);
+          if (bannerFile) {
+            loadedBusinessData.banner = bannerFile;
+            if (!loadedBusinessData.bannerUrl) {
+              loadedBusinessData.bannerUrl = URL.createObjectURL(bannerFile);
+            }
+          }
+        }
+        
         setBusinessData(prev => ({ ...prev, ...loadedBusinessData }));
         setServices(parsed.services || []);
         setStaffMembers(parsed.staffMembers || []);

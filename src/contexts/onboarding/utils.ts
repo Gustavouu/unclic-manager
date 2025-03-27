@@ -26,26 +26,49 @@ export const prepareDataForStorage = (data: BusinessData): Partial<BusinessData>
   // Cria uma cópia para não modificar o original
   const preparedData = { ...data };
   
-  // We need to handle File objects specially since they can't be directly serialized
+  // Handle logo file - convert to base64 if needed
   if (preparedData.logo instanceof File) {
-    // Create a URL for the logo if it doesn't exist yet
+    if (!preparedData.logoData) {
+      // Convert file to base64 for storage
+      fileToBase64(preparedData.logo).then(base64 => {
+        preparedData.logoData = base64;
+      }).catch(err => {
+        console.error("Error converting logo to base64:", err);
+      });
+    }
+    
+    // Store metadata
+    preparedData.logoName = preparedData.logo.name;
+    
+    // Create URL for preview if doesn't exist
     if (!preparedData.logoUrl) {
       preparedData.logoUrl = URL.createObjectURL(preparedData.logo);
     }
-    // Store logo name for future reference
-    preparedData.logoName = preparedData.logo.name;
-    // Files can't be serialized to JSON, so set to null for storage
+    
+    // Files can't be serialized, so set to null for storage
     preparedData.logo = null;
   }
   
+  // Handle banner file - convert to base64 if needed
   if (preparedData.banner instanceof File) {
-    // Create a URL for the banner if it doesn't exist yet
+    if (!preparedData.bannerData) {
+      // Convert file to base64 for storage
+      fileToBase64(preparedData.banner).then(base64 => {
+        preparedData.bannerData = base64;
+      }).catch(err => {
+        console.error("Error converting banner to base64:", err);
+      });
+    }
+    
+    // Store metadata
+    preparedData.bannerName = preparedData.banner.name;
+    
+    // Create URL for preview if doesn't exist
     if (!preparedData.bannerUrl) {
       preparedData.bannerUrl = URL.createObjectURL(preparedData.banner);
     }
-    // Store banner name for future reference
-    preparedData.bannerName = preparedData.banner.name;
-    // Files can't be serialized to JSON, so set to null for storage
+    
+    // Files can't be serialized, so set to null for storage
     preparedData.banner = null;
   }
   
@@ -67,7 +90,61 @@ export const createFilePreview = (file: File | null): string | null => {
 // Function to safely revoke object URLs
 export const revokeFilePreview = (url: string | null) => {
   if (url && url.startsWith('blob:')) {
-    URL.revokeObjectURL(url);
+    try {
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error revoking URL:", error);
+    }
+  }
+};
+
+// Convert file to base64 string
+export const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error("Failed to convert file to base64"));
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+// Convert base64 string to File object
+export const base64ToFile = (base64: string, filename: string): File | null => {
+  try {
+    // Extract MIME type from base64 string
+    const mimeMatch = base64.match(/data:([^;]+);base64,/);
+    if (!mimeMatch) return null;
+    
+    const mime = mimeMatch[1];
+    const base64Data = base64.replace(/^data:[^;]+;base64,/, '');
+    
+    // Convert base64 to binary
+    const byteCharacters = atob(base64Data);
+    const byteArrays = [];
+    
+    for (let i = 0; i < byteCharacters.length; i += 512) {
+      const slice = byteCharacters.slice(i, i + 512);
+      
+      const byteNumbers = new Array(slice.length);
+      for (let j = 0; j < slice.length; j++) {
+        byteNumbers[j] = slice.charCodeAt(j);
+      }
+      
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+    
+    const blob = new Blob(byteArrays, { type: mime });
+    return new File([blob], filename, { type: mime });
+  } catch (error) {
+    console.error("Error converting base64 to file:", error);
+    return null;
   }
 };
 

@@ -7,11 +7,13 @@ export interface BusinessData {
   email: string;
   phone: string;
   logo?: File | null;
-  logoUrl?: string;  // Added to store the URL of the logo preview
-  logoName?: string;  // Store the name of the logo file
+  logoUrl?: string;  // URL do preview do logo (blob ou base64)
+  logoName?: string;  // Nome do arquivo do logo
+  logoData?: string;  // Dados base64 do logo para persistência
   banner?: File | null;
-  bannerUrl?: string;  // Added to store the URL of the banner preview
-  bannerName?: string;  // Store the name of the banner file
+  bannerUrl?: string;  // URL do preview do banner (blob ou base64) 
+  bannerName?: string;  // Nome do arquivo do banner
+  bannerData?: string;  // Dados base64 do banner para persistência
   cep: string;
   address: string;
   number: string;
