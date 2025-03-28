@@ -39,7 +39,7 @@ export const PaymentService = {
           metodo_pagamento: request.paymentMethod,
           status: request.paymentMethod === 'cash' ? 'approved' : 'pending',
           descricao: request.description,
-          id_servico: request.serviceId, // Renamed from id_servico to match column name
+          id_servico: request.serviceId, 
           id_cliente: request.customerId,
           id_agendamento: request.appointmentId
         })
