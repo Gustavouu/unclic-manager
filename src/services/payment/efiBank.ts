@@ -50,6 +50,8 @@ export const EfiBankService = {
         appointmentId: data.referenceId
       };
       
+      console.log("Sending request to EFI Pay handler:", requestData);
+      
       // Chamar a edge function
       const response = await fetch(efipayHandlerUrl, {
         method: "POST",

@@ -16,12 +16,16 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [showPaymentQR, setShowPaymentQR] = useState(false);
   const { processPayment } = usePayment();
 
   const handlePaymentMethodSelect = (method: string) => {
     setPaymentMethod(method);
     // Reset any previous error when changing payment method
     setPaymentError(null);
+    setShowPaymentQR(false);
+    setPaymentUrl(null);
   };
 
   const createAppointment = async (paymentId: string) => {
@@ -80,6 +84,8 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
   const handlePayment = async () => {
     setIsProcessing(true);
     setPaymentError(null);
+    setPaymentUrl(null);
+    setShowPaymentQR(false);
     
     try {
       const paymentResult = await processPayment({
@@ -90,6 +96,16 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
         description: `Pagamento para ${bookingData.serviceName} com ${bookingData.professionalName}`,
         businessId: "1" // This should be dynamically set to the business ID
       });
+      
+      console.log("Payment result:", paymentResult);
+      
+      if (paymentMethod === "pix" && paymentResult.paymentUrl) {
+        setPaymentUrl(paymentResult.paymentUrl);
+        setShowPaymentQR(true);
+        toast.success("QR Code Pix gerado com sucesso! Escaneie para pagar.");
+        // For Pix, we don't move to the next step immediately as the user needs to pay
+        return;
+      }
       
       if (paymentResult.status === 'approved' || paymentResult.status === 'pending') {
         await createAppointment(paymentResult.id);
@@ -113,13 +129,36 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
     handlePayment();
   };
 
+  const handleConfirmPixPayment = async () => {
+    setIsProcessing(true);
+    
+    try {
+      // In a real scenario, we would check the payment status
+      // For this demo, we'll just simulate a successful payment
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      await createAppointment("PIX-" + Math.random().toString(36).substring(2, 7));
+      toast.success("Pagamento Pix confirmado! Agendamento finalizado.");
+      nextStep();
+    } catch (error) {
+      console.error("Error confirming Pix payment:", error);
+      setPaymentError("Erro ao confirmar pagamento Pix. Tente novamente.");
+      toast.error("Erro ao confirmar pagamento Pix. Tente novamente.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return {
     paymentMethod,
     isProcessing,
     paymentError,
     retryCount,
+    paymentUrl,
+    showPaymentQR,
     handlePaymentMethodSelect,
     handlePayment,
-    handleRetry
+    handleRetry,
+    handleConfirmPixPayment
   };
 }

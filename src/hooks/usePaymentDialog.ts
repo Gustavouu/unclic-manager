@@ -82,6 +82,20 @@ export function usePaymentDialog({
       toast.error("O pagamento foi aprovado, mas não foi possível finalizar o agendamento. Entre em contato com o suporte.");
     }
   };
+  
+  const checkPaymentStatus = async (transactionId: string) => {
+    try {
+      // In a real implementation, we would check the payment status with the payment gateway
+      // Here we'll simulate checking and return a success after a delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // For demonstrative purposes, we'll just return a success
+      return { status: "approved" };
+    } catch (error) {
+      console.error("Error checking payment status:", error);
+      return { status: "pending" };
+    }
+  };
 
   const handleSubmit = async (values: PaymentFormValues) => {
     setStep("processing");
@@ -104,6 +118,12 @@ export function usePaymentDialog({
       });
       
       setStep("result");
+      
+      // For Pix, we'll wait for the payment to be verified by the user
+      if (values.paymentMethod === "pix") {
+        toast.success("QR Code Pix gerado com sucesso! Escaneie para pagar.");
+        return;
+      }
       
       if (result.status === "approved") {
         toast.success("Pagamento realizado com sucesso!");
@@ -133,6 +153,38 @@ export function usePaymentDialog({
       onOpenChange(false);
     }
   };
+  
+  const verifyPayment = async (transactionId?: string) => {
+    if (!transactionId) return;
+    
+    setPaymentResult(prev => ({
+      ...prev!,
+      status: "processing"
+    }));
+    
+    try {
+      const result = await checkPaymentStatus(transactionId);
+      
+      setPaymentResult(prev => ({
+        ...prev!,
+        status: result.status as "pending" | "approved" | "rejected" | "cancelled" | "processing",
+      }));
+      
+      if (result.status === "approved") {
+        toast.success("Pagamento confirmado com sucesso!");
+        
+        // Create appointment if needed
+        if (!appointmentId) {
+          await createAppointment(transactionId);
+        }
+        
+        if (onSuccess) onSuccess();
+      }
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      toast.error("Erro ao verificar o pagamento. Tente novamente.");
+    }
+  };
 
   return {
     step,
@@ -142,6 +194,7 @@ export function usePaymentDialog({
     isLoading,
     error,
     handleSubmit,
-    handleClose
+    handleClose,
+    verifyPayment
   };
 }
