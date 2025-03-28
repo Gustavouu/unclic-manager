@@ -1,5 +1,4 @@
 
-import { createHmac } from "crypto";
 import { WebhookConfigService } from "./configService";
 import { WebhookNotificationPayload } from "./types";
 
@@ -28,13 +27,35 @@ export const WebhookNotificationService = {
       
       const body = JSON.stringify(notificationPayload);
       
-      // Calculate HMAC signature using the secret key
+      // Calculate signature using the Web Crypto API instead of Node.js crypto
       let signature = "";
       if (config.secretKey) {
         try {
-          const hmac = createHmac('sha256', config.secretKey);
-          hmac.update(body);
-          signature = hmac.digest('hex');
+          // Convert the message and key to ArrayBuffer
+          const encoder = new TextEncoder();
+          const messageBuffer = encoder.encode(body);
+          const keyBuffer = encoder.encode(config.secretKey);
+          
+          // Import the key
+          const cryptoKey = await window.crypto.subtle.importKey(
+            "raw",
+            keyBuffer,
+            { name: "HMAC", hash: "SHA-256" },
+            false,
+            ["sign"]
+          );
+          
+          // Sign the message
+          const signatureBuffer = await window.crypto.subtle.sign(
+            "HMAC",
+            cryptoKey,
+            messageBuffer
+          );
+          
+          // Convert the signature to hex string
+          signature = Array.from(new Uint8Array(signatureBuffer))
+            .map(b => b.toString(16).padStart(2, "0"))
+            .join("");
         } catch (error) {
           console.error("Erro ao gerar assinatura HMAC:", error);
         }
