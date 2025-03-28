@@ -10,7 +10,8 @@ export const appointments: Appointment[] = [
     date: new Date(2024, 6, 12, 10, 0),
     status: "agendado",
     price: 180,
-    serviceType: "hair"
+    serviceType: "hair",
+    duration: 120 // Adding the required duration property
   },
   {
     id: "2",
@@ -19,7 +20,8 @@ export const appointments: Appointment[] = [
     date: new Date(2024, 6, 12, 14, 30),
     status: "concluído",
     price: 95,
-    serviceType: "barber"
+    serviceType: "barber",
+    duration: 60 // Adding the required duration property
   },
   {
     id: "3",
@@ -28,7 +30,8 @@ export const appointments: Appointment[] = [
     date: new Date(2024, 6, 15, 11, 0),
     status: "cancelado",
     price: 60,
-    serviceType: "nails"
+    serviceType: "nails",
+    duration: 45 // Adding the required duration property
   },
   {
     id: "4",
@@ -37,7 +40,8 @@ export const appointments: Appointment[] = [
     date: new Date(2024, 6, 16, 15, 0),
     status: "agendado",
     price: 120,
-    serviceType: "makeup"
+    serviceType: "makeup",
+    duration: 90 // Adding the required duration property
   },
   {
     id: "5",
@@ -46,6 +50,7 @@ export const appointments: Appointment[] = [
     date: new Date(2024, 6, 17, 9, 0),
     status: "agendado",
     price: 150,
-    serviceType: "skincare"
+    serviceType: "skincare",
+    duration: 75 // Adding the required duration property
   },
 ];
