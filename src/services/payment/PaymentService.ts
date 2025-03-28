@@ -30,7 +30,7 @@ export const PaymentService = {
       
       // Configure the data for the Efi Bank API call
       const efiPaymentData = efiConfig 
-        ? await EfiBankService.callEfiBankAPI({
+        ? await EfiBankService.callEfiPayAPI({
             amount: payment.amount,
             description: payment.description || "Pagamento de serviço",
             paymentMethod: payment.paymentMethod,
@@ -104,7 +104,7 @@ export const PaymentService = {
       }
       
       // Query the status in the Efi Bank API or simulate the query
-      const efiStatusData = await EfiBankService.simulateEfiBankStatusCheck(transactionId || paymentId);
+      const efiStatusData = await EfiBankService.checkEfiBankStatus(transactionId || paymentId);
       
       // Update the status if there's a change
       if (transactionData.status !== mapEfiBankStatus(efiStatusData.status)) {
