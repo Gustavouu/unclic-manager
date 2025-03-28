@@ -24,6 +24,9 @@ interface PaymentDialogProps {
   appointmentId?: string;
   appointmentDate?: string;
   customerId: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
 }
 
 export const PaymentDialog = ({
@@ -36,6 +39,9 @@ export const PaymentDialog = ({
   appointmentId,
   appointmentDate,
   customerId,
+  customerName,
+  customerEmail,
+  customerPhone,
 }: PaymentDialogProps) => {
   const {
     step,
@@ -50,6 +56,9 @@ export const PaymentDialog = ({
     amount,
     appointmentId,
     customerId,
+    customerName,
+    customerEmail,
+    customerPhone,
     onSuccess
   });
   

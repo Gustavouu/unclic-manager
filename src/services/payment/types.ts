@@ -1,58 +1,32 @@
 
-/**
- * Payment request data 
- */
+// Export interface for payment request
 export interface PaymentRequest {
   serviceId: string;
   appointmentId?: string;
   customerId: string;
-  amount: number;
-  paymentMethod: string;
-  description?: string;
-  businessId?: string;
-}
-
-/**
- * Payment response data
- */
-export interface PaymentResponse {
-  id: string;
-  status: "pending" | "approved" | "rejected" | "cancelled" | "processing";
-  transactionId: string;
-  amount: number;
-  paymentMethod: string;
-  createdAt: string;
-  paymentUrl?: string | null;
-}
-
-/**
- * EFI Bank payment data
- */
-export interface EfiPaymentData {
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
   amount: number;
   description: string;
   paymentMethod: string;
-  referenceId: string;
-  merchantId?: string;
-  apiKey?: string;
-  isTestMode?: boolean;
+  businessId?: string;
 }
 
-/**
- * EFI Bank status response
- */
-export interface EfiStatusResponse {
-  status: string;
-  transactionId?: string;
-  paymentUrl?: string | null;
-}
-
-/**
- * Customer data interface
- */
-export interface CustomerData {
+// Export interface for payment response
+export interface PaymentResponse {
   id: string;
-  name: string;
-  email?: string;
-  phone?: string;
+  transactionId?: string;
+  status: string;
+  amount: number;
+  paymentMethod: string;
+  paymentUrl?: string;
+  clientSecret?: string;
+  createdAt: Date;
+}
+
+// Export the PaymentService interface (if needed)
+export interface PaymentServiceInterface {
+  createPayment: (request: PaymentRequest) => Promise<PaymentResponse>;
+  getPaymentStatus: (paymentId: string) => Promise<PaymentResponse>;
 }

@@ -11,6 +11,9 @@ interface UsePaymentDialogProps {
   amount: number;
   appointmentId?: string;
   customerId: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
   onSuccess?: () => void;
 }
 
@@ -20,6 +23,9 @@ export function usePaymentDialog({
   amount,
   appointmentId,
   customerId,
+  customerName,
+  customerEmail,
+  customerPhone,
   onSuccess
 }: UsePaymentDialogProps) {
   const [step, setStep] = useState<"form" | "processing" | "result">("form");
@@ -106,6 +112,9 @@ export function usePaymentDialog({
         appointmentId,
         amount,
         customerId,
+        customerName,
+        customerEmail,
+        customerPhone,
         paymentMethod: values.paymentMethod,
         description: `Pagamento para ${serviceName}`,
         businessId: "1" // Set default business ID
