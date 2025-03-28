@@ -10,6 +10,7 @@ export interface PaymentRequest {
   customerId: string;
   paymentMethod: string;
   description?: string;
+  businessId?: string; // Added missing businessId property
 }
 
 export interface PaymentResponse {

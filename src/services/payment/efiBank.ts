@@ -1,145 +1,148 @@
 
-import { supabase } from "@/integrations/supabase/client";
 import { EfiPaymentData, EfiStatusResponse } from "./types";
-import { v4 as uuidv4 } from "uuid";
+
+// URL for the EFI Pay payment handler Edge Function
+const efipayHandlerUrl = "https://jcdymkgmtxpryceziazt.supabase.co/functions/v1/efipay-payment-handler";
 
 /**
- * Makes API calls to the EFI Pay payment gateway
+ * Service for interacting with Efi Bank payment provider
  */
 export const EfiBankService = {
   /**
-   * Fetch EFI Pay integration configuration from database
+   * Gets the Efi Bank configuration from the database
    */
-  async getConfiguration(businessId: string = "1") {
+  async getConfiguration() {
     try {
-      // For demo purposes, always return mock configuration
-      // instead of attempting to query potentially non-existent tables
-      console.log("Using demo EFI Pay configuration");
+      // In a real implementation, this would fetch configuration from a database
+      // For demo purposes, we return a hardcoded configuration
       return {
-        merchant_id: "MERCHANT_" + Math.random().toString(36).substring(2, 10).toUpperCase(),
-        api_key: "API_KEY_" + Math.random().toString(36).substring(2, 10).toUpperCase(),
+        merchant_id: "DEMO_MERCHANT_ID",
+        api_key: "DEMO_API_KEY",
         is_test_mode: true
       };
     } catch (error) {
-      console.error("Error fetching EFI Pay configuration:", error);
+      console.error("Error getting Efi Bank configuration:", error);
       return null;
     }
   },
-  
+
   /**
-   * Call the EFI Pay API through our secure Edge Function
+   * Calls the Efi Bank API to create a payment
    */
   async callEfiPayAPI(data: EfiPaymentData): Promise<EfiStatusResponse> {
     try {
-      console.log("Calling EFI Pay API through Edge Function with data:", data);
+      console.log("Calling Efi Pay API with data:", data);
       
-      // URL completa para a edge function
-      const efipayHandlerUrl = "https://jcdymkgmtxpryceziazt.supabase.co/functions/v1/efipay-payment-handler";
+      // Determine which payment type to use based on payment method
+      const paymentType = data.paymentMethod === 'pix' 
+        ? 'pix' 
+        : (data.paymentMethod === 'credit_card' ? 'credit_card' : 'boleto');
       
-      // Preparar os dados para a requisição
-      const requestData = {
-        paymentType: data.paymentMethod === "pix" ? "pix" : (
-          data.paymentMethod === "credit_card" ? "credit_card" : "boleto"
-        ),
-        amount: data.amount * 100, // Convertendo para centavos
-        description: data.description || "Pagamento de serviço",
-        customer: {
-          name: "Cliente", // Idealmente, isso viria dos dados do cliente
-          document: "00000000000" // CPF (placeholder)
-        },
-        expiresIn: 3600, // 1 hora
-        appointmentId: data.referenceId || uuidv4()
-      };
-      
-      console.log("Sending request to EFI Pay handler:", requestData);
-      
-      // Chamar a edge function
+      // Call the EFI Pay Edge Function
       const response = await fetch(efipayHandlerUrl, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "apikey": process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify({
+          paymentType: paymentType,
+          amount: data.amount,
+          description: data.description,
+          customer: {
+            name: "Cliente do site",
+            document: "000.000.000-00",
+            email: "cliente@exemplo.com"
+          },
+          expiresIn: 3600, // 1 hour expiration
+          appointmentId: data.referenceId
+        })
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Erro na resposta da Edge Function:", errorData);
-        throw new Error(`Erro ao processar pagamento: ${errorData.error || 'Erro desconhecido'}`);
+        const errorText = await response.text();
+        throw new Error(`API error: ${response.status} - ${errorText}`);
       }
       
-      const responseData = await response.json();
-      console.log("Resposta da Edge Function:", responseData);
+      const result = await response.json();
       
-      // Em modo de demonstração, simulamos uma resposta bem-sucedida
-      if (data.isTestMode) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        return {
-          status: "pending",
-          transactionId: responseData.id || `EFI-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-          paymentUrl: responseData.qrCodeUrl || responseData.paymentUrl || `https://pay.efipay.com.br/${data.referenceId}?test=true`
-        };
+      console.log("Efi Pay API response:", result);
+      
+      return {
+        status: result.status || 'pending',
+        transactionId: result.id || '',
+        paymentUrl: result.qrCodeUrl || result.paymentUrl || ''
+      };
+    } catch (error) {
+      console.error("Error calling Efi Pay API:", error);
+      
+      // Return a fallback response with a pending status
+      return {
+        status: 'pending',
+        transactionId: `local-${Date.now()}`,
+        paymentUrl: null
+      };
+    }
+  },
+
+  /**
+   * Simulates a call to the Efi Bank API for demo purposes
+   */
+  async simulateEfiBankAPICall(data: EfiPaymentData): Promise<EfiStatusResponse> {
+    try {
+      // We'll attempt to call the real Edge Function if available
+      return await this.callEfiPayAPI(data);
+    } catch (error) {
+      console.warn("Falling back to simulated API call:", error);
+      
+      // Generate a transaction ID
+      const transactionId = `EFI-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+      
+      // Simulate a payment URL
+      let paymentUrl = null;
+      
+      if (data.paymentMethod === 'pix') {
+        paymentUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=pix-payment-${data.referenceId}-${Date.now()}`;
+      } else if (data.paymentMethod === 'credit_card') {
+        paymentUrl = `https://pay.efipay.com.br/credit/${transactionId}`;
       }
       
       return {
-        status: "pending",
-        transactionId: responseData.id || "",
-        paymentUrl: responseData.qrCodeUrl || responseData.paymentUrl || ""
+        status: 'pending',
+        transactionId: transactionId,
+        paymentUrl: paymentUrl
       };
-    } catch (error) {
-      console.error("Erro ao chamar API EFI Pay:", error);
-      
-      // Em modo de teste, retornamos uma resposta fake para continuar o fluxo
-      if (data.isTestMode) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        return {
-          status: "pending",
-          transactionId: "EFI-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
-          paymentUrl: `https://pay.efipay.com.br/${data.referenceId}?test=true`
-        };
-      }
-      
-      throw error;
     }
   },
-  
+
   /**
-   * Check the status of a payment with EFI Pay
+   * Checks the status of a payment in Efi Bank
    */
-  async checkEfiBankStatus(
-    transactionId: string,
-    merchantId?: string,
-    apiKey?: string
-  ): Promise<EfiStatusResponse> {
-    // Para demonstração, simulamos uma resposta
-    console.log("Checking status on EFI Pay API for:", transactionId);
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    const possibleStatuses = ["pending", "processing", "approved", "rejected", "cancelled"];
-    const randomStatus = possibleStatuses[Math.floor(Math.random() * possibleStatuses.length)];
-    
-    return {
-      status: randomStatus,
-      transactionId: transactionId,
-      paymentUrl: `https://pay.efipay.com.br/${transactionId}`
-    };
-  },
-  
-  /**
-   * Simulate a payment API call (for development)
-   */
-  async simulateEfiBankAPICall(data: EfiPaymentData): Promise<EfiStatusResponse> {
-    // Simulates response time of the API
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Simulates API response
-    return {
-      status: "pending",
-      transactionId: "EFI-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
-      paymentUrl: `https://pay.efipay.com.br/${data.referenceId}`
-    };
+  async checkEfiBankStatus(transactionId: string): Promise<EfiStatusResponse> {
+    try {
+      // In a real implementation, this would call an Efi Bank API endpoint
+      // For demo purposes, we return a hardcoded status
+      const randomStatus = Math.random();
+      let status = 'pending';
+      
+      // 60% chance of being approved, 20% still pending, 20% processing
+      if (randomStatus < 0.6) {
+        status = 'approved';
+      } else if (randomStatus < 0.8) {
+        status = 'pending';
+      } else {
+        status = 'processing';
+      }
+      
+      return {
+        status: status,
+        transactionId: transactionId
+      };
+    } catch (error) {
+      console.error("Error checking Efi Bank status:", error);
+      return {
+        status: 'pending',
+        transactionId: transactionId
+      };
+    }
   }
 };

@@ -8,7 +8,7 @@ export interface PaymentRequest {
   paymentMethod: string;
   description: string;
   appointmentId?: string;
-  businessId?: string; // Added business ID parameter
+  businessId?: string; // Define businessId property here as well
 }
 
 export interface PaymentResponse {
