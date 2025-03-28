@@ -1,21 +1,21 @@
 
-import { z } from "zod";
+import * as z from "zod";
 
 export const appointmentFormSchema = z.object({
   clientId: z.string({
-    required_error: "Selecione um cliente",
+    required_error: "O cliente é obrigatório.",
   }),
   serviceId: z.string({
-    required_error: "Selecione um serviço",
+    required_error: "O serviço é obrigatório.",
   }),
   professionalId: z.string({
-    required_error: "Selecione um profissional",
+    required_error: "O profissional é obrigatório.",
   }),
   date: z.date({
-    required_error: "Selecione uma data",
+    required_error: "A data é obrigatória.",
   }),
   time: z.string({
-    required_error: "Selecione um horário",
+    required_error: "O horário é obrigatório.",
   }),
   notes: z.string().optional(),
 });

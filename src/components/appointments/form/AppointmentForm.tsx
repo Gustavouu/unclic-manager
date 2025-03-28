@@ -15,6 +15,7 @@ import { clients } from "../data/appointmentMockData";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { useAppointments } from "@/hooks/appointments/useAppointments";
 
 type AppointmentFormProps = {
   onClose: () => void;
@@ -28,6 +29,8 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
     price: number;
   } | null>(null);
 
+  const { createAppointment } = useAppointments();
+
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
@@ -35,20 +38,43 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
     },
   });
 
-  const onSubmit = (values: AppointmentFormValues) => {
-    // Here you would handle the form submission to create a new appointment
-    console.log(values);
-    
-    // Close the dialog and display a success message
-    onClose();
-    
-    toast.success("Agendamento criado com sucesso!", {
-      description: `Cliente: ${clients.find(c => c.id === values.clientId)?.name}, 
-                   Data: ${format(values.date, "d 'de' MMMM", { locale: ptBR })} às ${values.time}`,
-    });
-    
-    // Reset the form
-    form.reset();
+  const onSubmit = async (values: AppointmentFormValues) => {
+    try {
+      // Build the appointment date from form values
+      const appointmentDate = new Date(values.date);
+      const [hours, minutes] = values.time.split(':').map(Number);
+      appointmentDate.setHours(hours, minutes, 0, 0);
+      
+      const client = clients.find(c => c.id === values.clientId);
+      
+      // Create the appointment through the hook
+      await createAppointment({
+        clientName: client?.name || "Cliente não identificado",
+        serviceName: selectedService?.name || "Serviço não identificado",
+        date: appointmentDate,
+        status: "agendado",
+        price: selectedService?.price || 0,
+        serviceType: "haircut", // This could be improved with actual categories
+        duration: selectedService?.duration || 60,
+        notes: values.notes,
+        serviceId: values.serviceId,
+        clientId: values.clientId,
+        professionalId: values.professionalId,
+        paymentMethod: "local" // Default payment method
+      });
+      
+      // Close the dialog and reset form
+      onClose();
+      form.reset();
+      
+      toast.success("Agendamento criado com sucesso!", {
+        description: `Cliente: ${client?.name}, 
+                     Data: ${format(appointmentDate, "d 'de' MMMM", { locale: ptBR })} às ${values.time}`,
+      });
+    } catch (error) {
+      console.error("Error creating appointment:", error);
+      toast.error("Erro ao criar agendamento. Tente novamente.");
+    }
   };
 
   return (

@@ -11,6 +11,7 @@ import { StepNavigator } from "./flow/StepNavigator";
 import { StepContent } from "./flow/StepContent";
 import { CloseButton } from "./flow/CloseButton";
 import { useBookingSteps } from "./hooks/useBookingSteps";
+import { useAppointments } from "@/hooks/appointments/useAppointments";
 
 export function WebsiteBookingFlow({ 
   services, 
@@ -26,6 +27,9 @@ export function WebsiteBookingFlow({
     prevStep,
     getStepTitle
   } = useBookingSteps();
+
+  // Get the appointments hook for use in the payment step
+  const { createAppointment } = useAppointments();
 
   // Cast services and staff to extended types for use in child components
   const extendedServices = services as ExtendedServiceData[];
@@ -75,6 +79,7 @@ export function WebsiteBookingFlow({
           <StepPayment 
             bookingData={bookingData}
             nextStep={nextStep}
+            createAppointment={createAppointment}
           />
         );
       case 5:

@@ -4,6 +4,7 @@ import { BookingData } from "../../types";
 import { usePayment } from "@/hooks/usePayment";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 interface UsePaymentStepProps {
   bookingData: BookingData;
@@ -25,18 +26,35 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
 
   const createAppointment = async (paymentId: string) => {
     try {
+      // Format the date and time for storage
+      const appointmentDate = bookingData.date 
+        ? format(bookingData.date, 'yyyy-MM-dd') 
+        : new Date().toISOString().split('T')[0];
+        
+      const timeStart = bookingData.time;
+      
+      // Calculate end time based on duration
+      const [hours, minutes] = timeStart.split(':').map(Number);
+      const startDate = new Date();
+      startDate.setHours(hours, minutes, 0);
+      
+      const endDate = new Date(startDate);
+      endDate.setMinutes(endDate.getMinutes() + bookingData.serviceDuration);
+      
+      const timeEnd = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+      
       const { data, error } = await supabase
         .from('agendamentos')
         .insert({
           id_servico: bookingData.serviceId,
-          id_cliente: "1",
+          id_cliente: "1", // This should be dynamically set to the actual customer ID
           valor: bookingData.servicePrice,
           status: 'confirmado',
-          data: bookingData.date?.toISOString().split('T')[0],
-          hora_inicio: bookingData.time,
-          hora_fim: bookingData.time,
+          data: appointmentDate,
+          hora_inicio: timeStart,
+          hora_fim: timeEnd,
           duracao: bookingData.serviceDuration,
-          id_negocio: "1",
+          id_negocio: "1", // This should be dynamically set to the business ID
           id_funcionario: bookingData.professionalId,
           forma_pagamento: paymentMethod,
           observacoes: bookingData.notes
@@ -46,6 +64,7 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
       
       if (error) throw error;
       
+      // Link transaction to appointment
       await supabase
         .from('transacoes')
         .update({ id_agendamento: data.id })
@@ -66,10 +85,10 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
       const paymentResult = await processPayment({
         serviceId: bookingData.serviceId,
         amount: bookingData.servicePrice,
-        customerId: "1",
+        customerId: "1", // This should be dynamically set to the actual customer ID
         paymentMethod: paymentMethod,
         description: `Pagamento para ${bookingData.serviceName} com ${bookingData.professionalName}`,
-        businessId: "1"
+        businessId: "1" // This should be dynamically set to the business ID
       });
       
       if (paymentResult.status === 'approved' || paymentResult.status === 'pending') {

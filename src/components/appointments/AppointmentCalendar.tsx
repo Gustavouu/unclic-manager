@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   addMonths, 
   subMonths, 
@@ -13,7 +13,7 @@ import {
   addWeeks,
   subWeeks,
   format,
-  isSameWeek
+  parseISO
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarFilter } from "./calendar/CalendarFilter";
@@ -22,13 +22,11 @@ import { MonthView } from "./calendar/MonthView";
 import { DayView } from "./calendar/DayView";
 import { WeekView } from "./calendar/WeekView";
 import { CalendarFooter } from "./calendar/CalendarFooter";
-import { Button } from "@/components/ui/button";
-import { Calendar, Grid3X3 } from "lucide-react";
 import { AppointmentType, CalendarViewType, ServiceType } from "./calendar/types";
-import { SAMPLE_APPOINTMENTS } from "./calendar/sampleData";
 import { useBusinessHours } from "@/hooks/useBusinessHours";
+import { useAppointments } from "@/hooks/appointments/useAppointments";
 
-// Redefinir os tipos de serviço específicos para barbearia
+// Map service types to display names for barbershop
 export const SERVICE_TYPE_NAMES: Record<ServiceType, string> = {
   all: "Todos os Serviços",
   haircut: "Corte de Cabelo",
@@ -48,6 +46,21 @@ export const AppointmentCalendar = () => {
   // Get business hours from the hook
   const { getCalendarBusinessHours } = useBusinessHours();
   const businessHours = getCalendarBusinessHours();
+  
+  // Get appointments from the hook
+  const { appointments, isLoading } = useAppointments();
+  
+  // Convert appointments to calendar format
+  const calendarAppointments: AppointmentType[] = appointments.map(app => ({
+    id: app.id,
+    date: app.date,
+    clientName: app.clientName,
+    serviceName: app.serviceName,
+    serviceType: app.serviceType,
+    duration: app.duration,
+    price: app.price,
+    status: app.status
+  }));
 
   const nextPeriod = () => {
     if (calendarView === "month") {
@@ -104,7 +117,7 @@ export const AppointmentCalendar = () => {
   }
 
   // Filter appointments based on service type
-  const filteredAppointments = SAMPLE_APPOINTMENTS.filter(app => 
+  const filteredAppointments = calendarAppointments.filter(app => 
     (serviceFilter === "all" || app.serviceType === serviceFilter)
   );
 
@@ -122,54 +135,60 @@ export const AppointmentCalendar = () => {
 
   return (
     <div className="rounded-lg border border-blue-100 shadow-sm overflow-hidden bg-white">
-      <div className="p-4">
-        <CalendarHeader 
-          currentDate={currentDate}
-          selectedDate={selectedDate}
-          calendarView={calendarView}
-          onPrevPeriod={prevPeriod}
-          onNextPeriod={nextPeriod}
-          onSelectDate={handleSelectDate}
-          onViewChange={setCalendarView}
-        />
-        
-        <div className="mb-4 border-b pb-4">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-            <CalendarFilter 
-              serviceFilter={serviceFilter}
-              onFilterChange={setServiceFilter}
-              serviceTypes={SERVICE_TYPE_NAMES}
-            />
-          </div>
+      {isLoading ? (
+        <div className="p-8 text-center">
+          <p className="text-muted-foreground">Carregando agendamentos...</p>
         </div>
-        
-        {calendarView === "month" && (
-          <MonthView
-            calendarDays={calendarDays}
-            weekDays={weekDays}
-            selectedDate={selectedDate}
-            appointments={filteredAppointments}
-            onSelectDay={handleSelectDay}
-          />
-        )}
-        
-        {calendarView === "week" && (
-          <WeekView
+      ) : (
+        <div className="p-4">
+          <CalendarHeader 
             currentDate={currentDate}
-            weekAppointments={weekAppointments}
-            onSelectAppointment={handleSelectAppointment}
-            businessHours={businessHours}
-          />
-        )}
-        
-        {calendarView === "day" && (
-          <DayView 
-            appointments={dayAppointments} 
             selectedDate={selectedDate}
-            onBackToMonth={() => setCalendarView("month")}
+            calendarView={calendarView}
+            onPrevPeriod={prevPeriod}
+            onNextPeriod={nextPeriod}
+            onSelectDate={handleSelectDate}
+            onViewChange={setCalendarView}
           />
-        )}
-      </div>
+          
+          <div className="mb-4 border-b pb-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+              <CalendarFilter 
+                serviceFilter={serviceFilter}
+                onFilterChange={setServiceFilter}
+                serviceTypes={SERVICE_TYPE_NAMES}
+              />
+            </div>
+          </div>
+          
+          {calendarView === "month" && (
+            <MonthView
+              calendarDays={calendarDays}
+              weekDays={weekDays}
+              selectedDate={selectedDate}
+              appointments={filteredAppointments}
+              onSelectDay={handleSelectDay}
+            />
+          )}
+          
+          {calendarView === "week" && (
+            <WeekView
+              currentDate={currentDate}
+              weekAppointments={weekAppointments}
+              onSelectAppointment={handleSelectAppointment}
+              businessHours={businessHours}
+            />
+          )}
+          
+          {calendarView === "day" && (
+            <DayView 
+              appointments={dayAppointments} 
+              selectedDate={selectedDate}
+              onBackToMonth={() => setCalendarView("month")}
+            />
+          )}
+        </div>
+      )}
       
       <CalendarFooter />
     </div>

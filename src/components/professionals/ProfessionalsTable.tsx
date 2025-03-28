@@ -1,17 +1,16 @@
 
+import { Professional } from "@/hooks/professionals/types";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
-import { Professional } from "@/hooks/professionals/types";
-import { ProfessionalStatusBadge } from "./ProfessionalStatusBadge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import { Eye, Edit, Trash2 } from "lucide-react";
+import { ProfessionalStatusBadge } from "./ProfessionalStatusBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import React from "react";
 
@@ -33,12 +32,12 @@ export const ProfessionalsTable = ({
   };
 
   return (
-    <div className="w-full overflow-auto">
+    <div className="border rounded-md">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Profissional</TableHead>
-            <TableHead>Função</TableHead>
+            <TableHead>Cargo</TableHead>
             <TableHead>Especialidades</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Ações</TableHead>
@@ -46,10 +45,10 @@ export const ProfessionalsTable = ({
         </TableHeader>
         <TableBody>
           {professionals.map((professional) => (
-            <TableRow key={professional.id}>
+            <TableRow key={professional.id} className="hover:bg-gray-50">
               <TableCell>
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
+                  <Avatar>
                     <AvatarImage src={professional.photoUrl} alt={professional.name} />
                     <AvatarFallback className="bg-blue-100 text-blue-700">
                       {getInitials(professional.name)}
@@ -57,7 +56,7 @@ export const ProfessionalsTable = ({
                   </Avatar>
                   <div>
                     <div className="font-medium">{professional.name}</div>
-                    <div className="text-sm text-gray-500">{professional.email}</div>
+                    <div className="text-xs text-gray-500">{professional.email}</div>
                   </div>
                 </div>
               </TableCell>
@@ -80,34 +79,43 @@ export const ProfessionalsTable = ({
                 <ProfessionalStatusBadge status={professional.status} />
               </TableCell>
               <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal size={16} />
-                      <span className="sr-only">Abrir menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onProfessionalClick(professional.id)}>
-                      <Eye size={16} className="mr-2" />
-                      Ver detalhes
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => onEditClick(professional, e)}>
-                      <Edit size={16} className="mr-2" />
-                      Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="text-red-500 focus:text-red-500"
-                      onClick={(e) => onDeleteClick(professional, e)}
-                    >
-                      <Trash2 size={16} className="mr-2" />
-                      Excluir
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-blue-600"
+                    onClick={() => onProfessionalClick(professional.id)}
+                  >
+                    <Eye size={16} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-amber-600"
+                    onClick={(e) => onEditClick(professional, e)}
+                  >
+                    <Edit size={16} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-red-600"
+                    onClick={(e) => onDeleteClick(professional, e)}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
+
+          {professionals.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                Nenhum profissional encontrado.
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>
