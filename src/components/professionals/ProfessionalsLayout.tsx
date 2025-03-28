@@ -60,7 +60,7 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
     if (professionals?.length) {
       setCurrentPage(1);
     }
-  }, [professionals?.length]);
+  }, [professionals?.length, setCurrentPage]);
   
   // Handle professional click
   const handleProfessionalClick = (id: string) => {
@@ -71,17 +71,18 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   // Handle edit click
   const handleEditClick = (professional: Professional, e: React.MouseEvent) => {
     e.stopPropagation();
-    setProfessionalToEdit({...professional});
+    setProfessionalToEdit(professional);
     setEditOpen(true);
   };
   
   // Handle delete click
   const handleDeleteClick = (professional: Professional, e: React.MouseEvent) => {
     e.stopPropagation();
-    setProfessionalToDelete({...professional});
+    setProfessionalToDelete(professional);
     setDeleteOpen(true);
   };
   
+  // Handle closing dialogs
   const handleDialogClose = (dialogType: 'details' | 'edit' | 'delete') => {
     if (dialogType === 'details') {
       setDetailsOpen(false);

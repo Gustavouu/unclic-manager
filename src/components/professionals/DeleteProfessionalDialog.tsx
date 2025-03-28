@@ -30,7 +30,11 @@ export const DeleteProfessionalDialog = ({
   const { removeProfessional } = useProfessionals();
   const { toast } = useToast();
 
-  if (!professional) return null;
+  const handleClose = () => {
+    if (!isDeleting) {
+      onOpenChange(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!professional?.id) return;
@@ -55,13 +59,12 @@ export const DeleteProfessionalDialog = ({
     }
   };
 
+  if (!professional) return null;
+
   return (
     <AlertDialog 
       open={open} 
-      onOpenChange={(isOpen) => {
-        if (isDeleting) return;
-        onOpenChange(isOpen);
-      }}
+      onOpenChange={handleClose}
     >
       <AlertDialogContent>
         <AlertDialogHeader>

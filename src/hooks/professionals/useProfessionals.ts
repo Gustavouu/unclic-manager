@@ -1,7 +1,7 @@
 
 import { useProfessionalOperations } from "./professionalOperations";
 import { useProfessionalUtils } from "./professionalUtils";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Professional } from "./types";
 
 export const useProfessionals = () => {
@@ -29,7 +29,7 @@ export const useProfessionals = () => {
   const { specialties, getProfessionalById } = useProfessionalUtils(trackedProfessionals);
   
   // Wrap the operations to ensure state is updated correctly
-  const handleAddProfessional = async (data: any) => {
+  const handleAddProfessional = useCallback(async (data: any) => {
     try {
       const result = await addProfessionalOp(data);
       return result;
@@ -37,9 +37,9 @@ export const useProfessionals = () => {
       console.error("Error in useProfessionals.handleAddProfessional:", error);
       throw error;
     }
-  };
+  }, [addProfessionalOp]);
 
-  const handleUpdateProfessional = async (id: string, data: any) => {
+  const handleUpdateProfessional = useCallback(async (id: string, data: any) => {
     try {
       await updateProfessionalOp(id, data);
       return true;
@@ -47,9 +47,9 @@ export const useProfessionals = () => {
       console.error("Error in useProfessionals.handleUpdateProfessional:", error);
       throw error;
     }
-  };
+  }, [updateProfessionalOp]);
 
-  const handleRemoveProfessional = async (id: string) => {
+  const handleRemoveProfessional = useCallback(async (id: string) => {
     try {
       await removeProfessionalOp(id);
       return true;
@@ -57,7 +57,7 @@ export const useProfessionals = () => {
       console.error("Error in useProfessionals.handleRemoveProfessional:", error);
       throw error;
     }
-  };
+  }, [removeProfessionalOp]);
   
   return {
     professionals: trackedProfessionals,

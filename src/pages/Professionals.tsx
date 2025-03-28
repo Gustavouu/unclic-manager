@@ -6,19 +6,17 @@ import { Grid2X2, List, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfessionalsLayout } from "@/components/professionals/ProfessionalsLayout";
 import { NewProfessionalDialog } from "@/components/professionals/NewProfessionalDialog";
-import { useToast } from "@/components/ui/use-toast";
 
 const Professionals = () => {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [showNewProfessionalDialog, setShowNewProfessionalDialog] = useState(false);
-  const { toast } = useToast();
 
   const handleOpenNewDialog = () => {
     setShowNewProfessionalDialog(true);
   };
 
-  const handleCloseNewDialog = () => {
-    setShowNewProfessionalDialog(false);
+  const handleCloseNewDialog = (open: boolean) => {
+    setShowNewProfessionalDialog(open);
   };
 
   return (
