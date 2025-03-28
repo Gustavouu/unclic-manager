@@ -39,7 +39,11 @@ export const PaymentService = {
           metodo_pagamento: request.paymentMethod,
           status: request.paymentMethod === 'cash' ? 'approved' : 'pending',
           descricao: request.description,
-          id_servico: request.serviceId, 
+          // Store service ID in notes as JSON since there's no direct column for it
+          notas: JSON.stringify({ 
+            serviceId: request.serviceId,
+            source: 'payment_service' 
+          }),
           id_cliente: request.customerId,
           id_agendamento: request.appointmentId
         })
