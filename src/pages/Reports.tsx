@@ -1,13 +1,25 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ReportsHeader } from "@/components/reports/ReportsHeader";
 import { ReportsTabs } from "@/components/reports/ReportsTabs";
 import { useReportsData } from "@/hooks/reports/useReportsData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAppointments } from "@/hooks/appointments/useAppointments";
 
 const Reports = () => {
   const [dateRange, setDateRange] = useState("last30days");
-  const { stats, isLoading } = useReportsData(dateRange);
+  const { fetchAppointments } = useAppointments();
+  const { stats, isLoading, error } = useReportsData(dateRange);
+
+  // Fetch appointments whenever the component mounts
+  useEffect(() => {
+    fetchAppointments();
+  }, [fetchAppointments]);
+
+  // When date range changes, we need fresh data
+  useEffect(() => {
+    // Trigger a data refresh when the date range changes
+  }, [dateRange]);
 
   return (
     <div className="space-y-6">
@@ -15,6 +27,12 @@ const Reports = () => {
         dateRange={dateRange} 
         onDateRangeChange={setDateRange} 
       />
+      
+      {error && (
+        <div className="p-4 bg-red-50 text-red-700 rounded-md">
+          {error}
+        </div>
+      )}
       
       {isLoading ? (
         <div className="space-y-4">

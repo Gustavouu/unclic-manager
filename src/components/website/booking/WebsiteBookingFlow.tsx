@@ -12,6 +12,7 @@ import { StepContent } from "./flow/StepContent";
 import { CloseButton } from "./flow/CloseButton";
 import { useBookingSteps } from "./hooks/useBookingSteps";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
+import { v4 as uuidv4 } from "uuid";
 
 export function WebsiteBookingFlow({ 
   services, 

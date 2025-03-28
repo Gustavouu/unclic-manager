@@ -48,7 +48,7 @@ export const AppointmentCalendar = () => {
   const businessHours = getCalendarBusinessHours();
   
   // Get appointments from the hook
-  const { appointments, isLoading } = useAppointments();
+  const { appointments, isLoading, fetchAppointments } = useAppointments();
   
   // Convert appointments to calendar format
   const calendarAppointments: AppointmentType[] = appointments.map(app => ({
@@ -61,6 +61,13 @@ export const AppointmentCalendar = () => {
     price: app.price,
     status: app.status
   }));
+  
+  // Refresh appointments when the component mounts or calendar view changes
+  useEffect(() => {
+    fetchAppointments();
+    // Refreshing data when calendar view changes is a good practice
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calendarView]);
 
   const nextPeriod = () => {
     if (calendarView === "month") {

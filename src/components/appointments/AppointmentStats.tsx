@@ -3,34 +3,47 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Scissors, Clock, UserCheck, AlertTriangle } from "lucide-react";
 import { format, isToday, isTomorrow, isAfter, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { SAMPLE_APPOINTMENTS } from "./calendar/sampleData";
+import { useAppointments } from "@/hooks/appointments/useAppointments";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const AppointmentStats = () => {
+  const { appointments, isLoading } = useAppointments();
+  
   const today = startOfDay(new Date());
   const tomorrow = startOfDay(new Date());
   tomorrow.setDate(tomorrow.getDate() + 1);
   
-  // Calculate stats using the SAMPLE_APPOINTMENTS data
-  const todayAppointments = SAMPLE_APPOINTMENTS.filter(app => isToday(new Date(app.date)));
-  const tomorrowAppointments = SAMPLE_APPOINTMENTS.filter(app => isTomorrow(new Date(app.date)));
-  const upcomingAppointments = SAMPLE_APPOINTMENTS.filter(app => 
-    isAfter(new Date(app.date), today) && 
+  // Calculate stats using real appointment data
+  const todayAppointments = appointments.filter(app => isToday(app.date));
+  const tomorrowAppointments = appointments.filter(app => isTomorrow(app.date));
+  const upcomingAppointments = appointments.filter(app => 
+    isAfter(app.date, today) && 
     app.status === "agendado"
   );
-  const pendingAppointments = SAMPLE_APPOINTMENTS.filter(app => app.status === "agendado");
+  const pendingAppointments = appointments.filter(app => app.status === "agendado");
 
   // Format next appointment time
   const nextAppointment = upcomingAppointments.sort((a, b) => 
-    new Date(a.date).getTime() - new Date(b.date).getTime()
+    a.date.getTime() - b.date.getTime()
   )[0];
   
   const nextAppointmentTime = nextAppointment 
-    ? format(new Date(nextAppointment.date), "HH:mm", { locale: ptBR })
+    ? format(nextAppointment.date, "HH:mm", { locale: ptBR })
     : "--:--";
 
   const nextAppointmentClient = nextAppointment 
     ? nextAppointment.clientName.split(" ")[0]
     : "Nenhum";
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-[100px] w-full" />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
