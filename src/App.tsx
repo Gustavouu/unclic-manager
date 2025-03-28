@@ -1,7 +1,6 @@
 
 import React, { useState } from "react";
 import {
-  BrowserRouter,
   Routes,
   Route,
   Navigate,
@@ -44,111 +43,109 @@ function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="unclic-theme">
       <Toaster />
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/" element={<Index />} />
-          <Route path="/website" element={<BusinessWebsite />} />
-          <Route path="/onboarding" element={<Onboarding />} />
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/" element={<Index />} />
+        <Route path="/website" element={<BusinessWebsite />} />
+        <Route path="/onboarding" element={<Onboarding />} />
 
-          {/* Protected Routes - Requires Authentication */}
-          <Route
-            path="/dashboard"
-            element={
-              <RequireAuth>
-                <Dashboard />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/clients"
-            element={
-              <RequireAuth>
-                <Clients />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/appointments"
-            element={
-              <RequireAuth>
-                <Appointments />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/services"
-            element={
-              <RequireAuth>
-                <Services />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/professionals"
-            element={
-              <RequireAuth>
-                <Professionals />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/finance"
-            element={
-              <RequireAuth>
-                <Finance />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/reports"
-            element={
-              <RequireAuth>
-                <Reports />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/inventory"
-            element={
-              <RequireAuth>
-                <Inventory />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <RequireAuth>
-                <Settings />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/payments"
-            element={
-              <RequireAuth>
-                <Payments />
-              </RequireAuth>
-            }
-          />
+        {/* Protected Routes - Requires Authentication */}
+        <Route
+          path="/dashboard"
+          element={
+            <RequireAuth>
+              <Dashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/clients"
+          element={
+            <RequireAuth>
+              <Clients />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/appointments"
+          element={
+            <RequireAuth>
+              <Appointments />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/services"
+          element={
+            <RequireAuth>
+              <Services />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/professionals"
+          element={
+            <RequireAuth>
+              <Professionals />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/finance"
+          element={
+            <RequireAuth>
+              <Finance />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <RequireAuth>
+              <Reports />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/inventory"
+          element={
+            <RequireAuth>
+              <Inventory />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <RequireAuth>
+              <Settings />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/payments"
+          element={
+            <RequireAuth>
+              <Payments />
+            </RequireAuth>
+          }
+        />
 
-          {/* Rota protegida para a página de teste de API (não aparece na navegação) */}
-          <Route
-            path="/payment-api-test"
-            element={
-              <RequireAuth>
-                <PaymentApiTest />
-              </RequireAuth>
-            }
-          />
+        {/* Rota protegida para a página de teste de API (não aparece na navegação) */}
+        <Route
+          path="/payment-api-test"
+          element={
+            <RequireAuth>
+              <PaymentApiTest />
+            </RequireAuth>
+          }
+        />
 
-          {/* Not Found Route - Must be the last one */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+        {/* Not Found Route - Must be the last one */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </ThemeProvider>
   );
 }
