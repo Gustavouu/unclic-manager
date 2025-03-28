@@ -31,7 +31,7 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
           isPopular: service.isPopular,
           isFeatured: service.isFeatured,
           description: service.description || "",
-          template: "",
+          template: "custom",
         }
       : {
           name: "",
@@ -40,13 +40,13 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
           isPopular: false,
           isFeatured: false,
           description: "",
-          template: "",
+          template: "custom",
         },
   });
 
   useEffect(() => {
     if (service) {
-      form.setValue("template", "");
+      form.setValue("template", "custom");
     }
   }, [service, form]);
 
@@ -67,7 +67,7 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
   };
 
   const handleTemplateSelect = (templateId: string) => {
-    if (!templateId) {
+    if (templateId === "custom") {
       // Se selecionar "Personalizado", não faz nada
       return;
     }

@@ -25,13 +25,13 @@ export function ServiceTemplateSelect({ control, onTemplateSelect }: ServiceTemp
                 field.onChange(value);
                 onTemplateSelect(value);
               }}
-              value={field.value || ""}
+              value={field.value || "custom"}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um serviço pré-cadastrado..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Personalizado</SelectItem>
+                <SelectItem value="custom">Personalizado</SelectItem>
                 {barberServiceTemplates.map((template) => (
                   <SelectItem key={template.id} value={template.id}>
                     {template.name}
