@@ -22,6 +22,10 @@ export type BookingData = {
   date: Date | undefined;
   time: string;
   notes: string;
+  clientId?: string;
+  clientName?: string;
+  clientPhone?: string;
+  clientEmail?: string;
 }
 
 export interface BookingFlowProps {
@@ -29,4 +33,12 @@ export interface BookingFlowProps {
   staff: StaffData[];
   businessName: string;
   closeFlow: () => void;
+}
+
+export interface ClientData {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  birthDate?: string;
 }

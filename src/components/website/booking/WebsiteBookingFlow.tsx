@@ -12,6 +12,7 @@ import { StepContent } from "./flow/StepContent";
 import { CloseButton } from "./flow/CloseButton";
 import { useBookingSteps } from "./hooks/useBookingSteps";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
+import { BookingFormFlow } from "./BookingFormFlow";
 import { v4 as uuidv4 } from "uuid";
 
 export function WebsiteBookingFlow({ 
@@ -47,12 +48,7 @@ export function WebsiteBookingFlow({
         );
       case 1:
         return (
-          <StepService 
-            services={extendedServices} 
-            bookingData={bookingData}
-            updateBookingData={updateBookingData}
-            nextStep={nextStep}
-          />
+          <BookingFormFlow onComplete={closeFlow} />
         );
       case 2:
         return (

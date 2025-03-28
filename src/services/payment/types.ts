@@ -46,3 +46,13 @@ export interface EfiStatusResponse {
   transactionId?: string;
   paymentUrl?: string | null;
 }
+
+/**
+ * Customer data interface
+ */
+export interface CustomerData {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+}
