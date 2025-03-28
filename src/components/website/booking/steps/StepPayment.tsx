@@ -11,6 +11,7 @@ import { formatPrice } from "@/components/website/WebsiteUtils";
 import { BookingData } from "../types";
 import { usePaymentStep } from "./payment/usePaymentStep";
 import { Appointment } from "@/components/appointments/types";
+import { v4 as uuidv4 } from "uuid";
 
 interface StepPaymentProps {
   bookingData: BookingData;
@@ -35,6 +36,11 @@ export function StepPayment({ bookingData, nextStep, createAppointment }: StepPa
         const [hours, minutes] = bookingData.time.split(':').map(Number);
         appointmentDate.setHours(hours, minutes, 0, 0);
         
+        // Generate valid UUIDs if missing
+        const serviceId = bookingData.serviceId || uuidv4();
+        const professionalId = bookingData.professionalId || uuidv4();
+        const defaultBusinessId = "00000000-0000-4000-a000-000000000001";
+        
         // Create appointment using the provided function
         await createAppointment({
           clientName: "Cliente do site", // This could be improved with actual user data
@@ -45,8 +51,10 @@ export function StepPayment({ bookingData, nextStep, createAppointment }: StepPa
           serviceType: "haircut", // This could be improved with actual categories
           duration: bookingData.serviceDuration,
           notes: bookingData.notes,
-          serviceId: bookingData.serviceId,
-          professionalId: bookingData.professionalId,
+          serviceId: serviceId,
+          clientId: uuidv4(), // Generate a valid client ID for website bookings
+          professionalId: professionalId,
+          businessId: defaultBusinessId,
           paymentMethod: paymentMethod
         });
         

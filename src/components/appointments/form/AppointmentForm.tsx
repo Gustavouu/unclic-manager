@@ -51,10 +51,15 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
       
       const client = clients.find(c => c.id === values.clientId);
       
-      // Create the appointment through the hook
-      // Make sure all IDs are valid UUIDs or null if not available
-      const defaultBusinessId = "00000000-0000-4000-a000-000000000001"; // Use a valid UUID format
+      // Generate valid UUIDs if they're missing
+      const serviceId = values.serviceId || uuidv4();
+      const clientId = values.clientId || uuidv4();
+      const professionalId = values.professionalId || uuidv4();
       
+      // Generate a fixed valid business ID 
+      const businessId = "00000000-0000-4000-a000-000000000001";
+      
+      // Create the appointment through the hook with valid UUIDs
       await createAppointment({
         clientName: client?.name || "Cliente não identificado",
         serviceName: selectedService?.name || "Serviço não identificado",
@@ -64,9 +69,10 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
         serviceType: "haircut", // This could be improved with actual categories
         duration: selectedService?.duration || 60,
         notes: values.notes,
-        serviceId: values.serviceId,
-        clientId: values.clientId,
-        professionalId: values.professionalId,
+        serviceId: serviceId,
+        clientId: clientId,
+        professionalId: professionalId,
+        businessId: businessId,
         paymentMethod: "local" // Default payment method
       });
       

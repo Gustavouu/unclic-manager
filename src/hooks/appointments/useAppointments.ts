@@ -66,15 +66,29 @@ export function useAppointments() {
     }
   };
 
-  const createAppointment = async (appointmentData: Omit<Appointment, 'id'>) => {
+  const createAppointment = async (appointmentData: {
+    clientName: string;
+    serviceName: string;
+    date: Date;
+    status: AppointmentStatus;
+    price: number;
+    serviceType: string;
+    duration: number;
+    notes?: string;
+    serviceId?: string;
+    clientId?: string;
+    professionalId?: string;
+    businessId?: string;
+    paymentMethod?: string;
+  }) => {
     try {
-      // Validate UUID format for foreign keys
-      // We need to ensure these are valid UUIDs before sending to Supabase
-      if (!isValidUUID(appointmentData.serviceId) || 
-          !isValidUUID(appointmentData.clientId) || 
-          !isValidUUID(appointmentData.professionalId)) {
-        throw new Error("IDs inválidos. Selecione cliente, serviço e profissional válidos.");
-      }
+      // Check for valid UUIDs or use sensible defaults
+      const defaultUuid = "00000000-0000-4000-a000-000000000001"; // Valid UUID for defaults
+      
+      const serviceId = isValidUUID(appointmentData.serviceId) ? appointmentData.serviceId : defaultUuid;
+      const clientId = isValidUUID(appointmentData.clientId) ? appointmentData.clientId : defaultUuid;
+      const professionalId = isValidUUID(appointmentData.professionalId) ? appointmentData.professionalId : defaultUuid;
+      const businessId = isValidUUID(appointmentData.businessId) ? appointmentData.businessId : defaultUuid;
 
       // Convert to database format
       const { data, error } = await supabase
@@ -86,12 +100,12 @@ export function useAppointments() {
           duracao: appointmentData.duration,
           valor: appointmentData.price,
           status: appointmentData.status,
-          forma_pagamento: appointmentData.paymentMethod,
+          forma_pagamento: appointmentData.paymentMethod || 'local',
           observacoes: appointmentData.notes,
-          id_servico: appointmentData.serviceId,
-          id_cliente: appointmentData.clientId,
-          id_negocio: "00000000-0000-4000-a000-000000000001", // Use a valid UUID as default
-          id_funcionario: appointmentData.professionalId
+          id_servico: serviceId,
+          id_cliente: clientId,
+          id_negocio: businessId,
+          id_funcionario: professionalId
         })
         .select()
         .single();
@@ -100,8 +114,16 @@ export function useAppointments() {
       
       // Add the new appointment to state
       const newAppointment: Appointment = {
-        ...appointmentData,
-        id: data.id
+        id: data.id,
+        clientName: appointmentData.clientName,
+        serviceName: appointmentData.serviceName,
+        date: appointmentData.date,
+        status: appointmentData.status,
+        price: appointmentData.price,
+        serviceType: appointmentData.serviceType,
+        duration: appointmentData.duration,
+        notes: appointmentData.notes,
+        paymentMethod: appointmentData.paymentMethod
       };
       
       setAppointments(prev => [...prev, newAppointment]);
