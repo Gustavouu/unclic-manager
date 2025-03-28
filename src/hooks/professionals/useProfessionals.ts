@@ -2,7 +2,7 @@
 import { useProfessionalOperations } from "./professionalOperations";
 import { useProfessionalUtils } from "./professionalUtils";
 import { useEffect, useState, useCallback } from "react";
-import { Professional } from "./types";
+import { Professional, ProfessionalCreateForm, ProfessionalStatus } from "./types";
 
 export const useProfessionals = () => {
   const {
@@ -15,7 +15,9 @@ export const useProfessionals = () => {
   } = useProfessionalOperations();
   
   // Ensure professionals is always an array
-  const safeProfessionals = Array.isArray(fetchedProfessionals) ? fetchedProfessionals : [] as Professional[];
+  const safeProfessionals = Array.isArray(fetchedProfessionals) 
+    ? fetchedProfessionals 
+    : [] as Professional[];
   
   // Add a local state to track changes
   const [trackedProfessionals, setTrackedProfessionals] = useState<Professional[]>(safeProfessionals);
@@ -29,7 +31,7 @@ export const useProfessionals = () => {
   const { specialties, getProfessionalById } = useProfessionalUtils(trackedProfessionals);
   
   // Wrap the operations to ensure state is updated correctly
-  const handleAddProfessional = useCallback(async (data: any) => {
+  const handleAddProfessional = useCallback(async (data: ProfessionalCreateForm) => {
     try {
       const result = await addProfessionalOp(data);
       return result;
@@ -39,7 +41,7 @@ export const useProfessionals = () => {
     }
   }, [addProfessionalOp]);
 
-  const handleUpdateProfessional = useCallback(async (id: string, data: any) => {
+  const handleUpdateProfessional = useCallback(async (id: string, data: ProfessionalCreateForm) => {
     try {
       await updateProfessionalOp(id, data);
       return true;
@@ -48,6 +50,16 @@ export const useProfessionals = () => {
       throw error;
     }
   }, [updateProfessionalOp]);
+
+  const handleUpdateStatus = useCallback(async (id: string, status: ProfessionalStatus) => {
+    try {
+      await updateProfessionalStatus(id, status);
+      return true;
+    } catch (error) {
+      console.error("Error in useProfessionals.handleUpdateStatus:", error);
+      throw error;
+    }
+  }, [updateProfessionalStatus]);
 
   const handleRemoveProfessional = useCallback(async (id: string) => {
     try {
@@ -66,7 +78,7 @@ export const useProfessionals = () => {
     getProfessionalById,
     addProfessional: handleAddProfessional,
     updateProfessional: handleUpdateProfessional,
-    updateProfessionalStatus,
+    updateProfessionalStatus: handleUpdateStatus,
     removeProfessional: handleRemoveProfessional
   };
 };

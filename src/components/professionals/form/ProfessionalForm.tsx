@@ -8,7 +8,6 @@ import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { ProfessionalCreateForm, Professional } from "@/hooks/professionals/types";
 import { ProfessionalFormFields } from "./ProfessionalFormFields";
 import { professionalSchema } from "../schemas/professionalFormSchema";
-import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -18,6 +17,7 @@ export interface ProfessionalFormProps {
   professional?: Professional; // For editing
   editMode?: boolean;
   isSubmitting?: boolean;
+  initialPhotoUrl?: string;
 }
 
 export const ProfessionalForm = ({ 

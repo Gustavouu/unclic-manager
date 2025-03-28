@@ -6,10 +6,24 @@ import { Grid2X2, List, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfessionalsLayout } from "@/components/professionals/ProfessionalsLayout";
 import { NewProfessionalDialog } from "@/components/professionals/NewProfessionalDialog";
+import { Professional } from "@/hooks/professionals/types";
+import { EditProfessionalDialog } from "@/components/professionals/EditProfessionalDialog";
+import { DeleteProfessionalDialog } from "@/components/professionals/DeleteProfessionalDialog";
+import { ProfessionalDetailsDialog } from "@/components/professionals/ProfessionalDetailsDialog";
 
 const Professionals = () => {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [showNewProfessionalDialog, setShowNewProfessionalDialog] = useState(false);
+  
+  // States for managing dialogs
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  
+  const [professionalToEdit, setProfessionalToEdit] = useState<Professional | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  
+  const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const handleOpenNewDialog = () => {
     setShowNewProfessionalDialog(true);
@@ -17,6 +31,22 @@ const Professionals = () => {
 
   const handleCloseNewDialog = (open: boolean) => {
     setShowNewProfessionalDialog(open);
+  };
+  
+  // Handlers for different dialogs
+  const handleViewDetails = (id: string) => {
+    setSelectedProfessionalId(id);
+    setDetailsOpen(true);
+  };
+  
+  const handleEditProfessional = (professional: Professional) => {
+    setProfessionalToEdit(professional);
+    setEditOpen(true);
+  };
+  
+  const handleDeleteProfessional = (professional: Professional) => {
+    setProfessionalToDelete(professional);
+    setDeleteOpen(true);
   };
 
   return (
@@ -51,19 +81,54 @@ const Professionals = () => {
           </div>
           
           <TabsContent value="grid" className="mt-0 p-4">
-            <ProfessionalsLayout view="grid" />
+            <ProfessionalsLayout 
+              view="grid" 
+              onViewDetails={handleViewDetails}
+              onEditProfessional={handleEditProfessional}
+              onDeleteProfessional={handleDeleteProfessional}
+            />
           </TabsContent>
           
           <TabsContent value="list" className="mt-0 p-4">
-            <ProfessionalsLayout view="list" />
+            <ProfessionalsLayout 
+              view="list" 
+              onViewDetails={handleViewDetails}
+              onEditProfessional={handleEditProfessional}
+              onDeleteProfessional={handleDeleteProfessional}
+            />
           </TabsContent>
         </Tabs>
       </Card>
 
+      {/* Dialogs */}
       <NewProfessionalDialog 
         open={showNewProfessionalDialog}
         onOpenChange={handleCloseNewDialog}
       />
+      
+      {selectedProfessionalId && (
+        <ProfessionalDetailsDialog
+          professionalId={selectedProfessionalId}
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        />
+      )}
+      
+      {professionalToEdit && (
+        <EditProfessionalDialog
+          professional={professionalToEdit}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+      )}
+      
+      {professionalToDelete && (
+        <DeleteProfessionalDialog
+          professional={professionalToDelete}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      )}
     </div>
   );
 };

@@ -1,175 +1,53 @@
 
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ProfessionalsGrid } from "./ProfessionalsGrid";
+import { ProfessionalsTable } from "./ProfessionalsTable";
 import { Professional } from "@/hooks/professionals/types";
-import { ProfessionalsDialogs } from "./ProfessionalsDialogs";
-import { ProfessionalsContent } from "./ProfessionalsContent";
-import { TablePagination } from "@/components/common/TablePagination";
-import { usePagination } from "@/hooks/professionals/usePagination";
-import { Card } from "@/components/ui/card";
 
 interface ProfessionalsLayoutProps {
   view: "grid" | "list";
+  onViewDetails: (id: string) => void;
+  onEditProfessional: (professional: Professional) => void;
+  onDeleteProfessional: (professional: Professional) => void;
 }
 
-export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
+export const ProfessionalsLayout = ({ 
+  view,
+  onViewDetails,
+  onEditProfessional,
+  onDeleteProfessional
+}: ProfessionalsLayoutProps) => {
   const { professionals, isLoading } = useProfessionals();
   
-  // Force rerender when professionals change
-  const [key, setKey] = useState(Date.now());
-  
-  // Dialog state
-  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [professionalToEdit, setProfessionalToEdit] = useState<Professional | null>(null);
-  const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
-  
-  // Items per page state
-  const [itemsPerPage, setItemsPerPage] = useState(6);
-  
-  // Pagination hook
-  const { 
-    currentPage, 
-    totalPages,
-    indexOfFirstItem,
-    indexOfLastItem,
-    setCurrentPage
-  } = usePagination({
-    totalItems: professionals?.length || 0,
-    itemsPerPage,
-    initialPage: 1
-  });
-  
-  // Current professionals to display
-  const currentProfessionals = Array.isArray(professionals) 
-    ? professionals.slice(indexOfFirstItem, indexOfLastItem) 
-    : [];
-  
-  // Update key to force rerender when professionals change
-  useEffect(() => {
-    setKey(Date.now());
-    console.log("Profissionais atualizados na interface:", professionals);
-  }, [professionals]);
-  
-  // Reset page to 1 when professionals array changes length
-  useEffect(() => {
-    if (professionals?.length) {
-      setCurrentPage(1);
-    }
-  }, [professionals?.length, setCurrentPage]);
-  
-  // Handle professional click
-  const handleProfessionalClick = (id: string) => {
-    setSelectedProfessionalId(id);
-    setDetailsOpen(true);
-  };
-  
-  // Handle edit click
-  const handleEditClick = (professional: Professional, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setProfessionalToEdit(professional);
-    setEditOpen(true);
-  };
-  
-  // Handle delete click
-  const handleDeleteClick = (professional: Professional, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setProfessionalToDelete(professional);
-    setDeleteOpen(true);
-  };
-  
-  // Handle closing dialogs
-  const handleDialogClose = (dialogType: 'details' | 'edit' | 'delete') => {
-    if (dialogType === 'details') {
-      setDetailsOpen(false);
-      setSelectedProfessionalId(null);
-    } else if (dialogType === 'edit') {
-      setEditOpen(false);
-      setProfessionalToEdit(null);
-    } else if (dialogType === 'delete') {
-      setDeleteOpen(false);
-      setProfessionalToDelete(null);
-    }
-    
-    // Force rerender
-    setKey(Date.now());
-  };
-  
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <div className="flex justify-center py-8">Carregando colaboradores...</div>;
   }
-  
+
   if (!professionals || professionals.length === 0) {
     return (
-      <Alert variant="destructive" className="border-orange-400 bg-orange-50 text-orange-800">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Nenhum colaborador encontrado</AlertTitle>
-        <AlertDescription>
-          Adicione colaboradores clicando no botão "Novo Colaborador".
-        </AlertDescription>
-      </Alert>
+      <div className="text-center py-8 text-gray-500">
+        Nenhum colaborador encontrado. Adicione novos colaboradores para começar.
+      </div>
     );
   }
-  
-  return (
-    <>
-      <div key={key} className="space-y-6">
-        <ProfessionalsContent 
-          view={view}
-          professionals={currentProfessionals}
-          onProfessionalClick={handleProfessionalClick}
-          onEditClick={handleEditClick}
-          onDeleteClick={handleDeleteClick}
-        />
-        
-        {professionals.length > 0 && (
-          <Card className="border shadow-sm">
-            <TablePagination 
-              currentPage={currentPage}
-              totalPages={totalPages}
-              itemsPerPage={itemsPerPage}
-              totalItems={professionals.length}
-              indexOfFirstItem={indexOfFirstItem}
-              indexOfLastItem={indexOfLastItem}
-              onPageChange={setCurrentPage}
-              onItemsPerPageChange={(value) => {
-                setItemsPerPage(value);
-                setCurrentPage(1); // Reset to first page when changing items per page
-              }}
-              itemsPerPageOptions={[6, 12, 24, 48]}
-            />
-          </Card>
-        )}
-      </div>
-      
-      <ProfessionalsDialogs 
-        selectedProfessionalId={selectedProfessionalId}
-        detailsOpen={detailsOpen}
-        setDetailsOpen={(open) => {
-          if (!open) handleDialogClose('details');
-          else setDetailsOpen(open);
-        }}
-        professionalToEdit={professionalToEdit}
-        editOpen={editOpen}
-        setEditOpen={(open) => {
-          if (!open) handleDialogClose('edit');
-          else setEditOpen(open);
-        }}
-        professionalToDelete={professionalToDelete}
-        deleteOpen={deleteOpen}
-        setDeleteOpen={(open) => {
-          if (!open) handleDialogClose('delete');
-          else setDeleteOpen(open);
-        }}
+
+  if (view === "grid") {
+    return (
+      <ProfessionalsGrid 
+        professionals={professionals} 
+        onViewDetails={onViewDetails}
+        onEditProfessional={onEditProfessional}
+        onDeleteProfessional={onDeleteProfessional}
       />
-    </>
+    );
+  }
+
+  return (
+    <ProfessionalsTable 
+      professionals={professionals} 
+      onViewDetails={onViewDetails}
+      onEditProfessional={onEditProfessional}
+      onDeleteProfessional={onDeleteProfessional}
+    />
   );
 };
