@@ -25,6 +25,24 @@ export interface PaymentResponse {
   createdAt: Date;
 }
 
+// EFI Bank payment data
+export interface EfiPaymentData {
+  amount: number;
+  description: string;
+  paymentMethod: string;
+  referenceId: string;
+  merchantId?: string;
+  apiKey?: string;
+  isTestMode?: boolean;
+}
+
+// EFI Bank status response
+export interface EfiStatusResponse {
+  status: string;
+  transactionId?: string;
+  paymentUrl?: string | null;
+}
+
 // Export the PaymentService interface (if needed)
 export interface PaymentServiceInterface {
   createPayment: (request: PaymentRequest) => Promise<PaymentResponse>;
