@@ -1,23 +1,23 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Scissors, Clock, UserCheck, AlertTriangle } from "lucide-react";
-import { appointments } from "./data/appointmentsSampleData";
 import { format, isToday, isTomorrow, isAfter, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { SAMPLE_APPOINTMENTS } from "./calendar/sampleData";
 
 export const AppointmentStats = () => {
   const today = startOfDay(new Date());
   const tomorrow = startOfDay(new Date());
   tomorrow.setDate(tomorrow.getDate() + 1);
   
-  // Calculate stats
-  const todayAppointments = appointments.filter(app => isToday(new Date(app.date)));
-  const tomorrowAppointments = appointments.filter(app => isTomorrow(new Date(app.date)));
-  const upcomingAppointments = appointments.filter(app => 
+  // Calculate stats using the SAMPLE_APPOINTMENTS data
+  const todayAppointments = SAMPLE_APPOINTMENTS.filter(app => isToday(new Date(app.date)));
+  const tomorrowAppointments = SAMPLE_APPOINTMENTS.filter(app => isTomorrow(new Date(app.date)));
+  const upcomingAppointments = SAMPLE_APPOINTMENTS.filter(app => 
     isAfter(new Date(app.date), today) && 
     app.status === "agendado"
   );
-  const pendingAppointments = appointments.filter(app => app.status === "agendado");
+  const pendingAppointments = SAMPLE_APPOINTMENTS.filter(app => app.status === "agendado");
 
   // Format next appointment time
   const nextAppointment = upcomingAppointments.sort((a, b) => 
