@@ -1,3 +1,4 @@
+
 import {
   Table,
   TableBody,
@@ -16,49 +17,19 @@ import React from "react";
 
 interface ProfessionalsTableProps {
   professionals: Professional[];
-  onProfessionalClick?: (id: string) => void;
-  onEditClick?: (professional: Professional, e: React.MouseEvent) => void;
-  onDeleteClick?: (professional: Professional, e: React.MouseEvent) => void;
-  onViewDetails?: (id: string) => void;
-  onEditProfessional?: (professional: Professional) => void;
-  onDeleteProfessional?: (professional: Professional) => void;
+  onProfessionalClick: (id: string) => void;
+  onEditClick: (professional: Professional, e: React.MouseEvent) => void;
+  onDeleteClick: (professional: Professional, e: React.MouseEvent) => void;
 }
 
 export const ProfessionalsTable = ({
   professionals,
   onProfessionalClick,
   onEditClick,
-  onDeleteClick,
-  onViewDetails,
-  onEditProfessional,
-  onDeleteProfessional
+  onDeleteClick
 }: ProfessionalsTableProps) => {
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-  };
-
-  const handleViewDetails = (id: string) => {
-    if (onProfessionalClick) {
-      onProfessionalClick(id);
-    } else if (onViewDetails) {
-      onViewDetails(id);
-    }
-  };
-
-  const handleEdit = (professional: Professional, e: React.MouseEvent) => {
-    if (onEditClick) {
-      onEditClick(professional, e);
-    } else if (onEditProfessional) {
-      onEditProfessional(professional);
-    }
-  };
-
-  const handleDelete = (professional: Professional, e: React.MouseEvent) => {
-    if (onDeleteClick) {
-      onDeleteClick(professional, e);
-    } else if (onDeleteProfessional) {
-      onDeleteProfessional(professional);
-    }
   };
 
   return (
@@ -117,17 +88,17 @@ export const ProfessionalsTable = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleViewDetails(professional.id)}>
+                    <DropdownMenuItem onClick={() => onProfessionalClick(professional.id)}>
                       <Eye size={16} className="mr-2" />
                       Ver detalhes
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => handleEdit(professional, e)}>
+                    <DropdownMenuItem onClick={(e) => onEditClick(professional, e)}>
                       <Edit size={16} className="mr-2" />
                       Editar
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       className="text-red-500 focus:text-red-500"
-                      onClick={(e) => handleDelete(professional, e)}
+                      onClick={(e) => onDeleteClick(professional, e)}
                     >
                       <Trash2 size={16} className="mr-2" />
                       Excluir
