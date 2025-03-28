@@ -22,11 +22,15 @@ export const WeekView = ({
   const { getCalendarBusinessHours } = useBusinessHours();
   const businessHours = propBusinessHours || getCalendarBusinessHours();
   
-  // Get all days of the week from the context's calendarDays
-  const weekDays = Array.isArray(weekAppointments) ? 
-    [...new Set(weekAppointments.map(app => format(app.date, 'yyyy-MM-dd')))]
-      .map(dateStr => new Date(dateStr)) : 
-    [];
+  // Get all days of the week from the current date
+  const startOfWeek = new Date(currentDate);
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Start with Sunday
+  
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(startOfWeek);
+    day.setDate(day.getDate() + i);
+    return day;
+  });
   
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">

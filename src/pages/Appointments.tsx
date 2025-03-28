@@ -10,31 +10,13 @@ import { NewAppointmentDialog } from "@/components/appointments/NewAppointmentDi
 import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { AppointmentStats } from "@/components/appointments/AppointmentStats";
 import { Calendar, Grid3X3 } from "lucide-react";
+import { useRouteCalendarView } from "@/hooks/useRouteCalendarView";
 import { CalendarViewType } from "@/components/appointments/calendar/types";
 
 const Appointments = () => {
   const [view, setView] = useState<"calendar" | "list">("calendar");
   const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
-  const [calendarView, setCalendarView] = useState<CalendarViewType>("month");
-
-  // Function to update URL with the current view
-  const updateUrlView = (newView: CalendarViewType) => {
-    setCalendarView(newView);
-    
-    // Using browser history API to update the URL with the view parameter
-    const url = new URL(window.location.href);
-    url.searchParams.set('view', newView);
-    window.history.pushState({}, '', url);
-  };
-
-  // Initialize view from URL parameter if present
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const viewParam = url.searchParams.get('view') as CalendarViewType | null;
-    if (viewParam && ['month', 'week', 'day'].includes(viewParam)) {
-      setCalendarView(viewParam);
-    }
-  }, []);
+  const { calendarView, updateUrlView } = useRouteCalendarView();
 
   return (
     <OnboardingProvider>
@@ -96,7 +78,7 @@ const Appointments = () => {
             </div>
             
             <TabsContent value="calendar" className="mt-0 p-0">
-              <AppointmentCalendar />
+              <AppointmentCalendar initialView={calendarView} />
             </TabsContent>
             
             <TabsContent value="list" className="mt-0 p-4 bg-white">

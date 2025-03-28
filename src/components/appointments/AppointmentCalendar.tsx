@@ -7,13 +7,17 @@ import { MonthView } from "./calendar/MonthView";
 import { DayView } from "./calendar/DayView";
 import { WeekView } from "./calendar/WeekView";
 import { CalendarFooter } from "./calendar/CalendarFooter";
-import { AppointmentType } from "./calendar/types";
+import { AppointmentType, CalendarViewType } from "./calendar/types";
 import { useBusinessHours } from "@/hooks/useBusinessHours";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { CalendarProvider, useCalendarContext } from "./calendar/CalendarContext";
 import { SERVICE_TYPE_NAMES } from "./types";
 
-export const AppointmentCalendar = () => {
+interface AppointmentCalendarProps {
+  initialView?: CalendarViewType;
+}
+
+export const AppointmentCalendar = ({ initialView }: AppointmentCalendarProps) => {
   // Get appointments from the hook
   const { appointments, isLoading, fetchAppointments } = useAppointments();
   
@@ -37,14 +41,20 @@ export const AppointmentCalendar = () => {
 
   return (
     <CalendarProvider appointments={calendarAppointments}>
-      <CalendarContent isLoading={isLoading} />
+      <CalendarContent isLoading={isLoading} initialView={initialView} />
     </CalendarProvider>
   );
 };
 
-const CalendarContent = ({ isLoading }: { isLoading: boolean }) => {
+interface CalendarContentProps {
+  isLoading: boolean;
+  initialView?: CalendarViewType;
+}
+
+const CalendarContent = ({ isLoading, initialView }: CalendarContentProps) => {
   const { 
     calendarView, 
+    setCalendarView,
     serviceFilter,
     setServiceFilter,
     calendarDays,
@@ -55,6 +65,13 @@ const CalendarContent = ({ isLoading }: { isLoading: boolean }) => {
     handleSelectDay,
     handleSelectAppointment
   } = useCalendarContext();
+  
+  // Set initial view from props if provided
+  useEffect(() => {
+    if (initialView) {
+      setCalendarView(initialView);
+    }
+  }, [initialView, setCalendarView]);
   
   // Get business hours from the hook
   const { getCalendarBusinessHours } = useBusinessHours();
@@ -104,7 +121,7 @@ const CalendarContent = ({ isLoading }: { isLoading: boolean }) => {
         {calendarView === "day" && (
           <DayView 
             appointments={dayAppointments} 
-            onBackToMonth={() => calendarView}
+            onBackToMonth={() => setCalendarView("month")}
           />
         )}
       </div>
