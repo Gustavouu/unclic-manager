@@ -9,7 +9,8 @@ export const SAMPLE_APPOINTMENTS: AppointmentType[] = [
     date: new Date(new Date().setHours(10, 0)),
     clientName: "Mariana Silva",
     serviceName: "Corte e Coloração",
-    serviceType: "hair",
+    serviceType: "haircut",
+    status: "agendado",
     duration: 90,
     price: 180
   },
@@ -18,34 +19,38 @@ export const SAMPLE_APPOINTMENTS: AppointmentType[] = [
     date: new Date(new Date().setHours(14, 30)),
     clientName: "Carlos Santos",
     serviceName: "Barba e Cabelo",
-    serviceType: "barber",
+    serviceType: "combo",
+    status: "agendado",
     duration: 60,
     price: 95
   },
   {
     id: "3",
     date: setHours(setMinutes(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 2), 0), 11),
-    clientName: "Ana Paula Costa",
-    serviceName: "Manicure",
-    serviceType: "nails",
+    clientName: "João Paulo Costa",
+    serviceName: "Corte Degradê",
+    serviceType: "haircut",
+    status: "agendado",
     duration: 45,
     price: 60
   },
   {
     id: "4",
     date: setHours(setMinutes(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1), 0), 15),
-    clientName: "Fernanda Lima",
-    serviceName: "Maquiagem para Evento",
-    serviceType: "makeup",
+    clientName: "Fernando Lima",
+    serviceName: "Barba Completa",
+    serviceType: "barber",
+    status: "concluído",
     duration: 60,
-    price: 120
+    price: 70
   },
   {
     id: "5",
     date: setHours(setMinutes(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1), 0), 9),
     clientName: "Paulo Mendes",
-    serviceName: "Limpeza de Pele",
-    serviceType: "skincare",
+    serviceName: "Tratamento Capilar",
+    serviceType: "treatment",
+    status: "agendado",
     duration: 75,
     price: 150
   },
