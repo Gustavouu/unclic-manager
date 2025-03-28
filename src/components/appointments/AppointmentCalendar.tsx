@@ -23,7 +23,7 @@ import { DayView } from "./calendar/DayView";
 import { WeekView } from "./calendar/WeekView";
 import { CalendarFooter } from "./calendar/CalendarFooter";
 import { Button } from "@/components/ui/button";
-import { Calendar, Grid3X3, Scissors, User } from "lucide-react";
+import { Calendar, Grid3X3 } from "lucide-react";
 import { AppointmentType, CalendarViewType, ServiceType } from "./calendar/types";
 import { SAMPLE_APPOINTMENTS } from "./calendar/sampleData";
 import { useBusinessHours } from "@/hooks/useBusinessHours";
