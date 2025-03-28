@@ -17,6 +17,7 @@ const Finance = () => {
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [period, setPeriod] = useState("30days");
 
   const breadcrumb = [
     { label: "Dashboard", path: "/" },
@@ -45,12 +46,23 @@ const Finance = () => {
         </div>
 
         <Card className="border shadow-sm">
-          <TransactionFilters />
+          <TransactionFilters 
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            typeFilter={typeFilter}
+            setTypeFilter={setTypeFilter}
+            period={period}
+            setPeriod={setPeriod}
+          />
           
           <TransactionsTable 
             isLoading={isLoading}
             filterType="all"
-            period="30days"
+            period={period}
             currentPage={currentPage}
             pageSize={pageSize}
             setCurrentPage={setCurrentPage}

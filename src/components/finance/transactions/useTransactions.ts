@@ -33,9 +33,6 @@ export const useTransactions = (
             data_pagamento,
             clientes (
               nome
-            ),
-            servicos (
-              nome
             )
           `)
           .order('criado_em', { ascending: false });
@@ -54,6 +51,21 @@ export const useTransactions = (
           query = query.gte('criado_em', thirtyDaysAgo.toISOString());
         }
         
+        // Adicionar filtro de pesquisa
+        if (searchTerm && searchTerm.trim() !== '') {
+          query = query.ilike('descricao', `%${searchTerm}%`);
+        }
+        
+        // Adicionar filtro de status
+        if (statusFilter && statusFilter.length > 0) {
+          query = query.in('status', statusFilter);
+        }
+        
+        // Adicionar filtro de tipo
+        if (typeFilter && typeFilter.length > 0) {
+          query = query.in('tipo', typeFilter);
+        }
+        
         const { data, error } = await query.limit(50);
 
         if (error) throw error;
@@ -61,6 +73,7 @@ export const useTransactions = (
         setTransactions(data || []);
       } catch (error) {
         console.error("Erro ao buscar transações:", error);
+        setTransactions([]);
       } finally {
         setLoading(false);
       }

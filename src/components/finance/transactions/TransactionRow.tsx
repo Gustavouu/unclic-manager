@@ -20,7 +20,7 @@ export const TransactionRow = ({ transaction }: TransactionRowProps) => {
         {formatDate(transaction.criado_em)}
       </TableCell>
       <TableCell className="max-w-[200px] truncate" title={transaction.descricao}>
-        {transaction.servico?.nome || transaction.descricao || "—"}
+        {transaction.descricao || "—"}
       </TableCell>
       <TableCell>
         {transaction.cliente?.nome || "Cliente não identificado"}

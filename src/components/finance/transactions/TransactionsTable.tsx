@@ -6,15 +6,16 @@ import { TransactionsTableProps } from "./types";
 import { useTransactions } from "./useTransactions";
 import { TransactionSkeletonRows } from "./TransactionSkeletonRows";
 import { TransactionRow } from "./TransactionRow";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 export function TransactionsTable({ 
   isLoading, 
   filterType = "all", 
   period = "30days",
-  currentPage,
-  pageSize,
-  setCurrentPage,
-  setPageSize,
+  currentPage = 1,
+  pageSize = 10,
+  setCurrentPage = () => {},
+  setPageSize = () => {},
   searchTerm = "",
   dateRange,
   statusFilter = [],
@@ -30,6 +31,16 @@ export function TransactionsTable({
     statusFilter,
     typeFilter
   );
+
+  const totalPages = Math.ceil(transactions.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const visibleTransactions = transactions.slice(startIndex, startIndex + pageSize);
+
+  const handlePageChange = (page: number) => {
+    if (setCurrentPage && page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   return (
     <Card>
@@ -52,8 +63,8 @@ export function TransactionsTable({
           <TableBody>
             {isLoading || loading ? (
               <TransactionSkeletonRows />
-            ) : transactions.length > 0 ? (
-              transactions.map((transaction) => (
+            ) : visibleTransactions.length > 0 ? (
+              visibleTransactions.map((transaction) => (
                 <TransactionRow key={transaction.id} transaction={transaction} />
               ))
             ) : (
@@ -65,6 +76,39 @@ export function TransactionsTable({
             )}
           </TableBody>
         </Table>
+
+        {!isLoading && !loading && transactions.length > 0 && (
+          <div className="mt-4 flex items-center justify-end">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => (
+                  <PaginationItem key={i}>
+                    <PaginationLink 
+                      onClick={() => handlePageChange(i + 1)}
+                      isActive={currentPage === i + 1}
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
