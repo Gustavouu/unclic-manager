@@ -4,6 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { AppointmentType } from "./types";
 import { cn } from "@/lib/utils";
 import { useCalendarContext } from "./CalendarContext";
+import { useBusinessHours } from "@/hooks/useBusinessHours";
 
 type WeekViewProps = {
   weekAppointments: AppointmentType[];
