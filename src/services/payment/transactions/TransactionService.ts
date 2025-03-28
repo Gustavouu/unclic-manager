@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { WebhookService } from "../webhookService";
+import { WebhookService } from "../webhook";
 
 /**
  * Service for handling transaction database operations

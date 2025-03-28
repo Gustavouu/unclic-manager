@@ -2,7 +2,7 @@
 import { PaymentRequest, PaymentResponse } from "./types";
 import { EfiBankService } from "./efiBank";
 import { mapEfiBankStatus } from "./utils";
-import { WebhookService } from "./webhookService";
+import { WebhookService } from "./webhook";
 import { TransactionService } from "./transactions/TransactionService";
 import { PaymentResponseMapper } from "./mappers/PaymentResponseMapper";
 
