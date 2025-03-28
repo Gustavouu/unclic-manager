@@ -1,23 +1,23 @@
 
 import { useState } from "react";
-import { format, addHours, setHours, setMinutes, isWithinInterval, differenceInMinutes } from "date-fns";
+import { format, addHours, setHours, setMinutes, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon, Clock, ChevronLeft, User, Tag } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, ChevronLeft } from "lucide-react";
 import { AppointmentType } from "./types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useCalendarContext } from "./CalendarContext";
 
 type DayViewProps = {
   appointments: AppointmentType[];
-  selectedDate?: Date;
   onBackToMonth: () => void;
 };
 
 export const DayView = ({ 
-  appointments, 
-  selectedDate = new Date(),
+  appointments,
   onBackToMonth
 }: DayViewProps) => {
+  const { selectedDate, setCalendarView } = useCalendarContext();
   const [hoveredSlot, setHoveredSlot] = useState<string | null>(null);
   
   // Create time slots from 8am to 8pm (business hours)
@@ -62,7 +62,7 @@ export const DayView = ({
       <Button 
         variant="ghost" 
         size="sm" 
-        onClick={onBackToMonth}
+        onClick={() => setCalendarView("month")}
         className="mb-2 text-gray-600 flex items-center gap-1 pl-2 m-2"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -141,10 +141,6 @@ export const DayView = ({
                                   <div className="flex items-center gap-1 text-gray-500">
                                     <Clock className="h-3 w-3 text-blue-600" />
                                     <span>{appointment.duration} min</span>
-                                  </div>
-                                  <div className="flex items-center gap-1 text-gray-500">
-                                    <Tag className="h-3 w-3 text-blue-600" />
-                                    <span>R$ {appointment.price.toFixed(2)}</span>
                                   </div>
                                 </div>
                               </div>

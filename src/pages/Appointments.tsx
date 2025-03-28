@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CalendarIcon, List, CalendarPlus } from "lucide-react";
@@ -10,11 +10,31 @@ import { NewAppointmentDialog } from "@/components/appointments/NewAppointmentDi
 import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { AppointmentStats } from "@/components/appointments/AppointmentStats";
 import { Calendar, Grid3X3 } from "lucide-react";
+import { CalendarViewType } from "@/components/appointments/calendar/types";
 
 const Appointments = () => {
   const [view, setView] = useState<"calendar" | "list">("calendar");
   const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
-  const [calendarView, setCalendarView] = useState<"month" | "week">("month");
+  const [calendarView, setCalendarView] = useState<CalendarViewType>("month");
+
+  // Function to update URL with the current view
+  const updateUrlView = (newView: CalendarViewType) => {
+    setCalendarView(newView);
+    
+    // Using browser history API to update the URL with the view parameter
+    const url = new URL(window.location.href);
+    url.searchParams.set('view', newView);
+    window.history.pushState({}, '', url);
+  };
+
+  // Initialize view from URL parameter if present
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const viewParam = url.searchParams.get('view') as CalendarViewType | null;
+    if (viewParam && ['month', 'week', 'day'].includes(viewParam)) {
+      setCalendarView(viewParam);
+    }
+  }, []);
 
   return (
     <OnboardingProvider>
@@ -57,7 +77,7 @@ const Appointments = () => {
                     variant="outline"
                     size="sm"
                     className={`h-9 ${calendarView === 'month' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
-                    onClick={() => setCalendarView('month')}
+                    onClick={() => updateUrlView('month')}
                   >
                     <Grid3X3 size={16} className="mr-1" />
                     Mensal
@@ -66,7 +86,7 @@ const Appointments = () => {
                     variant="outline"
                     size="sm"
                     className={`h-9 ${calendarView === 'week' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
-                    onClick={() => setCalendarView('week')}
+                    onClick={() => updateUrlView('week')}
                   >
                     <Calendar size={16} className="mr-1" />
                     Semanal

@@ -9,28 +9,20 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { CalendarViewType } from "./types";
+import { useCalendarContext } from "./CalendarContext";
 
-type CalendarHeaderProps = {
-  currentDate: Date;
-  selectedDate: Date;
-  calendarView: CalendarViewType;
-  onPrevPeriod: () => void;
-  onNextPeriod: () => void;
-  onSelectDate: (date: Date | undefined) => void;
-  onViewChange: (view: CalendarViewType) => void;
-};
-
-export const CalendarHeader = ({
-  currentDate,
-  selectedDate,
-  calendarView,
-  onPrevPeriod,
-  onNextPeriod,
-  onSelectDate,
-  onViewChange,
-}: CalendarHeaderProps) => {
-  // Formatar o título com base na visualização atual
+export const CalendarHeader = () => {
+  const {
+    currentDate,
+    selectedDate,
+    calendarView,
+    prevPeriod,
+    nextPeriod,
+    handleSelectDate,
+    setCalendarView
+  } = useCalendarContext();
+  
+  // Format the title based on the current view
   let headerTitle = "";
   
   if (calendarView === "month") {
@@ -61,11 +53,7 @@ export const CalendarHeader = ({
               <CalendarComponent
                 mode="single"
                 selected={selectedDate}
-                onSelect={(date) => {
-                  if (date) {
-                    onSelectDate(date);
-                  }
-                }}
+                onSelect={handleSelectDate}
                 initialFocus
                 className="p-3 pointer-events-auto"
                 locale={ptBR}
@@ -81,10 +69,10 @@ export const CalendarHeader = ({
           {headerTitle}
         </h3>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={onPrevPeriod} className="h-7 w-7 hover:bg-blue-100">
+          <Button variant="ghost" size="icon" onClick={prevPeriod} className="h-7 w-7 hover:bg-blue-100">
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={onNextPeriod} className="h-7 w-7 hover:bg-blue-100">
+          <Button variant="ghost" size="icon" onClick={nextPeriod} className="h-7 w-7 hover:bg-blue-100">
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

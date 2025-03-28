@@ -1,31 +1,31 @@
 
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AppointmentType } from "./types";
 import { cn } from "@/lib/utils";
-import { useBusinessHours } from "@/hooks/useBusinessHours";
+import { useCalendarContext } from "./CalendarContext";
 
 type WeekViewProps = {
-  currentDate: Date;
   weekAppointments: AppointmentType[];
   onSelectAppointment: (date: Date) => void;
   businessHours?: Record<string, { isOpen: boolean; hours?: string }>;
 };
 
 export const WeekView = ({
-  currentDate,
   weekAppointments,
   onSelectAppointment,
   businessHours: propBusinessHours,
 }: WeekViewProps) => {
+  const { currentDate } = useCalendarContext();
   // Get business hours from the hook or from props
   const { getCalendarBusinessHours } = useBusinessHours();
   const businessHours = propBusinessHours || getCalendarBusinessHours();
   
-  // Get all days of the week
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
-  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
-  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+  // Get all days of the week from the context's calendarDays
+  const weekDays = Array.isArray(weekAppointments) ? 
+    [...new Set(weekAppointments.map(app => format(app.date, 'yyyy-MM-dd')))]
+      .map(dateStr => new Date(dateStr)) : 
+    [];
   
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
