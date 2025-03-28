@@ -29,6 +29,22 @@ export const usePayment = () => {
     }
   };
 
+  const getPaymentStatus = async (paymentId: string): Promise<PaymentResponse> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await PaymentService.getPaymentStatus(paymentId);
+      return response;
+    } catch (err) {
+      console.error("Payment status error:", err);
+      setError(err instanceof Error ? err : new Error("Unknown payment status error"));
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const openPaymentUrl = () => {
     if (paymentUrl) {
       window.open(paymentUrl, '_blank');
@@ -37,6 +53,7 @@ export const usePayment = () => {
 
   return {
     processPayment,
+    getPaymentStatus,
     isLoading,
     error,
     paymentUrl,
