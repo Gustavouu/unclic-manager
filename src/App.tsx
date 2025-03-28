@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   BrowserRouter,
@@ -46,8 +47,8 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
-          <Route path="/login" element={<Login updateAuthStatus={updateAuthStatus} />} />
-          <Route path="/signup" element={<SignUp updateAuthStatus={updateAuthStatus} />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
           <Route path="/" element={<Index />} />
           <Route path="/website" element={<BusinessWebsite />} />
           <Route path="/onboarding" element={<Onboarding />} />

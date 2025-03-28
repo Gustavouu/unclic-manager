@@ -7,7 +7,7 @@ interface RequireAuthProps {
   children: ReactNode;
 }
 
-const RequireAuth = ({ children }: RequireAuthProps) => {
+export const RequireAuth = ({ children }: RequireAuthProps) => {
   const { user, loading } = useAuth();
   const location = useLocation();
   
