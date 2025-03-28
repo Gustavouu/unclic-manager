@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Appointment } from "@/components/appointments/types";
 import { CreateAppointmentData } from "./types";
-import { isValidUUID, DEFAULT_UUID } from "./utils";
+import { isValidUUID } from "./utils";
 
+// Modify the function to avoid using a DEFAULT_UUID for the business ID
 export const useAppointmentCreate = (
   setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
 ) => {
@@ -13,12 +14,11 @@ export const useAppointmentCreate = (
     try {
       console.log("Creating appointment with data:", appointmentData);
       
-      // Check for valid UUIDs or use sensible defaults
-      const serviceId = isValidUUID(appointmentData.serviceId) ? appointmentData.serviceId : DEFAULT_UUID;
-      const clientId = isValidUUID(appointmentData.clientId) ? appointmentData.clientId : DEFAULT_UUID;
-      const professionalId = isValidUUID(appointmentData.professionalId) ? appointmentData.professionalId : DEFAULT_UUID;
-      const businessId = isValidUUID(appointmentData.businessId) ? appointmentData.businessId : DEFAULT_UUID;
-
+      // Check for valid UUIDs
+      const serviceId = isValidUUID(appointmentData.serviceId) ? appointmentData.serviceId : null;
+      const clientId = isValidUUID(appointmentData.clientId) ? appointmentData.clientId : null;
+      const professionalId = isValidUUID(appointmentData.professionalId) ? appointmentData.professionalId : null;
+      
       // Format dates properly for PostgreSQL
       const appointmentDate = format(appointmentData.date, 'yyyy-MM-dd');
       const startTime = format(appointmentData.date, 'HH:mm:ss');
@@ -31,23 +31,40 @@ export const useAppointmentCreate = (
         endTime 
       });
 
-      // Convert to database format
+      // Get first available business ID from the database or use null
+      const { data: business } = await supabase
+        .from('negocios')
+        .select('id')
+        .limit(1)
+        .single();
+        
+      const businessId = business?.id || null;
+      
+      console.log("Using business ID:", businessId);
+
+      // Convert to database format - only include businessId if it exists
+      const appointment = {
+        data: appointmentDate,
+        hora_inicio: startTime,
+        hora_fim: endTime,
+        duracao: appointmentData.duration,
+        valor: appointmentData.price,
+        status: appointmentData.status,
+        forma_pagamento: appointmentData.paymentMethod || 'local',
+        observacoes: appointmentData.notes,
+        id_servico: serviceId,
+        id_cliente: clientId,
+        id_funcionario: professionalId
+      };
+      
+      // Only add business ID if it exists
+      if (businessId) {
+        Object.assign(appointment, { id_negocio: businessId });
+      }
+      
       const { data, error } = await supabase
         .from('agendamentos')
-        .insert({
-          data: appointmentDate,
-          hora_inicio: startTime,
-          hora_fim: endTime,
-          duracao: appointmentData.duration,
-          valor: appointmentData.price,
-          status: appointmentData.status,
-          forma_pagamento: appointmentData.paymentMethod || 'local',
-          observacoes: appointmentData.notes,
-          id_servico: serviceId,
-          id_cliente: clientId,
-          id_negocio: businessId,
-          id_funcionario: professionalId
-        })
+        .insert(appointment)
         .select()
         .single();
       

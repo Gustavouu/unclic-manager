@@ -1,3 +1,4 @@
+
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -16,7 +17,6 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { v4 as uuidv4 } from "uuid";
-import { DEFAULT_UUID } from "@/hooks/appointments/utils";
 
 type AppointmentFormProps = {
   onClose: () => void;
@@ -56,7 +56,7 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
       const clientId = values.clientId || uuidv4();
       const professionalId = values.professionalId || uuidv4();
       
-      // Create the appointment through the hook with valid UUIDs
+      // Create the appointment through the hook (removed businessId)
       await createAppointment({
         clientName: client?.name || "Cliente não identificado",
         serviceName: selectedService?.name || "Serviço não identificado",
@@ -69,7 +69,6 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
         serviceId: serviceId,
         clientId: clientId,
         professionalId: professionalId,
-        businessId: DEFAULT_UUID,
         paymentMethod: "local" // Default payment method
       });
       
