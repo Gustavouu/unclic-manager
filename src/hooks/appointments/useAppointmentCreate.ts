@@ -6,7 +6,6 @@ import { Appointment } from "@/components/appointments/types";
 import { CreateAppointmentData } from "./types";
 import { isValidUUID } from "./utils";
 
-// Modify the function to avoid using a DEFAULT_UUID for the business ID
 export const useAppointmentCreate = (
   setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
 ) => {
@@ -42,7 +41,12 @@ export const useAppointmentCreate = (
       
       console.log("Using business ID:", businessId);
 
-      // Convert to database format - only include businessId if it exists
+      // Make sure we have a valid business ID, it's required by the database schema
+      if (!businessId) {
+        throw new Error("No business ID available. Please create a business first.");
+      }
+
+      // Convert to database format - always include businessId
       const appointment = {
         data: appointmentDate,
         hora_inicio: startTime,
@@ -54,13 +58,9 @@ export const useAppointmentCreate = (
         observacoes: appointmentData.notes,
         id_servico: serviceId,
         id_cliente: clientId,
-        id_funcionario: professionalId
+        id_funcionario: professionalId,
+        id_negocio: businessId // Always include this field
       };
-      
-      // Only add business ID if it exists
-      if (businessId) {
-        Object.assign(appointment, { id_negocio: businessId });
-      }
       
       const { data, error } = await supabase
         .from('agendamentos')

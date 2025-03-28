@@ -56,7 +56,7 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
       const clientId = values.clientId || uuidv4();
       const professionalId = values.professionalId || uuidv4();
       
-      // Create the appointment through the hook (removed businessId)
+      // Create the appointment through the hook
       await createAppointment({
         clientName: client?.name || "Cliente não identificado",
         serviceName: selectedService?.name || "Serviço não identificado",

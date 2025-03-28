@@ -13,7 +13,7 @@ export interface CreateAppointmentData {
   serviceId?: string;
   clientId?: string;
   professionalId?: string;
-  businessId?: string; // Make businessId optional
+  businessId?: string; 
   paymentMethod?: string;
 }
 
