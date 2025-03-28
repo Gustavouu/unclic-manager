@@ -23,10 +23,19 @@ import { DayView } from "./calendar/DayView";
 import { WeekView } from "./calendar/WeekView";
 import { CalendarFooter } from "./calendar/CalendarFooter";
 import { Button } from "@/components/ui/button";
-import { Calendar, Grid3X3 } from "lucide-react";
-import { AppointmentType, CalendarViewType, ServiceType, SERVICE_TYPE_NAMES } from "./calendar/types";
+import { Calendar, Grid3X3, Scissors, User } from "lucide-react";
+import { AppointmentType, CalendarViewType, ServiceType } from "./calendar/types";
 import { SAMPLE_APPOINTMENTS } from "./calendar/sampleData";
 import { useBusinessHours } from "@/hooks/useBusinessHours";
+
+// Redefinir os tipos de serviço específicos para barbearia
+export const SERVICE_TYPE_NAMES: Record<ServiceType, string> = {
+  all: "Todos os Serviços",
+  haircut: "Corte de Cabelo",
+  barber: "Barba",
+  combo: "Corte e Barba",
+  treatment: "Tratamentos"
+};
 
 const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 

@@ -1,14 +1,7 @@
 
-import { ServiceType, SERVICE_TYPE_NAMES } from "./types";
+import { ServiceType } from "./types";
 import { cn } from "@/lib/utils";
-import { 
-  Scissors, 
-  Music2, 
-  Smile, 
-  Sparkles,
-  Palette, 
-  FilterX 
-} from "lucide-react";
+import { Scissors, UserSquare2, Sparkles, FilterX } from "lucide-react";
 
 type CalendarFilterProps = {
   serviceFilter: ServiceType;
@@ -21,20 +14,19 @@ export const CalendarFilter = ({
   onFilterChange,
   serviceTypes,
 }: CalendarFilterProps) => {
-  // Map service types to icons
+  // Map service types to icons - updated for barbershop
   const serviceIcons: Record<ServiceType, React.ReactNode> = {
     all: <FilterX size={16} />,
-    hair: <Scissors size={16} />,
-    barber: <Music2 size={16} />,
-    nails: <Sparkles size={16} />,
-    makeup: <Palette size={16} />,
-    skincare: <Smile size={16} />,
+    haircut: <Scissors size={16} />,
+    barber: <UserSquare2 size={16} />,
+    combo: <Scissors size={16} />,
+    treatment: <Sparkles size={16} />,
   };
 
   return (
     <div>
       <div className="flex items-center">
-        <h3 className="text-sm text-gray-700 mb-2">Filtrar por tipo de serviço</h3>
+        <h3 className="text-sm text-gray-700 mb-2">Filtrar por serviço</h3>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {Object.entries(serviceTypes).map(([type, label]) => (

@@ -2,15 +2,15 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Clock, Calendar as CalendarIcon } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, User, Scissors } from "lucide-react";
 import { SearchBar } from "./list/SearchBar";
 import { FiltersButton } from "./list/FiltersButton";
 import { FiltersPanel } from "./list/FiltersPanel";
-import { AppointmentsTable } from "./list/AppointmentsTable";
 import { useAppointmentsFilter } from "./list/hooks/useAppointmentsFilter";
 import { appointments } from "./data/appointmentsSampleData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const AppointmentsList = () => {
   const { 
@@ -48,10 +48,11 @@ export const AppointmentsList = () => {
   return (
     <div className="space-y-4">
       <div className="flex flex-col space-y-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-center gap-2">
           <SearchBar 
             searchTerm={searchTerm} 
             setSearchTerm={setSearchTerm} 
+            className="w-full sm:w-auto sm:flex-1"
           />
           <FiltersButton 
             showFilters={showFilters} 
@@ -98,7 +99,11 @@ export const AppointmentsList = () => {
                     <div key={appointment.id} className="p-4 hover:bg-gray-50 transition-colors flex justify-between items-center">
                       <div className="flex items-start gap-3">
                         <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                          <Clock className="h-5 w-5" />
+                          {appointment.serviceType === "haircut" || appointment.serviceType === "combo" ? (
+                            <Scissors className="h-5 w-5" />
+                          ) : (
+                            <User className="h-5 w-5" />
+                          )}
                         </div>
                         <div>
                           <div className="font-medium text-gray-900">{appointment.clientName}</div>
@@ -136,6 +141,13 @@ export const AppointmentsList = () => {
       ) : (
         <div className="text-center py-10 border rounded-lg bg-gray-50">
           <p className="text-gray-500">Nenhum agendamento encontrado.</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={handleResetFilters}
+          >
+            Limpar filtros
+          </Button>
         </div>
       )}
     </div>

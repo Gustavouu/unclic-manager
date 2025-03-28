@@ -1,26 +1,24 @@
 
-import { ReactNode } from "react";
-
-export type ServiceType = "all" | "hair" | "barber" | "nails" | "makeup" | "skincare";
+export type AppointmentStatus = "agendado" | "concluído" | "cancelado";
+export type ServiceType = "all" | "haircut" | "barber" | "combo" | "treatment";
+export type CalendarViewType = "month" | "week" | "day";
 
 export type AppointmentType = {
   id: string;
-  date: Date;
   clientName: string;
   serviceName: string;
-  serviceType: string;
-  duration: number;
+  date: Date;
+  status: AppointmentStatus;
   price: number;
+  serviceType: ServiceType;
+  duration: number;
 };
 
-// Map service types to display names
+// Map service types to display names for barbershop
 export const SERVICE_TYPE_NAMES: Record<ServiceType, string> = {
   all: "Todos os Serviços",
-  hair: "Cabelo",
-  barber: "Barbearia",
-  nails: "Manicure/Pedicure",
-  makeup: "Maquiagem",
-  skincare: "Estética Facial"
+  haircut: "Corte de Cabelo",
+  barber: "Barba",
+  combo: "Corte e Barba",
+  treatment: "Tratamentos"
 };
-
-export type CalendarViewType = "month" | "week" | "day";

@@ -1,6 +1,6 @@
 
 export type AppointmentStatus = "agendado" | "concluído" | "cancelado";
-export type ServiceType = "all" | "hair" | "barber" | "nails" | "makeup" | "skincare";
+export type ServiceType = "all" | "haircut" | "barber" | "combo" | "treatment";
 export type DateFilter = "all" | "today" | "tomorrow" | "thisWeek" | "custom";
 
 export interface Appointment {
@@ -13,12 +13,11 @@ export interface Appointment {
   serviceType: string;
 }
 
-// Map service types to display names
+// Map service types to display names for barbershop
 export const SERVICE_TYPE_NAMES: Record<ServiceType, string> = {
   all: "Todos os Serviços",
-  hair: "Cabelo",
-  barber: "Barbearia",
-  nails: "Manicure/Pedicure",
-  makeup: "Maquiagem",
-  skincare: "Estética Facial"
+  haircut: "Corte de Cabelo",
+  barber: "Barba",
+  combo: "Corte e Barba",
+  treatment: "Tratamentos"
 };

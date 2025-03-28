@@ -5,17 +5,19 @@ import { Input } from "@/components/ui/input";
 interface SearchBarProps {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
+  className?: string;
 }
 
-export const SearchBar = ({ searchTerm, setSearchTerm }: SearchBarProps) => {
+export const SearchBar = ({ searchTerm, setSearchTerm, className = "" }: SearchBarProps) => {
   return (
-    <div className="relative flex-1">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-      <Input 
+    <div className={`relative ${className}`}>
+      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Input
+        type="text"
         placeholder="Buscar por cliente ou serviço..."
-        className="pl-9"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
+        className="pl-9"
       />
     </div>
   );

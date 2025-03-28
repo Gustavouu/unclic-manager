@@ -1,5 +1,5 @@
 
-import { Sparkles } from "lucide-react";
+import { Scissors } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
@@ -18,7 +18,7 @@ export const ServiceTypeFilter = ({ serviceFilter, setServiceFilter }: ServiceTy
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 text-sm font-medium">
-        <Sparkles size={16} className="text-muted-foreground" />
+        <Scissors size={16} className="text-muted-foreground" />
         Tipo de Serviço
       </div>
       <Select
@@ -30,11 +30,10 @@ export const ServiceTypeFilter = ({ serviceFilter, setServiceFilter }: ServiceTy
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todos os serviços</SelectItem>
-          <SelectItem value="hair">Cabelo</SelectItem>
-          <SelectItem value="barber">Barbearia</SelectItem>
-          <SelectItem value="nails">Manicure/Pedicure</SelectItem>
-          <SelectItem value="makeup">Maquiagem</SelectItem>
-          <SelectItem value="skincare">Estética Facial</SelectItem>
+          <SelectItem value="haircut">Corte de Cabelo</SelectItem>
+          <SelectItem value="barber">Barba</SelectItem>
+          <SelectItem value="combo">Corte e Barba</SelectItem>
+          <SelectItem value="treatment">Tratamentos</SelectItem>
         </SelectContent>
       </Select>
     </div>
