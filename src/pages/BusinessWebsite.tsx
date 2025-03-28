@@ -48,8 +48,10 @@ const BusinessWebsite = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Banner Component */}
-      <WebsiteBanner businessData={displayBusinessData} />
+      {/* Only show banner when booking flow is not visible */}
+      {!showBookingFlow && (
+        <WebsiteBanner businessData={displayBusinessData} />
+      )}
 
       <AnimatePresence>
         {showBookingFlow && (

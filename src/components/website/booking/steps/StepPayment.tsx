@@ -6,9 +6,10 @@ import { BookingData } from "../WebsiteBookingFlow";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CreditCard, Banknote, Smartphone } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { formatPrice } from "@/components/website/WebsiteUtils";
+import { usePayment } from "@/hooks/usePayment";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface StepPaymentProps {
   bookingData: BookingData;
@@ -21,15 +22,76 @@ export function StepPayment({
 }: StepPaymentProps) {
   const [paymentMethod, setPaymentMethod] = useState<string>("credit_card");
   const [isProcessing, setIsProcessing] = useState(false);
+  const { processPayment } = usePayment();
 
-  const handlePayment = () => {
+  const handlePaymentMethodSelect = (method: string) => {
+    setPaymentMethod(method);
+  };
+
+  const createAppointment = async (paymentId: string) => {
+    try {
+      // Create appointment in the database
+      const { data, error } = await supabase
+        .from('agendamentos')
+        .insert({
+          id_servico: bookingData.serviceId,
+          id_cliente: "1", // Assuming a default client ID for now
+          valor: bookingData.servicePrice,
+          status: 'confirmado',
+          data: bookingData.date?.toISOString().split('T')[0],
+          hora_inicio: bookingData.time,
+          hora_fim: bookingData.time, // This should be calculated based on duration
+          duracao: bookingData.serviceDuration,
+          id_negocio: "1", // Example business ID
+          id_funcionario: bookingData.professionalId,
+          forma_pagamento: paymentMethod,
+          observacoes: bookingData.notes
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Update the transaction with the new appointment ID
+      await supabase
+        .from('transacoes')
+        .update({ id_agendamento: data.id })
+        .eq('id', paymentId);
+      
+      return data.id;
+    } catch (error) {
+      console.error("Error creating appointment:", error);
+      throw error;
+    }
+  };
+
+  const handlePayment = async () => {
     setIsProcessing(true);
     
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      // Process payment using the usePayment hook
+      const paymentResult = await processPayment({
+        serviceId: bookingData.serviceId,
+        amount: bookingData.servicePrice,
+        customerId: "1", // Assuming a default customer ID for now
+        paymentMethod: paymentMethod,
+        description: `Pagamento para ${bookingData.serviceName} com ${bookingData.professionalName}`
+      });
+      
+      if (paymentResult.status === 'approved' || paymentResult.status === 'pending') {
+        // Create the appointment in the database
+        await createAppointment(paymentResult.id);
+        toast.success("Agendamento confirmado com sucesso!");
+        nextStep();
+      } else {
+        toast.error("Erro no processamento do pagamento. Por favor, tente novamente.");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error("Ocorreu um erro ao processar o pagamento. Por favor, tente novamente mais tarde.");
+    } finally {
       setIsProcessing(false);
-      nextStep();
-    }, 2000);
+    }
   };
 
   return (
@@ -69,50 +131,37 @@ export function StepPayment({
         <div className="space-y-4">
           <h3 className="font-medium">Escolha a forma de pagamento</h3>
           
-          <RadioGroup 
-            defaultValue={paymentMethod} 
-            onValueChange={setPaymentMethod}
-            className="grid gap-4"
-          >
-            <div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="credit_card" id="credit_card" />
-                <Label 
-                  htmlFor="credit_card" 
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <CreditCard className="h-4 w-4" />
-                  Cartão de Crédito
-                </Label>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Button
+              type="button"
+              variant={paymentMethod === "credit_card" ? "default" : "outline"}
+              className="flex flex-col items-center justify-center h-24 gap-2"
+              onClick={() => handlePaymentMethodSelect("credit_card")}
+            >
+              <CreditCard className="h-6 w-6" />
+              <span>Cartão de Crédito</span>
+            </Button>
             
-            <div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="pix" id="pix" />
-                <Label 
-                  htmlFor="pix" 
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <Smartphone className="h-4 w-4" />
-                  PIX
-                </Label>
-              </div>
-            </div>
+            <Button
+              type="button"
+              variant={paymentMethod === "pix" ? "default" : "outline"}
+              className="flex flex-col items-center justify-center h-24 gap-2"
+              onClick={() => handlePaymentMethodSelect("pix")}
+            >
+              <Smartphone className="h-6 w-6" />
+              <span>PIX</span>
+            </Button>
             
-            <div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="cash" id="cash" />
-                <Label 
-                  htmlFor="cash" 
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <Banknote className="h-4 w-4" />
-                  Dinheiro no Local
-                </Label>
-              </div>
-            </div>
-          </RadioGroup>
+            <Button
+              type="button"
+              variant={paymentMethod === "cash" ? "default" : "outline"}
+              className="flex flex-col items-center justify-center h-24 gap-2"
+              onClick={() => handlePaymentMethodSelect("cash")}
+            >
+              <Banknote className="h-6 w-6" />
+              <span>Dinheiro no Local</span>
+            </Button>
+          </div>
         </div>
       </CardContent>
       <CardFooter>

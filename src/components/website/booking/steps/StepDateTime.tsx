@@ -27,9 +27,6 @@ export function StepDateTime({
   const [selectedTime, setSelectedTime] = useState<string>(
     bookingData.time || ""
   );
-  const [notes, setNotes] = useState<string>(
-    bookingData.notes || ""
-  );
   
   // Add state for the active period filter
   const [activePeriod, setActivePeriod] = useState<Period>("morning");
@@ -42,7 +39,7 @@ export function StepDateTime({
       updateBookingData({
         date: selectedDate,
         time: selectedTime,
-        notes: notes
+        notes: "" // Keep empty notes
       });
       nextStep();
     }
@@ -87,8 +84,6 @@ export function StepDateTime({
           <DateTimeForm
             selectedDate={selectedDate}
             handleDateSelect={handleDateSelect}
-            notes={notes}
-            setNotes={setNotes}
           />
 
           {selectedDate && (

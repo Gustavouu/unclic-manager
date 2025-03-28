@@ -9,7 +9,7 @@ import { StepPayment } from "./steps/StepPayment";
 import { StepConfirmation } from "./steps/StepConfirmation";
 import { ServiceData, StaffData } from "@/contexts/onboarding/types";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 
 // Extended types for booking flow components
 export interface ExtendedStaffData extends StaffData {
@@ -152,7 +152,7 @@ export function WebsiteBookingFlow({
 
   const getStepTitle = () => {
     switch (step) {
-      case 0: return "Agendamento";
+      case 0: return "";
       case 1: return "Escolha do Serviço";
       case 2: return "Escolha do Profissional";
       case 3: return "Data e Hora";
@@ -163,7 +163,16 @@ export function WebsiteBookingFlow({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto mt-8 mb-16 px-4 bg-white rounded-xl shadow-lg p-6">
+    <div className="w-full max-w-4xl mx-auto mt-8 mb-16 px-4 bg-white rounded-xl shadow-lg p-6 relative">
+      <Button 
+        size="icon" 
+        variant="outline" 
+        className="absolute right-6 top-6 z-10 bg-white hover:bg-gray-100"
+        onClick={closeFlow}
+      >
+        <X className="h-4 w-4" />
+      </Button>
+
       <div className="mb-6">
         {step > 0 && renderProgressBar()}
         
