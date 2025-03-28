@@ -25,10 +25,13 @@ export const TransactionService = {
       // Generate a unique transaction ID
       const transactionId = uuidv4();
       
-      // Ensure we have a valid businessId (UUID format)
-      const businessId = data.businessId && !data.businessId.includes("-") 
-        ? uuidv4() // If it's not in UUID format, generate a new one
-        : (data.businessId || uuidv4());
+      // Garante um ID de negócio válido em formato UUID
+      let businessId = data.businessId;
+      
+      // Se não for fornecido ou for inválido, cria um novo
+      if (!businessId || businessId === "1" || !businessId.includes("-")) {
+        businessId = uuidv4();
+      }
       
       // Create an in-memory transaction for demo purposes
       const transaction = {

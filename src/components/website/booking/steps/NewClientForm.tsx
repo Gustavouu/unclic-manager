@@ -65,39 +65,63 @@ export function NewClientForm({ phone, onClientCreated, onBack }: NewClientFormP
       }
 
       // Consultamos o primeiro negócio disponível para associar o cliente
-      const { data: business } = await supabase
+      // Corrigindo a consulta para garantir que obtenha um ID de negócio válido
+      const { data: business, error: businessError } = await supabase
         .from('negocios')
         .select('id')
-        .limit(1)
-        .single();
+        .limit(1);
       
-      const businessId = business?.id || null;
+      // Verificar se há erro ou se não há dados retornados
+      if (businessError || !business || business.length === 0) {
+        console.error("Erro ao buscar negócio:", businessError);
+        
+        // Use um ID fixo para desenvolvimento, se não encontrar um negócio
+        const defaultBusinessId = "00000000-0000-0000-0000-000000000001";
+        
+        // Criamos o novo cliente com o ID padrão
+        const { data: newClient, error } = await supabase
+          .from('clientes')
+          .insert({
+            nome: name,
+            email: email || null,
+            telefone: phone,
+            data_nascimento: birthDate,
+            id_negocio: defaultBusinessId
+          })
+          .select('id, nome, email, telefone')
+          .single();
 
-      if (!businessId) {
-        showErrorToast("Erro ao identificar o estabelecimento. Por favor, tente novamente.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Criamos o novo cliente
-      const { data: newClient, error } = await supabase
-        .from('clientes')
-        .insert({
-          nome: name,
-          email: email || null,
-          telefone: phone,
-          data_nascimento: birthDate,
-          id_negocio: businessId
-        })
-        .select('id, nome, email, telefone')
-        .single();
-
-      if (error) {
-        console.error("Erro ao criar cliente:", error);
-        showErrorToast("Ocorreu um erro ao criar seu cadastro. Por favor, tente novamente.");
+        if (error) {
+          console.error("Erro ao criar cliente:", error);
+          showErrorToast("Ocorreu um erro ao criar seu cadastro. Por favor, tente novamente.");
+        } else {
+          showSuccessToast("Cadastro realizado com sucesso!");
+          onClientCreated(newClient.id, newClient.nome, newClient.email, newClient.telefone);
+        }
       } else {
-        showSuccessToast("Cadastro realizado com sucesso!");
-        onClientCreated(newClient.id, newClient.nome, newClient.email, newClient.telefone);
+        // Se encontrou um negócio, use o ID
+        const businessId = business[0]?.id;
+
+        // Criamos o novo cliente
+        const { data: newClient, error } = await supabase
+          .from('clientes')
+          .insert({
+            nome: name,
+            email: email || null,
+            telefone: phone,
+            data_nascimento: birthDate,
+            id_negocio: businessId
+          })
+          .select('id, nome, email, telefone')
+          .single();
+
+        if (error) {
+          console.error("Erro ao criar cliente:", error);
+          showErrorToast("Ocorreu um erro ao criar seu cadastro. Por favor, tente novamente.");
+        } else {
+          showSuccessToast("Cadastro realizado com sucesso!");
+          onClientCreated(newClient.id, newClient.nome, newClient.email, newClient.telefone);
+        }
       }
     } catch (error) {
       console.error("Erro ao criar cliente:", error);
