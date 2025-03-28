@@ -17,7 +17,10 @@ export const NewProfessionalDialog = ({
   onOpenChange 
 }: NewProfessionalDialogProps) => {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog 
+      open={open} 
+      onOpenChange={onOpenChange}
+    >
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">Adicionar Novo Colaborador</DialogTitle>

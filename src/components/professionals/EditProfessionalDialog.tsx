@@ -22,9 +22,11 @@ export const EditProfessionalDialog = ({
 }: EditProfessionalDialogProps) => {
   const [currentProfessional, setCurrentProfessional] = useState<Professional | null>(null);
   
+  // When the dialog opens or professional changes, update the local state
   useEffect(() => {
     if (professional && open) {
-      setCurrentProfessional(professional);
+      // Create a deep copy to avoid reference issues
+      setCurrentProfessional({...professional});
     }
   }, [professional, open]);
 
@@ -33,16 +35,7 @@ export const EditProfessionalDialog = ({
   return (
     <Dialog 
       open={open} 
-      onOpenChange={(isOpen) => {
-        if (!isOpen) {
-          // Delay closing to avoid flickering
-          setTimeout(() => {
-            onOpenChange(false);
-          }, 0);
-        } else {
-          onOpenChange(true);
-        }
-      }}
+      onOpenChange={onOpenChange}
     >
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
         <DialogHeader>

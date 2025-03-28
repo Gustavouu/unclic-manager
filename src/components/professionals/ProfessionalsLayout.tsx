@@ -49,23 +49,18 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
     ? professionals.slice(indexOfFirstItem, indexOfLastItem) 
     : [];
   
+  // Update key to force rerender when professionals change
   useEffect(() => {
-    // Increment key to force rerender when professionals change
     setKey(Date.now());
     console.log("Profissionais atualizados na interface:", professionals);
   }, [professionals]);
   
-  // Reset dialog state whenever professionals change
+  // Reset page to 1 when professionals array changes length
   useEffect(() => {
-    if (!isLoading) {
-      if (editOpen && professionalToEdit) {
-        const updatedProfessional = professionals.find(p => p.id === professionalToEdit.id);
-        if (updatedProfessional) {
-          setProfessionalToEdit(updatedProfessional);
-        }
-      }
+    if (professionals?.length) {
+      setCurrentPage(1);
     }
-  }, [professionals, isLoading, editOpen, professionalToEdit]);
+  }, [professionals?.length]);
   
   // Handle professional click
   const handleProfessionalClick = (id: string) => {

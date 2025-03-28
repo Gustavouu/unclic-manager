@@ -8,10 +8,10 @@ export const useProfessionals = () => {
   const {
     professionals: fetchedProfessionals,
     isLoading,
-    addProfessional,
-    updateProfessional,
+    addProfessional: addProfessionalOp,
+    updateProfessional: updateProfessionalOp,
     updateProfessionalStatus,
-    removeProfessional
+    removeProfessional: removeProfessionalOp
   } = useProfessionalOperations();
   
   // Ensure professionals is always an array
@@ -31,7 +31,7 @@ export const useProfessionals = () => {
   // Wrap the operations to ensure state is updated correctly
   const handleAddProfessional = async (data: any) => {
     try {
-      const result = await addProfessional(data);
+      const result = await addProfessionalOp(data);
       return result;
     } catch (error) {
       console.error("Error in useProfessionals.handleAddProfessional:", error);
@@ -41,7 +41,7 @@ export const useProfessionals = () => {
 
   const handleUpdateProfessional = async (id: string, data: any) => {
     try {
-      await updateProfessional(id, data);
+      await updateProfessionalOp(id, data);
       return true;
     } catch (error) {
       console.error("Error in useProfessionals.handleUpdateProfessional:", error);
@@ -51,7 +51,7 @@ export const useProfessionals = () => {
 
   const handleRemoveProfessional = async (id: string) => {
     try {
-      await removeProfessional(id);
+      await removeProfessionalOp(id);
       return true;
     } catch (error) {
       console.error("Error in useProfessionals.handleRemoveProfessional:", error);

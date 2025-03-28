@@ -16,7 +16,7 @@ export const useProfessionalOperations = () => {
     
     try {
       // Simular requisição
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const newProfessional: Professional = {
         id: uuidv4(),
@@ -70,7 +70,7 @@ export const useProfessionalOperations = () => {
     
     try {
       // Simular requisição
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       setProfessionals(prev => {
         const updated = prev.map(p => p.id === id ? { ...p, ...data } : p);
@@ -83,6 +83,8 @@ export const useProfessionalOperations = () => {
         title: "Colaborador atualizado",
         description: "As informações foram atualizadas com sucesso!"
       });
+      
+      return true;
     } catch (error) {
       console.error("Erro ao atualizar profissional:", error);
       toast({
@@ -102,7 +104,7 @@ export const useProfessionalOperations = () => {
     
     try {
       // Simular requisição
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       setProfessionals(prev => {
         const updated = prev.map(p => p.id === id ? { ...p, status } : p);
@@ -122,6 +124,8 @@ export const useProfessionalOperations = () => {
         title: "Status atualizado",
         description: `Colaborador agora está: ${statusLabels[status]}`
       });
+      
+      return true;
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
       toast({
@@ -141,7 +145,7 @@ export const useProfessionalOperations = () => {
     
     try {
       // Simular requisição
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const professional = professionals.find(p => p.id === id);
       
@@ -156,6 +160,8 @@ export const useProfessionalOperations = () => {
         title: "Colaborador removido",
         description: `${professional?.name} foi removido com sucesso!`
       });
+      
+      return true;
     } catch (error) {
       console.error("Erro ao remover profissional:", error);
       toast({
