@@ -26,7 +26,7 @@ export const WebsiteBookingModal: React.FC<WebsiteBookingModalProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-background/95 flex items-start justify-center pt-4 pb-8 overflow-y-auto"
+      className="fixed inset-0 z-50 bg-white flex items-start justify-center pt-4 pb-8 overflow-y-auto"
     >
       <div className="relative w-full max-w-5xl mx-4">
         <WebsiteBookingFlow 

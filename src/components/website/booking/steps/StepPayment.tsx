@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,30 +131,30 @@ export function StepPayment({
             <Button
               type="button"
               variant={paymentMethod === "credit_card" ? "default" : "outline"}
-              className="flex flex-col items-center justify-center h-24 gap-2"
+              className="flex items-center justify-center py-3 gap-2 h-auto"
               onClick={() => handlePaymentMethodSelect("credit_card")}
             >
-              <CreditCard className="h-6 w-6" />
+              <CreditCard className="h-5 w-5" />
               <span>Cartão de Crédito</span>
             </Button>
             
             <Button
               type="button"
               variant={paymentMethod === "pix" ? "default" : "outline"}
-              className="flex flex-col items-center justify-center h-24 gap-2"
+              className="flex items-center justify-center py-3 gap-2 h-auto"
               onClick={() => handlePaymentMethodSelect("pix")}
             >
-              <Smartphone className="h-6 w-6" />
+              <Smartphone className="h-5 w-5" />
               <span>PIX</span>
             </Button>
             
             <Button
               type="button"
               variant={paymentMethod === "cash" ? "default" : "outline"}
-              className="flex flex-col items-center justify-center h-24 gap-2"
+              className="flex items-center justify-center py-3 gap-2 h-auto"
               onClick={() => handlePaymentMethodSelect("cash")}
             >
-              <Banknote className="h-6 w-6" />
+              <Banknote className="h-5 w-5" />
               <span>Dinheiro no Local</span>
             </Button>
           </div>
