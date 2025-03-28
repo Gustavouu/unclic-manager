@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
@@ -9,6 +9,8 @@ import { PeriodFilter } from "./datetime/PeriodFilter";
 import { TimeSlots } from "./datetime/TimeSlots";
 import { DateTimeForm } from "./datetime/DateTimeForm";
 import { BookingData } from "../types";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Clock } from "lucide-react";
 
 interface StepDateTimeProps {
   bookingData: BookingData;
@@ -31,8 +33,8 @@ export function StepDateTime({
   // Add state for the active period filter
   const [activePeriod, setActivePeriod] = useState<Period>("morning");
 
-  // Get time slots using the custom hook
-  const { morningSlots, afternoonSlots, eveningSlots } = useTimeSlots();
+  // Get time slots using the custom hook with the selected date
+  const { morningSlots, afternoonSlots, eveningSlots, isBusinessOpen } = useTimeSlots(selectedDate);
 
   const handleContinue = () => {
     if (selectedDate && selectedTime) {
@@ -61,10 +63,16 @@ export function StepDateTime({
   // Set default period when date changes
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
+    setSelectedTime("");
     if (date) {
       setDefaultActivePeriod();
     }
   };
+
+  // Reset selected time when date changes
+  useEffect(() => {
+    setSelectedTime("");
+  }, [selectedDate]);
 
   // Period button click handler
   const handlePeriodClick = (period: Period) => {
@@ -92,24 +100,36 @@ export function StepDateTime({
                 Horários disponíveis para {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
               </h3>
               
-              {/* Period filter buttons */}
-              <PeriodFilter
-                activePeriod={activePeriod}
-                handlePeriodClick={handlePeriodClick}
-                morningSlots={morningSlots}
-                afternoonSlots={afternoonSlots}
-                eveningSlots={eveningSlots}
-              />
-              
-              {/* Time slots */}
-              <TimeSlots
-                morningSlots={morningSlots}
-                afternoonSlots={afternoonSlots}
-                eveningSlots={eveningSlots}
-                selectedTime={selectedTime}
-                setSelectedTime={setSelectedTime}
-                activePeriod={activePeriod}
-              />
+              {isBusinessOpen ? (
+                <>
+                  {/* Period filter buttons */}
+                  <PeriodFilter
+                    activePeriod={activePeriod}
+                    handlePeriodClick={handlePeriodClick}
+                    morningSlots={morningSlots}
+                    afternoonSlots={afternoonSlots}
+                    eveningSlots={eveningSlots}
+                  />
+                  
+                  {/* Time slots */}
+                  <TimeSlots
+                    morningSlots={morningSlots}
+                    afternoonSlots={afternoonSlots}
+                    eveningSlots={eveningSlots}
+                    selectedTime={selectedTime}
+                    setSelectedTime={setSelectedTime}
+                    activePeriod={activePeriod}
+                  />
+                </>
+              ) : (
+                <Alert className="mt-4">
+                  <Clock className="h-4 w-4" />
+                  <AlertTitle>Estabelecimento fechado</AlertTitle>
+                  <AlertDescription>
+                    O estabelecimento não funciona neste dia. Por favor, selecione outra data.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           )}
         </div>
@@ -117,7 +137,7 @@ export function StepDateTime({
       <CardFooter className="px-0">
         <Button 
           className="w-full" 
-          disabled={!selectedDate || !selectedTime}
+          disabled={!selectedDate || !selectedTime || !isBusinessOpen}
           onClick={handleContinue}
         >
           Continuar para Pagamento

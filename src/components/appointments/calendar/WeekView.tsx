@@ -3,28 +3,23 @@ import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "da
 import { ptBR } from "date-fns/locale";
 import { AppointmentType } from "./types";
 import { cn } from "@/lib/utils";
+import { useBusinessHours } from "@/hooks/useBusinessHours";
 
 type WeekViewProps = {
   currentDate: Date;
   weekAppointments: AppointmentType[];
   onSelectAppointment: (date: Date) => void;
-  businessHours: Record<string, { isOpen: boolean; hours?: string }>;
 };
 
 export const WeekView = ({
   currentDate,
   weekAppointments,
   onSelectAppointment,
-  businessHours = {
-    0: { isOpen: false }, // Sunday
-    1: { isOpen: true, hours: "09:00 - 18:00" }, // Monday
-    2: { isOpen: true, hours: "09:00 - 18:00" }, // Tuesday
-    3: { isOpen: true, hours: "09:00 - 18:00" }, // Wednesday
-    4: { isOpen: true, hours: "09:00 - 18:00" }, // Thursday
-    5: { isOpen: true, hours: "09:00 - 18:00" }, // Friday
-    6: { isOpen: true, hours: "09:00 - 16:00" }, // Saturday
-  }
 }: WeekViewProps) => {
+  // Get business hours from the hook
+  const { getCalendarBusinessHours } = useBusinessHours();
+  const businessHours = getCalendarBusinessHours();
+  
   // Get all days of the week
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });

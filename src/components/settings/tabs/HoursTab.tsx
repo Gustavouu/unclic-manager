@@ -1,13 +1,54 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
+import { toast } from "sonner";
 
 export const HoursTab = () => {
+  const { businessHours, updateBusinessHours, saveProgress } = useOnboarding();
+  const [isEditing, setIsEditing] = useState(false);
+  
+  const days = [
+    { key: "monday", label: "Segunda-feira" },
+    { key: "tuesday", label: "Terça-feira" },
+    { key: "wednesday", label: "Quarta-feira" },
+    { key: "thursday", label: "Quinta-feira" },
+    { key: "friday", label: "Sexta-feira" },
+    { key: "saturday", label: "Sábado" },
+    { key: "sunday", label: "Domingo" }
+  ];
+  
+  const timeOptions = [
+    "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", "09:00", "09:30", 
+    "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", 
+    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", 
+    "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", 
+    "22:00", "22:30", "23:00", "23:30"
+  ];
+  
+  const handleToggleDay = (day: string, checked: boolean) => {
+    updateBusinessHours(day, { open: checked });
+  };
+  
+  const handleTimeChange = (day: string, field: 'openTime' | 'closeTime', value: string) => {
+    updateBusinessHours(day, { [field]: value });
+  };
+  
+  const handleSaveChanges = () => {
+    saveProgress();
+    toast.success("Horários salvos com sucesso!");
+    setIsEditing(false);
+  };
+  
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -17,93 +58,88 @@ export const HoursTab = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Horários Regulares</h3>
-            
-            <div className="space-y-2">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Dia da Semana</TableHead>
-                    <TableHead>Horário de Abertura</TableHead>
-                    <TableHead>Horário de Fechamento</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>Segunda-feira</TableCell>
-                    <TableCell>08:00</TableCell>
-                    <TableCell>18:00</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Terça-feira</TableCell>
-                    <TableCell>08:00</TableCell>
-                    <TableCell>18:00</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Quarta-feira</TableCell>
-                    <TableCell>08:00</TableCell>
-                    <TableCell>18:00</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Quinta-feira</TableCell>
-                    <TableCell>08:00</TableCell>
-                    <TableCell>18:00</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Sexta-feira</TableCell>
-                    <TableCell>08:00</TableCell>
-                    <TableCell>18:00</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Sábado</TableCell>
-                    <TableCell>09:00</TableCell>
-                    <TableCell>13:00</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Domingo</TableCell>
-                    <TableCell>Fechado</TableCell>
-                    <TableCell>Fechado</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Horários Especiais</h3>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="holiday-hours">Horários de Feriados</Label>
-                <Button variant="outline" size="sm">
-                  Adicionar Feriado
-                </Button>
+        <div className="flex justify-end mb-4">
+          <Button 
+            variant={isEditing ? "default" : "outline"} 
+            onClick={handleEditToggle}
+          >
+            {isEditing ? "Cancelar Edição" : "Editar Horários"}
+          </Button>
+        </div>
+        
+        <div className="rounded-lg border">
+          {days.map((day) => (
+            <div 
+              key={day.key} 
+              className="grid grid-cols-4 sm:grid-cols-7 gap-4 items-center p-4 border-b last:border-b-0"
+            >
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id={`day-${day.key}`} 
+                  checked={businessHours[day.key].open}
+                  onCheckedChange={(checked) => handleToggleDay(day.key, checked)}
+                  disabled={!isEditing}
+                />
+                <Label htmlFor={`day-${day.key}`} className="font-medium">
+                  {day.label}
+                </Label>
               </div>
               
-              <div className="border rounded-md p-3">
-                <p className="text-sm text-muted-foreground">
-                  Nenhum horário especial definido.
-                </p>
+              <div className="col-span-3 sm:col-span-6 grid grid-cols-2 gap-2">
+                {businessHours[day.key].open ? (
+                  <>
+                    <div>
+                      <Label htmlFor={`open-${day.key}`} className="text-sm text-muted-foreground mb-1 block">
+                        Abertura
+                      </Label>
+                      <Select
+                        value={businessHours[day.key].openTime}
+                        onValueChange={(value) => handleTimeChange(day.key, 'openTime', value)}
+                        disabled={!isEditing || !businessHours[day.key].open}
+                      >
+                        <SelectTrigger id={`open-${day.key}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeOptions.map((time) => (
+                            <SelectItem key={`open-${day.key}-${time}`} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor={`close-${day.key}`} className="text-sm text-muted-foreground mb-1 block">
+                        Fechamento
+                      </Label>
+                      <Select
+                        value={businessHours[day.key].closeTime}
+                        onValueChange={(value) => handleTimeChange(day.key, 'closeTime', value)}
+                        disabled={!isEditing || !businessHours[day.key].open}
+                      >
+                        <SelectTrigger id={`close-${day.key}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeOptions.map((time) => (
+                            <SelectItem key={`close-${day.key}-${time}`} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                ) : (
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">Fechado</span>
+                  </div>
+                )}
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="temporary-hours">Horários Temporários</Label>
-                <Button variant="outline" size="sm">
-                  Adicionar Horário
-                </Button>
-              </div>
-              
-              <div className="border rounded-md p-3">
-                <p className="text-sm text-muted-foreground">
-                  Nenhum horário temporário definido.
-                </p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
         
         <Separator />
@@ -114,7 +150,7 @@ export const HoursTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="break-time">Tempo de Intervalo</Label>
-              <Select defaultValue="0">
+              <Select defaultValue="0" disabled={!isEditing}>
                 <SelectTrigger id="break-time">
                   <SelectValue placeholder="Selecione o tempo" />
                 </SelectTrigger>
@@ -130,7 +166,7 @@ export const HoursTab = () => {
             
             <div className="space-y-2">
               <Label htmlFor="buffer-time">Tempo de Preparação</Label>
-              <Select defaultValue="0">
+              <Select defaultValue="0" disabled={!isEditing}>
                 <SelectTrigger id="buffer-time">
                   <SelectValue placeholder="Selecione o tempo" />
                 </SelectTrigger>
@@ -146,8 +182,12 @@ export const HoursTab = () => {
         </div>
       </CardContent>
       <CardFooter className="flex justify-end gap-2">
-        <Button variant="outline">Cancelar</Button>
-        <Button>Salvar Alterações</Button>
+        {isEditing && (
+          <>
+            <Button variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
+            <Button onClick={handleSaveChanges}>Salvar Alterações</Button>
+          </>
+        )}
       </CardFooter>
     </Card>
   );
