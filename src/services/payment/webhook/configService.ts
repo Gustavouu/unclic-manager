@@ -3,40 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { WebhookConfig } from "./types";
 
 /**
- * Service for managing webhook configurations
+ * Service for webhook configuration
  */
 export const WebhookConfigService = {
   /**
-   * Verifies if a webhook is configured and active
-   */
-  async isWebhookEnabled(): Promise<boolean> {
-    try {
-      const { data, error } = await supabase
-        .from('transacoes')
-        .select('notas')
-        .eq('id_negocio', "1")
-        .limit(1);
-      
-      if (error || !data || data.length === 0) {
-        return false;
-      }
-      
-      try {
-        const notes = data[0].notas ? JSON.parse(data[0].notas) : {};
-        return notes.webhook_config?.is_active === true && 
-               !!notes.webhook_config?.webhook_url;
-      } catch (e) {
-        console.error("Erro ao analisar configuração de webhook:", e);
-        return false;
-      }
-    } catch (e) {
-      console.error("Erro ao verificar status do webhook:", e);
-      return false;
-    }
-  },
-  
-  /**
-   * Retrieves the current webhook configuration
+   * Gets the current webhook configuration
    */
   async getWebhookConfig(): Promise<WebhookConfig | null> {
     try {
@@ -45,28 +16,40 @@ export const WebhookConfigService = {
         .select('notas')
         .eq('id_negocio', "1")
         .limit(1);
-      
-      if (error || !data || data.length === 0) {
+
+      if (error) {
+        console.error("Error fetching webhook config:", error);
         return null;
       }
-      
-      try {
-        const notes = data[0].notas ? JSON.parse(data[0].notas) : {};
-        if (!notes.webhook_config) return null;
-        
-        return {
-          webhookUrl: notes.webhook_config.webhook_url || "",
-          secretKey: notes.webhook_config.secret_key || "",
-          isActive: notes.webhook_config.is_active || false,
-          paymentIntegration: notes.webhook_config.payment_integration || "padrao"
-        };
-      } catch (e) {
-        console.error("Erro ao analisar configuração de webhook:", e);
-        return null;
+
+      if (data && data.length > 0 && data[0].notas) {
+        try {
+          const notes = JSON.parse(data[0].notas);
+          if (notes.webhook_config) {
+            return {
+              webhookUrl: notes.webhook_config.webhook_url || "",
+              secretKey: notes.webhook_config.secret_key || "",
+              isActive: notes.webhook_config.is_active || false,
+              paymentIntegration: notes.webhook_config.payment_integration || "padrao"
+            };
+          }
+        } catch (parseError) {
+          console.error("Error parsing webhook config:", parseError);
+        }
       }
-    } catch (e) {
-      console.error("Erro ao obter configuração de webhook:", e);
+
+      return null;
+    } catch (err) {
+      console.error("Error loading webhook config:", err);
       return null;
     }
+  },
+
+  /**
+   * Checks if webhook is enabled
+   */
+  async isWebhookEnabled(): Promise<boolean> {
+    const config = await this.getWebhookConfig();
+    return config?.isActive || false;
   }
 };

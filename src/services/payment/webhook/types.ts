@@ -1,7 +1,9 @@
 
-/**
- * Types for the webhook service
- */
+export interface WebhookProcessResult {
+  success: boolean;
+  message: string;
+}
+
 export interface WebhookConfig {
   webhookUrl: string;
   secretKey: string;
@@ -9,13 +11,7 @@ export interface WebhookConfig {
   paymentIntegration: string;
 }
 
-export interface WebhookNotificationPayload {
+export interface WebhookNotification {
   event: string;
-  timestamp: string;
-  data: any;
-}
-
-export interface WebhookProcessResult {
-  success: boolean;
-  message: string;
+  payload: any;
 }
