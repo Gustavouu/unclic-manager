@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
@@ -53,7 +52,6 @@ export function useReportsData(dateRange: string) {
       
       setIsLoading(true);
       try {
-        // Get date range for filtering
         const today = new Date();
         let startDate: Date, endDate: Date;
         
@@ -84,13 +82,11 @@ export function useReportsData(dateRange: string) {
             break;
         }
         
-        // Filter appointments based on date range
         const filteredAppointments = appointments.filter(app => {
           const appDate = new Date(app.date);
           return isAfter(appDate, startDate) && isBefore(appDate, endDate);
         });
         
-        // Calculate service statistics
         const totalAppointments = filteredAppointments.length;
         const completedAppointments = filteredAppointments.filter(app => app.status === "concluído").length;
         const canceledAppointments = filteredAppointments.filter(app => app.status === "cancelado").length;
@@ -103,14 +99,11 @@ export function useReportsData(dateRange: string) {
         const averageDuration = totalAppointments > 0 ? 
           durations.reduce((sum, duration) => sum + duration, 0) / totalAppointments : 0;
         
-        // Calculate occupancy rate (simplified estimation)
-        const occupancyRate = Math.min(85, Math.round((totalAppointments / (30 * 8)) * 100)); // Simplified calculation
+        const occupancyRate = Math.min(85, Math.round((totalAppointments / (30 * 8)) * 100));
         
-        // Calculate client statistics
         const clientIds = new Set(filteredAppointments.map(app => app.clientId));
         const totalClients = clientIds.size;
         
-        // Fetch additional client data for "new clients" calculation
         let clientsWithDates: { id: string, createdAt: string }[] = [];
         if (totalClients > 0) {
           const { data: clientData } = await supabase
@@ -119,11 +112,13 @@ export function useReportsData(dateRange: string) {
             .in('id', Array.from(clientIds));
           
           if (clientData) {
-            clientsWithDates = clientData;
+            clientsWithDates = clientData.map(client => ({
+              id: client.id,
+              createdAt: client.criado_em
+            }));
           }
         }
         
-        // Calculate new clients in this period
         const newClientsCount = clientsWithDates.filter(client => 
           isAfter(new Date(client.createdAt), startDate) && 
           isBefore(new Date(client.createdAt), endDate)
@@ -132,7 +127,6 @@ export function useReportsData(dateRange: string) {
         const returningClientsCount = totalClients - newClientsCount;
         const retentionRate = totalClients > 0 ? (returningClientsCount / totalClients) * 100 : 0;
         
-        // Calculate service popularity
         const serviceCount: Record<string, number> = {};
         filteredAppointments.forEach(app => {
           serviceCount[app.serviceName] = (serviceCount[app.serviceName] || 0) + 1;
@@ -143,13 +137,11 @@ export function useReportsData(dateRange: string) {
           .sort((a, b) => b.count - a.count)
           .slice(0, 5);
         
-        // Calculate professional statistics
         const professionalData: Record<string, { count: number, revenue: number }> = {};
         
         for (const app of filteredAppointments) {
           if (!app.professionalId) continue;
           
-          // Fetch professional name if not available in appointment
           let profName = "Profissional";
           if (app.professionalId) {
             const { data } = await supabase
@@ -181,7 +173,6 @@ export function useReportsData(dateRange: string) {
           .sort((a, b) => b.revenue - a.revenue)
           .slice(0, 5);
         
-        // Calculate payment methods distribution
         const paymentMethods: Record<string, number> = {
           'Cartão de Crédito': 0, 
           'Cartão de Débito': 0, 
@@ -214,11 +205,8 @@ export function useReportsData(dateRange: string) {
             valor: totalPayments > 0 ? Math.round((count / totalPayments) * 100) : 0 
           }));
         
-        // Calculate monthly revenue (simplified)
-        // For a real implementation, we would fetch transaction data from the database
         const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
         const monthlyRevenue = monthNames.map(name => {
-          // Simplified calculation - in real app we would query transactions table
           const monthIndex = monthNames.indexOf(name);
           const monthDate = new Date(today.getFullYear(), monthIndex, 1);
           
@@ -226,7 +214,6 @@ export function useReportsData(dateRange: string) {
             .filter(app => isSameMonth(new Date(app.date), monthDate))
             .reduce((sum, app) => sum + app.price, 0);
           
-          // Generate random expenses that are about 40-60% of revenue for demo
           const randomFactor = 0.4 + Math.random() * 0.2;
           const monthExpense = Math.round(monthRevenue * randomFactor);
           
@@ -237,7 +224,6 @@ export function useReportsData(dateRange: string) {
           };
         });
         
-        // Update state with calculated statistics
         setStats({
           totalAppointments,
           completedAppointments,
