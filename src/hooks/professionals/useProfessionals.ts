@@ -14,15 +14,15 @@ export const useProfessionals = () => {
     removeProfessional
   } = useProfessionalOperations();
   
-  // Garantir que os profissionais estão sempre como um array
+  // Ensure professionals is always an array
   const safeProfessionals = Array.isArray(fetchedProfessionals) ? fetchedProfessionals : [] as Professional[];
   
-  // Adicionar um estado local para rastrear mudanças
+  // Add a local state to track changes
   const [trackedProfessionals, setTrackedProfessionals] = useState<Professional[]>(safeProfessionals);
   
-  // Sincronizar os profissionais quando eles mudarem
+  // Sync professionals when they change
   useEffect(() => {
-    console.log("Atualizando profissionais no useProfessionals:", safeProfessionals);
+    console.log("Updating professionals in useProfessionals:", safeProfessionals);
     setTrackedProfessionals(safeProfessionals);
   }, [safeProfessionals]);
   

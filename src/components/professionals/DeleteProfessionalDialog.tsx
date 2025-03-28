@@ -18,7 +18,7 @@ import { useToast } from "@/components/ui/use-toast";
 interface DeleteProfessionalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  professional: Professional | null;
+  professional: Professional;
 }
 
 export const DeleteProfessionalDialog = ({
@@ -33,7 +33,7 @@ export const DeleteProfessionalDialog = ({
   if (!professional) return null;
 
   const handleDelete = async () => {
-    if (!professional) return;
+    if (!professional?.id) return;
     
     try {
       setIsDeleting(true);

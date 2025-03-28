@@ -52,12 +52,10 @@ const Professionals = () => {
         </Tabs>
       </Card>
 
-      {showNewProfessionalDialog && (
-        <NewProfessionalDialog 
-          open={showNewProfessionalDialog}
-          onOpenChange={setShowNewProfessionalDialog}
-        />
-      )}
+      <NewProfessionalDialog 
+        open={showNewProfessionalDialog}
+        onOpenChange={setShowNewProfessionalDialog}
+      />
     </div>
   );
 };

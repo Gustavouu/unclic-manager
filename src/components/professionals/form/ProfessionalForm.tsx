@@ -8,13 +8,13 @@ import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { ProfessionalCreateForm, Professional } from "@/hooks/professionals/types";
 import { ProfessionalFormFields } from "./ProfessionalFormFields";
 import { professionalSchema } from "../schemas/professionalFormSchema";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ProfessionalFormProps {
   onClose: () => void;
-  professional?: Professional; // Adicionado para edição
+  professional?: Professional; // For editing
   editMode?: boolean;
 }
 
@@ -26,28 +26,8 @@ export const ProfessionalForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   
-  // Obter dados dos profissionais e garantir que specialties é inicializado corretamente
+  // Get professionals data and ensure specialties is properly initialized
   const { specialties = [], addProfessional, updateProfessional } = useProfessionals();
-  
-  // Garantir que temos valores de especialidades para exibir no formulário
-  const [availableSpecialties, setAvailableSpecialties] = useState<string[]>([]);
-  
-  useEffect(() => {
-    // Inicializar com valores padrão se não houver especialidades
-    if (!specialties || specialties.length === 0) {
-      setAvailableSpecialties([
-        "Cabeleireiro", 
-        "Manicure", 
-        "Pedicure", 
-        "Esteticista", 
-        "Massagista", 
-        "Barbeiro", 
-        "Maquiador"
-      ]);
-    } else {
-      setAvailableSpecialties(specialties);
-    }
-  }, [specialties]);
   
   const form = useForm<ProfessionalCreateForm>({
     resolver: zodResolver(professionalSchema),
@@ -66,36 +46,34 @@ export const ProfessionalForm = ({
   const onSubmit = async (data: ProfessionalCreateForm) => {
     try {
       setIsSubmitting(true);
-      // Garantir que specialties é sempre um array
+      
+      // Create a clean copy of the form data
       const formData = {
         ...data,
         specialties: Array.isArray(data.specialties) ? data.specialties : []
       };
       
-      console.log("Enviando dados do formulário:", formData);
+      console.log("Submitting professional form data:", formData);
       
       if (editMode && professional) {
         await updateProfessional(professional.id, formData);
         toast({
           title: "Colaborador atualizado",
-          description: "O colaborador foi atualizado com sucesso.",
+          description: "As informações do colaborador foram atualizadas com sucesso.",
         });
       } else {
         await addProfessional(formData);
         toast({
           title: "Colaborador adicionado",
-          description: "O colaborador foi adicionado com sucesso.",
+          description: "O novo colaborador foi adicionado com sucesso.",
         });
         form.reset();
       }
       
-      // Aguardar um tempo maior antes de fechar o diálogo
-      // para garantir que o estado seja atualizado completamente
-      setTimeout(() => {
-        onClose();
-      }, 2000); // Aumentamos o tempo para 2s
+      // Close the dialog after successful submission
+      onClose();
     } catch (error) {
-      console.error("Erro ao processar profissional:", error);
+      console.error("Error processing professional:", error);
       toast({
         title: "Erro",
         description: `Ocorreu um erro ao ${editMode ? 'atualizar' : 'adicionar'} o colaborador.`,
@@ -118,7 +96,7 @@ export const ProfessionalForm = ({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <ProfessionalFormFields 
           form={form} 
-          specialties={availableSpecialties}
+          specialties={specialties}
           editMode={editMode}
           initialPhotoUrl={professional?.photoUrl}
         />
