@@ -40,7 +40,7 @@ export function StepPayment({ bookingData, nextStep, createAppointment }: StepPa
         const serviceId = bookingData.serviceId || uuidv4();
         const professionalId = bookingData.professionalId || uuidv4();
         
-        // Create appointment using the provided function (removed businessId)
+        // Create appointment using the provided function
         await createAppointment({
           clientName: "Cliente do site", // This could be improved with actual user data
           serviceName: bookingData.serviceName,
@@ -53,7 +53,8 @@ export function StepPayment({ bookingData, nextStep, createAppointment }: StepPa
           serviceId: serviceId,
           clientId: uuidv4(), // Generate a valid client ID for website bookings
           professionalId: professionalId,
-          paymentMethod: paymentMethod
+          paymentMethod: paymentMethod,
+          businessId: "1" // Use default business ID
         });
         
         // Proceed to next step
