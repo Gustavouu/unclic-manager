@@ -11,46 +11,43 @@ import {
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 interface DeleteServiceDialogProps {
+  serviceId: string;
   serviceName: string;
-  onConfirm: () => void;
+  onServiceDeleted: (serviceId: string) => void;
 }
 
-export function DeleteServiceDialog({ serviceName, onConfirm }: DeleteServiceDialogProps) {
+export function DeleteServiceDialog({ serviceId, serviceName, onServiceDeleted }: DeleteServiceDialogProps) {
   const [open, setOpen] = useState(false);
 
-  const handleConfirm = () => {
-    onConfirm();
+  const handleDelete = () => {
+    onServiceDeleted(serviceId);
     setOpen(false);
-    toast.success("Serviço excluído com sucesso!");
   };
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        className="text-red-500 hover:text-red-700 hover:bg-red-50"
-        onClick={() => setOpen(true)}
-      >
-        Excluir
+      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+        <Trash2 className="h-4 w-4" />
       </Button>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
           <AlertDialogDescription>
-            Você está prestes a excluir o serviço <strong>{serviceName}</strong>. Esta ação não pode ser desfeita.
+            Tem certeza que deseja excluir o serviço <span className="font-medium">{serviceName}</span>?
+            <br /><br />
+            Esta ação não pode ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction 
-            className="bg-red-500 hover:bg-red-600" 
-            onClick={handleConfirm}
+            onClick={handleDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Sim, excluir
+            Excluir
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
