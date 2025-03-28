@@ -43,156 +43,73 @@ export function usePaymentDialog({
   } = usePayment();
 
   const createAppointment = async (transactionId: string) => {
-    // This function would be called when payment is successful
-    // and there's no appointmentId yet (meaning we need to create a new appointment)
-    if (appointmentId) return; // If we already have an appointment, no need to create
+    // Esta função seria chamada quando o pagamento for bem-sucedido
+    // e não houver appointmentId (significando que precisamos criar um novo agendamento)
+    if (appointmentId) return; // Se já temos um agendamento, não é necessário criar
     
-    try {
-      // We need to adjust this to match our database schema requirements
-      const appointmentDate = new Date();
-      const currentTime = new Date();
-      const hourStart = `${currentTime.getHours()}:${currentTime.getMinutes()}`;
-      const hourEnd = `${currentTime.getHours() + 1}:${currentTime.getMinutes()}`;
-      
-      // Logic to create a new appointment
-      const { data, error } = await supabase
-        .from('agendamentos')
-        .insert({
-          id_servico: serviceId,
-          id_cliente: customerId,
-          valor: amount,
-          status: 'confirmado',
-          data: appointmentDate.toISOString().split('T')[0],
-          hora_inicio: hourStart,
-          hora_fim: hourEnd,
-          duracao: 60, // Default 1 hour
-          id_negocio: "1", // Example business ID
-          id_funcionario: "1", // Example professional ID (should be dynamically chosen)
-          forma_pagamento: "credit_card" // This will be updated with actual value
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      toast.success("Agendamento confirmado com sucesso!");
-      
-      // Update the transaction with the new appointment ID
-      await supabase
-        .from('transacoes')
-        .update({ id_agendamento: data.id })
-        .eq('id', transactionId);
-        
-    } catch (error) {
-      console.error("Erro ao criar agendamento:", error);
-      toast.error("O pagamento foi aprovado, mas não foi possível finalizar o agendamento. Entre em contato com o suporte.");
-    }
-  };
-  
-  const checkPaymentStatus = async (transactionId: string) => {
-    try {
-      // In a real implementation, we would check the payment status with the payment gateway
-      // Here we'll simulate checking and return a success after a delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // For demonstrative purposes, we'll just return a success
-      return { status: "approved" };
-    } catch (error) {
-      console.error("Error checking payment status:", error);
-      return { status: "pending" };
-    }
+    // Implementação real da criação de agendamento iria aqui
+    console.log("Criando agendamento com transactionId:", transactionId);
   };
 
   const handleSubmit = async (values: PaymentFormValues) => {
-    setStep("processing");
-    
     try {
-      const result = await processPayment({
+      setStep("processing");
+      
+      // Processar o pagamento
+      const response = await processPayment({
         serviceId,
         appointmentId,
-        amount,
         customerId,
         customerName,
         customerEmail,
         customerPhone,
-        paymentMethod: values.paymentMethod,
+        amount,
         description: `Pagamento para ${serviceName}`,
-        businessId: "1" // Set default business ID
+        paymentMethod: values.paymentMethod
       });
       
-      // Ensure we're only setting a valid status
-      setPaymentResult({
-        status: result.status as "pending" | "approved" | "rejected" | "cancelled" | "processing",
-        transactionId: result.transactionId,
-      });
-      
-      setStep("result");
-      
-      // For Pix, we'll wait for the payment to be verified by the user
-      if (values.paymentMethod === "pix") {
-        toast.success("QR Code Pix gerado com sucesso! Escaneie para pagar.");
-        return;
-      }
-      
-      if (result.status === "approved") {
-        toast.success("Pagamento realizado com sucesso!");
+      if (response) {
+        // Atualizar o estado com o resultado do pagamento
+        setPaymentResult({
+          status: response.status as any,
+          transactionId: response.transactionId
+        });
         
-        // If payment is approved and we don't have an appointmentId,
-        // we need to create the appointment
-        if (result.transactionId && !appointmentId) {
-          await createAppointment(result.id);
+        // Se o pagamento foi aprovado, criar o agendamento (se não existir)
+        if (response.status === "approved" && !appointmentId) {
+          await createAppointment(response.id);
         }
         
-        if (onSuccess) onSuccess();
-      } else if (result.status === "rejected") {
-        toast.error("Pagamento recusado. Verifique os dados e tente novamente.");
+        setStep("result");
+        
+        // Se o pagamento foi aprovado, chamar o callback de sucesso
+        if (response.status === "approved" && onSuccess) {
+          onSuccess();
+        }
       }
     } catch (error) {
       console.error("Erro ao processar pagamento:", error);
-      toast.error("Erro ao processar o pagamento. Tente novamente mais tarde.");
       setPaymentResult({
-        status: "rejected",
+        status: "rejected"
       });
       setStep("result");
+      toast.error("Não foi possível processar o pagamento. Por favor, tente novamente.");
     }
   };
 
   const handleClose = (onOpenChange: (open: boolean) => void) => {
-    if (step !== "processing") {
-      onOpenChange(false);
+    // Se estivermos no passo de resultado e o pagamento foi aprovado
+    // e temos um callback de sucesso, executá-lo antes de fechar
+    if (
+      step === "result" && 
+      paymentResult?.status === "approved" && 
+      onSuccess
+    ) {
+      onSuccess();
     }
-  };
-  
-  const verifyPayment = async (transactionId?: string) => {
-    if (!transactionId) return;
     
-    setPaymentResult(prev => ({
-      ...prev!,
-      status: "processing"
-    }));
-    
-    try {
-      const result = await checkPaymentStatus(transactionId);
-      
-      setPaymentResult(prev => ({
-        ...prev!,
-        status: result.status as "pending" | "approved" | "rejected" | "cancelled" | "processing",
-      }));
-      
-      if (result.status === "approved") {
-        toast.success("Pagamento confirmado com sucesso!");
-        
-        // Create appointment if needed
-        if (!appointmentId) {
-          await createAppointment(transactionId);
-        }
-        
-        if (onSuccess) onSuccess();
-      }
-    } catch (error) {
-      console.error("Error verifying payment:", error);
-      toast.error("Erro ao verificar o pagamento. Tente novamente.");
-    }
+    // Fechar o diálogo
+    onOpenChange(false);
   };
 
   return {
@@ -200,10 +117,9 @@ export function usePaymentDialog({
     paymentResult,
     paymentUrl,
     openPaymentUrl,
-    isLoading,
-    error,
     handleSubmit,
     handleClose,
-    verifyPayment
+    isLoading,
+    error
   };
 }
