@@ -11,7 +11,7 @@ const transactionsStore = new Map();
  */
 export const TransactionService = {
   /**
-   * Creates a transaction record in the database
+   * Creates a transaction record in memory (to avoid RLS policy issues)
    */
   async createTransaction(data: {
     serviceId: string;

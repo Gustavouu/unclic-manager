@@ -1,24 +1,43 @@
 
-import { PaymentResponse } from "./types";
+/**
+ * Maps EFI Bank payment status to our internal payment status
+ */
+export const mapEfiBankStatus = (status: string): string => {
+  switch (status) {
+    case 'approved':
+    case 'confirmed':
+    case 'paid':
+      return 'aprovado';
+    case 'pending':
+    case 'created':
+    case 'waiting':
+      return 'pendente';
+    case 'processing':
+    case 'in_process':
+      return 'processando';
+    case 'rejected':
+    case 'cancelled':
+    case 'failed':
+      return 'rejeitado';
+    default:
+      return 'pendente';
+  }
+};
 
 /**
- * Maps Efi Bank status to internal application status
+ * Maps our internal payment status to EFI Bank payment status
  */
-export function mapEfiBankStatus(efiBankStatus: string): PaymentResponse['status'] {
-  switch (efiBankStatus) {
-    case 'completed':
-    case 'approved':
+export const mapToEfiBankStatus = (status: string): string => {
+  switch (status) {
+    case 'aprovado':
       return 'approved';
-    case 'failed':
-    case 'rejected':
-      return 'rejected';
-    case 'canceled':
-    case 'cancelled':
-      return 'cancelled';
-    case 'processing':
+    case 'pendente':
+      return 'pending';
+    case 'processando':
       return 'processing';
-    case 'pending':
+    case 'rejeitado':
+      return 'rejected';
     default:
       return 'pending';
   }
-}
+};

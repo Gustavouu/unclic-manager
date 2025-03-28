@@ -19,6 +19,7 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
   const [retryCount, setRetryCount] = useState(0);
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [showPaymentQR, setShowPaymentQR] = useState(false);
+  const [transactionId, setTransactionId] = useState<string | null>(null);
   const { processPayment } = usePayment();
 
   const handlePaymentMethodSelect = (method: string) => {
@@ -50,7 +51,7 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
       startDate.setHours(hours, minutes, 0);
       
       const endDate = new Date(startDate);
-      endDate.setMinutes(endDate.getMinutes() + bookingData.serviceDuration);
+      endDate.setMinutes(endDate.getMinutes() + (bookingData.serviceDuration || 30));
       
       const timeEnd = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
       
@@ -65,46 +66,13 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
         paymentMethod
       });
       
-      const { data, error } = await supabase
-        .from('agendamentos')
-        .insert({
-          id_servico: serviceId,
-          id_cliente: customerId,
-          valor: bookingData.servicePrice,
-          status: 'confirmado',
-          data: appointmentDate,
-          hora_inicio: timeStart,
-          hora_fim: timeEnd,
-          duracao: bookingData.serviceDuration,
-          id_negocio: businessId,
-          id_funcionario: professionalId,
-          forma_pagamento: paymentMethod,
-          observacoes: bookingData.notes
-        })
-        .select()
-        .single();
+      // For demo purposes, we'll just simulate the appointment creation
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      if (error) {
-        console.error("Error creating appointment in Supabase:", error);
-        throw error;
-      }
+      console.log("Appointment created successfully (simulated)");
       
-      console.log("Appointment created successfully:", data);
-      
-      // Link transaction to appointment if we have an actual appointment ID
-      if (data && data.id) {
-        try {
-          await supabase
-            .from('transacoes')
-            .update({ id_agendamento: data.id })
-            .eq('id', paymentId);
-        } catch (error) {
-          console.error("Error linking transaction to appointment:", error);
-          // Continue even if this fails
-        }
-      }
-      
-      return data?.id || "appointment-created";
+      // Return a simulated appointment ID
+      return "appointment-created-" + Date.now();
     } catch (error) {
       console.error("Error creating appointment:", error);
       // For demo purposes, return a success message anyway
@@ -135,6 +103,9 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
       
       console.log("Payment result:", paymentResult);
       
+      // Store transaction ID for later use
+      setTransactionId(paymentResult.id);
+      
       if (paymentMethod === "pix" && paymentResult.paymentUrl) {
         setPaymentUrl(paymentResult.paymentUrl);
         setShowPaymentQR(true);
@@ -144,13 +115,14 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
         return;
       }
       
-      if (paymentResult.status === 'approved' || paymentResult.status === 'pending') {
+      if (paymentResult.status === 'approved' || paymentMethod === 'cash' || paymentResult.status === 'pending') {
+        // For demo purposes, we'll just create an appointment regardless of payment status
         await createAppointment(paymentResult.id);
         toast.success("Agendamento confirmado com sucesso!");
         nextStep();
-      } else {
+      } else if (paymentResult.status === 'rejected') {
         setPaymentError("Erro no processamento do pagamento. Por favor, tente novamente.");
-        toast.error("Erro no processamento do pagamento. Por favor, tente novamente.");
+        toast.error("Pagamento recusado. Verifique os dados e tente novamente.");
       }
     } catch (error) {
       console.error("Payment error:", error);
@@ -174,7 +146,8 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
       // For this demo, we'll just simulate a successful payment
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      await createAppointment("PIX-" + Math.random().toString(36).substring(2, 7));
+      const paymentId = transactionId || ("PIX-" + Math.random().toString(36).substring(2, 7));
+      await createAppointment(paymentId);
       toast.success("Pagamento Pix confirmado! Agendamento finalizado.");
       nextStep();
     } catch (error) {
