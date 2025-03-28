@@ -9,10 +9,12 @@ import { AppointmentsList } from "@/components/appointments/AppointmentsList";
 import { NewAppointmentDialog } from "@/components/appointments/NewAppointmentDialog";
 import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { AppointmentStats } from "@/components/appointments/AppointmentStats";
+import { Calendar, Grid3X3 } from "lucide-react";
 
 const Appointments = () => {
   const [view, setView] = useState<"calendar" | "list">("calendar");
   const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
+  const [calendarView, setCalendarView] = useState<"month" | "week">("month");
 
   return (
     <OnboardingProvider>
@@ -48,6 +50,29 @@ const Appointments = () => {
                   <span>Lista</span>
                 </TabsTrigger>
               </TabsList>
+              
+              {view === "calendar" && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`h-9 ${calendarView === 'month' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
+                    onClick={() => setCalendarView('month')}
+                  >
+                    <Grid3X3 size={16} className="mr-1" />
+                    Mensal
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`h-9 ${calendarView === 'week' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
+                    onClick={() => setCalendarView('week')}
+                  >
+                    <Calendar size={16} className="mr-1" />
+                    Semanal
+                  </Button>
+                </div>
+              )}
             </div>
             
             <TabsContent value="calendar" className="mt-0 p-0">

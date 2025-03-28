@@ -40,7 +40,7 @@ export const SAMPLE_APPOINTMENTS: AppointmentType[] = [
     clientName: "Fernando Lima",
     serviceName: "Barba Completa",
     serviceType: "barber",
-    status: "concluído",
+    status: "agendado",
     duration: 60,
     price: 70
   },

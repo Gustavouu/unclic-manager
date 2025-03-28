@@ -140,27 +140,6 @@ export const AppointmentCalendar = () => {
               onFilterChange={setServiceFilter}
               serviceTypes={SERVICE_TYPE_NAMES}
             />
-            
-            <div className="flex items-center gap-2 self-end">
-              <Button
-                variant="outline"
-                size="sm"
-                className={`h-9 ${calendarView === 'month' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
-                onClick={() => setCalendarView('month')}
-              >
-                <Grid3X3 size={16} className="mr-1" />
-                Mensal
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className={`h-9 ${calendarView === 'week' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
-                onClick={() => setCalendarView('week')}
-              >
-                <Calendar size={16} className="mr-1" />
-                Semanal
-              </Button>
-            </div>
           </div>
         </div>
         
