@@ -12,7 +12,6 @@ import { BookingData } from "../types";
 import { usePaymentStep } from "./payment/usePaymentStep";
 import { Appointment } from "@/components/appointments/types";
 import { v4 as uuidv4 } from "uuid";
-import Image from "next/image";
 
 interface StepPaymentProps {
   bookingData: BookingData;

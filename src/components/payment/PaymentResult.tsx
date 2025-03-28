@@ -1,8 +1,7 @@
-
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
-import { formatPrice } from "@/lib/formatters";
+import { formatCurrency } from "@/lib/formatters";
 import { Check, ExternalLink, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
@@ -142,7 +141,7 @@ export const PaymentResult = ({
         
         <div className="flex justify-between">
           <span className="text-muted-foreground">Valor:</span>
-          <span className="font-bold">{formatPrice(amount)}</span>
+          <span className="font-bold">{formatCurrency(amount)}</span>
         </div>
         
         {paymentResult.transactionId && (
