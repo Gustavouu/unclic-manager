@@ -9,10 +9,10 @@ import { WebhookNotificationService } from "./notificationService";
 export const WebhookService = {
   // Configuration methods
   getWebhookConfig: WebhookConfigService.getWebhookConfig,
-  saveWebhookConfig: WebhookConfigService.saveWebhookConfig,
+  isWebhookEnabled: WebhookConfigService.isWebhookEnabled,
   
   // Processing methods
-  processWebhook: WebhookProcessingService.processWebhook,
+  processIncomingWebhook: WebhookProcessingService.processIncomingWebhook,
   
   // Notification methods
   sendWebhookNotification: WebhookNotificationService.sendWebhookNotification
