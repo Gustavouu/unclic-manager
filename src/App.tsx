@@ -1,11 +1,9 @@
 
-import React, { useState } from "react";
+import React from "react";
 import {
   Routes,
   Route,
   Navigate,
-  useLocation,
-  Outlet,
 } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -29,18 +27,9 @@ import Payments from "@/pages/Payments";
 import NotFound from "@/pages/NotFound";
 import Onboarding from "@/pages/Onboarding";
 import BusinessWebsite from "@/pages/BusinessWebsite";
-import PaymentApiTest from "@/pages/PaymentApiTest"; // Adicionado o import para a página de teste
+import PaymentApiTest from "@/pages/PaymentApiTest";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    localStorage.getItem("accessToken") ? true : false
-  );
-
-  // Function to update authentication status
-  const updateAuthStatus = (status: boolean) => {
-    setIsAuthenticated(status);
-  };
-
   return (
     <ThemeProvider defaultTheme="light" storageKey="unclic-theme">
       <Toaster />
@@ -49,12 +38,19 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/" element={<Index />} />
-        <Route path="/website" element={
+        <Route 
+          path="/website" 
+          element={
+            <OnboardingProvider>
+              <BusinessWebsite />
+            </OnboardingProvider>
+          } 
+        />
+        <Route path="/onboarding" element={
           <OnboardingProvider>
-            <BusinessWebsite />
+            <Onboarding />
           </OnboardingProvider>
         } />
-        <Route path="/onboarding" element={<Onboarding />} />
 
         {/* Protected Routes - Requires Authentication */}
         <Route
