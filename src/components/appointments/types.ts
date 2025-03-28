@@ -1,4 +1,3 @@
-
 export type AppointmentStatus = "agendado" | "concluído" | "cancelado";
 export type ServiceType = "all" | "haircut" | "barber" | "combo" | "treatment";
 export type DateFilter = "all" | "today" | "tomorrow" | "thisWeek" | "custom";
@@ -18,6 +17,7 @@ export interface Appointment {
   serviceId?: string;
   clientId?: string;
   professionalId?: string;
+  businessId?: string;
 }
 
 export interface AppointmentType {

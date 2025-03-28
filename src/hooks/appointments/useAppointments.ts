@@ -123,7 +123,11 @@ export function useAppointments() {
         serviceType: appointmentData.serviceType,
         duration: appointmentData.duration,
         notes: appointmentData.notes,
-        paymentMethod: appointmentData.paymentMethod
+        paymentMethod: appointmentData.paymentMethod,
+        serviceId: serviceId,
+        clientId: clientId,
+        professionalId: professionalId,
+        businessId: businessId
       };
       
       setAppointments(prev => [...prev, newAppointment]);

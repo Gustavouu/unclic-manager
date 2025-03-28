@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -39,7 +38,6 @@ export function StepPayment({ bookingData, nextStep, createAppointment }: StepPa
         // Generate valid UUIDs if missing
         const serviceId = bookingData.serviceId || uuidv4();
         const professionalId = bookingData.professionalId || uuidv4();
-        const defaultBusinessId = "00000000-0000-4000-a000-000000000001";
         
         // Create appointment using the provided function
         await createAppointment({
@@ -54,8 +52,7 @@ export function StepPayment({ bookingData, nextStep, createAppointment }: StepPa
           serviceId: serviceId,
           clientId: uuidv4(), // Generate a valid client ID for website bookings
           professionalId: professionalId,
-          businessId: defaultBusinessId,
-          paymentMethod: paymentMethod
+          businessId: "00000000-0000-4000-a000-000000000001"
         });
         
         // Proceed to next step
