@@ -10,6 +10,9 @@ import { ServiceDurationPriceFields } from "./form/ServiceDurationPriceFields";
 import { ServiceDescriptionField } from "./form/ServiceDescriptionField";
 import { ServiceToggleField } from "./form/ServiceToggleField";
 import { FormActions } from "./form/FormActions";
+import { ServiceTemplateSelect } from "./form/ServiceTemplateSelect";
+import { barberServiceTemplates } from "./barberServiceTemplates";
+import { useEffect } from "react";
 
 interface ServiceFormProps {
   service?: ServiceData;
@@ -28,6 +31,7 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
           isPopular: service.isPopular,
           isFeatured: service.isFeatured,
           description: service.description || "",
+          template: "",
         }
       : {
           name: "",
@@ -36,8 +40,15 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
           isPopular: false,
           isFeatured: false,
           description: "",
+          template: "",
         },
   });
+
+  useEffect(() => {
+    if (service) {
+      form.setValue("template", "");
+    }
+  }, [service, form]);
 
   const handleSubmit = (data: ServiceFormValues) => {
     // Ensure all required fields are present by creating a complete ServiceData object
@@ -46,7 +57,7 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
       name: data.name,
       duration: data.duration,
       price: data.price,
-      category: data.name, // Use name as category
+      category: service?.category || data.name, // Use existing category or name as category
       isPopular: data.isPopular,
       isFeatured: data.isFeatured,
       description: data.description,
@@ -55,9 +66,26 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
     onSubmit(completeServiceData);
   };
 
+  const handleTemplateSelect = (templateId: string) => {
+    if (!templateId) {
+      // Se selecionar "Personalizado", não faz nada
+      return;
+    }
+
+    const selectedTemplate = barberServiceTemplates.find(template => template.id === templateId);
+    if (selectedTemplate) {
+      form.setValue("name", selectedTemplate.name);
+      form.setValue("duration", selectedTemplate.duration);
+      form.setValue("price", selectedTemplate.price);
+      form.setValue("description", selectedTemplate.description);
+    }
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+        <ServiceTemplateSelect control={form.control} onTemplateSelect={handleTemplateSelect} />
+        
         <ServiceNameField control={form.control} />
         
         <ServiceDurationPriceFields control={form.control} />

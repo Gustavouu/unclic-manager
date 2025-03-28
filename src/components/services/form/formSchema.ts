@@ -8,6 +8,7 @@ export const serviceFormSchema = z.object({
   isPopular: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
   description: z.string().optional(),
+  template: z.string().optional(),
 });
 
 export type ServiceFormValues = z.infer<typeof serviceFormSchema>;
