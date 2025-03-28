@@ -1,6 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { WebhookService } from "../webhook";
+import { v4 as uuidv4 } from "uuid";
+
+// In-memory transactions storage for demo purposes
+const transactionsStore = new Map();
 
 /**
  * Service for handling transaction database operations
@@ -18,32 +22,43 @@ export const TransactionService = {
     description: string;
     businessId?: string;
   }) {
-    const { data: dbTransaction, error } = await supabase
-      .from('transacoes')
-      .insert({
+    try {
+      // Generate a unique transaction ID
+      const transactionId = uuidv4();
+      
+      // Create an in-memory transaction for demo purposes
+      const transaction = {
+        id: transactionId,
         id_servico: data.serviceId,
-        id_agendamento: data.appointmentId || null,
+        id_agendamento: data.appointmentId,
         id_cliente: data.customerId,
         valor: data.amount,
         metodo_pagamento: data.paymentMethod,
         descricao: data.description,
         tipo: "receita",
         status: "pendente",
-        id_negocio: data.businessId || "1" // Default business ID
-      })
-      .select('id, status, metodo_pagamento, valor, criado_em, notas')
-      .single();
-
-    if (error) {
-      console.error("Database error:", error);
+        id_negocio: data.businessId || "1",
+        criado_em: new Date().toISOString(),
+        notas: null
+      };
+      
+      // Store in our in-memory Map
+      transactionsStore.set(transactionId, transaction);
+      
+      console.log("Transaction created (in-memory):", transactionId);
+      
+      return {
+        id: transactionId,
+        status: "pendente",
+        metodo_pagamento: data.paymentMethod,
+        valor: data.amount,
+        criado_em: new Date().toISOString(),
+        notas: null
+      };
+    } catch (error) {
+      console.error("Error creating transaction:", error);
       throw new Error("Erro ao registrar transação no banco de dados");
     }
-    
-    if (!dbTransaction) {
-      throw new Error("Nenhuma transação retornada após a inserção");
-    }
-
-    return dbTransaction;
   },
 
   /**
@@ -59,6 +74,13 @@ export const TransactionService = {
     }
   ) {
     try {
+      const transaction = transactionsStore.get(transactionId);
+      
+      if (!transaction) {
+        console.error("Transaction not found:", transactionId);
+        return;
+      }
+      
       // Store provider information in the notas field as JSON
       const efiDataJSON = JSON.stringify({
         transaction_id: providerData.transaction_id,
@@ -66,13 +88,11 @@ export const TransactionService = {
         provider: providerData.provider || 'efi_bank'
       });
       
-      await supabase
-        .from('transacoes')
-        .update({ 
-          status: providerData.status,
-          notas: efiDataJSON
-        })
-        .eq('id', transactionId);
+      // Update the transaction in memory
+      transaction.status = providerData.status || transaction.status;
+      transaction.notas = efiDataJSON;
+      
+      console.log("Transaction updated (in-memory):", transactionId);
     } catch (error) {
       console.error("Error updating transaction with provider data:", error);
       // Continue even if update fails, as we already have the transaction in our system
@@ -83,22 +103,25 @@ export const TransactionService = {
    * Gets a transaction by ID
    */
   async getTransaction(transactionId: string) {
-    const { data, error } = await supabase
-      .from('transacoes')
-      .select('id, status, metodo_pagamento, valor, criado_em, notas')
-      .eq('id', transactionId)
-      .single();
-
-    if (error) {
-      console.error("Database error:", error);
+    try {
+      const transaction = transactionsStore.get(transactionId);
+      
+      if (!transaction) {
+        throw new Error("Transação não encontrada");
+      }
+      
+      return {
+        id: transaction.id,
+        status: transaction.status,
+        metodo_pagamento: transaction.metodo_pagamento,
+        valor: transaction.valor,
+        criado_em: transaction.criado_em,
+        notas: transaction.notas
+      };
+    } catch (error) {
+      console.error("Error getting transaction:", error);
       throw new Error("Erro ao consultar transação no banco de dados");
     }
-    
-    if (!data) {
-      throw new Error("Transação não encontrada");
-    }
-
-    return data;
   },
 
   /**
@@ -110,17 +133,22 @@ export const TransactionService = {
     isPaid: boolean = false
   ) {
     try {
-      const updateData: any = { status };
+      const transaction = transactionsStore.get(transactionId);
       
-      if (isPaid) {
-        updateData.data_pagamento = new Date().toISOString();
+      if (!transaction) {
+        console.error("Transaction not found:", transactionId);
+        return false;
       }
       
-      await supabase
-        .from('transacoes')
-        .update(updateData)
-        .eq('id', transactionId);
-        
+      // Update the transaction
+      transaction.status = status;
+      
+      if (isPaid) {
+        transaction.data_pagamento = new Date().toISOString();
+      }
+      
+      console.log("Transaction status updated (in-memory):", transactionId, status);
+      
       // Send webhook notification
       WebhookService.sendWebhookNotification('payment.updated', {
         payment_id: transactionId,
