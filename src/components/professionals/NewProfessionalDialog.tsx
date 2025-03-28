@@ -9,6 +9,7 @@ import { ProfessionalForm } from "./form/ProfessionalForm";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
+import { ProfessionalCreateForm } from "@/hooks/professionals/types";
 
 interface NewProfessionalDialogProps {
   open: boolean;
@@ -29,7 +30,7 @@ export const NewProfessionalDialog = ({
     }
   };
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: ProfessionalCreateForm) => {
     try {
       setIsSubmitting(true);
       await addProfessional(data);

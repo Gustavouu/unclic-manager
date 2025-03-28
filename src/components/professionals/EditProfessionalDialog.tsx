@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ProfessionalForm } from "./form/ProfessionalForm";
-import { Professional } from "@/hooks/professionals/types";
+import { Professional, ProfessionalCreateForm } from "@/hooks/professionals/types";
 import { useEffect, useState } from "react";
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { useToast } from "@/components/ui/use-toast";
@@ -41,7 +41,7 @@ export const EditProfessionalDialog = ({
     }
   };
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: ProfessionalCreateForm) => {
     if (!currentProfessional?.id) return;
     
     try {
@@ -80,7 +80,7 @@ export const EditProfessionalDialog = ({
           onClose={handleClose}
           onSubmit={handleSubmit}
           professional={currentProfessional}
-          editMode
+          editMode={true}
           isSubmitting={isSubmitting}
         />
       </DialogContent>

@@ -12,22 +12,25 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
-interface ProfessionalFormProps {
+export interface ProfessionalFormProps {
   onClose: () => void;
+  onSubmit: (data: ProfessionalCreateForm) => Promise<void>;
   professional?: Professional; // For editing
   editMode?: boolean;
+  isSubmitting?: boolean;
 }
 
 export const ProfessionalForm = ({ 
   onClose, 
+  onSubmit,
   professional,
-  editMode = false 
+  editMode = false,
+  isSubmitting = false
 }: ProfessionalFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   
   // Get professionals data and ensure specialties is properly initialized
-  const { specialties = [], addProfessional, updateProfessional } = useProfessionals();
+  const { specialties = [] } = useProfessionals();
   
   const form = useForm<ProfessionalCreateForm>({
     resolver: zodResolver(professionalSchema),
@@ -43,12 +46,10 @@ export const ProfessionalForm = ({
     },
   });
 
-  const onSubmit = async (data: ProfessionalCreateForm) => {
+  const handleSubmit = async (data: ProfessionalCreateForm) => {
     if (isSubmitting) return;
     
     try {
-      setIsSubmitting(true);
-      
       // Create a clean copy of the form data
       const formData = {
         ...data,
@@ -57,23 +58,7 @@ export const ProfessionalForm = ({
       
       console.log("Submitting professional form data:", formData);
       
-      if (editMode && professional) {
-        await updateProfessional(professional.id, formData);
-        toast({
-          title: "Colaborador atualizado",
-          description: "As informações do colaborador foram atualizadas com sucesso.",
-        });
-      } else {
-        await addProfessional(formData);
-        toast({
-          title: "Colaborador adicionado",
-          description: "O novo colaborador foi adicionado com sucesso.",
-        });
-        form.reset();
-      }
-      
-      // Close the dialog after successful submission
-      onClose();
+      await onSubmit(formData);
     } catch (error) {
       console.error("Error processing professional:", error);
       toast({
@@ -81,8 +66,6 @@ export const ProfessionalForm = ({
         description: `Ocorreu um erro ao ${editMode ? 'atualizar' : 'adicionar'} o colaborador.`,
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -95,7 +78,7 @@ export const ProfessionalForm = ({
         }
       </DialogDescription>
       
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <ProfessionalFormFields 
           form={form} 
           specialties={specialties}
