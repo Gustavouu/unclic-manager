@@ -11,6 +11,7 @@ import { BookingData } from "../types";
 import { usePaymentStep } from "./payment/usePaymentStep";
 import { Appointment } from "@/components/appointments/types";
 import { v4 as uuidv4 } from "uuid";
+import { DEFAULT_UUID } from "@/hooks/appointments/utils";
 
 interface StepPaymentProps {
   bookingData: BookingData;
@@ -52,7 +53,8 @@ export function StepPayment({ bookingData, nextStep, createAppointment }: StepPa
           serviceId: serviceId,
           clientId: uuidv4(), // Generate a valid client ID for website bookings
           professionalId: professionalId,
-          businessId: "00000000-0000-4000-a000-000000000001"
+          businessId: DEFAULT_UUID,
+          paymentMethod: paymentMethod
         });
         
         // Proceed to next step
