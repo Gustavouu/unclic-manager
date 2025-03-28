@@ -52,16 +52,46 @@ export const PaymentService = {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Database error:", error);
+        throw new Error(`Erro de banco de dados: ${error.message}`);
+      }
       
       let paymentUrl = null;
       
+      // For non-cash payments, generate appropriate payment URLs
       if (request.paymentMethod === 'pix') {
         // In a real implementation, we would generate a PIX code or URL
-        paymentUrl = `https://efi-bank.com/payment/${paymentId}`;
+        const webhookUrl = new URL(window.location.origin);
+        webhookUrl.pathname = "/api/webhook-handler";
+        paymentUrl = `https://efi-bank.com/payment/${paymentId}?callback=${encodeURIComponent(webhookUrl.toString())}`;
       } else if (request.paymentMethod === 'credit_card') {
         // In a real implementation, we would redirect to a credit card payment page
-        paymentUrl = `https://efi-bank.com/payment/${paymentId}`;
+        const webhookUrl = new URL(window.location.origin);
+        webhookUrl.pathname = "/api/webhook-handler";
+        paymentUrl = `https://efi-bank.com/payment/${paymentId}?callback=${encodeURIComponent(webhookUrl.toString())}`;
+      }
+      
+      // Notify our webhook handler about the new payment
+      try {
+        await fetch('/api/webhook-handler', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            event: 'payment.created',
+            data: {
+              payment_id: paymentId,
+              status: data.status,
+              amount: data.valor,
+              payment_method: data.metodo_pagamento
+            }
+          })
+        });
+      } catch (webhookError) {
+        // Log but don't fail the transaction if webhook notification fails
+        console.warn("Could not notify webhook about new payment:", webhookError);
       }
       
       return {
@@ -90,7 +120,55 @@ export const PaymentService = {
         .eq('id', paymentId)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Database error:", error);
+        throw new Error(`Erro ao consultar o status: ${error.message}`);
+      }
+      
+      // If successful, check if we need to simulate a status update for demo purposes
+      if (data && data.status === 'pending') {
+        // Randomly decide if we should update the status (for demo purposes)
+        const shouldUpdateStatus = Math.random() > 0.7;
+        
+        if (shouldUpdateStatus) {
+          const newStatus = Math.random() > 0.5 ? 'approved' : 'processing';
+          
+          // Update the transaction status in the database
+          const { error: updateError } = await supabase
+            .from('transacoes')
+            .update({ 
+              status: newStatus,
+              data_pagamento: newStatus === 'approved' ? new Date().toISOString() : null
+            })
+            .eq('id', paymentId);
+          
+          if (updateError) {
+            console.warn("Could not update payment status:", updateError);
+          } else {
+            data.status = newStatus;
+          }
+          
+          // Notify webhook about the status change
+          try {
+            await fetch('/api/webhook-handler', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                event: 'payment.updated',
+                data: {
+                  payment_id: paymentId,
+                  status: newStatus,
+                  updated_at: new Date().toISOString()
+                }
+              })
+            });
+          } catch (webhookError) {
+            console.warn("Could not notify webhook about status update:", webhookError);
+          }
+        }
+      }
       
       return {
         id: data.id,

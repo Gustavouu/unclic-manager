@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CreditCard, Banknote, Smartphone } from "lucide-react";
+import { CreditCard, Banknote, Smartphone, AlertTriangle, RefreshCw } from "lucide-react";
 import { formatPrice } from "@/components/website/WebsiteUtils";
 import { usePayment } from "@/hooks/usePayment";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BookingData } from "../types";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface StepPaymentProps {
   bookingData: BookingData;
@@ -22,10 +23,14 @@ export function StepPayment({
 }: StepPaymentProps) {
   const [paymentMethod, setPaymentMethod] = useState<string>("credit_card");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const { processPayment } = usePayment();
 
   const handlePaymentMethodSelect = (method: string) => {
     setPaymentMethod(method);
+    // Reset any previous error when changing payment method
+    setPaymentError(null);
   };
 
   const createAppointment = async (paymentId: string) => {
@@ -65,6 +70,7 @@ export function StepPayment({
 
   const handlePayment = async () => {
     setIsProcessing(true);
+    setPaymentError(null);
     
     try {
       const paymentResult = await processPayment({
@@ -72,7 +78,8 @@ export function StepPayment({
         amount: bookingData.servicePrice,
         customerId: "1",
         paymentMethod: paymentMethod,
-        description: `Pagamento para ${bookingData.serviceName} com ${bookingData.professionalName}`
+        description: `Pagamento para ${bookingData.serviceName} com ${bookingData.professionalName}`,
+        businessId: "1"
       });
       
       if (paymentResult.status === 'approved' || paymentResult.status === 'pending') {
@@ -80,14 +87,21 @@ export function StepPayment({
         toast.success("Agendamento confirmado com sucesso!");
         nextStep();
       } else {
+        setPaymentError("Erro no processamento do pagamento. Por favor, tente novamente.");
         toast.error("Erro no processamento do pagamento. Por favor, tente novamente.");
       }
     } catch (error) {
       console.error("Payment error:", error);
+      setPaymentError("Ocorreu um erro ao processar o pagamento. Por favor, tente novamente mais tarde.");
       toast.error("Ocorreu um erro ao processar o pagamento. Por favor, tente novamente mais tarde.");
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    handlePayment();
   };
 
   return (
@@ -99,6 +113,14 @@ export function StepPayment({
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
+        {paymentError && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Erro no processamento</AlertTitle>
+            <AlertDescription>{paymentError}</AlertDescription>
+          </Alert>
+        )}
+      
         <div className="bg-muted/50 p-4 rounded-lg space-y-3">
           <h3 className="font-medium">Resumo do agendamento</h3>
           
@@ -160,7 +182,23 @@ export function StepPayment({
           </div>
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex flex-col sm:flex-row gap-2">
+        {paymentError ? (
+          <Button 
+            className="w-full" 
+            onClick={handleRetry} 
+            disabled={isProcessing}
+            variant="outline"
+          >
+            {isProcessing ? "Processando..." : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Tentar Novamente
+              </>
+            )}
+          </Button>
+        ) : null}
+        
         <Button 
           className="w-full" 
           onClick={handlePayment} 
