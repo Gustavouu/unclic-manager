@@ -7,47 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Filter, CalendarDays, Download } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Input } from "@/components/ui/input";
 
-export interface TransactionFiltersProps {
-  searchTerm?: string;
-  setSearchTerm?: (value: string) => void;
-  dateRange?: [Date | null, Date | null];
-  setDateRange?: (value: [Date | null, Date | null]) => void;
-  statusFilter?: string[];
-  setStatusFilter?: (value: string[]) => void;
-  typeFilter?: string[];
-  setTypeFilter?: (value: string[]) => void;
-  period?: string;
-  setPeriod?: (value: string) => void;
-}
-
-export function TransactionFilters({
-  searchTerm = "",
-  setSearchTerm = () => {},
-  dateRange = [null, null],
-  setDateRange = () => {},
-  statusFilter = [],
-  setStatusFilter = () => {},
-  typeFilter = [],
-  setTypeFilter = () => {},
-  period = "30days",
-  setPeriod = () => {}
-}: TransactionFiltersProps) {
+export function TransactionFilters() {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   
-  const handlePeriodChange = (value: string) => {
-    setPeriod(value);
-  };
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-  
   return (
-    <div className="p-4 flex flex-wrap items-center gap-2">
-      <Select value={period} onValueChange={handlePeriodChange}>
+    <div className="flex flex-wrap items-center gap-2">
+      <Select defaultValue="30days">
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Período" />
         </SelectTrigger>
@@ -72,9 +39,6 @@ export function TransactionFilters({
             selected={date}
             onSelect={(newDate) => {
               setDate(newDate);
-              if (newDate) {
-                setDateRange([newDate, newDate]);
-              }
               setIsCalendarOpen(false);
             }}
             initialFocus
@@ -82,13 +46,6 @@ export function TransactionFilters({
           />
         </PopoverContent>
       </Popover>
-      
-      <Input
-        placeholder="Buscar transação..."
-        value={searchTerm}
-        onChange={handleSearch}
-        className="max-w-sm"
-      />
       
       <Button variant="outline" size="icon">
         <Filter className="h-4 w-4" />
