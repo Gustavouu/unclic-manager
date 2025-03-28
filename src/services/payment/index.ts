@@ -12,7 +12,7 @@ export interface PaymentRequest {
 
 export interface PaymentResponse {
   id: string;
-  status: string;
+  status: "pending" | "approved" | "rejected" | "cancelled" | "processing";
   amount: number;
   paymentMethod: string;
   createdAt: string;
@@ -39,7 +39,7 @@ export const PaymentService = {
           metodo_pagamento: request.paymentMethod,
           status: request.paymentMethod === 'cash' ? 'approved' : 'pending',
           descricao: request.description,
-          id_servico: request.serviceId,
+          id_servico: request.serviceId, // Renamed from id_servico to match column name
           id_cliente: request.customerId,
           id_agendamento: request.appointmentId
         })
@@ -60,7 +60,7 @@ export const PaymentService = {
       
       return {
         id: paymentId,
-        status: data.status,
+        status: data.status as "pending" | "approved" | "rejected" | "cancelled" | "processing",
         amount: data.valor,
         paymentMethod: data.metodo_pagamento,
         createdAt: data.criado_em,
@@ -88,7 +88,7 @@ export const PaymentService = {
       
       return {
         id: data.id,
-        status: data.status,
+        status: data.status as "pending" | "approved" | "rejected" | "cancelled" | "processing",
         amount: data.valor,
         paymentMethod: data.metodo_pagamento,
         createdAt: data.criado_em,

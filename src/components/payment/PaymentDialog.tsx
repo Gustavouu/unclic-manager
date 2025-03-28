@@ -132,8 +132,9 @@ export const PaymentDialog = ({
         description: `Pagamento para ${serviceName}`
       });
       
+      // Ensure we're only setting a valid status
       setPaymentResult({
-        status: result.status,
+        status: result.status as "pending" | "approved" | "rejected" | "cancelled" | "processing",
         transactionId: result.transactionId,
       });
       
