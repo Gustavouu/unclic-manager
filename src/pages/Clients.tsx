@@ -4,6 +4,7 @@ import { ClientsLayout } from "@/components/clients/ClientsLayout";
 import { ClientsHeader } from "@/components/clients/ClientsHeader";
 import { ClientsTable } from "@/components/clients/ClientsTable";
 import { ClientDetails } from "@/components/clients/ClientDetails";
+import { ClientStats } from "@/components/clients/ClientStats";
 import { useClientData } from "@/hooks/clients";
 import { Card } from "@/components/ui/card";
 import { TablePagination } from "@/components/common/TablePagination";
@@ -50,6 +51,13 @@ const Clients = () => {
 
   return (
     <ClientsLayout>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
+        <h1 className="text-xl font-display font-medium">Gerenciamento de Clientes</h1>
+      </div>
+      
+      {/* Stats cards row */}
+      <ClientStats />
+
       <ClientsHeader 
         searchTerm={searchTerm} 
         setSearchTerm={setSearchTerm} 
