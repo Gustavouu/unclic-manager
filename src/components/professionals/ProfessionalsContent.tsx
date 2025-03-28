@@ -1,7 +1,7 @@
 
 import { Professional } from "@/hooks/professionals/types";
-import { ProfessionalsGrid } from "./ProfessionalsGrid";
-import { ProfessionalsTable } from "./ProfessionalsTable";
+import { ProfessionalsGrid, ProfessionalsGridProps } from "./ProfessionalsGrid";
+import { ProfessionalsTable, ProfessionalsTableProps } from "./ProfessionalsTable";
 import React from "react";
 
 interface ProfessionalsContentProps {

@@ -15,7 +15,7 @@ import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import React from "react";
 
-interface ProfessionalsTableProps {
+export interface ProfessionalsTableProps {
   professionals: Professional[];
   onProfessionalClick: (id: string) => void;
   onEditClick: (professional: Professional, e: React.MouseEvent) => void;

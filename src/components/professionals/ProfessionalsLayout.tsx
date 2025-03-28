@@ -31,7 +31,7 @@ export const ProfessionalsLayout = ({
     );
   }
 
-  // Adapter functions to match the expected prop interfaces
+  // Adapter functions to match the expected interfaces in the sub-components
   const handleProfessionalClick = (id: string) => {
     onViewDetails(id);
   };

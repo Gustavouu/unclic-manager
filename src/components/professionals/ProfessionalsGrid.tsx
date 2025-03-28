@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, Edit, Trash2 } from "lucide-react";
 import React from "react";
 
-interface ProfessionalsGridProps {
+export interface ProfessionalsGridProps {
   professionals: Professional[];
   onProfessionalClick: (id: string) => void;
   onEditClick: (professional: Professional, e: React.MouseEvent) => void;
