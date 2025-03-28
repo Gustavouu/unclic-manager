@@ -3,12 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ProfessionalProductivityChart } from "../charts/ProfessionalProductivityChart";
 import { ProfessionalRevenueChart } from "../charts/ProfessionalRevenueChart";
 import { ProfessionalPerformanceSection } from "../sections/ProfessionalPerformanceSection";
+import { ReportStatistics } from "@/hooks/reports/useReportsData";
 
 interface ProfessionalsReportsProps {
   dateRange: string;
+  stats: ReportStatistics;
 }
 
-export function ProfessionalsReports({ dateRange }: ProfessionalsReportsProps) {
+export function ProfessionalsReports({ dateRange, stats }: ProfessionalsReportsProps) {
   return (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
       <Card className="md:col-span-2">
@@ -17,7 +19,7 @@ export function ProfessionalsReports({ dateRange }: ProfessionalsReportsProps) {
           <CardDescription>Análise de desempenho dos profissionais</CardDescription>
         </CardHeader>
         <CardContent>
-          <ProfessionalPerformanceSection dateRange={dateRange} />
+          <ProfessionalPerformanceSection dateRange={dateRange} stats={stats} />
         </CardContent>
       </Card>
       
@@ -27,7 +29,7 @@ export function ProfessionalsReports({ dateRange }: ProfessionalsReportsProps) {
           <CardDescription>Atendimentos por profissional</CardDescription>
         </CardHeader>
         <CardContent>
-          <ProfessionalProductivityChart dateRange={dateRange} />
+          <ProfessionalProductivityChart dateRange={dateRange} stats={stats} />
         </CardContent>
       </Card>
       
@@ -37,7 +39,7 @@ export function ProfessionalsReports({ dateRange }: ProfessionalsReportsProps) {
           <CardDescription>Receita por profissional</CardDescription>
         </CardHeader>
         <CardContent>
-          <ProfessionalRevenueChart dateRange={dateRange} />
+          <ProfessionalRevenueChart dateRange={dateRange} stats={stats} />
         </CardContent>
       </Card>
     </div>

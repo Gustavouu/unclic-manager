@@ -4,12 +4,14 @@ import { ClientAcquisitionChart } from "../charts/ClientAcquisitionChart";
 import { ClientRetentionChart } from "../charts/ClientRetentionChart";
 import { ClientCategoriesChart } from "../charts/ClientCategoriesChart";
 import { ClientStatisticsSection } from "../sections/ClientStatisticsSection";
+import { ReportStatistics } from "@/hooks/reports/useReportsData";
 
 interface ClientReportsProps {
   dateRange: string;
+  stats: ReportStatistics;
 }
 
-export function ClientReports({ dateRange }: ClientReportsProps) {
+export function ClientReports({ dateRange, stats }: ClientReportsProps) {
   return (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
       <Card className="md:col-span-2">
@@ -18,7 +20,7 @@ export function ClientReports({ dateRange }: ClientReportsProps) {
           <CardDescription>Dados consolidados da sua base de clientes</CardDescription>
         </CardHeader>
         <CardContent>
-          <ClientStatisticsSection dateRange={dateRange} />
+          <ClientStatisticsSection dateRange={dateRange} stats={stats} />
         </CardContent>
       </Card>
       

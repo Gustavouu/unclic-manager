@@ -4,21 +4,23 @@ import { RevenueChart } from "../charts/RevenueChart";
 import { SalesDistributionChart } from "../charts/SalesDistributionChart";
 import { PaymentMethodsChart } from "../charts/PaymentMethodsChart";
 import { FinancialSummarySection } from "../sections/FinancialSummarySection";
+import { ReportStatistics } from "@/hooks/reports/useReportsData";
 
 interface FinancialReportsProps {
   dateRange: string;
+  stats: ReportStatistics;
 }
 
-export function FinancialReports({ dateRange }: FinancialReportsProps) {
+export function FinancialReports({ dateRange, stats }: FinancialReportsProps) {
   return (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
       <Card className="md:col-span-2">
         <CardHeader>
           <CardTitle>Resumo Financeiro</CardTitle>
-          <CardDescription>Visão geral das suas finanças nos últimos 30 dias</CardDescription>
+          <CardDescription>Visão geral das suas finanças no período selecionado</CardDescription>
         </CardHeader>
         <CardContent>
-          <FinancialSummarySection dateRange={dateRange} />
+          <FinancialSummarySection dateRange={dateRange} stats={stats} />
         </CardContent>
       </Card>
       
@@ -28,7 +30,7 @@ export function FinancialReports({ dateRange }: FinancialReportsProps) {
           <CardDescription>Receitas nos últimos 6 meses</CardDescription>
         </CardHeader>
         <CardContent>
-          <RevenueChart dateRange={dateRange} />
+          <RevenueChart dateRange={dateRange} stats={stats} />
         </CardContent>
       </Card>
       
@@ -48,7 +50,7 @@ export function FinancialReports({ dateRange }: FinancialReportsProps) {
           <CardDescription>Distribuição por forma de pagamento</CardDescription>
         </CardHeader>
         <CardContent>
-          <PaymentMethodsChart dateRange={dateRange} />
+          <PaymentMethodsChart dateRange={dateRange} stats={stats} />
         </CardContent>
       </Card>
     </div>

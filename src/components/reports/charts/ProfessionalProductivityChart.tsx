@@ -1,21 +1,14 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { ReportStatistics } from "@/hooks/reports/useReportsData";
 
 interface ProfessionalProductivityChartProps {
   dateRange: string;
+  stats: ReportStatistics;
 }
 
-const data = [
-  { name: "Ana Silva", count: 125 },
-  { name: "Carlos Oliveira", count: 115 },
-  { name: "Mariana Santos", count: 98 },
-  { name: "Bruno Costa", count: 87 },
-  { name: "Juliana Lima", count: 75 },
-];
-
-export function ProfessionalProductivityChart({ dateRange }: ProfessionalProductivityChartProps) {
-  // In a real application, we would use the dateRange to filter data
-  console.log(`Loading professional productivity data for range: ${dateRange}`);
+export function ProfessionalProductivityChart({ dateRange, stats }: ProfessionalProductivityChartProps) {
+  const data = stats.professionalProductivity;
   
   return (
     <ResponsiveContainer width="100%" height={300}>

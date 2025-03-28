@@ -10,22 +10,15 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ReportStatistics } from "@/hooks/reports/useReportsData";
 
 interface PaymentMethodsChartProps {
   dateRange: string;
+  stats: ReportStatistics;
 }
 
-const data = [
-  { name: 'Cartão de Crédito', valor: 45 },
-  { name: 'Cartão de Débito', valor: 25 },
-  { name: 'Dinheiro', valor: 15 },
-  { name: 'Pix', valor: 12 },
-  { name: 'Outros', valor: 3 },
-];
-
-export function PaymentMethodsChart({ dateRange }: PaymentMethodsChartProps) {
-  // In a real application, we would use the dateRange to filter data
-  console.log(`Loading payment methods data for range: ${dateRange}`);
+export function PaymentMethodsChart({ dateRange, stats }: PaymentMethodsChartProps) {
+  const data = stats.paymentMethods;
   
   const config = {
     valor: {

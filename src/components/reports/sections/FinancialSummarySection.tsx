@@ -1,13 +1,31 @@
 
 import { ArrowUpRight, ArrowDownRight, DollarSign, CreditCard, ShoppingBag, AlertCircle } from "lucide-react";
+import { ReportStatistics } from "@/hooks/reports/useReportsData";
 
 interface FinancialSummarySectionProps {
   dateRange: string;
+  stats: ReportStatistics;
 }
 
-export function FinancialSummarySection({ dateRange }: FinancialSummarySectionProps) {
-  // No real application, we would use the dateRange to filter data
-  console.log(`Loading financial summary for range: ${dateRange}`);
+export function FinancialSummarySection({ dateRange, stats }: FinancialSummarySectionProps) {
+  // Format currency values
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('pt-BR', { 
+      style: 'currency', 
+      currency: 'BRL' 
+    });
+  };
+  
+  // Calculate expense (simplified)
+  const estimatedExpense = Math.round(stats.totalRevenue * 0.4); // Simplified calculation
+  const profit = stats.totalRevenue - estimatedExpense;
+  const accountsReceivable = Math.round(stats.totalRevenue * 0.15); // Simplified calculation
+  
+  // Calculate trend indicators (simplified for demonstration)
+  const revenueTrend = 12.5;
+  const expenseTrend = 2.3;
+  const profitTrend = 18.2;
+  const receivableTrend = -5.1;
   
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -17,13 +35,13 @@ export function FinancialSummarySection({ dateRange }: FinancialSummarySectionPr
             <DollarSign className="h-5 w-5 text-primary" />
           </div>
           <div className="text-sm text-green-600 flex items-center">
-            <span>+12.5%</span>
+            <span>+{revenueTrend}%</span>
             <ArrowUpRight className="h-4 w-4 ml-1" />
           </div>
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Receita Total</p>
-          <h3 className="text-2xl font-bold">R$ 26.450</h3>
+          <h3 className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</h3>
         </div>
       </div>
       
@@ -33,13 +51,13 @@ export function FinancialSummarySection({ dateRange }: FinancialSummarySectionPr
             <ShoppingBag className="h-5 w-5 text-red-500" />
           </div>
           <div className="text-sm text-red-600 flex items-center">
-            <span>+2.3%</span>
+            <span>+{expenseTrend}%</span>
             <ArrowUpRight className="h-4 w-4 ml-1" />
           </div>
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Despesas</p>
-          <h3 className="text-2xl font-bold">R$ 10.240</h3>
+          <h3 className="text-2xl font-bold">{formatCurrency(estimatedExpense)}</h3>
         </div>
       </div>
       
@@ -49,13 +67,13 @@ export function FinancialSummarySection({ dateRange }: FinancialSummarySectionPr
             <CreditCard className="h-5 w-5 text-green-500" />
           </div>
           <div className="text-sm text-green-600 flex items-center">
-            <span>+18.2%</span>
+            <span>+{profitTrend}%</span>
             <ArrowUpRight className="h-4 w-4 ml-1" />
           </div>
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Lucro Líquido</p>
-          <h3 className="text-2xl font-bold">R$ 16.210</h3>
+          <h3 className="text-2xl font-bold">{formatCurrency(profit)}</h3>
         </div>
       </div>
       
@@ -65,13 +83,13 @@ export function FinancialSummarySection({ dateRange }: FinancialSummarySectionPr
             <AlertCircle className="h-5 w-5 text-amber-500" />
           </div>
           <div className="text-sm text-amber-600 flex items-center">
-            <span>-5.1%</span>
+            <span>{receivableTrend}%</span>
             <ArrowDownRight className="h-4 w-4 ml-1" />
           </div>
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Contas a Receber</p>
-          <h3 className="text-2xl font-bold">R$ 3.850</h3>
+          <h3 className="text-2xl font-bold">{formatCurrency(accountsReceivable)}</h3>
         </div>
       </div>
     </div>

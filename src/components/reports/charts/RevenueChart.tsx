@@ -9,23 +9,15 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ReportStatistics } from "@/hooks/reports/useReportsData";
 
 interface RevenueChartProps {
   dateRange: string;
+  stats: ReportStatistics;
 }
 
-const data = [
-  { name: 'Jan', receita: 4500, despesa: 2300 },
-  { name: 'Fev', receita: 5200, despesa: 2500 },
-  { name: 'Mar', receita: 4800, despesa: 2400 },
-  { name: 'Abr', receita: 6000, despesa: 2700 },
-  { name: 'Mai', receita: 5500, despesa: 2500 },
-  { name: 'Jun', receita: 6800, despesa: 2900 },
-];
-
-export function RevenueChart({ dateRange }: RevenueChartProps) {
-  // In a real application, we would use the dateRange to filter data
-  console.log(`Loading revenue data for range: ${dateRange}`);
+export function RevenueChart({ dateRange, stats }: RevenueChartProps) {
+  const data = stats.monthlyRevenue;
   
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', { 

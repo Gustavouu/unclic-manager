@@ -5,12 +5,14 @@ import { FinancialReports } from "./tabs/FinancialReports";
 import { ClientReports } from "./tabs/ClientReports";
 import { ServiceReports } from "./tabs/ServiceReports";
 import { ProfessionalsReports } from "./tabs/ProfessionalsReports";
+import { ReportStatistics } from "@/hooks/reports/useReportsData";
 
 interface ReportsTabsProps {
   dateRange: string;
+  stats: ReportStatistics;
 }
 
-export function ReportsTabs({ dateRange }: ReportsTabsProps) {
+export function ReportsTabs({ dateRange, stats }: ReportsTabsProps) {
   const [activeTab, setActiveTab] = useState("financial");
 
   return (
@@ -22,16 +24,16 @@ export function ReportsTabs({ dateRange }: ReportsTabsProps) {
         <TabsTrigger value="professionals">Profissionais</TabsTrigger>
       </TabsList>
       <TabsContent value="financial" className="space-y-4 pt-2">
-        <FinancialReports dateRange={dateRange} />
+        <FinancialReports dateRange={dateRange} stats={stats} />
       </TabsContent>
       <TabsContent value="clients" className="space-y-4 pt-2">
-        <ClientReports dateRange={dateRange} />
+        <ClientReports dateRange={dateRange} stats={stats} />
       </TabsContent>
       <TabsContent value="services" className="space-y-4 pt-2">
-        <ServiceReports dateRange={dateRange} />
+        <ServiceReports dateRange={dateRange} stats={stats} />
       </TabsContent>
       <TabsContent value="professionals" className="space-y-4 pt-2">
-        <ProfessionalsReports dateRange={dateRange} />
+        <ProfessionalsReports dateRange={dateRange} stats={stats} />
       </TabsContent>
     </Tabs>
   );

@@ -1,21 +1,14 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { ReportStatistics } from "@/hooks/reports/useReportsData";
 
 interface ServicePopularityChartProps {
   dateRange: string;
+  stats: ReportStatistics;
 }
 
-const data = [
-  { name: "Corte de Cabelo", count: 150 },
-  { name: "Coloração", count: 120 },
-  { name: "Manicure", count: 100 },
-  { name: "Pedicure", count: 80 },
-  { name: "Tratamento Facial", count: 60 },
-];
-
-export function ServicePopularityChart({ dateRange }: ServicePopularityChartProps) {
-  // In a real application, we would use the dateRange to filter data
-  console.log(`Loading service popularity data for range: ${dateRange}`);
+export function ServicePopularityChart({ dateRange, stats }: ServicePopularityChartProps) {
+  const data = stats.servicePopularity;
   
   return (
     <ResponsiveContainer width="100%" height={300}>

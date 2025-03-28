@@ -1,13 +1,15 @@
 
 import { Users, UserPlus, UserCheck, Calendar } from "lucide-react";
+import { ReportStatistics } from "@/hooks/reports/useReportsData";
 
 interface ClientStatisticsSectionProps {
   dateRange: string;
+  stats: ReportStatistics;
 }
 
-export function ClientStatisticsSection({ dateRange }: ClientStatisticsSectionProps) {
-  // No real application, we would use the dateRange to filter data
-  console.log(`Loading client statistics for range: ${dateRange}`);
+export function ClientStatisticsSection({ dateRange, stats }: ClientStatisticsSectionProps) {
+  // Calculate average visit frequency in days (simplified for demonstration)
+  const averageVisitFrequency = 18; // Fixed value for demonstration
   
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -19,7 +21,7 @@ export function ClientStatisticsSection({ dateRange }: ClientStatisticsSectionPr
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Total de Clientes</p>
-          <h3 className="text-2xl font-bold">685</h3>
+          <h3 className="text-2xl font-bold">{stats.totalClients}</h3>
         </div>
       </div>
       
@@ -31,7 +33,7 @@ export function ClientStatisticsSection({ dateRange }: ClientStatisticsSectionPr
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Novos Clientes (Mês)</p>
-          <h3 className="text-2xl font-bold">42</h3>
+          <h3 className="text-2xl font-bold">{stats.newClientsCount}</h3>
         </div>
       </div>
       
@@ -43,7 +45,7 @@ export function ClientStatisticsSection({ dateRange }: ClientStatisticsSectionPr
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Taxa de Retenção</p>
-          <h3 className="text-2xl font-bold">87%</h3>
+          <h3 className="text-2xl font-bold">{Math.round(stats.retentionRate)}%</h3>
         </div>
       </div>
       
@@ -55,7 +57,7 @@ export function ClientStatisticsSection({ dateRange }: ClientStatisticsSectionPr
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Frequência Média</p>
-          <h3 className="text-2xl font-bold">18 dias</h3>
+          <h3 className="text-2xl font-bold">{averageVisitFrequency} dias</h3>
         </div>
       </div>
     </div>

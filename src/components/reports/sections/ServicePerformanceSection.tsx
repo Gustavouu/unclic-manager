@@ -1,13 +1,23 @@
 
-import { CalendarRange, Clock, DollarSign, Users } from "lucide-react";
+import { Users, Clock, DollarSign, CalendarRange } from "lucide-react";
+import { ReportStatistics } from "@/hooks/reports/useReportsData";
 
 interface ServicePerformanceSectionProps {
   dateRange: string;
+  stats: ReportStatistics;
 }
 
-export function ServicePerformanceSection({ dateRange }: ServicePerformanceSectionProps) {
-  // In a real application, we would use the dateRange to filter data
-  console.log(`Loading service performance data for range: ${dateRange}`);
+export function ServicePerformanceSection({ dateRange, stats }: ServicePerformanceSectionProps) {
+  // Format the average duration in minutes
+  const formattedDuration = Math.round(stats.averageDuration);
+  
+  // Format the average ticket value
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('pt-BR', { 
+      style: 'currency', 
+      currency: 'BRL' 
+    });
+  };
   
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -19,7 +29,7 @@ export function ServicePerformanceSection({ dateRange }: ServicePerformanceSecti
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Total de Agendamentos</p>
-          <h3 className="text-2xl font-bold">523</h3>
+          <h3 className="text-2xl font-bold">{stats.totalAppointments}</h3>
         </div>
       </div>
       
@@ -31,7 +41,7 @@ export function ServicePerformanceSection({ dateRange }: ServicePerformanceSecti
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Tempo Médio</p>
-          <h3 className="text-2xl font-bold">45 min</h3>
+          <h3 className="text-2xl font-bold">{formattedDuration} min</h3>
         </div>
       </div>
       
@@ -43,7 +53,7 @@ export function ServicePerformanceSection({ dateRange }: ServicePerformanceSecti
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Ticket Médio</p>
-          <h3 className="text-2xl font-bold">R$ 85</h3>
+          <h3 className="text-2xl font-bold">{formatCurrency(stats.averagePrice)}</h3>
         </div>
       </div>
       
@@ -55,7 +65,7 @@ export function ServicePerformanceSection({ dateRange }: ServicePerformanceSecti
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Taxa de Ocupação</p>
-          <h3 className="text-2xl font-bold">78%</h3>
+          <h3 className="text-2xl font-bold">{stats.occupancyRate}%</h3>
         </div>
       </div>
     </div>

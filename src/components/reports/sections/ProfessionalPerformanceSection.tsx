@@ -1,13 +1,30 @@
 
 import { Users, Clock, TrendingUp, DollarSign } from "lucide-react";
+import { ReportStatistics } from "@/hooks/reports/useReportsData";
 
 interface ProfessionalPerformanceSectionProps {
   dateRange: string;
+  stats: ReportStatistics;
 }
 
-export function ProfessionalPerformanceSection({ dateRange }: ProfessionalPerformanceSectionProps) {
-  // In a real application, we would use the dateRange to filter data
-  console.log(`Loading professional performance data for range: ${dateRange}`);
+export function ProfessionalPerformanceSection({ dateRange, stats }: ProfessionalPerformanceSectionProps) {
+  // Format currency values
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('pt-BR', { 
+      style: 'currency', 
+      currency: 'BRL' 
+    });
+  };
+  
+  // Calculate professional metrics
+  const activeProfs = stats.professionalProductivity.length;
+  const avgAppointments = stats.totalAppointments > 0 && activeProfs > 0 ? 
+    Math.round(stats.totalAppointments / activeProfs) : 0;
+  
+  const conversionRate = 92; // Fixed value for demonstration
+  
+  const avgRevenue = stats.totalRevenue > 0 && activeProfs > 0 ? 
+    Math.round(stats.totalRevenue / activeProfs) : 0;
   
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -19,7 +36,7 @@ export function ProfessionalPerformanceSection({ dateRange }: ProfessionalPerfor
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Profissionais Ativos</p>
-          <h3 className="text-2xl font-bold">12</h3>
+          <h3 className="text-2xl font-bold">{activeProfs}</h3>
         </div>
       </div>
       
@@ -31,7 +48,7 @@ export function ProfessionalPerformanceSection({ dateRange }: ProfessionalPerfor
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Média de Atendimentos</p>
-          <h3 className="text-2xl font-bold">38</h3>
+          <h3 className="text-2xl font-bold">{avgAppointments}</h3>
         </div>
       </div>
       
@@ -43,7 +60,7 @@ export function ProfessionalPerformanceSection({ dateRange }: ProfessionalPerfor
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Taxa de Conversão</p>
-          <h3 className="text-2xl font-bold">92%</h3>
+          <h3 className="text-2xl font-bold">{conversionRate}%</h3>
         </div>
       </div>
       
@@ -55,7 +72,7 @@ export function ProfessionalPerformanceSection({ dateRange }: ProfessionalPerfor
         </div>
         <div className="mt-3">
           <p className="text-sm text-muted-foreground">Receita por Profissional</p>
-          <h3 className="text-2xl font-bold">R$ 3.850</h3>
+          <h3 className="text-2xl font-bold">{formatCurrency(avgRevenue)}</h3>
         </div>
       </div>
     </div>
