@@ -26,25 +26,19 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Grid3X3 } from "lucide-react";
 import { AppointmentType, CalendarViewType, ServiceType, SERVICE_TYPE_NAMES } from "./calendar/types";
 import { SAMPLE_APPOINTMENTS } from "./calendar/sampleData";
+import { useBusinessHours } from "@/hooks/useBusinessHours";
 
 const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-
-// Define business hours
-const BUSINESS_HOURS: Record<string, { isOpen: boolean; hours?: string }> = {
-  0: { isOpen: false }, // Sunday
-  1: { isOpen: true, hours: "09:00 - 18:00" }, // Monday
-  2: { isOpen: true, hours: "09:00 - 18:00" }, // Tuesday
-  3: { isOpen: true, hours: "09:00 - 18:00" }, // Wednesday
-  4: { isOpen: true, hours: "09:00 - 18:00" }, // Thursday
-  5: { isOpen: true, hours: "09:00 - 18:00" }, // Friday
-  6: { isOpen: true, hours: "09:00 - 16:00" }, // Saturday
-};
 
 export const AppointmentCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarView, setCalendarView] = useState<CalendarViewType>("month");
   const [serviceFilter, setServiceFilter] = useState<ServiceType>("all");
+  
+  // Get business hours from the hook
+  const { getCalendarBusinessHours } = useBusinessHours();
+  const businessHours = getCalendarBusinessHours();
 
   const nextPeriod = () => {
     if (calendarView === "month") {
@@ -118,7 +112,7 @@ export const AppointmentCalendar = () => {
   });
 
   return (
-    <div className="rounded-lg border border-border/40 shadow-sm overflow-hidden bg-white">
+    <div className="rounded-lg border border-blue-100 shadow-sm overflow-hidden bg-white">
       <div className="p-4">
         <CalendarHeader 
           currentDate={currentDate}
@@ -131,7 +125,7 @@ export const AppointmentCalendar = () => {
         />
         
         <div className="mb-4 border-b pb-4">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-3">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <CalendarFilter 
               serviceFilter={serviceFilter}
               onFilterChange={setServiceFilter}
@@ -142,7 +136,7 @@ export const AppointmentCalendar = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className={`h-9 ${calendarView === 'month' ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}`}
+                className={`h-9 ${calendarView === 'month' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
                 onClick={() => setCalendarView('month')}
               >
                 <Grid3X3 size={16} className="mr-1" />
@@ -151,7 +145,7 @@ export const AppointmentCalendar = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className={`h-9 ${calendarView === 'week' ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}`}
+                className={`h-9 ${calendarView === 'week' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
                 onClick={() => setCalendarView('week')}
               >
                 <Calendar size={16} className="mr-1" />
@@ -176,7 +170,7 @@ export const AppointmentCalendar = () => {
             currentDate={currentDate}
             weekAppointments={weekAppointments}
             onSelectAppointment={handleSelectAppointment}
-            businessHours={BUSINESS_HOURS}
+            businessHours={businessHours}
           />
         )}
         

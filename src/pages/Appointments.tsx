@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Calendar as CalendarIcon, List, CalendarPlus } from "lucide-react";
+import { CalendarIcon, List, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppointmentCalendar } from "@/components/appointments/AppointmentCalendar";
 import { AppointmentsList } from "@/components/appointments/AppointmentsList";
@@ -23,8 +23,8 @@ const Appointments = () => {
           className="w-full"
           onValueChange={(value) => setView(value as "calendar" | "list")}
         >
-          <div className="flex justify-between items-center p-3 border-b bg-gray-50">
-            <TabsList className="bg-gray-200">
+          <div className="flex justify-between items-center p-3 border-b bg-white">
+            <TabsList className="bg-blue-50">
               <TabsTrigger value="calendar" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 <CalendarIcon size={16} />
                 <span>Calendário</span>
@@ -48,7 +48,7 @@ const Appointments = () => {
             <AppointmentCalendar />
           </TabsContent>
           
-          <TabsContent value="list" className="mt-0 p-4">
+          <TabsContent value="list" className="mt-0 p-4 bg-white">
             <AppointmentsList />
           </TabsContent>
         </Tabs>

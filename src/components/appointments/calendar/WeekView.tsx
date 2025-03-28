@@ -9,16 +9,18 @@ type WeekViewProps = {
   currentDate: Date;
   weekAppointments: AppointmentType[];
   onSelectAppointment: (date: Date) => void;
+  businessHours?: Record<string, { isOpen: boolean; hours?: string }>;
 };
 
 export const WeekView = ({
   currentDate,
   weekAppointments,
   onSelectAppointment,
+  businessHours: propBusinessHours,
 }: WeekViewProps) => {
-  // Get business hours from the hook
+  // Get business hours from the hook or from props
   const { getCalendarBusinessHours } = useBusinessHours();
-  const businessHours = getCalendarBusinessHours();
+  const businessHours = propBusinessHours || getCalendarBusinessHours();
   
   // Get all days of the week
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
@@ -38,17 +40,17 @@ export const WeekView = ({
           <div 
             key={index} 
             className={cn(
-              "border rounded-lg",
+              "border rounded-lg shadow-sm",
               isOpen ? "border-gray-200" : "border-gray-100 bg-gray-50"
             )}
           >
             <div className={cn(
               "p-2 border-b flex justify-between items-center",
-              isOpen ? "bg-gray-50 border-gray-200" : "bg-gray-100 border-gray-200"
+              isOpen ? "bg-blue-50 border-blue-100 text-blue-800" : "bg-gray-100 border-gray-200"
             )}>
               <h3 className={cn(
                 "text-sm font-medium",
-                isOpen ? "text-gray-700" : "text-gray-500"
+                isOpen ? "text-blue-800" : "text-gray-500"
               )}>
                 {format(day, "EEEE, dd/MM", { locale: ptBR })}
               </h3>
@@ -58,7 +60,7 @@ export const WeekView = ({
                 </span>
               )}
               {isOpen && businessHours[dayOfWeek]?.hours && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
                   {businessHours[dayOfWeek]?.hours}
                 </span>
               )}
@@ -74,22 +76,20 @@ export const WeekView = ({
                   .map(appointment => (
                     <div 
                       key={appointment.id}
-                      className="p-2 hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="p-3 hover:bg-blue-50/30 transition-colors cursor-pointer flex justify-between"
                       onClick={() => onSelectAppointment(appointment.date)}
                     >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-gray-800">{appointment.clientName}</p>
-                          <p className="text-sm text-gray-600">{appointment.serviceName}</p>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                            <span>{appointment.duration} min</span>
-                            <span>R$ {appointment.price.toFixed(2)}</span>
-                          </div>
+                      <div>
+                        <p className="font-medium text-gray-800">{appointment.clientName}</p>
+                        <p className="text-sm text-gray-600">{appointment.serviceName}</p>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                          <span>{appointment.duration} min</span>
+                          <span>R$ {appointment.price.toFixed(2)}</span>
                         </div>
-                        <div className="flex flex-col items-end">
-                          <div className="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full mb-1">
-                            {format(appointment.date, "HH:mm")}
-                          </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <div className="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full mb-1">
+                          {format(appointment.date, "HH:mm")}
                         </div>
                       </div>
                     </div>
