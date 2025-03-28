@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -11,6 +10,7 @@ import PaymentProcessing from "./PaymentProcessing";
 import { PaymentResult } from "./PaymentResult";
 import PaymentDialogHeader from "./PaymentDialogHeader";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const paymentSchema = z.object({
   paymentMethod: z.string({ required_error: "Selecione uma forma de pagamento" }),
@@ -129,7 +129,8 @@ export const PaymentDialog = ({
         amount,
         customerId,
         paymentMethod: values.paymentMethod,
-        description: `Pagamento para ${serviceName}`
+        description: `Pagamento para ${serviceName}`,
+        businessId: "1" // Set default business ID
       });
       
       // Ensure we're only setting a valid status

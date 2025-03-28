@@ -8,6 +8,7 @@ export interface PaymentRequest {
   paymentMethod: string;
   description: string;
   appointmentId?: string;
+  businessId?: string; // Added business ID parameter
 }
 
 export interface PaymentResponse {
@@ -27,7 +28,7 @@ export const PaymentService = {
   async createPayment(request: PaymentRequest): Promise<PaymentResponse> {
     try {
       // Generate a payment ID for this transaction
-      const paymentId = `PAY-${Math.random().toString(36).substring(2, 15)}`;
+      const paymentId = crypto.randomUUID(); // Using UUID instead of random string
       
       // Create a transaction record in the database
       const { data, error } = await supabase
@@ -45,7 +46,8 @@ export const PaymentService = {
             source: 'payment_service' 
           }),
           id_cliente: request.customerId,
-          id_agendamento: request.appointmentId
+          id_agendamento: request.appointmentId,
+          id_negocio: request.businessId || "1" // Default to "1" if not provided
         })
         .select()
         .single();
