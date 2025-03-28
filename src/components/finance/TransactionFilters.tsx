@@ -8,7 +8,27 @@ import { Filter, CalendarDays, Download } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export function TransactionFilters() {
+export interface TransactionFiltersProps {
+  searchTerm?: string;
+  setSearchTerm?: (value: string) => void;
+  dateRange?: [Date | null, Date | null];
+  setDateRange?: (value: [Date | null, Date | null]) => void;
+  statusFilter?: string[];
+  setStatusFilter?: (value: string[]) => void;
+  typeFilter?: string[];
+  setTypeFilter?: (value: string[]) => void;
+}
+
+export function TransactionFilters({
+  searchTerm,
+  setSearchTerm,
+  dateRange,
+  setDateRange,
+  statusFilter,
+  setStatusFilter,
+  typeFilter,
+  setTypeFilter
+}: TransactionFiltersProps = {}) {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   

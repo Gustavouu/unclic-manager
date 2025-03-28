@@ -29,13 +29,33 @@ interface Transaction {
   };
 }
 
-interface TransactionsTableProps {
+export interface TransactionsTableProps {
   isLoading: boolean;
   filterType?: "all" | "receita" | "despesa";
   period?: string;
+  currentPage?: number;
+  pageSize?: number;
+  setCurrentPage?: (page: number) => void;
+  setPageSize?: (size: number) => void;
+  searchTerm?: string;
+  dateRange?: [Date | null, Date | null];
+  statusFilter?: string[];
+  typeFilter?: string[];
 }
 
-export function TransactionsTable({ isLoading, filterType = "all", period = "30days" }: TransactionsTableProps) {
+export function TransactionsTable({ 
+  isLoading, 
+  filterType = "all", 
+  period = "30days",
+  currentPage,
+  pageSize,
+  setCurrentPage,
+  setPageSize,
+  searchTerm,
+  dateRange,
+  statusFilter,
+  typeFilter
+}: TransactionsTableProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -93,7 +113,7 @@ export function TransactionsTable({ isLoading, filterType = "all", period = "30d
     if (!isLoading) {
       fetchTransactions();
     }
-  }, [isLoading, filterType, period]);
+  }, [isLoading, filterType, period, searchTerm, dateRange, statusFilter, typeFilter]);
 
   const getPaymentMethodLabel = (method: string | null) => {
     if (!method) return "Não informado";

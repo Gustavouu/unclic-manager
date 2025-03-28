@@ -16,6 +16,7 @@ const Finance = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const breadcrumb = [
     { label: "Dashboard", path: "/" },
@@ -35,35 +36,21 @@ const Finance = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="col-span-1 md:col-span-2">
-            <FinancialSummary />
+            <FinancialSummary isLoading={isLoading} />
           </Card>
           
           <Card className="col-span-1">
-            <PaymentMethodsStats />
+            <PaymentMethodsStats isLoading={isLoading} />
           </Card>
         </div>
 
         <Card className="border shadow-sm">
-          <TransactionFilters 
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            dateRange={dateRange}
-            setDateRange={setDateRange}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            typeFilter={typeFilter}
-            setTypeFilter={setTypeFilter}
-          />
+          <TransactionFilters />
           
           <TransactionsTable 
-            currentPage={currentPage}
-            pageSize={pageSize}
-            setCurrentPage={setCurrentPage}
-            setPageSize={setPageSize}
-            searchTerm={searchTerm}
-            dateRange={dateRange}
-            statusFilter={statusFilter}
-            typeFilter={typeFilter}
+            isLoading={isLoading}
+            filterType="all"
+            period="30days"
           />
         </Card>
       </div>
