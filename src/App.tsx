@@ -10,6 +10,7 @@ import {
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from "@/components/auth/RequireAuth";
+import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 
 // Pages
 import Index from "@/pages/Index";
@@ -48,7 +49,11 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/" element={<Index />} />
-        <Route path="/website" element={<BusinessWebsite />} />
+        <Route path="/website" element={
+          <OnboardingProvider>
+            <BusinessWebsite />
+          </OnboardingProvider>
+        } />
         <Route path="/onboarding" element={<Onboarding />} />
 
         {/* Protected Routes - Requires Authentication */}
