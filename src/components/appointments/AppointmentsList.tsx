@@ -104,7 +104,7 @@ export const AppointmentsList = () => {
                           <div className="font-medium text-gray-900">{appointment.clientName}</div>
                           <div className="text-sm text-gray-600">{appointment.serviceName}</div>
                           <div className="flex items-center gap-3 mt-1">
-                            <div className="text-xs text-gray-500">{appointment.duration} min</div>
+                            <div className="text-xs text-gray-500">{appointment.serviceType} min</div>
                             <div className="text-xs text-gray-500">R$ {appointment.price.toFixed(2)}</div>
                           </div>
                         </div>
@@ -115,13 +115,13 @@ export const AppointmentsList = () => {
                         </div>
                         <div className="text-xs mt-1">
                           <Badge variant="outline" className={`
-                            ${appointment.status === 'confirmed' ? 'bg-green-50 text-green-700 border-green-200' : ''}
-                            ${appointment.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : ''}
-                            ${appointment.status === 'canceled' ? 'bg-red-50 text-red-700 border-red-200' : ''}
+                            ${appointment.status === 'agendado' ? 'bg-green-50 text-green-700 border-green-200' : ''}
+                            ${appointment.status === 'pendente' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : ''}
+                            ${appointment.status === 'cancelado' ? 'bg-red-50 text-red-700 border-red-200' : ''}
                           `}>
-                            {appointment.status === 'confirmed' ? 'Confirmado' : 
-                             appointment.status === 'pending' ? 'Pendente' : 
-                             appointment.status === 'canceled' ? 'Cancelado' : 
+                            {appointment.status === 'agendado' ? 'Confirmado' : 
+                             appointment.status === 'pendente' ? 'Pendente' : 
+                             appointment.status === 'cancelado' ? 'Cancelado' : 
                              appointment.status}
                           </Badge>
                         </div>
