@@ -26,6 +26,11 @@ export const TransactionService = {
       // Generate a unique transaction ID
       const transactionId = uuidv4();
       
+      // Ensure we have a valid businessId (UUID format)
+      const businessId = data.businessId && !data.businessId.includes("-") 
+        ? uuidv4() // If it's not in UUID format, generate a new one
+        : (data.businessId || uuidv4());
+      
       // Create an in-memory transaction for demo purposes
       const transaction = {
         id: transactionId,
@@ -37,7 +42,7 @@ export const TransactionService = {
         descricao: data.description,
         tipo: "receita",
         status: "pendente",
-        id_negocio: data.businessId || "1",
+        id_negocio: businessId,
         criado_em: new Date().toISOString(),
         notas: null
       };

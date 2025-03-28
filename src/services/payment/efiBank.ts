@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { EfiPaymentData, EfiStatusResponse } from "./types";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Makes API calls to the EFI Pay payment gateway
@@ -47,7 +48,7 @@ export const EfiBankService = {
           document: "00000000000" // CPF (placeholder)
         },
         expiresIn: 3600, // 1 hora
-        appointmentId: data.referenceId
+        appointmentId: data.referenceId || uuidv4()
       };
       
       console.log("Sending request to EFI Pay handler:", requestData);

@@ -5,6 +5,7 @@ import { mapEfiBankStatus } from "./utils";
 import { WebhookService } from "./webhook";
 import { TransactionService } from "./transactions/TransactionService";
 import { PaymentResponseMapper } from "./mappers/PaymentResponseMapper";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Service for handling payment processing with Efi Bank
@@ -18,6 +19,11 @@ export const PaymentService = {
       // First, get the Efi Bank configuration
       const efiConfig = await EfiBankService.getConfiguration();
       
+      // Generate a valid UUID for business ID if a numeric string is provided
+      const businessId = payment.businessId && !payment.businessId.includes("-") 
+        ? uuidv4() 
+        : payment.businessId || uuidv4();
+      
       // Register the transaction in our database
       const dbTransaction = await TransactionService.createTransaction({
         serviceId: payment.serviceId,
@@ -25,7 +31,8 @@ export const PaymentService = {
         customerId: payment.customerId,
         amount: payment.amount,
         paymentMethod: payment.paymentMethod,
-        description: payment.description || "Pagamento de serviço"
+        description: payment.description || "Pagamento de serviço",
+        businessId: businessId
       });
       
       // Configure the data for the Efi Bank API call

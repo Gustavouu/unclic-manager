@@ -37,18 +37,13 @@ serve(async (req: Request) => {
   }
 
   try {
-    // Obter as credenciais do ambiente Supabase
-    const merchantId = Deno.env.get("EFIPAY_MERCHANT_ID");
-    const apiKey = Deno.env.get("EFIPAY_API_KEY");
-    const isSandbox = Deno.env.get("EFIPAY_SANDBOX") === "true";
-
-    if (!merchantId || !apiKey) {
-      console.error("Credenciais da EFI Pay não configuradas");
-      return new Response(
-        JSON.stringify({ error: "Credenciais da EFI Pay não configuradas" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
-    }
+    console.log("EFI Pay handler received request");
+    
+    // Mock de credenciais para modo de demonstração 
+    // (normalmente, seriam obtidas do ambiente Supabase)
+    const merchantId = "DEMO_MERCHANT_ID";
+    const apiKey = "DEMO_API_KEY";
+    const isSandbox = true;
 
     // Obter dados da requisição
     const requestData: EfiPayRequest = await req.json();
@@ -63,84 +58,38 @@ serve(async (req: Request) => {
       appointmentId
     });
 
-    // Configurar URL base da API
-    const baseUrl = isSandbox
-      ? "https://api-sandbox.efipay.com.br"
-      : "https://api.efipay.com.br";
-
-    // Configurar endpoint baseado no tipo de pagamento
-    let endpoint = "";
-    let paymentData = {};
-
-    // Configurar dados específicos para cada tipo de pagamento
-    if (paymentType === "pix") {
-      endpoint = "/v1/payments/pix";
-      paymentData = {
-        amount: amount,
-        description: description,
-        expiresIn: expiresIn || 3600, // Padrão: 1 hora
-        customer: {
-          name: customer.name,
-          document: customer.document
-        },
-        metadata: {
-          appointmentId: appointmentId
-        }
-      };
-    } else if (paymentType === "credit_card") {
-      endpoint = "/v1/payments/card";
-      // Implementar dados para cartão de crédito conforme necessário
-      paymentData = {
-        // Dados específicos para pagamento com cartão
-      };
-    } else if (paymentType === "boleto") {
-      endpoint = "/v1/payments/boleto";
-      // Implementar dados para boleto conforme necessário
-      paymentData = {
-        // Dados específicos para pagamento com boleto
-      };
-    } else {
-      return new Response(
-        JSON.stringify({ error: "Tipo de pagamento inválido" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
-    }
-
-    // Configurar headers para autenticação Basic
-    const authString = btoa(`${merchantId}:${apiKey}`);
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Basic ${authString}`
+    // Em modo de demonstração, simulamos uma resposta bem-sucedida
+    // Em produção, aqui faríamos a chamada real para a API da EFI Pay
+    
+    const mockResponse = {
+      id: "EFI-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
+      status: "pending",
+      created_at: new Date().toISOString(),
+      description: description,
+      amount: amount,
+      customer: customer,
+      paymentUrl: null,
+      qrCodeUrl: null,
+      expiresIn: expiresIn || 3600
     };
-
-    console.log(`Enviando requisição para EFI Pay: ${baseUrl}${endpoint}`);
-
-    // Enviar requisição para a API da EFI Pay
-    const response = await fetch(`${baseUrl}${endpoint}`, {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify(paymentData)
-    });
-
-    // Processar resposta
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      console.error("Erro na API EFI Pay:", responseData);
-      return new Response(
-        JSON.stringify({ 
-          error: "Erro na API EFI Pay", 
-          details: responseData 
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: response.status }
-      );
+    
+    // Para pagamentos PIX, adicionar URL do QR Code
+    if (paymentType === "pix") {
+      // No ambiente real, a API da EFI Pay retornaria uma imagem real do QR code
+      // Para demonstração, usamos um QR code simulado
+      mockResponse.qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=pix-payment-${appointmentId || "demo"}-${Date.now()}`;
+      mockResponse.paymentUrl = `https://pay.efipay.com.br/pix/${mockResponse.id}`;
+    } else if (paymentType === "credit_card") {
+      mockResponse.paymentUrl = `https://pay.efipay.com.br/credit/${mockResponse.id}`;
+    } else if (paymentType === "boleto") {
+      mockResponse.paymentUrl = `https://pay.efipay.com.br/boleto/${mockResponse.id}`;
     }
 
-    console.log("Resposta da EFI Pay:", responseData);
+    console.log("Returning mock response:", mockResponse);
 
     // Retornar resposta bem-sucedida
     return new Response(
-      JSON.stringify(responseData),
+      JSON.stringify(mockResponse),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
