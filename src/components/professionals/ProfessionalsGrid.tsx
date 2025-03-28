@@ -1,27 +1,56 @@
-
 import { Professional } from "@/hooks/professionals/types";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfessionalStatusBadge } from "./ProfessionalStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Eye, Edit, Trash2 } from "lucide-react";
+import React from "react";
 
 interface ProfessionalsGridProps {
   professionals: Professional[];
-  onViewDetails: (id: string) => void;
-  onEditProfessional: (professional: Professional) => void;
-  onDeleteProfessional: (professional: Professional) => void;
+  onProfessionalClick?: (id: string) => void;
+  onEditClick?: (professional: Professional, e: React.MouseEvent) => void;
+  onDeleteClick?: (professional: Professional, e: React.MouseEvent) => void;
+  onViewDetails?: (id: string) => void;
+  onEditProfessional?: (professional: Professional) => void;
+  onDeleteProfessional?: (professional: Professional) => void;
 }
 
 export const ProfessionalsGrid = ({ 
   professionals, 
+  onProfessionalClick,
+  onEditClick,
+  onDeleteClick,
   onViewDetails,
   onEditProfessional,
   onDeleteProfessional 
 }: ProfessionalsGridProps) => {
-  // Função para obter as iniciais do nome
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  };
+
+  const handleViewDetails = (id: string) => {
+    if (onProfessionalClick) {
+      onProfessionalClick(id);
+    } else if (onViewDetails) {
+      onViewDetails(id);
+    }
+  };
+
+  const handleEdit = (professional: Professional, e: React.MouseEvent) => {
+    if (onEditClick) {
+      onEditClick(professional, e);
+    } else if (onEditProfessional) {
+      onEditProfessional(professional);
+    }
+  };
+
+  const handleDelete = (professional: Professional, e: React.MouseEvent) => {
+    if (onDeleteClick) {
+      onDeleteClick(professional, e);
+    } else if (onDeleteProfessional) {
+      onDeleteProfessional(professional);
+    }
   };
 
   return (
@@ -68,7 +97,7 @@ export const ProfessionalsGrid = ({
               variant="outline" 
               size="sm" 
               className="flex-1"
-              onClick={() => onViewDetails(professional.id)}
+              onClick={() => handleViewDetails(professional.id)}
             >
               <Eye size={16} className="mr-1" />
               Ver
@@ -77,7 +106,7 @@ export const ProfessionalsGrid = ({
               variant="outline" 
               size="sm" 
               className="flex-1"
-              onClick={() => onEditProfessional(professional)}
+              onClick={(e) => handleEdit(professional, e)}
             >
               <Edit size={16} className="mr-1" />
               Editar
@@ -86,7 +115,7 @@ export const ProfessionalsGrid = ({
               variant="outline" 
               size="sm" 
               className="flex-1 text-red-500 hover:text-red-600 hover:bg-red-50"
-              onClick={() => onDeleteProfessional(professional)}
+              onClick={(e) => handleDelete(professional, e)}
             >
               <Trash2 size={16} className="mr-1" />
               Excluir

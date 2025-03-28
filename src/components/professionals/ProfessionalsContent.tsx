@@ -2,6 +2,7 @@
 import { Professional } from "@/hooks/professionals/types";
 import { ProfessionalsGrid } from "./ProfessionalsGrid";
 import { ProfessionalsTable } from "./ProfessionalsTable";
+import React from "react";
 
 interface ProfessionalsContentProps {
   view: "grid" | "list";

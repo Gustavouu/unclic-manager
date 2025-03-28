@@ -1,8 +1,8 @@
 
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
-import { ProfessionalsGrid } from "./ProfessionalsGrid";
-import { ProfessionalsTable } from "./ProfessionalsTable";
+import { ProfessionalsContent } from "./ProfessionalsContent";
 import { Professional } from "@/hooks/professionals/types";
+import React from "react";
 
 interface ProfessionalsLayoutProps {
   view: "grid" | "list";
@@ -31,23 +31,28 @@ export const ProfessionalsLayout = ({
     );
   }
 
-  if (view === "grid") {
-    return (
-      <ProfessionalsGrid 
-        professionals={professionals} 
-        onViewDetails={onViewDetails}
-        onEditProfessional={onEditProfessional}
-        onDeleteProfessional={onDeleteProfessional}
-      />
-    );
-  }
+  // Adapter functions to match the expected prop interfaces
+  const handleProfessionalClick = (id: string) => {
+    onViewDetails(id);
+  };
+
+  const handleEditClick = (professional: Professional, e: React.MouseEvent) => {
+    e.preventDefault();
+    onEditProfessional(professional);
+  };
+
+  const handleDeleteClick = (professional: Professional, e: React.MouseEvent) => {
+    e.preventDefault();
+    onDeleteProfessional(professional);
+  };
 
   return (
-    <ProfessionalsTable 
-      professionals={professionals} 
-      onViewDetails={onViewDetails}
-      onEditProfessional={onEditProfessional}
-      onDeleteProfessional={onDeleteProfessional}
+    <ProfessionalsContent
+      view={view}
+      professionals={professionals}
+      onProfessionalClick={handleProfessionalClick}
+      onEditClick={handleEditClick}
+      onDeleteClick={handleDeleteClick}
     />
   );
 };
