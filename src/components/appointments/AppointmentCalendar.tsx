@@ -33,9 +33,16 @@ export const AppointmentCalendar = ({ initialView }: AppointmentCalendarProps) =
     status: app.status
   }));
   
-  // Refresh appointments when the component mounts
+  // Refresh appointments when the component mounts and every minute
   useEffect(() => {
     fetchAppointments();
+    
+    // Set up a polling interval to refresh appointments
+    const intervalId = setInterval(() => {
+      fetchAppointments();
+    }, 60000); // Refresh every minute
+    
+    return () => clearInterval(intervalId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

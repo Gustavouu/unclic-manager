@@ -11,19 +11,33 @@ export const useAppointmentCreate = (
 ) => {
   const createAppointment = async (appointmentData: CreateAppointmentData) => {
     try {
+      console.log("Creating appointment with data:", appointmentData);
+      
       // Check for valid UUIDs or use sensible defaults
       const serviceId = isValidUUID(appointmentData.serviceId) ? appointmentData.serviceId : DEFAULT_UUID;
       const clientId = isValidUUID(appointmentData.clientId) ? appointmentData.clientId : DEFAULT_UUID;
       const professionalId = isValidUUID(appointmentData.professionalId) ? appointmentData.professionalId : DEFAULT_UUID;
       const businessId = isValidUUID(appointmentData.businessId) ? appointmentData.businessId : DEFAULT_UUID;
 
+      // Format dates properly for PostgreSQL
+      const appointmentDate = format(appointmentData.date, 'yyyy-MM-dd');
+      const startTime = format(appointmentData.date, 'HH:mm:ss');
+      const endDate = new Date(appointmentData.date.getTime() + appointmentData.duration * 60000);
+      const endTime = format(endDate, 'HH:mm:ss');
+
+      console.log("Formatted date and times:", { 
+        appointmentDate, 
+        startTime, 
+        endTime 
+      });
+
       // Convert to database format
       const { data, error } = await supabase
         .from('agendamentos')
         .insert({
-          data: format(appointmentData.date, 'yyyy-MM-dd'),
-          hora_inicio: format(appointmentData.date, 'HH:mm:ss'),
-          hora_fim: format(new Date(appointmentData.date.getTime() + appointmentData.duration * 60000), 'HH:mm:ss'),
+          data: appointmentDate,
+          hora_inicio: startTime,
+          hora_fim: endTime,
           duracao: appointmentData.duration,
           valor: appointmentData.price,
           status: appointmentData.status,
@@ -37,7 +51,12 @@ export const useAppointmentCreate = (
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase insert error:", error);
+        throw error;
+      }
+      
+      console.log("Appointment created successfully:", data);
       
       // Add the new appointment to state
       const newAppointment: Appointment = {

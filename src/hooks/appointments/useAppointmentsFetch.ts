@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment, AppointmentStatus } from "@/components/appointments/types";
 import { toast } from "sonner";
@@ -10,11 +10,13 @@ export const useAppointmentsFetch = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
     try {
+      console.log("Fetching appointments...");
+      
       // Fetch from database
       const { data, error } = await supabase
         .from('agendamentos')
@@ -31,9 +33,16 @@ export const useAppointmentsFetch = () => {
           servicos(nome),
           clientes(nome),
           funcionarios(nome)
-        `);
+        `)
+        .order('data', { ascending: false })
+        .order('hora_inicio', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+
+      console.log("Fetched appointments:", data);
 
       // Transform database data to application format
       const formattedAppointments = data.map(item => {
@@ -57,6 +66,7 @@ export const useAppointmentsFetch = () => {
       });
       
       setAppointments(formattedAppointments);
+      console.log("Formatted appointments:", formattedAppointments);
     } catch (err) {
       console.error("Error fetching appointments:", err);
       setError("Não foi possível carregar os agendamentos");
@@ -64,7 +74,7 @@ export const useAppointmentsFetch = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   return {
     appointments,
