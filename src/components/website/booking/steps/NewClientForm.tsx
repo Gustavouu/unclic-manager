@@ -10,7 +10,7 @@ import { UserPlusIcon, CalendarIcon } from "lucide-react";
 
 interface NewClientFormProps {
   phone: string;
-  onClientCreated: (clientId: string, clientName: string) => void;
+  onClientCreated: (clientId: string, clientName: string, clientEmail?: string, clientPhone?: string) => void;
   onBack: () => void;
 }
 
@@ -71,7 +71,13 @@ export function NewClientForm({ phone, onClientCreated, onBack }: NewClientFormP
         .limit(1)
         .single();
       
-      const businessId = business?.id || uuidv4();
+      const businessId = business?.id || null;
+
+      if (!businessId) {
+        showErrorToast("Erro ao identificar o estabelecimento. Por favor, tente novamente.");
+        setIsSubmitting(false);
+        return;
+      }
 
       // Criamos o novo cliente
       const { data: newClient, error } = await supabase
@@ -83,7 +89,7 @@ export function NewClientForm({ phone, onClientCreated, onBack }: NewClientFormP
           data_nascimento: birthDate,
           id_negocio: businessId
         })
-        .select('id')
+        .select('id, nome, email, telefone')
         .single();
 
       if (error) {
@@ -91,7 +97,7 @@ export function NewClientForm({ phone, onClientCreated, onBack }: NewClientFormP
         showErrorToast("Ocorreu um erro ao criar seu cadastro. Por favor, tente novamente.");
       } else {
         showSuccessToast("Cadastro realizado com sucesso!");
-        onClientCreated(newClient.id, name);
+        onClientCreated(newClient.id, newClient.nome, newClient.email, newClient.telefone);
       }
     } catch (error) {
       console.error("Erro ao criar cliente:", error);

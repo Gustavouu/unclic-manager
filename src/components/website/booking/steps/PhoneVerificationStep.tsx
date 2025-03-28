@@ -8,7 +8,7 @@ import { showErrorToast } from "@/utils/formUtils";
 import { PhoneIcon, UserIcon, CalendarIcon } from "lucide-react";
 
 interface PhoneVerificationStepProps {
-  onClientFound: (clientId: string, clientName: string) => void;
+  onClientFound: (clientId: string, clientName: string, clientEmail?: string, clientPhone?: string) => void;
   onNewClient: (phone: string) => void;
 }
 
@@ -32,7 +32,7 @@ export function PhoneVerificationStep({ onClientFound, onNewClient }: PhoneVerif
       // Consulta o cliente pelo telefone
       const { data, error } = await supabase
         .from('clientes')
-        .select('id, nome')
+        .select('id, nome, email, telefone')
         .eq('telefone', phone)
         .limit(1)
         .single();
@@ -47,7 +47,7 @@ export function PhoneVerificationStep({ onClientFound, onNewClient }: PhoneVerif
         }
       } else if (data) {
         // Cliente encontrado, prosseguir com o agendamento
-        onClientFound(data.id, data.nome);
+        onClientFound(data.id, data.nome, data.email, data.telefone);
       }
     } catch (error) {
       console.error("Erro ao verificar cliente:", error);

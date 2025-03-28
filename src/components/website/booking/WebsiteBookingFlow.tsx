@@ -1,96 +1,76 @@
 
+import { useState, useEffect } from "react";
 import { StepWelcome } from "./steps/StepWelcome";
-import { StepService } from "./steps/StepService";
-import { StepProfessional } from "./steps/StepProfessional";
-import { StepDateTime } from "./steps/StepDateTime";
-import { StepPayment } from "./steps/StepPayment";
-import { StepConfirmation } from "./steps/StepConfirmation";
-import { BookingFlowProps, ExtendedServiceData, ExtendedStaffData } from "./types";
+import { BookingFormFlow } from "./BookingFormFlow";
+import { BookingFlowProps } from "./types";
 import { BookingProgress } from "./flow/BookingProgress";
 import { StepNavigator } from "./flow/StepNavigator";
 import { StepContent } from "./flow/StepContent";
 import { CloseButton } from "./flow/CloseButton";
-import { useBookingSteps } from "./hooks/useBookingSteps";
-import { useAppointments } from "@/hooks/appointments/useAppointments";
-import { BookingFormFlow } from "./BookingFormFlow";
-import { v4 as uuidv4 } from "uuid";
+import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function WebsiteBookingFlow({ 
-  services, 
-  staff, 
   businessName,
   closeFlow 
 }: BookingFlowProps) {
-  const {
-    step,
-    bookingData,
-    updateBookingData,
-    nextStep,
-    prevStep,
-    getStepTitle
-  } = useBookingSteps();
+  const [step, setStep] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [businessData, setBusinessData] = useState<any>(null);
 
-  // Get the appointments hook for use in the payment step
-  const { createAppointment } = useAppointments();
+  // Fetch business data on component mount
+  useEffect(() => {
+    const fetchBusinessData = async () => {
+      setLoading(true);
+      try {
+        // Fetch business info including config
+        const { data: business, error } = await supabase
+          .from('negocios')
+          .select(`
+            id,
+            nome,
+            telefone,
+            email_admin,
+            configuracoes_negocio (*)
+          `)
+          .order('criado_em', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (error) throw error;
+        setBusinessData(business);
+      } catch (error) {
+        console.error('Error fetching business data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchBusinessData();
+  }, []);
 
-  // Cast services and staff to extended types for use in child components
-  const extendedServices = services as ExtendedServiceData[];
-  const extendedStaff = staff as ExtendedStaffData[];
-
-  const getStepContent = () => {
+  const nextStep = () => setStep(prev => prev + 1);
+  const prevStep = () => setStep(prev => Math.max(0, prev - 1));
+  
+  const getStepTitle = () => {
     switch (step) {
-      case 0:
-        return (
-          <StepWelcome 
-            businessName={businessName} 
-            nextStep={nextStep} 
-          />
-        );
-      case 1:
-        return (
-          <BookingFormFlow onComplete={closeFlow} />
-        );
-      case 2:
-        return (
-          <StepProfessional 
-            staff={extendedStaff.filter(s => 
-              !bookingData.serviceId || 
-              !s.specialties?.length || 
-              s.specialties.includes(bookingData.serviceName)
-            )}
-            bookingData={bookingData}
-            updateBookingData={updateBookingData}
-            nextStep={nextStep}
-          />
-        );
-      case 3:
-        return (
-          <StepDateTime 
-            bookingData={bookingData}
-            updateBookingData={updateBookingData}
-            nextStep={nextStep}
-          />
-        );
-      case 4:
-        return (
-          <StepPayment 
-            bookingData={bookingData}
-            nextStep={nextStep}
-            createAppointment={createAppointment}
-          />
-        );
-      case 5:
-        return (
-          <StepConfirmation 
-            bookingData={bookingData}
-            businessName={businessName}
-            closeFlow={closeFlow}
-          />
-        );
-      default:
-        return null;
+      case 0: return "Bem-vindo";
+      case 1: return "Fazer Agendamento";
+      default: return "";
     }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="w-full max-w-4xl mx-auto mt-8 mb-16 px-4 bg-white rounded-xl shadow-lg p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Carregando informações...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto mt-8 mb-16 px-4 bg-white rounded-xl shadow-lg p-6 relative">
@@ -100,7 +80,15 @@ export function WebsiteBookingFlow({
       <BookingProgress step={step} getStepTitle={getStepTitle} />
       
       <StepContent step={step}>
-        {getStepContent()}
+        {step === 0 && (
+          <StepWelcome 
+            businessName={businessData?.nome || businessName} 
+            nextStep={nextStep} 
+          />
+        )}
+        {step === 1 && (
+          <BookingFormFlow onComplete={closeFlow} />
+        )}
       </StepContent>
     </div>
   );
