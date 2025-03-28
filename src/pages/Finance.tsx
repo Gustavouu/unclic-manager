@@ -2,19 +2,24 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FinancialChart } from "@/components/dashboard/FinancialChart";
-import { FinancialSummary } from "@/components/finance/FinancialSummary";
-import { TransactionsTable } from "@/components/finance/TransactionsTable";
-import { TransactionFilters } from "@/components/finance/TransactionFilters";
-import { PaymentMethodsStats } from "@/components/finance/PaymentMethodsStats";
-import { FinancialActions } from "@/components/finance/FinancialActions";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+import { 
+  FinancialChart, 
+  FinancialSummary, 
+  TransactionsTable,
+  TransactionFilters,
+  PaymentMethodsStats,
+  FinancialActions 
+} from "@/components/finance";
+
 export default function Finance() {
   const [isLoading, setIsLoading] = useState(true);
-  const currentMonth = format(new Date(), 'LLLL', { locale: ptBR });
+  const [activeTab, setActiveTab] = useState("todas");
+  const [period, setPeriod] = useState("30days");
+  const [searchDate, setSearchDate] = useState<Date | undefined>(undefined);
   
   useEffect(() => {
     // Simular o carregamento dos dados
@@ -24,6 +29,14 @@ export default function Finance() {
     
     return () => clearTimeout(timer);
   }, []);
+
+  const handlePeriodChange = (value: string) => {
+    setPeriod(value);
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    setSearchDate(date);
+  };
   
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -61,7 +74,7 @@ export default function Finance() {
         </Card>
       </div>
       
-      <Tabs defaultValue="todas" className="mt-8">
+      <Tabs defaultValue="todas" className="mt-8" onValueChange={setActiveTab}>
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
           <TabsList>
             <TabsTrigger value="todas">Todas</TabsTrigger>
@@ -69,13 +82,18 @@ export default function Finance() {
             <TabsTrigger value="despesas">Despesas</TabsTrigger>
           </TabsList>
           
-          <TransactionFilters />
+          <TransactionFilters 
+            onPeriodChange={handlePeriodChange}
+            onDateChange={handleDateChange}
+          />
         </div>
         
         <TabsContent value="todas" className="mt-0">
           <TransactionsTable
             isLoading={isLoading}
             filterType="all"
+            period={period}
+            searchDate={searchDate}
           />
         </TabsContent>
         
@@ -83,6 +101,8 @@ export default function Finance() {
           <TransactionsTable
             isLoading={isLoading}
             filterType="receita"
+            period={period}
+            searchDate={searchDate}
           />
         </TabsContent>
         
@@ -90,6 +110,8 @@ export default function Finance() {
           <TransactionsTable
             isLoading={isLoading}
             filterType="despesa"
+            period={period}
+            searchDate={searchDate}
           />
         </TabsContent>
       </Tabs>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,11 +34,21 @@ interface TransactionsTableProps {
   isLoading: boolean;
   filterType?: "all" | "receita" | "despesa";
   period?: string;
+  searchDate?: Date;
+  searchQuery?: string;
 }
 
-export function TransactionsTable({ isLoading, filterType = "all", period = "30days" }: TransactionsTableProps) {
+export function TransactionsTable({ 
+  isLoading, 
+  filterType = "all", 
+  period = "30days",
+  searchDate,
+  searchQuery
+}: TransactionsTableProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -55,10 +66,7 @@ export function TransactionsTable({ isLoading, filterType = "all", period = "30d
             descricao,
             criado_em,
             data_pagamento,
-            clientes (
-              nome
-            ),
-            servicos (
+            cliente:id_cliente (
               nome
             )
           `)
@@ -68,6 +76,7 @@ export function TransactionsTable({ isLoading, filterType = "all", period = "30d
           query = query.eq('tipo', filterType);
         }
         
+        // Filtro por período
         if (period === "7days") {
           const sevenDaysAgo = new Date();
           sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -76,6 +85,28 @@ export function TransactionsTable({ isLoading, filterType = "all", period = "30d
           const thirtyDaysAgo = new Date();
           thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
           query = query.gte('criado_em', thirtyDaysAgo.toISOString());
+        } else if (period === "90days") {
+          const ninetyDaysAgo = new Date();
+          ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+          query = query.gte('criado_em', ninetyDaysAgo.toISOString());
+        }
+        
+        // Filtro por data específica
+        if (searchDate) {
+          const startOfDay = new Date(searchDate);
+          startOfDay.setHours(0, 0, 0, 0);
+          
+          const endOfDay = new Date(searchDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          
+          query = query
+            .gte('criado_em', startOfDay.toISOString())
+            .lte('criado_em', endOfDay.toISOString());
+        }
+        
+        // Busca por texto (descrição ou valor)
+        if (searchQuery) {
+          query = query.ilike('descricao', `%${searchQuery}%`);
         }
         
         const { data, error } = await query.limit(50);
@@ -93,7 +124,7 @@ export function TransactionsTable({ isLoading, filterType = "all", period = "30d
     if (!isLoading) {
       fetchTransactions();
     }
-  }, [isLoading, filterType, period]);
+  }, [isLoading, filterType, period, searchDate, searchQuery]);
 
   const getPaymentMethodLabel = (method: string | null) => {
     if (!method) return "Não informado";
@@ -114,6 +145,40 @@ export function TransactionsTable({ isLoading, filterType = "all", period = "30d
     } catch (e) {
       return "Data inválida";
     }
+  };
+
+  // Lógica de paginação
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentTransactions = transactions.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(transactions.length / itemsPerPage);
+
+  const renderPagination = () => {
+    if (transactions.length <= itemsPerPage) return null;
+    
+    return (
+      <div className="flex justify-center gap-2 mt-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          Anterior
+        </Button>
+        <span className="flex items-center px-3 text-sm">
+          Página {currentPage} de {totalPages}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          Próxima
+        </Button>
+      </div>
+    );
   };
 
   const renderSkeletonRows = () => {
@@ -151,14 +216,14 @@ export function TransactionsTable({ isLoading, filterType = "all", period = "30d
           <TableBody>
             {isLoading || loading ? (
               renderSkeletonRows()
-            ) : transactions.length > 0 ? (
-              transactions.map((transaction) => (
+            ) : currentTransactions.length > 0 ? (
+              currentTransactions.map((transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell>
                     {formatDate(transaction.criado_em)}
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate" title={transaction.descricao}>
-                    {transaction.servico?.nome || transaction.descricao || "—"}
+                    {transaction.descricao || "—"}
                   </TableCell>
                   <TableCell>
                     {transaction.cliente?.nome || "Cliente não identificado"}
@@ -200,6 +265,7 @@ export function TransactionsTable({ isLoading, filterType = "all", period = "30d
             )}
           </TableBody>
         </Table>
+        {renderPagination()}
       </CardContent>
     </Card>
   );

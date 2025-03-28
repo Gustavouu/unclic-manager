@@ -4,17 +4,56 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, CalendarDays, Download } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Filter, CalendarDays, Download, Search } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export function TransactionFilters() {
+interface TransactionFiltersProps {
+  onPeriodChange?: (value: string) => void;
+  onDateChange?: (date: Date | undefined) => void;
+  onSearchChange?: (value: string) => void;
+}
+
+export function TransactionFilters({ 
+  onPeriodChange, 
+  onDateChange,
+  onSearchChange
+}: TransactionFiltersProps) {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [period, setPeriod] = useState("30days");
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  const handlePeriodChange = (value: string) => {
+    setPeriod(value);
+    onPeriodChange?.(value);
+  };
+
+  const handleDateSelect = (newDate: Date | undefined) => {
+    setDate(newDate);
+    setIsCalendarOpen(false);
+    onDateChange?.(newDate);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    onSearchChange?.(e.target.value);
+  };
   
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Select defaultValue="30days">
+      <div className="relative w-full sm:w-auto">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Pesquisar transações..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          className="pl-9 w-full sm:w-[200px]"
+        />
+      </div>
+      
+      <Select defaultValue={period} onValueChange={handlePeriodChange}>
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Período" />
         </SelectTrigger>
@@ -37,10 +76,7 @@ export function TransactionFilters() {
           <Calendar
             mode="single"
             selected={date}
-            onSelect={(newDate) => {
-              setDate(newDate);
-              setIsCalendarOpen(false);
-            }}
+            onSelect={handleDateSelect}
             initialFocus
             locale={ptBR}
           />
