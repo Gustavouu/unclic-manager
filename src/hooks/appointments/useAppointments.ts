@@ -68,6 +68,14 @@ export function useAppointments() {
 
   const createAppointment = async (appointmentData: Omit<Appointment, 'id'>) => {
     try {
+      // Validate UUID format for foreign keys
+      // We need to ensure these are valid UUIDs before sending to Supabase
+      if (!isValidUUID(appointmentData.serviceId) || 
+          !isValidUUID(appointmentData.clientId) || 
+          !isValidUUID(appointmentData.professionalId)) {
+        throw new Error("IDs inválidos. Selecione cliente, serviço e profissional válidos.");
+      }
+
       // Convert to database format
       const { data, error } = await supabase
         .from('agendamentos')
@@ -82,7 +90,7 @@ export function useAppointments() {
           observacoes: appointmentData.notes,
           id_servico: appointmentData.serviceId,
           id_cliente: appointmentData.clientId,
-          id_negocio: "1",  // Using default business ID
+          id_negocio: "00000000-0000-4000-a000-000000000001", // Use a valid UUID as default
           id_funcionario: appointmentData.professionalId
         })
         .select()
@@ -101,9 +109,16 @@ export function useAppointments() {
       return data.id;
     } catch (err) {
       console.error("Error creating appointment:", err);
-      toast.error("Erro ao criar agendamento");
+      toast.error("Erro ao criar agendamento. Tente novamente.");
       throw err;
     }
+  };
+
+  // Helper function to validate UUID format
+  const isValidUUID = (id: string | undefined): boolean => {
+    if (!id) return false;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id);
   };
 
   const updateAppointment = async (id: string, changes: Partial<Appointment>) => {

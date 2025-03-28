@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
+import { v4 as uuidv4 } from "uuid";
 
 type AppointmentFormProps = {
   onClose: () => void;
@@ -30,6 +31,7 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
   } | null>(null);
 
   const { createAppointment } = useAppointments();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
@@ -40,6 +42,8 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
 
   const onSubmit = async (values: AppointmentFormValues) => {
     try {
+      setIsSubmitting(true);
+      
       // Build the appointment date from form values
       const appointmentDate = new Date(values.date);
       const [hours, minutes] = values.time.split(':').map(Number);
@@ -48,6 +52,9 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
       const client = clients.find(c => c.id === values.clientId);
       
       // Create the appointment through the hook
+      // Make sure all IDs are valid UUIDs or null if not available
+      const defaultBusinessId = "00000000-0000-4000-a000-000000000001"; // Use a valid UUID format
+      
       await createAppointment({
         clientName: client?.name || "Cliente não identificado",
         serviceName: selectedService?.name || "Serviço não identificado",
@@ -74,6 +81,8 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
     } catch (error) {
       console.error("Error creating appointment:", error);
       toast.error("Erro ao criar agendamento. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -94,7 +103,9 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
           <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit">Agendar</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Agendando..." : "Agendar"}
+          </Button>
         </DialogFooter>
       </form>
     </Form>
