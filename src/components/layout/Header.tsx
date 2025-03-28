@@ -22,6 +22,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/useAuth";
 
 interface HeaderProps {
   breadcrumb?: { label: string; path?: string }[];
@@ -30,9 +31,10 @@ interface HeaderProps {
 export const Header = ({ breadcrumb = [] }: HeaderProps) => {
   const isMobile = useMobile();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
+    logout();
     navigate("/login");
   };
   
@@ -91,11 +93,13 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
               <Button variant="ghost" className="flex items-center gap-2 ml-2 p-1 pr-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="" />
-                  <AvatarFallback className="bg-primary/10 text-primary font-medium">SA</AvatarFallback>
+                  <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                    {user?.name ? user.name.substring(0, 2).toUpperCase() : 'SA'}
+                  </AvatarFallback>
                 </Avatar>
                 {!isMobile && (
                   <>
-                    <span className="text-sm font-medium">Salão Exemplo</span>
+                    <span className="text-sm font-medium">{user?.name || "Salão Exemplo"}</span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </>
                 )}

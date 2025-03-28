@@ -10,16 +10,11 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const { signUp, loading } = useAuth();
+  const { signup, loading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const userData = {
-      name,
-    };
-    
-    await signUp(email, password, userData);
+    await signup(email, password, name);
   };
 
   return (
@@ -73,7 +68,7 @@ const SignUp = () => {
             </Button>
             <div className="text-center text-sm">
               Já possui uma conta?{" "}
-              <Link to="/" className="text-blue-500 hover:text-blue-600">
+              <Link to="/login" className="text-blue-500 hover:text-blue-600">
                 Fazer login
               </Link>
             </div>

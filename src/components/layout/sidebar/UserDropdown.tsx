@@ -10,13 +10,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 export function UserDropdown() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   
   const handleLogout = () => {
-    // Clear auth token
-    localStorage.removeItem("accessToken");
+    // Use the logout function from auth context
+    logout();
     // Navigate to login
     navigate("/login");
   };
@@ -31,10 +33,10 @@ export function UserDropdown() {
               <AvatarFallback>SA</AvatarFallback>
             </Avatar>
             <span className="text-left font-normal">
-              <span className="font-semibold">Salão Exemplo</span>
+              <span className="font-semibold">{user?.name || "Salão Exemplo"}</span>
               <br />
               <span className="text-xs text-muted-foreground">
-                admin@exemplo.com
+                {user?.email || "admin@exemplo.com"}
               </span>
             </span>
           </Button>
