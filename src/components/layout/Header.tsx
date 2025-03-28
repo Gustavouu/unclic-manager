@@ -31,6 +31,11 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
   const isMobile = useMobile();
   const navigate = useNavigate();
   
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    navigate("/login");
+  };
+  
   return (
     <header className="sticky top-0 z-30 flex flex-col border-b border-border/50 py-2 px-4 md:px-6 bg-background/95 backdrop-blur-sm">
       <div className="flex items-center justify-between h-12">
@@ -99,11 +104,11 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Perfil</DropdownMenuItem>
-              <DropdownMenuItem>Configurações</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/settings")}>Perfil</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/settings")}>Configurações</DropdownMenuItem>
               <DropdownMenuItem>Assinatura</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/login")}>
+              <DropdownMenuItem onClick={handleLogout}>
                 Sair
               </DropdownMenuItem>
             </DropdownMenuContent>

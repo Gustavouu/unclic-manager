@@ -9,31 +9,41 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
 
 export function UserDropdown() {
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    // Clear auth token
+    localStorage.removeItem("accessToken");
+    // Navigate to login
+    navigate("/login");
+  };
+
   return (
     <div className="mt-auto border-t">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="flex h-8 w-full p-0 px-3">
+          <Button variant="ghost" className="flex h-14 w-full p-3">
             <Avatar className="mr-2 h-6 w-6">
               <AvatarImage src="/images/barber-avatar.png" alt="Avatar" />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarFallback>SA</AvatarFallback>
             </Avatar>
             <span className="text-left font-normal">
-              <span className="font-semibold">Carlos Nicodemos</span>
+              <span className="font-semibold">Salão Exemplo</span>
               <br />
-              <span className="text-muted-foreground">
-                carlos.nicodemos@gmail.com
+              <span className="text-xs text-muted-foreground">
+                admin@exemplo.com
               </span>
             </span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" forceMount>
-          <DropdownMenuItem>Perfil</DropdownMenuItem>
-          <DropdownMenuItem>Configurações</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate("/settings")}>Perfil</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate("/settings")}>Configurações</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Sair</DropdownMenuItem>
+          <DropdownMenuItem onClick={handleLogout}>Sair</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

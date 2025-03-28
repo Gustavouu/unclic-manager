@@ -8,6 +8,7 @@ import {
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from "@/components/auth/RequireAuth";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 
 // Pages
@@ -57,7 +58,9 @@ function App() {
           path="/dashboard"
           element={
             <RequireAuth>
-              <Dashboard />
+              <AppLayout breadcrumb={[{ label: "Dashboard" }]}>
+                <Dashboard />
+              </AppLayout>
             </RequireAuth>
           }
         />
@@ -65,7 +68,9 @@ function App() {
           path="/clients"
           element={
             <RequireAuth>
-              <Clients />
+              <AppLayout breadcrumb={[{ label: "Dashboard", path: "/dashboard" }, { label: "Clientes" }]}>
+                <Clients />
+              </AppLayout>
             </RequireAuth>
           }
         />
@@ -73,7 +78,9 @@ function App() {
           path="/appointments"
           element={
             <RequireAuth>
-              <Appointments />
+              <AppLayout breadcrumb={[{ label: "Dashboard", path: "/dashboard" }, { label: "Agenda" }]}>
+                <Appointments />
+              </AppLayout>
             </RequireAuth>
           }
         />
@@ -81,7 +88,9 @@ function App() {
           path="/services"
           element={
             <RequireAuth>
-              <Services />
+              <AppLayout breadcrumb={[{ label: "Dashboard", path: "/dashboard" }, { label: "Serviços" }]}>
+                <Services />
+              </AppLayout>
             </RequireAuth>
           }
         />
@@ -89,7 +98,9 @@ function App() {
           path="/professionals"
           element={
             <RequireAuth>
-              <Professionals />
+              <AppLayout breadcrumb={[{ label: "Dashboard", path: "/dashboard" }, { label: "Profissionais" }]}>
+                <Professionals />
+              </AppLayout>
             </RequireAuth>
           }
         />
@@ -97,7 +108,9 @@ function App() {
           path="/finance"
           element={
             <RequireAuth>
-              <Finance />
+              <AppLayout breadcrumb={[{ label: "Dashboard", path: "/dashboard" }, { label: "Financeiro" }]}>
+                <Finance />
+              </AppLayout>
             </RequireAuth>
           }
         />
@@ -105,7 +118,9 @@ function App() {
           path="/reports"
           element={
             <RequireAuth>
-              <Reports />
+              <AppLayout breadcrumb={[{ label: "Dashboard", path: "/dashboard" }, { label: "Relatórios" }]}>
+                <Reports />
+              </AppLayout>
             </RequireAuth>
           }
         />
@@ -113,7 +128,9 @@ function App() {
           path="/inventory"
           element={
             <RequireAuth>
-              <Inventory />
+              <AppLayout breadcrumb={[{ label: "Dashboard", path: "/dashboard" }, { label: "Estoque" }]}>
+                <Inventory />
+              </AppLayout>
             </RequireAuth>
           }
         />
@@ -121,7 +138,9 @@ function App() {
           path="/settings"
           element={
             <RequireAuth>
-              <Settings />
+              <AppLayout breadcrumb={[{ label: "Dashboard", path: "/dashboard" }, { label: "Configurações" }]}>
+                <Settings />
+              </AppLayout>
             </RequireAuth>
           }
         />
@@ -129,17 +148,21 @@ function App() {
           path="/payments"
           element={
             <RequireAuth>
-              <Payments />
+              <AppLayout breadcrumb={[{ label: "Dashboard", path: "/dashboard" }, { label: "Pagamentos" }]}>
+                <Payments />
+              </AppLayout>
             </RequireAuth>
           }
         />
 
-        {/* Rota protegida para a página de teste de API (não aparece na navegação) */}
+        {/* Protected route for payment API test page (not shown in navigation) */}
         <Route
           path="/payment-api-test"
           element={
             <RequireAuth>
-              <PaymentApiTest />
+              <AppLayout breadcrumb={[{ label: "Dashboard", path: "/dashboard" }, { label: "Teste de API" }]}>
+                <PaymentApiTest />
+              </AppLayout>
             </RequireAuth>
           }
         />

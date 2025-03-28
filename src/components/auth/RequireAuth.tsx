@@ -19,7 +19,7 @@ export const RequireAuth = ({ children }: RequireAuthProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Apenas renderiza os children, sem envolver em AppLayout
+  // Render children directly (which now already includes AppLayout)
   return children;
 };
 
