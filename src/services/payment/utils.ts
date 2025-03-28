@@ -37,6 +37,8 @@ export const mapToEfiBankStatus = (status: string): string => {
       return 'processing';
     case 'rejeitado':
       return 'rejected';
+    case 'cancelado':
+      return 'cancelled';
     default:
       return 'pending';
   }
