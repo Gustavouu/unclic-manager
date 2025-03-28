@@ -15,15 +15,16 @@ export const ServiceActions = ({
   onServiceDeleted
 }: ServiceActionsProps) => {
   return (
-    <>
+    <div className="flex items-center justify-end gap-2">
       <EditServiceDialog 
         service={service} 
         onServiceUpdated={onServiceUpdated} 
       />
       <DeleteServiceDialog 
+        serviceId={service.id}
         serviceName={service.name} 
-        onConfirm={() => onServiceDeleted(service.id)} 
+        onServiceDeleted={onServiceDeleted} 
       />
-    </>
+    </div>
   );
 };
