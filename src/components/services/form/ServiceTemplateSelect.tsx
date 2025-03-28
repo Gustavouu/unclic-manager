@@ -18,7 +18,7 @@ export function ServiceTemplateSelect({ control, onTemplateSelect }: ServiceTemp
       name="template"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Modelo de Serviço</FormLabel>
+          <FormLabel>Serviço</FormLabel>
           <FormControl>
             <Select
               onValueChange={(value) => {
@@ -28,7 +28,7 @@ export function ServiceTemplateSelect({ control, onTemplateSelect }: ServiceTemp
               value={field.value || "custom"}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione um serviço pré-cadastrado..." />
+                <SelectValue placeholder="Selecione um serviço..." />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="custom">Personalizado</SelectItem>

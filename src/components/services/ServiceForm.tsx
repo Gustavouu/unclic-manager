@@ -5,7 +5,6 @@ import { Form } from "@/components/ui/form";
 import { ServiceData } from "./servicesData";
 import { v4 as uuidv4 } from "uuid";
 import { serviceFormSchema, ServiceFormValues } from "./form/formSchema";
-import { ServiceNameField } from "./form/ServiceNameField";
 import { ServiceDurationPriceFields } from "./form/ServiceDurationPriceFields";
 import { ServiceDescriptionField } from "./form/ServiceDescriptionField";
 import { ServiceToggleField } from "./form/ServiceToggleField";
@@ -68,7 +67,11 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
 
   const handleTemplateSelect = (templateId: string) => {
     if (templateId === "custom") {
-      // Se selecionar "Personalizado", não faz nada
+      // Se selecionar "Personalizado", limpa os campos mas mantém o template
+      form.setValue("name", "");
+      form.setValue("duration", 30);
+      form.setValue("price", 0);
+      form.setValue("description", "");
       return;
     }
 
@@ -85,8 +88,6 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
         <ServiceTemplateSelect control={form.control} onTemplateSelect={handleTemplateSelect} />
-        
-        <ServiceNameField control={form.control} />
         
         <ServiceDurationPriceFields control={form.control} />
         
@@ -111,6 +112,8 @@ export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
         </div>
         
         <FormActions onCancel={onCancel} isEditing={!!service} />
+
+        <input type="hidden" {...form.register("name")} />
       </form>
     </Form>
   );
