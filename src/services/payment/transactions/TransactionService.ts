@@ -1,5 +1,4 @@
 
-import { supabase } from "@/integrations/supabase/client";
 import { WebhookService } from "../webhook";
 import { v4 as uuidv4 } from "uuid";
 

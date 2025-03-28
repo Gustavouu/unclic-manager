@@ -1,4 +1,3 @@
-
 import { PaymentRequest, PaymentResponse } from "./types";
 import { EfiBankService } from "./efiBank";
 import { mapEfiBankStatus } from "./utils";
@@ -86,7 +85,15 @@ export const PaymentService = {
       return paymentResponse;
     } catch (error) {
       console.error("Erro ao processar pagamento com Efi Bank:", error);
-      throw new Error("Não foi possível processar o pagamento. Tente novamente mais tarde.");
+      
+      // If it's a database error, throw a more specific error
+      if (error.message && error.message.includes("row-level security policy")) {
+        console.error("Database error:", error);
+        throw new Error("Erro de banco de dados: " + error.message);
+      }
+      
+      // Otherwise throw a generic error
+      throw new Error("Falha ao processar pagamento. Por favor, tente novamente.");
     }
   },
 

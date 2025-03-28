@@ -1,28 +1,33 @@
 
 /**
- * Payment service type definitions
+ * Payment request data 
  */
-
 export interface PaymentRequest {
   serviceId: string;
   appointmentId?: string;
-  amount: number;
   customerId: string;
+  amount: number;
   paymentMethod: string;
   description?: string;
-  businessId?: string; // Added missing businessId property
+  businessId?: string;
 }
 
+/**
+ * Payment response data
+ */
 export interface PaymentResponse {
   id: string;
   status: "pending" | "approved" | "rejected" | "cancelled" | "processing";
-  transactionId?: string;
+  transactionId: string;
   amount: number;
   paymentMethod: string;
   createdAt: string;
-  paymentUrl?: string; // URL para pagamento via Efi Bank quando aplicável
+  paymentUrl?: string | null;
 }
 
+/**
+ * EFI Bank payment data
+ */
 export interface EfiPaymentData {
   amount: number;
   description: string;
@@ -33,8 +38,11 @@ export interface EfiPaymentData {
   isTestMode?: boolean;
 }
 
+/**
+ * EFI Bank status response
+ */
 export interface EfiStatusResponse {
   status: string;
-  transactionId: string;
-  paymentUrl?: string;
+  transactionId?: string;
+  paymentUrl?: string | null;
 }

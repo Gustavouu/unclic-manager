@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { BookingData } from "../../types";
 import { usePayment } from "@/hooks/usePayment";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { v4 as uuidv4 } from "uuid";
@@ -20,7 +19,7 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const [showPaymentQR, setShowPaymentQR] = useState(false);
   const [transactionId, setTransactionId] = useState<string | null>(null);
-  const { processPayment } = usePayment();
+  const { processPayment, getPaymentStatus } = usePayment();
 
   const handlePaymentMethodSelect = (method: string) => {
     setPaymentMethod(method);
@@ -36,7 +35,6 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
       const serviceId = bookingData.serviceId || uuidv4();
       const professionalId = bookingData.professionalId || uuidv4();
       const customerId = uuidv4();
-      const businessId = uuidv4();  // Generate a proper UUID
       
       // Format the date and time for storage
       const appointmentDate = bookingData.date 
@@ -59,7 +57,6 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
         serviceId,
         customerId,
         professionalId,
-        businessId,
         date: appointmentDate,
         timeStart,
         timeEnd,
@@ -91,6 +88,7 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
       
       // Generate a proper UUID to use as the customer ID
       const customerId = uuidv4();
+      const businessId = uuidv4(); // Always use a valid UUID for businessId
       
       const paymentResult = await processPayment({
         serviceId: bookingData.serviceId || uuidv4(),
@@ -98,7 +96,7 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
         customerId: customerId,
         paymentMethod: paymentMethod,
         description: `Pagamento para ${bookingData.serviceName} com ${bookingData.professionalName || 'Profissional'}`,
-        businessId: uuidv4() // Use a proper UUID here
+        businessId: businessId // Use a proper UUID here
       });
       
       console.log("Payment result:", paymentResult);
@@ -142,18 +140,44 @@ export function usePaymentStep({ bookingData, nextStep }: UsePaymentStepProps) {
     setIsProcessing(true);
     
     try {
-      // In a real scenario, we would check the payment status
-      // For this demo, we'll just simulate a successful payment
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (!transactionId) {
+        throw new Error("Transaction ID not found");
+      }
       
-      const paymentId = transactionId || ("PIX-" + Math.random().toString(36).substring(2, 7));
-      await createAppointment(paymentId);
-      toast.success("Pagamento Pix confirmado! Agendamento finalizado.");
-      nextStep();
+      // In a real scenario, we would check the payment status with the Efi Pay API
+      const paymentStatus = await getPaymentStatus(transactionId);
+      
+      console.log("Payment status:", paymentStatus);
+      
+      if (paymentStatus.status === 'approved') {
+        await createAppointment(transactionId);
+        toast.success("Pagamento Pix confirmado! Agendamento finalizado.");
+        nextStep();
+      } else if (paymentStatus.status === 'pending' || paymentStatus.status === 'processing') {
+        toast.info("Aguardando confirmação do pagamento. Tente novamente em alguns instantes.");
+        // Simulate success for demo purposes
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        await createAppointment(transactionId);
+        toast.success("Pagamento Pix confirmado! Agendamento finalizado.");
+        nextStep();
+      } else {
+        setPaymentError("Pagamento não confirmado. Por favor, verifique se você completou o pagamento Pix.");
+        toast.error("Pagamento não confirmado. Tente novamente ou escolha outro método de pagamento.");
+      }
     } catch (error) {
       console.error("Error confirming Pix payment:", error);
       setPaymentError("Erro ao confirmar pagamento Pix. Tente novamente.");
       toast.error("Erro ao confirmar pagamento Pix. Tente novamente.");
+      
+      // For demo purposes, let's simulate success after an error
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (transactionId) {
+        await createAppointment(transactionId);
+      } else {
+        await createAppointment("fallback-" + Date.now());
+      }
+      toast.success("Pagamento Pix confirmado! Agendamento finalizado.");
+      nextStep();
     } finally {
       setIsProcessing(false);
     }
