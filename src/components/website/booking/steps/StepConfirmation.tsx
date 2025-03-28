@@ -1,11 +1,10 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookingData } from "../WebsiteBookingFlow";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CheckCircle2, Calendar, Clock, User, Scissors } from "lucide-react";
 import { formatPrice } from "@/components/website/WebsiteUtils";
+import { BookingData } from "../types";
 
 interface StepConfirmationProps {
   bookingData: BookingData;

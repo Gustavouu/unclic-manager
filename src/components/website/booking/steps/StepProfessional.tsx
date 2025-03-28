@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { BookingData, ExtendedStaffData } from "../WebsiteBookingFlow";
+import { BookingData, ExtendedStaffData } from "../types";
 
 interface StepProfessionalProps {
   staff: ExtendedStaffData[];

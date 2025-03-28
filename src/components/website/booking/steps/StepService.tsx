@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { formatPrice, formatDuration } from "@/components/website/WebsiteUtils";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BookingData, ExtendedServiceData } from "../WebsiteBookingFlow";
+import { BookingData, ExtendedServiceData } from "../types";
 
 interface StepServiceProps {
   services: ExtendedServiceData[];

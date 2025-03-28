@@ -2,13 +2,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookingData } from "../WebsiteBookingFlow";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useTimeSlots, Period } from "./datetime/useTimeSlots";
 import { PeriodFilter } from "./datetime/PeriodFilter";
 import { TimeSlots } from "./datetime/TimeSlots";
 import { DateTimeForm } from "./datetime/DateTimeForm";
+import { BookingData } from "../types";
 
 interface StepDateTimeProps {
   bookingData: BookingData;

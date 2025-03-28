@@ -1,8 +1,6 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookingData } from "../WebsiteBookingFlow";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CreditCard, Banknote, Smartphone } from "lucide-react";
@@ -10,6 +8,7 @@ import { formatPrice } from "@/components/website/WebsiteUtils";
 import { usePayment } from "@/hooks/usePayment";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { BookingData } from "../types";
 
 interface StepPaymentProps {
   bookingData: BookingData;
@@ -30,19 +29,18 @@ export function StepPayment({
 
   const createAppointment = async (paymentId: string) => {
     try {
-      // Create appointment in the database
       const { data, error } = await supabase
         .from('agendamentos')
         .insert({
           id_servico: bookingData.serviceId,
-          id_cliente: "1", // Assuming a default client ID for now
+          id_cliente: "1",
           valor: bookingData.servicePrice,
           status: 'confirmado',
           data: bookingData.date?.toISOString().split('T')[0],
           hora_inicio: bookingData.time,
-          hora_fim: bookingData.time, // This should be calculated based on duration
+          hora_fim: bookingData.time,
           duracao: bookingData.serviceDuration,
-          id_negocio: "1", // Example business ID
+          id_negocio: "1",
           id_funcionario: bookingData.professionalId,
           forma_pagamento: paymentMethod,
           observacoes: bookingData.notes
@@ -52,7 +50,6 @@ export function StepPayment({
       
       if (error) throw error;
       
-      // Update the transaction with the new appointment ID
       await supabase
         .from('transacoes')
         .update({ id_agendamento: data.id })
@@ -69,17 +66,15 @@ export function StepPayment({
     setIsProcessing(true);
     
     try {
-      // Process payment using the usePayment hook
       const paymentResult = await processPayment({
         serviceId: bookingData.serviceId,
         amount: bookingData.servicePrice,
-        customerId: "1", // Assuming a default customer ID for now
+        customerId: "1",
         paymentMethod: paymentMethod,
         description: `Pagamento para ${bookingData.serviceName} com ${bookingData.professionalName}`
       });
       
       if (paymentResult.status === 'approved' || paymentResult.status === 'pending') {
-        // Create the appointment in the database
         await createAppointment(paymentResult.id);
         toast.success("Agendamento confirmado com sucesso!");
         nextStep();

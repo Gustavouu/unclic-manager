@@ -1,7 +1,5 @@
 
 import React from "react";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { WebsiteBookingFlow } from "./booking/WebsiteBookingFlow";
 import { ServiceData, StaffData } from "@/contexts/onboarding/types";
@@ -40,4 +38,4 @@ export const WebsiteBookingModal: React.FC<WebsiteBookingModalProps> = ({
       </div>
     </motion.div>
   );
-};
+}
