@@ -15,10 +15,10 @@ export function TransactionsTable({
   pageSize,
   setCurrentPage,
   setPageSize,
-  searchTerm,
+  searchTerm = "",
   dateRange,
-  statusFilter,
-  typeFilter
+  statusFilter = [],
+  typeFilter = []
 }: TransactionsTableProps) {
   
   const { transactions, loading } = useTransactions(

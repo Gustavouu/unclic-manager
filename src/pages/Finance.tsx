@@ -51,6 +51,14 @@ const Finance = () => {
             isLoading={isLoading}
             filterType="all"
             period="30days"
+            currentPage={currentPage}
+            pageSize={pageSize}
+            setCurrentPage={setCurrentPage}
+            setPageSize={setPageSize}
+            searchTerm={searchTerm}
+            dateRange={dateRange}
+            statusFilter={statusFilter}
+            typeFilter={typeFilter}
           />
         </Card>
       </div>
