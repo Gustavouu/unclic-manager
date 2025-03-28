@@ -6,10 +6,20 @@ import { Grid2X2, List, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfessionalsLayout } from "@/components/professionals/ProfessionalsLayout";
 import { NewProfessionalDialog } from "@/components/professionals/NewProfessionalDialog";
+import { useToast } from "@/components/ui/use-toast";
 
 const Professionals = () => {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [showNewProfessionalDialog, setShowNewProfessionalDialog] = useState(false);
+  const { toast } = useToast();
+
+  const handleOpenNewDialog = () => {
+    setShowNewProfessionalDialog(true);
+  };
+
+  const handleCloseNewDialog = () => {
+    setShowNewProfessionalDialog(false);
+  };
 
   return (
     <div className="space-y-4">
@@ -34,7 +44,7 @@ const Professionals = () => {
             </TabsList>
             
             <Button 
-              onClick={() => setShowNewProfessionalDialog(true)}
+              onClick={handleOpenNewDialog}
               className="gap-2 bg-blue-600 hover:bg-blue-700"
             >
               <UserPlus size={16} />
@@ -54,7 +64,7 @@ const Professionals = () => {
 
       <NewProfessionalDialog 
         open={showNewProfessionalDialog}
-        onOpenChange={setShowNewProfessionalDialog}
+        onOpenChange={handleCloseNewDialog}
       />
     </div>
   );

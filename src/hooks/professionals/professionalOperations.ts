@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { Professional, ProfessionalCreateForm, ProfessionalStatus } from "./types";
 import { v4 as uuidv4 } from "uuid";
@@ -27,7 +28,8 @@ export const useProfessionalOperations = () => {
         bio: data.bio || "",
         status: "active",
         commissionPercentage: data.commissionPercentage || 0,
-        hireDate: new Date().toISOString().split('T')[0]
+        hireDate: new Date().toISOString().split('T')[0],
+        photoUrl: data.photoUrl || ""
       };
       
       // Atualizar o estado com o novo profissional de forma imutável
@@ -70,15 +72,19 @@ export const useProfessionalOperations = () => {
       // Simular requisição
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      setProfessionals(prev => 
-        prev.map(p => p.id === id ? { ...p, ...data } : p)
-      );
+      setProfessionals(prev => {
+        const updated = prev.map(p => p.id === id ? { ...p, ...data } : p);
+        console.log("Profissional atualizado:", id, data);
+        console.log("Lista atualizada:", updated);
+        return updated;
+      });
       
       toast({
         title: "Colaborador atualizado",
         description: "As informações foram atualizadas com sucesso!"
       });
     } catch (error) {
+      console.error("Erro ao atualizar profissional:", error);
       toast({
         title: "Erro",
         description: "Ocorreu um erro ao atualizar o colaborador.",
@@ -98,9 +104,12 @@ export const useProfessionalOperations = () => {
       // Simular requisição
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      setProfessionals(prev => 
-        prev.map(p => p.id === id ? { ...p, status } : p)
-      );
+      setProfessionals(prev => {
+        const updated = prev.map(p => p.id === id ? { ...p, status } : p);
+        console.log("Status do profissional atualizado:", id, status);
+        console.log("Lista atualizada:", updated);
+        return updated;
+      });
       
       const statusLabels = {
         active: "Ativo",
@@ -114,6 +123,7 @@ export const useProfessionalOperations = () => {
         description: `Colaborador agora está: ${statusLabels[status]}`
       });
     } catch (error) {
+      console.error("Erro ao atualizar status:", error);
       toast({
         title: "Erro",
         description: "Ocorreu um erro ao atualizar o status.",
@@ -134,13 +144,20 @@ export const useProfessionalOperations = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const professional = professionals.find(p => p.id === id);
-      setProfessionals(prev => prev.filter(p => p.id !== id));
+      
+      setProfessionals(prev => {
+        const filtered = prev.filter(p => p.id !== id);
+        console.log("Profissional removido:", id);
+        console.log("Lista atualizada:", filtered);
+        return filtered;
+      });
       
       toast({
         title: "Colaborador removido",
         description: `${professional?.name} foi removido com sucesso!`
       });
     } catch (error) {
+      console.error("Erro ao remover profissional:", error);
       toast({
         title: "Erro",
         description: "Ocorreu um erro ao remover o colaborador.",

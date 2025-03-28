@@ -18,7 +18,7 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   const { professionals, isLoading } = useProfessionals();
   
   // Force rerender when professionals change
-  const [key, setKey] = useState(0);
+  const [key, setKey] = useState(Date.now());
   
   // Dialog state
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
@@ -51,9 +51,21 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   
   useEffect(() => {
     // Increment key to force rerender when professionals change
-    setKey(prev => prev + 1);
+    setKey(Date.now());
     console.log("Profissionais atualizados na interface:", professionals);
   }, [professionals]);
+  
+  // Reset dialog state whenever professionals change
+  useEffect(() => {
+    if (!isLoading) {
+      if (editOpen && professionalToEdit) {
+        const updatedProfessional = professionals.find(p => p.id === professionalToEdit.id);
+        if (updatedProfessional) {
+          setProfessionalToEdit(updatedProfessional);
+        }
+      }
+    }
+  }, [professionals, isLoading, editOpen, professionalToEdit]);
   
   // Handle professional click
   const handleProfessionalClick = (id: string) => {
@@ -64,15 +76,31 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
   // Handle edit click
   const handleEditClick = (professional: Professional, e: React.MouseEvent) => {
     e.stopPropagation();
-    setProfessionalToEdit(professional);
+    setProfessionalToEdit({...professional});
     setEditOpen(true);
   };
   
   // Handle delete click
   const handleDeleteClick = (professional: Professional, e: React.MouseEvent) => {
     e.stopPropagation();
-    setProfessionalToDelete(professional);
+    setProfessionalToDelete({...professional});
     setDeleteOpen(true);
+  };
+  
+  const handleDialogClose = (dialogType: 'details' | 'edit' | 'delete') => {
+    if (dialogType === 'details') {
+      setDetailsOpen(false);
+      setSelectedProfessionalId(null);
+    } else if (dialogType === 'edit') {
+      setEditOpen(false);
+      setProfessionalToEdit(null);
+    } else if (dialogType === 'delete') {
+      setDeleteOpen(false);
+      setProfessionalToDelete(null);
+    }
+    
+    // Force rerender
+    setKey(Date.now());
   };
   
   if (isLoading) {
@@ -129,13 +157,22 @@ export const ProfessionalsLayout = ({ view }: ProfessionalsLayoutProps) => {
       <ProfessionalsDialogs 
         selectedProfessionalId={selectedProfessionalId}
         detailsOpen={detailsOpen}
-        setDetailsOpen={setDetailsOpen}
+        setDetailsOpen={(open) => {
+          if (!open) handleDialogClose('details');
+          else setDetailsOpen(open);
+        }}
         professionalToEdit={professionalToEdit}
         editOpen={editOpen}
-        setEditOpen={setEditOpen}
+        setEditOpen={(open) => {
+          if (!open) handleDialogClose('edit');
+          else setEditOpen(open);
+        }}
         professionalToDelete={professionalToDelete}
         deleteOpen={deleteOpen}
-        setDeleteOpen={setDeleteOpen}
+        setDeleteOpen={(open) => {
+          if (!open) handleDialogClose('delete');
+          else setDeleteOpen(open);
+        }}
       />
     </>
   );

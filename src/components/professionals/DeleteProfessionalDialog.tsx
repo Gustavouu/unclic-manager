@@ -56,7 +56,13 @@ export const DeleteProfessionalDialog = ({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog 
+      open={open} 
+      onOpenChange={(isOpen) => {
+        if (isDeleting) return;
+        onOpenChange(isOpen);
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>

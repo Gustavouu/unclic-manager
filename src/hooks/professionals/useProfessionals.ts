@@ -28,14 +28,45 @@ export const useProfessionals = () => {
   
   const { specialties, getProfessionalById } = useProfessionalUtils(trackedProfessionals);
   
+  // Wrap the operations to ensure state is updated correctly
+  const handleAddProfessional = async (data: any) => {
+    try {
+      const result = await addProfessional(data);
+      return result;
+    } catch (error) {
+      console.error("Error in useProfessionals.handleAddProfessional:", error);
+      throw error;
+    }
+  };
+
+  const handleUpdateProfessional = async (id: string, data: any) => {
+    try {
+      await updateProfessional(id, data);
+      return true;
+    } catch (error) {
+      console.error("Error in useProfessionals.handleUpdateProfessional:", error);
+      throw error;
+    }
+  };
+
+  const handleRemoveProfessional = async (id: string) => {
+    try {
+      await removeProfessional(id);
+      return true;
+    } catch (error) {
+      console.error("Error in useProfessionals.handleRemoveProfessional:", error);
+      throw error;
+    }
+  };
+  
   return {
     professionals: trackedProfessionals,
     isLoading,
     specialties,
     getProfessionalById,
-    addProfessional,
-    updateProfessional,
+    addProfessional: handleAddProfessional,
+    updateProfessional: handleUpdateProfessional,
     updateProfessionalStatus,
-    removeProfessional
+    removeProfessional: handleRemoveProfessional
   };
 };

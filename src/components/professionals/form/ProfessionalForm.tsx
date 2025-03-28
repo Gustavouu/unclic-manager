@@ -44,6 +44,8 @@ export const ProfessionalForm = ({
   });
 
   const onSubmit = async (data: ProfessionalCreateForm) => {
+    if (isSubmitting) return;
+    
     try {
       setIsSubmitting(true);
       
