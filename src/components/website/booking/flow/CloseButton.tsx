@@ -2,10 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-
-interface CloseButtonProps {
-  onClick: () => void;
-}
+import { CloseButtonProps } from "../types";
 
 export function CloseButton({ onClick }: CloseButtonProps) {
   return (

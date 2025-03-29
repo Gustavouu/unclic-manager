@@ -27,18 +27,48 @@ export interface BookingData {
 
 export interface ExtendedServiceData {
   id: string;
-  nome: string;
-  descricao: string;
-  duracao: number;
-  preco: number;
-  ativo: boolean;
+  name: string;
+  description: string;
+  duration: number;
+  price: number;
+  active: boolean;
+  category?: string;
 }
 
 export interface ExtendedStaffData {
   id: string;
-  nome: string;
-  cargo: string;
-  especializacoes: string[];
-  foto_url: string;
-  bio: string;
+  name: string;
+  role: string;
+  specialties: string[];
+  photo_url?: string;
+  bio?: string;
+  availability?: boolean;
+}
+
+// Add interface definitions for the component props
+export interface CloseButtonProps {
+  onClick: () => void;
+}
+
+export interface BookingProgressProps {
+  currentStep: number;
+  getStepTitle?: () => string;
+}
+
+export interface StepContentProps {
+  step: number;
+  bookingData: BookingData;
+  updateBookingData: (data: Partial<BookingData>) => void;
+  services: any[];
+  staff: any[];
+  onComplete: () => void;
+  businessName: string;
+  children?: React.ReactNode;
+}
+
+export interface StepNavigatorProps {
+  step: number;
+  onNext: () => void;
+  onPrevious: () => void;
+  bookingData: BookingData;
 }

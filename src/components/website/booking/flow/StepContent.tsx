@@ -1,11 +1,7 @@
 
 import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-
-interface StepContentProps {
-  step: number;
-  children: React.ReactNode;
-}
+import { StepContentProps } from "../types";
 
 export function StepContent({ step, children }: StepContentProps) {
   // Animation variants

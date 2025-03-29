@@ -1,16 +1,11 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import { BookingData } from "../types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useTimeSlots, Period } from "./datetime/useTimeSlots";
-import { PeriodFilter } from "./datetime/PeriodFilter";
-import { TimeSlots } from "./datetime/TimeSlots";
-import { DateTimeForm } from "./datetime/DateTimeForm";
-import { BookingData } from "../types";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Clock } from "lucide-react";
 
 interface StepDateTimeProps {
   bookingData: BookingData;
@@ -18,129 +13,87 @@ interface StepDateTimeProps {
   nextStep: () => void;
 }
 
-export function StepDateTime({
-  bookingData,
-  updateBookingData,
-  nextStep
-}: StepDateTimeProps) {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    bookingData.date || undefined
-  );
-  const [selectedTime, setSelectedTime] = useState<string>(
-    bookingData.time || ""
-  );
+export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepDateTimeProps) {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(bookingData.date);
+  const [selectedTime, setSelectedTime] = useState<string>(bookingData.time || "");
+
+  // Mock available time slots
+  const availableTimeSlots = [
+    "09:00", "09:30", "10:00", "10:30", "11:00", 
+    "11:30", "13:00", "13:30", "14:00", "14:30", 
+    "15:00", "15:30", "16:00", "16:30", "17:00"
+  ];
   
-  // Add state for the active period filter
-  const [activePeriod, setActivePeriod] = useState<Period>("morning");
-
-  // Get time slots using the custom hook with the selected date
-  const { morningSlots, afternoonSlots, eveningSlots, isBusinessOpen } = useTimeSlots(selectedDate);
-
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    updateBookingData({ date });
+  };
+  
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+    updateBookingData({ time });
+  };
+  
   const handleContinue = () => {
     if (selectedDate && selectedTime) {
-      updateBookingData({
-        date: selectedDate,
-        time: selectedTime,
-        notes: "" // Keep empty notes
-      });
       nextStep();
     }
   };
 
-  // Set default active period when date is selected
-  const setDefaultActivePeriod = () => {
-    if (morningSlots.length > 0) {
-      setActivePeriod("morning");
-    } else if (afternoonSlots.length > 0) {
-      setActivePeriod("afternoon");
-    } else if (eveningSlots.length > 0) {
-      setActivePeriod("evening");
-    } else {
-      setActivePeriod("all");
-    }
-  };
-
-  // Set default period when date changes
-  const handleDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date);
-    setSelectedTime("");
-    if (date) {
-      setDefaultActivePeriod();
-    }
-  };
-
-  // Reset selected time when date changes
-  useEffect(() => {
-    setSelectedTime("");
-  }, [selectedDate]);
-
-  // Period button click handler
-  const handlePeriodClick = (period: Period) => {
-    setActivePeriod(period);
-  };
-
   return (
-    <Card className="border-none shadow-none">
-      <CardHeader className="px-0">
-        <CardTitle className="text-2xl">Escolha a Data e Hora</CardTitle>
+    <Card className="border-none shadow-lg">
+      <CardHeader>
+        <CardTitle className="text-2xl">Escolha a data e horário</CardTitle>
         <p className="text-muted-foreground mt-2">
-          Selecione quando você deseja agendar seu serviço
+          Selecione uma data e horário para o serviço
+          {bookingData.serviceName && (
+            <span className="font-medium"> "{bookingData.serviceName}"</span>
+          )}
+          {bookingData.professionalName && (
+            <span> com <span className="font-medium">{bookingData.professionalName}</span></span>
+          )}
         </p>
       </CardHeader>
-      <CardContent className="px-0">
-        <div className="flex flex-col md:flex-row gap-6">
-          <DateTimeForm
-            selectedDate={selectedDate}
-            handleDateSelect={handleDateSelect}
+      <CardContent className="space-y-6">
+        <div>
+          <h3 className="text-sm font-medium mb-2">Data</h3>
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleDateSelect}
+            locale={ptBR}
+            className="rounded-md border"
+            disabled={{ before: new Date() }}
           />
-
-          {selectedDate && (
-            <div className="md:w-1/2">
-              <h3 className="font-medium mb-3">
-                Horários disponíveis para {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
-              </h3>
-              
-              {isBusinessOpen ? (
-                <>
-                  {/* Period filter buttons */}
-                  <PeriodFilter
-                    activePeriod={activePeriod}
-                    handlePeriodClick={handlePeriodClick}
-                    morningSlots={morningSlots}
-                    afternoonSlots={afternoonSlots}
-                    eveningSlots={eveningSlots}
-                  />
-                  
-                  {/* Time slots */}
-                  <TimeSlots
-                    morningSlots={morningSlots}
-                    afternoonSlots={afternoonSlots}
-                    eveningSlots={eveningSlots}
-                    selectedTime={selectedTime}
-                    setSelectedTime={setSelectedTime}
-                    activePeriod={activePeriod}
-                  />
-                </>
-              ) : (
-                <Alert className="mt-4">
-                  <Clock className="h-4 w-4" />
-                  <AlertTitle>Estabelecimento fechado</AlertTitle>
-                  <AlertDescription>
-                    O estabelecimento não funciona neste dia. Por favor, selecione outra data.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-          )}
         </div>
+        
+        {selectedDate && (
+          <div>
+            <h3 className="text-sm font-medium mb-2">
+              Horários disponíveis para {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+            </h3>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              {availableTimeSlots.map((time) => (
+                <Button
+                  key={time}
+                  variant={selectedTime === time ? "default" : "outline"}
+                  className="w-full"
+                  onClick={() => handleTimeSelect(time)}
+                >
+                  {time}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
-      <CardFooter className="px-0">
+      <CardFooter>
         <Button 
           className="w-full" 
-          disabled={!selectedDate || !selectedTime || !isBusinessOpen}
+          disabled={!selectedDate || !selectedTime}
           onClick={handleContinue}
         >
-          Continuar para Pagamento
+          Continuar
         </Button>
       </CardFooter>
     </Card>
