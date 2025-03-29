@@ -85,7 +85,7 @@ export const useAppointmentCreate = (
         
         console.log("Appointment created successfully:", data);
         
-        // Add the new appointment to state
+        // Convert database record to app format
         const newAppointment: Appointment = {
           id: data.id,
           clientName: appointmentData.clientName,
@@ -103,8 +103,11 @@ export const useAppointmentCreate = (
           businessId: businessId
         };
         
+        // Update state with the new appointment
         setAppointments(prev => [...prev, newAppointment]);
         toast.success("Agendamento criado com sucesso!");
+        
+        // Return the new appointment ID
         return data.id;
       } catch (dbError) {
         // If database operation fails, use in-memory data for demo purposes
@@ -131,8 +134,11 @@ export const useAppointmentCreate = (
           businessId: businessId
         };
         
+        // Update state with the new appointment
         setAppointments(prev => [...prev, newAppointment]);
         toast.success("Agendamento criado com sucesso! (modo demonstração)");
+        
+        // Return the demo appointment ID
         return demoId;
       }
     } catch (err) {

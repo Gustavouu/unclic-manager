@@ -7,7 +7,7 @@ import { MonthView } from "./calendar/MonthView";
 import { DayView } from "./calendar/DayView";
 import { WeekView } from "./calendar/WeekView";
 import { CalendarFooter } from "./calendar/CalendarFooter";
-import { AppointmentType, CalendarViewType } from "./calendar/types";
+import { CalendarViewType } from "./calendar/types";
 import { useBusinessHours } from "@/hooks/useBusinessHours";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { CalendarProvider, useCalendarContext } from "./calendar/CalendarContext";
@@ -22,29 +22,30 @@ export const AppointmentCalendar = ({ initialView }: AppointmentCalendarProps) =
   const { appointments, isLoading, fetchAppointments } = useAppointments();
   
   // Convert appointments to calendar format
-  const calendarAppointments: AppointmentType[] = appointments.map(app => ({
+  const calendarAppointments = appointments.map(app => ({
     id: app.id,
     date: app.date,
     clientName: app.clientName,
     serviceName: app.serviceName,
     serviceType: app.serviceType,
-    duration: app.duration,
-    price: app.price,
+    duration: app.duration || 60,
+    price: app.price || 0,
     status: app.status
   }));
   
   // Refresh appointments when the component mounts and every minute
   useEffect(() => {
+    console.log("Fetching appointments in AppointmentCalendar");
     fetchAppointments();
     
     // Set up a polling interval to refresh appointments
     const intervalId = setInterval(() => {
+      console.log("Refreshing appointments (interval)");
       fetchAppointments();
     }, 60000); // Refresh every minute
     
     return () => clearInterval(intervalId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchAppointments]);
 
   return (
     <CalendarProvider appointments={calendarAppointments}>

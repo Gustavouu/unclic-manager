@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment, AppointmentStatus } from "@/components/appointments/types";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 export const useAppointmentsFetch = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -30,6 +30,9 @@ export const useAppointmentsFetch = () => {
           status,
           forma_pagamento,
           observacoes,
+          id_servico,
+          id_cliente,
+          id_funcionario,
           servicos(nome),
           clientes(nome),
           funcionarios(nome)
@@ -46,24 +49,39 @@ export const useAppointmentsFetch = () => {
 
       // Transform database data to application format
       const formattedAppointments = data.map(item => {
-        const appointmentDate = new Date(`${item.data}T${item.hora_inicio}`);
-        
-        // Ensure we cast the status to AppointmentStatus type
-        const status = (item.status || "agendado") as AppointmentStatus;
-        
-        return {
-          id: item.id,
-          clientName: item.clientes?.nome || "Cliente não encontrado",
-          serviceName: item.servicos?.nome || "Serviço não encontrado",
-          date: appointmentDate,
-          status: status,
-          price: item.valor || 0,
-          serviceType: "haircut", // Default type, can be improved with categorization
-          duration: item.duracao || 60,
-          notes: item.observacoes,
-          paymentMethod: item.forma_pagamento
-        };
-      });
+        try {
+          // Parse date and time into a JavaScript Date object
+          const dateStr = item.data;
+          const timeStr = item.hora_inicio;
+          
+          // Create a Date object from the date and time strings
+          const dateTimeStr = `${dateStr}T${timeStr}`;
+          const appointmentDate = new Date(dateTimeStr);
+          
+          // Ensure we cast the status to AppointmentStatus type
+          const status = (item.status || "agendado") as AppointmentStatus;
+          
+          // Create an Appointment object
+          return {
+            id: item.id,
+            clientName: item.clientes?.nome || "Cliente não encontrado",
+            serviceName: item.servicos?.nome || "Serviço não encontrado",
+            date: appointmentDate,
+            status: status,
+            price: item.valor || 0,
+            serviceType: "haircut", // Default type, can be improved with categorization
+            duration: item.duracao || 60,
+            notes: item.observacoes,
+            paymentMethod: item.forma_pagamento,
+            serviceId: item.id_servico,
+            clientId: item.id_cliente,
+            professionalId: item.id_funcionario
+          };
+        } catch (err) {
+          console.error("Error formatting appointment:", err, item);
+          return null;
+        }
+      }).filter(Boolean) as Appointment[];
       
       setAppointments(formattedAppointments);
       console.log("Formatted appointments:", formattedAppointments);
