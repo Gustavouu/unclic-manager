@@ -10,6 +10,7 @@ import { useTimeSlots } from "./datetime/useTimeSlots";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { Appointment } from "@/components/appointments/types";
 
 interface StepDateTimeProps {
   bookingData: BookingData;
@@ -40,9 +41,14 @@ export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepD
     // Find appointments for the selected date
     const appointmentsForDate = appointments.filter(app => {
       if (!app.date) return false;
-      const appDate = typeof app.date === 'string' 
-        ? app.date.split('T')[0] 
-        : format(app.date, 'yyyy-MM-dd');
+      
+      // Safely handle the date property which could be a Date object or a string
+      const appDate = app.date instanceof Date 
+        ? format(app.date, 'yyyy-MM-dd') 
+        : typeof app.date === 'string' 
+          ? app.date.split('T')[0] 
+          : '';
+      
       return appDate === formattedSelectedDate;
     });
     
@@ -50,11 +56,15 @@ export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepD
     appointmentsForDate.forEach(app => {
       // For simplicity, we're just using the start time
       // In a real app, would need to consider duration
-      const appTime = typeof app.date === 'string'
-        ? app.date.split('T')[1].substring(0, 5)
-        : format(app.date, 'HH:mm');
+      const appTime = app.date instanceof Date
+        ? format(app.date, 'HH:mm')
+        : typeof app.date === 'string'
+          ? app.date.split('T')[1]?.substring(0, 5) || ''
+          : '';
       
-      bookedTimeSlots.add(appTime);
+      if (appTime) {
+        bookedTimeSlots.add(appTime);
+      }
     });
     
     // Filter available time slots
