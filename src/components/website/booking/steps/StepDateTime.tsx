@@ -39,28 +39,32 @@ export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepD
     const formattedSelectedDate = format(selectedDate, 'yyyy-MM-dd');
     
     // Find appointments for the selected date
-    const appointmentsForDate = appointments.filter(app => {
+    const appointmentsForDate = appointments.filter((app: Appointment) => {
       if (!app.date) return false;
       
-      // Safely handle the date property which could be a Date object or a string
-      const appDate = app.date instanceof Date 
-        ? format(app.date, 'yyyy-MM-dd') 
-        : typeof app.date === 'string' 
-          ? app.date.split('T')[0] 
-          : '';
+      let appDate = '';
+      if (app.date instanceof Date) {
+        appDate = format(app.date, 'yyyy-MM-dd');
+      } else if (typeof app.date === 'string') {
+        const dateParts = app.date.split('T');
+        appDate = dateParts[0];
+      }
       
       return appDate === formattedSelectedDate;
     });
     
     // Mark time slots as booked
-    appointmentsForDate.forEach(app => {
-      // For simplicity, we're just using the start time
-      // In a real app, would need to consider duration
-      const appTime = app.date instanceof Date
-        ? format(app.date, 'HH:mm')
-        : typeof app.date === 'string'
-          ? app.date.split('T')[1]?.substring(0, 5) || ''
-          : '';
+    appointmentsForDate.forEach((app: Appointment) => {
+      let appTime = '';
+      
+      if (app.date instanceof Date) {
+        appTime = format(app.date, 'HH:mm');
+      } else if (typeof app.date === 'string') {
+        const dateParts = app.date.split('T');
+        if (dateParts.length > 1) {
+          appTime = dateParts[1].substring(0, 5);
+        }
+      }
       
       if (appTime) {
         bookedTimeSlots.add(appTime);
@@ -187,4 +191,27 @@ export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepD
       </CardFooter>
     </Card>
   );
+  
+  function handleDateSelect(date: Date | undefined) {
+    setSelectedDate(date);
+    setSelectedTime("");
+  };
+  
+  function handleContinue() {
+    if (!selectedDate || !selectedTime) {
+      toast.warning("Selecione uma data e um horário");
+      return;
+    }
+    
+    updateBookingData({
+      date: selectedDate,
+      time: selectedTime
+    });
+    
+    nextStep();
+  };
+  
+  function handlePeriodClick(period: "morning" | "afternoon" | "evening" | "all") {
+    setActivePeriod(period);
+  };
 }
