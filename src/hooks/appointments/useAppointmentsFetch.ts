@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Appointment, AppointmentStatus } from "@/components/appointments/types";
 import { toast } from "sonner";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 
 export const useAppointmentsFetch = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -64,7 +64,7 @@ export const useAppointmentsFetch = () => {
           // Create an Appointment object
           return {
             id: item.id,
-            clientName: item.clientes?.nome || "Cliente não encontrado",
+            clientName: item.clientes?.nome || item.observacoes?.split(',')[0] || "Cliente não encontrado",
             serviceName: item.servicos?.nome || "Serviço não encontrado",
             date: appointmentDate,
             status: status,

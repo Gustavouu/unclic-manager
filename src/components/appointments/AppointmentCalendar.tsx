@@ -33,7 +33,7 @@ export const AppointmentCalendar = ({ initialView }: AppointmentCalendarProps) =
     status: app.status
   }));
   
-  // Refresh appointments when the component mounts and every minute
+  // Refresh appointments when the component mounts and every 30 seconds
   useEffect(() => {
     console.log("Fetching appointments in AppointmentCalendar");
     fetchAppointments();
@@ -42,7 +42,7 @@ export const AppointmentCalendar = ({ initialView }: AppointmentCalendarProps) =
     const intervalId = setInterval(() => {
       console.log("Refreshing appointments (interval)");
       fetchAppointments();
-    }, 60000); // Refresh every minute
+    }, 30000); // Refresh every 30 seconds
     
     return () => clearInterval(intervalId);
   }, [fetchAppointments]);

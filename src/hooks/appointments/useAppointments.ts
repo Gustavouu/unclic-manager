@@ -21,8 +21,9 @@ export function useAppointments(): AppointmentHookReturn {
 
   // Load appointments on component mount
   useEffect(() => {
+    console.log("Initial fetch of appointments in useAppointments");
     fetchAppointments();
-  }, []);
+  }, [fetchAppointments]);
 
   return {
     appointments,

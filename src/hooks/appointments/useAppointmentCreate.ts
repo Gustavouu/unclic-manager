@@ -41,21 +41,23 @@ export const useAppointmentCreate = (
           .maybeSingle();
           
         businessId = business?.id || null;
+        console.log("Found business ID from database:", businessId);
       } catch (error) {
         console.warn("Failed to get business ID from database:", error);
-        // Generate a fallback business ID if database query fails
-        businessId = appointmentData.businessId || uuidv4();
       }
       
-      console.log("Using business ID:", businessId);
-
-      // Make sure we have a valid business ID
+      // If no business ID from database, use provided one or generate new one
       if (!businessId) {
-        businessId = uuidv4();
-        console.log("Generated new business ID:", businessId);
+        businessId = appointmentData.businessId || uuidv4();
+        console.log("Using alternate business ID:", businessId);
       }
 
-      // Convert to database format - always include businessId
+      // Create a notes field with client info if coming from website
+      const notesWithClientInfo = appointmentData.clientName && !appointmentData.notes ? 
+        `${appointmentData.clientName}, ${appointmentData.serviceName}` : 
+        appointmentData.notes;
+
+      // Convert to database format
       const appointment = {
         data: appointmentDate,
         hora_inicio: startTime,
@@ -64,12 +66,14 @@ export const useAppointmentCreate = (
         valor: appointmentData.price,
         status: appointmentData.status,
         forma_pagamento: appointmentData.paymentMethod || 'local',
-        observacoes: appointmentData.notes,
+        observacoes: notesWithClientInfo,
         id_servico: serviceId,
         id_cliente: clientId,
         id_funcionario: professionalId,
         id_negocio: businessId
       };
+      
+      console.log("Saving appointment to database:", appointment);
       
       try {
         const { data, error } = await supabase
@@ -95,7 +99,7 @@ export const useAppointmentCreate = (
           price: appointmentData.price,
           serviceType: appointmentData.serviceType,
           duration: appointmentData.duration,
-          notes: appointmentData.notes,
+          notes: notesWithClientInfo,
           paymentMethod: appointmentData.paymentMethod,
           serviceId: serviceId,
           clientId: clientId,
@@ -126,7 +130,7 @@ export const useAppointmentCreate = (
           price: appointmentData.price,
           serviceType: appointmentData.serviceType,
           duration: appointmentData.duration,
-          notes: appointmentData.notes,
+          notes: notesWithClientInfo,
           paymentMethod: appointmentData.paymentMethod,
           serviceId: serviceId,
           clientId: clientId,
@@ -136,6 +140,7 @@ export const useAppointmentCreate = (
         
         // Update state with the new appointment
         setAppointments(prev => [...prev, newAppointment]);
+        console.log("Added appointment to state:", newAppointment);
         toast.success("Agendamento criado com sucesso! (modo demonstração)");
         
         // Return the demo appointment ID

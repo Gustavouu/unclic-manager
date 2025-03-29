@@ -16,7 +16,7 @@ interface StepConfirmationProps {
 
 export function StepConfirmation({ bookingData, onComplete }: StepConfirmationProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { createAppointment } = useAppointments();
+  const { createAppointment, fetchAppointments } = useAppointments();
   
   const handleCompleteBooking = async () => {
     if (!bookingData.date) {
@@ -31,6 +31,15 @@ export function StepConfirmation({ bookingData, onComplete }: StepConfirmationPr
       const appointmentDate = new Date(bookingData.date);
       const [hours, minutes] = bookingData.time.split(':').map(Number);
       appointmentDate.setHours(hours, minutes, 0, 0);
+      
+      console.log("Creating website appointment with data:", {
+        clientName: bookingData.clientName,
+        serviceName: bookingData.serviceName,
+        date: appointmentDate,
+        serviceId: bookingData.serviceId,
+        professionalId: bookingData.professionalId,
+        time: bookingData.time
+      });
       
       // Create appointment
       await createAppointment({
@@ -47,6 +56,9 @@ export function StepConfirmation({ bookingData, onComplete }: StepConfirmationPr
         professionalId: bookingData.professionalId,
         paymentMethod: "local" // Default payment method
       });
+      
+      // Refresh the appointments list to show the new appointment
+      fetchAppointments();
       
       toast.success("Agendamento confirmado com sucesso!");
       onComplete();

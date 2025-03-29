@@ -30,7 +30,7 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
     price: number;
   } | null>(null);
 
-  const { createAppointment } = useAppointments();
+  const { createAppointment, fetchAppointments } = useAppointments();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<AppointmentFormValues>({
@@ -56,6 +56,14 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
       const clientId = values.clientId || uuidv4();
       const professionalId = values.professionalId || uuidv4();
       
+      console.log("Creating appointment with form values:", {
+        ...values,
+        appointmentDate,
+        serviceId,
+        clientId,
+        professionalId
+      });
+      
       // Create the appointment through the hook
       await createAppointment({
         clientName: client?.name || "Cliente não identificado",
@@ -71,6 +79,9 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
         professionalId: professionalId,
         paymentMethod: "local" // Default payment method
       });
+      
+      // Refresh appointments to show the new one
+      fetchAppointments();
       
       // Close the dialog and reset form
       onClose();
