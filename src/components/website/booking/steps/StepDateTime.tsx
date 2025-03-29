@@ -11,6 +11,7 @@ import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Appointment } from "@/components/appointments/types";
+import { parseDateFromAppointment } from "../utils/dateUtils";
 
 interface StepDateTimeProps {
   bookingData: BookingData;
@@ -42,34 +43,16 @@ export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepD
     const appointmentsForDate = appointments.filter((app: Appointment) => {
       if (!app.date) return false;
       
-      let appDate = '';
-      if (app.date instanceof Date) {
-        appDate = format(app.date, 'yyyy-MM-dd');
-      } else if (typeof app.date === 'string') {
-        // Explicitly check if it's a string before using split
-        const dateParts = app.date.split('T');
-        appDate = dateParts[0];
-      }
-      
+      const appDate = parseDateFromAppointment(app).date;
       return appDate === formattedSelectedDate;
     });
     
     // Mark time slots as booked
     appointmentsForDate.forEach((app: Appointment) => {
-      let appTime = '';
+      const { time } = parseDateFromAppointment(app);
       
-      if (app.date instanceof Date) {
-        appTime = format(app.date, 'HH:mm');
-      } else if (typeof app.date === 'string') {
-        // Explicitly check if it's a string before using split
-        const dateParts = app.date.split('T');
-        if (dateParts.length > 1) {
-          appTime = dateParts[1].substring(0, 5);
-        }
-      }
-      
-      if (appTime) {
-        bookedTimeSlots.add(appTime);
+      if (time) {
+        bookedTimeSlots.add(time);
       }
     });
     
