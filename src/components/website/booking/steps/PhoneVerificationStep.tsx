@@ -2,10 +2,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
-import { supabase } from "@/integrations/supabase/client";
 import { formatPhone } from "@/utils/formUtils";
-import { showErrorToast } from "@/utils/formUtils";
-import { PhoneIcon, UserIcon, CalendarIcon } from "lucide-react";
+import { toast } from "sonner";
+import { PhoneIcon } from "lucide-react";
 
 interface PhoneVerificationStepProps {
   onClientFound: (clientId: string, clientName: string, clientEmail?: string, clientPhone?: string) => void;
@@ -22,36 +21,22 @@ export function PhoneVerificationStep({ onClientFound, onNewClient }: PhoneVerif
 
   const handleVerifyPhone = async () => {
     if (!phone || phone.length < 14) {
-      showErrorToast("Por favor, informe um número de telefone válido");
+      toast.error("Por favor, informe um número de telefone válido");
       return;
     }
 
     setIsChecking(true);
 
     try {
-      // Consulta o cliente pelo telefone
-      const { data, error } = await supabase
-        .from('clientes')
-        .select('id, nome, email, telefone')
-        .eq('telefone', phone)
-        .limit(1)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // Cliente não encontrado, vamos para o cadastro
-          onNewClient(phone);
-        } else {
-          console.error("Erro ao verificar cliente:", error);
-          showErrorToast("Ocorreu um erro ao verificar o telefone. Por favor, tente novamente.");
-        }
-      } else if (data) {
-        // Cliente encontrado, prosseguir com o agendamento
-        onClientFound(data.id, data.nome, data.email, data.telefone);
-      }
+      // Simulate checking for an existing client
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // For demo purposes, we'll assume no client exists with this phone number
+      // In a real implementation, this would check against a database
+      onNewClient(phone);
     } catch (error) {
-      console.error("Erro ao verificar cliente:", error);
-      showErrorToast("Ocorreu um erro ao verificar o telefone. Por favor, tente novamente.");
+      console.error("Erro ao verificar telefone:", error);
+      toast.error("Ocorreu um erro ao verificar o telefone. Por favor, tente novamente.");
     } finally {
       setIsChecking(false);
     }

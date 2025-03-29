@@ -1,76 +1,48 @@
 
-import { toast } from "sonner";
-
-// Função para validar campos obrigatórios
-export const validateRequired = (value: string, fieldName: string): string | null => {
-  if (!value || value.trim() === "") {
-    return `O campo ${fieldName} é obrigatório`;
+export const formatPhone = (value: string): string => {
+  if (!value) return '';
+  
+  // Remove all non-digit characters
+  const digitsOnly = value.replace(/\D/g, '');
+  
+  // Apply mask (XX) XXXXX-XXXX
+  if (digitsOnly.length <= 2) {
+    return `(${digitsOnly}`;
+  } else if (digitsOnly.length <= 7) {
+    return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2)}`;
+  } else if (digitsOnly.length <= 11) {
+    return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2, 7)}-${digitsOnly.slice(7)}`;
+  } else {
+    return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2, 7)}-${digitsOnly.slice(7, 11)}`;
   }
-  return null;
 };
 
-// Adaptadores para useFormValidation (aceitam apenas um argumento)
-export const createRequiredValidator = (fieldName: string) => {
-  return (value: string): string | null => validateRequired(value, fieldName);
+export const validateRequired = (value: string, fieldName: string): string | null => {
+  return value.trim() ? null : `${fieldName} é obrigatório`;
 };
 
-// Função para validar email
-export const validateEmail = (email: string): string | null => {
-  if (!email) return null;
+export const validateEmail = (value: string): string | null => {
+  if (!value.trim()) return null; // Email is optional
   
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return "Email inválido";
-  }
-  return null;
+  return emailRegex.test(value) ? null : "Email inválido";
 };
 
-// Função para formatar telefone com máscara (xx) xxxxx-xxxx
-export const formatPhone = (phone: string): string => {
-  // Remove todos os caracteres não numéricos
-  const numericValue = phone.replace(/\D/g, '');
+export const validatePhone = (value: string): string | null => {
+  if (!value.trim()) return null; // Phone is optional
   
-  // Limita a 11 dígitos (DDD + 9 dígitos)
-  const limitedValue = numericValue.slice(0, 11);
-  
-  // Aplica a máscara conforme o tamanho
-  if (limitedValue.length <= 2) {
-    return limitedValue;
-  } else if (limitedValue.length <= 7) {
-    return `(${limitedValue.slice(0, 2)}) ${limitedValue.slice(2)}`;
-  } else {
-    return `(${limitedValue.slice(0, 2)}) ${limitedValue.slice(2, 7)}-${limitedValue.slice(7)}`;
-  }
+  // Check if phone has at least 10 digits
+  const digitsOnly = value.replace(/\D/g, '');
+  return digitsOnly.length >= 10 ? null : "Telefone inválido";
 };
 
-// Função para validar telefone
-export const validatePhone = (phone: string): string | null => {
-  if (!phone) return null;
-  
-  const phoneRegex = /^\(\d{2}\)\s\d{4,5}-\d{4}$/;
-  if (!phoneRegex.test(phone)) {
-    return "Telefone inválido (formato: (xx) xxxxx-xxxx)";
-  }
-  return null;
-};
-
-// Função para mostrar mensagem de sucesso
-export const showSuccessToast = (message: string = "Alterações salvas com sucesso!") => {
+export const showSuccessToast = (message: string) => {
   toast.success(message);
 };
 
-// Função para mostrar mensagem de erro
-export const showErrorToast = (message: string = "Erro ao salvar alterações. Tente novamente.") => {
+export const showErrorToast = (message: string) => {
   toast.error(message);
 };
 
-// Mock de função de salvamento
-export const mockSaveFunction = async (): Promise<boolean> => {
-  // Simula uma chamada de API com 90% de chance de sucesso
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const isSuccess = Math.random() > 0.1; // 90% de chance de sucesso
-      resolve(isSuccess);
-    }, 1000);
-  });
-};
+// Add this import to make the toast functions work
+import { toast } from "sonner";

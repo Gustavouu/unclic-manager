@@ -1,12 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PhoneVerificationStep } from "./steps/PhoneVerificationStep";
 import { NewClientForm } from "./steps/NewClientForm";
 import { PaymentRequiredAppointmentForm } from "@/components/appointments/form/PaymentRequiredAppointmentForm";
 import { Card, CardContent } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
 import { ClientData } from "./types";
-import { Loader2 } from "lucide-react";
 
 interface BookingFormFlowProps {
   onComplete?: () => void;
@@ -15,47 +13,45 @@ interface BookingFormFlowProps {
 export function BookingFormFlow({ onComplete }: BookingFormFlowProps) {
   const [step, setStep] = useState<"phone" | "new-client" | "appointment">("phone");
   const [clientData, setClientData] = useState<ClientData | null>(null);
-  const [isLoadingServices, setIsLoadingServices] = useState(false);
-  const [isLoadingStaff, setIsLoadingStaff] = useState(false);
-  const [services, setServices] = useState<any[]>([]);
-  const [staff, setStaff] = useState<any[]>([]);
-
-  // Fetch services and staff on component mount
-  useEffect(() => {
-    const fetchServicesAndStaff = async () => {
-      setIsLoadingServices(true);
-      setIsLoadingStaff(true);
-      
-      try {
-        // Fetch services
-        const { data: servicesData, error: servicesError } = await supabase
-          .from('servicos')
-          .select('id, nome, descricao, duracao, preco, ativo')
-          .eq('ativo', true);
-        
-        if (servicesError) throw servicesError;
-        
-        setServices(servicesData || []);
-        
-        // Fetch staff
-        const { data: staffData, error: staffError } = await supabase
-          .from('funcionarios')
-          .select('id, nome, cargo, especializacoes, foto_url, bio')
-          .eq('status', 'ativo');
-        
-        if (staffError) throw staffError;
-        
-        setStaff(staffData || []);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setIsLoadingServices(false);
-        setIsLoadingStaff(false);
-      }
-    };
-    
-    fetchServicesAndStaff();
-  }, []);
+  
+  // Mock data for the demo
+  const mockServices = [
+    {
+      id: "1",
+      nome: "Corte de Cabelo",
+      descricao: "Corte moderno com finalização",
+      duracao: 60,
+      preco: 80,
+      ativo: true
+    },
+    {
+      id: "2",
+      nome: "Manicure",
+      descricao: "Cuidados completos para unhas",
+      duracao: 45,
+      preco: 50,
+      ativo: true
+    }
+  ];
+  
+  const mockStaff = [
+    {
+      id: "1",
+      nome: "Ana Silva",
+      cargo: "Cabeleireira",
+      especializacoes: ["Cortes femininos", "Coloração"],
+      foto_url: "https://i.pravatar.cc/150?img=5",
+      bio: "Especialista em cortes modernos"
+    },
+    {
+      id: "2",
+      nome: "João Santos",
+      cargo: "Manicure",
+      especializacoes: ["Unhas em gel", "Nail art"],
+      foto_url: "https://i.pravatar.cc/150?img=12",
+      bio: "5 anos de experiência em nail art"
+    }
+  ];
 
   const handleClientFound = (clientId: string, clientName: string, clientEmail?: string, clientPhone?: string) => {
     setClientData({ 
@@ -92,18 +88,6 @@ export function BookingFormFlow({ onComplete }: BookingFormFlowProps) {
     }
   };
 
-  // Loading state while fetching data
-  if (isLoadingServices || isLoadingStaff) {
-    return (
-      <Card className="max-w-md mx-auto">
-        <CardContent className="pt-6 flex flex-col items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Carregando dados para agendamento...</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card className="max-w-md mx-auto">
       <CardContent className="pt-6">
@@ -129,8 +113,8 @@ export function BookingFormFlow({ onComplete }: BookingFormFlowProps) {
             customerEmail={clientData.email}
             customerPhone={clientData.phone}
             onSuccess={handleBookingComplete}
-            availableServices={services}
-            availableStaff={staff}
+            availableServices={mockServices}
+            availableStaff={mockStaff}
           />
         )}
       </CardContent>
