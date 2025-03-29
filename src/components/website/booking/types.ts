@@ -56,7 +56,7 @@ export interface CloseButtonProps {
 
 export interface BookingProgressProps {
   currentStep: number;
-  getStepTitle?: () => string;
+  getStepTitle: () => string;
 }
 
 export interface StepContentProps {
@@ -67,4 +67,6 @@ export interface StepContentProps {
 export interface StepNavigatorProps {
   step: number;
   onPrevious: () => void;
+  onNext?: () => void;
+  bookingData: BookingData;
 }

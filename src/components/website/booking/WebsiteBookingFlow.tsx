@@ -13,6 +13,7 @@ import { StepClientInfo } from "./steps/StepClientInfo";
 import { StepConfirmation } from "./steps/StepConfirmation";
 import { BookingFlowProps } from "./types";
 import { useBookingData } from "./hooks/useBookingData";
+import { toast } from "sonner";
 
 export function WebsiteBookingFlow({ 
   businessName,
@@ -21,9 +22,29 @@ export function WebsiteBookingFlow({
   staff = []
 }: BookingFlowProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const { bookingData, updateBookingData } = useBookingData();
+  const { bookingData, updateBookingData, resetBookingData } = useBookingData();
   
   const handleNextStep = () => {
+    if (currentStep === 0 && !bookingData.serviceId) {
+      toast.warning("Escolha um serviço para continuar");
+      return;
+    }
+    
+    if (currentStep === 1 && !bookingData.professionalId) {
+      toast.warning("Escolha um profissional para continuar");
+      return;
+    }
+    
+    if (currentStep === 2 && (!bookingData.date || !bookingData.time)) {
+      toast.warning("Escolha uma data e horário para continuar");
+      return;
+    }
+    
+    if (currentStep === 3 && (!bookingData.clientName || !bookingData.clientEmail)) {
+      toast.warning("Preencha seus dados para continuar");
+      return;
+    }
+    
     setCurrentStep(prev => prev + 1);
     window.scrollTo(0, 0);
   };
@@ -34,17 +55,19 @@ export function WebsiteBookingFlow({
   };
   
   const completeBooking = () => {
+    // Reset booking data when completed
+    resetBookingData();
+    toast.success("Agendamento realizado com sucesso!");
     closeFlow();
   };
   
   const getStepTitle = () => {
     switch (currentStep) {
-      case 0: return "Bem-vindo";
-      case 1: return "Escolha o serviço";
-      case 2: return "Escolha o profissional";
-      case 3: return "Escolha data e horário";
-      case 4: return "Seus dados";
-      case 5: return "Confirmação";
+      case 0: return "Serviço";
+      case 1: return "Profissional";
+      case 2: return "Data e Horário";
+      case 3: return "Seus dados";
+      case 4: return "Confirmação";
       default: return "";
     }
   };
@@ -56,18 +79,11 @@ export function WebsiteBookingFlow({
       <div className="max-w-3xl mx-auto px-4 lg:px-0">
         <BookingProgress 
           currentStep={currentStep} 
-          getStepTitle={() => getStepTitle()} 
+          getStepTitle={getStepTitle} 
         />
         
         <StepContent step={currentStep}>
           {currentStep === 0 && (
-            <StepIntro 
-              businessName={businessName}
-              nextStep={handleNextStep}
-            />
-          )}
-          
-          {currentStep === 1 && (
             <StepService 
               bookingData={bookingData}
               updateBookingData={updateBookingData}
@@ -76,7 +92,7 @@ export function WebsiteBookingFlow({
             />
           )}
           
-          {currentStep === 2 && (
+          {currentStep === 1 && (
             <StepProfessional 
               bookingData={bookingData}
               updateBookingData={updateBookingData}
@@ -85,7 +101,7 @@ export function WebsiteBookingFlow({
             />
           )}
           
-          {currentStep === 3 && (
+          {currentStep === 2 && (
             <StepDateTime 
               bookingData={bookingData}
               updateBookingData={updateBookingData}
@@ -93,7 +109,7 @@ export function WebsiteBookingFlow({
             />
           )}
           
-          {currentStep === 4 && (
+          {currentStep === 3 && (
             <StepClientInfo 
               bookingData={bookingData}
               updateBookingData={updateBookingData}
@@ -101,7 +117,7 @@ export function WebsiteBookingFlow({
             />
           )}
           
-          {currentStep === 5 && (
+          {currentStep === 4 && (
             <StepConfirmation 
               bookingData={bookingData}
               onComplete={completeBooking}
@@ -112,6 +128,8 @@ export function WebsiteBookingFlow({
         <StepNavigator 
           step={currentStep}
           onPrevious={handlePreviousStep}
+          onNext={currentStep < 4 ? handleNextStep : undefined}
+          bookingData={bookingData}
         />
       </div>
     </div>

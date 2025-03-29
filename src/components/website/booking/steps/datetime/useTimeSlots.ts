@@ -50,14 +50,14 @@ export function useTimeSlots(selectedDate?: Date) {
       if (hour === openHour) {
         if (openMinute <= 0) {
           slots.push({ 
-            time: `${hour}:00`, 
+            time: `${hour.toString().padStart(2, '0')}:00`, 
             period: hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening",
             isAvailable: true
           });
         }
         if (openMinute <= 30) {
           slots.push({ 
-            time: `${hour}:30`, 
+            time: `${hour.toString().padStart(2, '0')}:30`, 
             period: hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening",
             isAvailable: true
           });
@@ -67,14 +67,14 @@ export function useTimeSlots(selectedDate?: Date) {
       else if (hour === closeHour) {
         if (closeMinute > 0) {
           slots.push({ 
-            time: `${hour}:00`, 
+            time: `${hour.toString().padStart(2, '0')}:00`, 
             period: hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening",
             isAvailable: true
           });
         }
         if (closeMinute > 30) {
           slots.push({ 
-            time: `${hour}:30`, 
+            time: `${hour.toString().padStart(2, '0')}:30`, 
             period: hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening",
             isAvailable: true
           });
@@ -83,12 +83,12 @@ export function useTimeSlots(selectedDate?: Date) {
       // Add both slots for hours in between
       else {
         slots.push({ 
-          time: `${hour}:00`, 
+          time: `${hour.toString().padStart(2, '0')}:00`, 
           period: hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening",
           isAvailable: true
         });
         slots.push({ 
-          time: `${hour}:30`, 
+          time: `${hour.toString().padStart(2, '0')}:30`, 
           period: hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening",
           isAvailable: true
         });

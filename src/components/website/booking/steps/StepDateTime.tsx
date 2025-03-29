@@ -1,13 +1,15 @@
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
 import { BookingData } from "../types";
+import { Button } from "@/components/ui/button";
+import { DateTimeForm } from "./datetime/DateTimeForm";
+import { TimeSlots } from "./datetime/TimeSlots";
+import { PeriodFilter } from "./datetime/PeriodFilter";
+import { useTimeSlots } from "./datetime/useTimeSlots";
+import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { useAvailableTimeSlots } from "@/hooks/useAvailableTimeSlots";
-import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface StepDateTimeProps {
   bookingData: BookingData;
@@ -17,96 +19,158 @@ interface StepDateTimeProps {
 
 export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepDateTimeProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(bookingData.date);
-  const [selectedTime, setSelectedTime] = useState<string>(bookingData.time || "");
+  const [selectedTime, setSelectedTime] = useState<string>(bookingData.time);
+  const [activePeriod, setActivePeriod] = useState<"morning" | "afternoon" | "evening" | "all">("all");
   
-  const { availableSlots, isLoading } = useAvailableTimeSlots(
-    selectedDate,
-    bookingData.professionalId, 
-    bookingData.serviceDuration
-  );
+  const { timeSlots, morningSlots, afternoonSlots, eveningSlots, isBusinessOpen } = useTimeSlots(selectedDate);
+  const { appointments } = useAppointments();
+  
+  // Filter out booked time slots
+  const [availableTimeSlots, setAvailableTimeSlots] = useState(timeSlots);
+  const [availableMorningSlots, setAvailableMorningSlots] = useState(morningSlots);
+  const [availableAfternoonSlots, setAvailableAfternoonSlots] = useState(afternoonSlots);
+  const [availableEveningSlots, setAvailableEveningSlots] = useState(eveningSlots);
+  
+  useEffect(() => {
+    if (!selectedDate) return;
+    
+    const bookedTimeSlots = new Set();
+    const formattedSelectedDate = format(selectedDate, 'yyyy-MM-dd');
+    
+    // Find appointments for the selected date
+    const appointmentsForDate = appointments.filter(app => {
+      if (!app.date) return false;
+      const appDate = typeof app.date === 'string' 
+        ? app.date.split('T')[0] 
+        : format(app.date, 'yyyy-MM-dd');
+      return appDate === formattedSelectedDate;
+    });
+    
+    // Mark time slots as booked
+    appointmentsForDate.forEach(app => {
+      // For simplicity, we're just using the start time
+      // In a real app, would need to consider duration
+      const appTime = typeof app.date === 'string'
+        ? app.date.split('T')[1].substring(0, 5)
+        : format(app.date, 'HH:mm');
+      
+      bookedTimeSlots.add(appTime);
+    });
+    
+    // Filter available time slots
+    const filtered = timeSlots.filter(slot => !bookedTimeSlots.has(slot.time));
+    setAvailableTimeSlots(filtered);
+    
+    // Also filter by period
+    setAvailableMorningSlots(filtered.filter(slot => slot.period === "morning"));
+    setAvailableAfternoonSlots(filtered.filter(slot => slot.period === "afternoon"));
+    setAvailableEveningSlots(filtered.filter(slot => slot.period === "evening"));
+    
+    // If selected time is now booked, clear selection
+    if (selectedTime && bookedTimeSlots.has(selectedTime)) {
+      setSelectedTime("");
+      toast.warning("O horário selecionado não está mais disponível");
+    }
+  }, [selectedDate, timeSlots, appointments]);
   
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
-    setSelectedTime(""); // Reset time when date changes
-    updateBookingData({ date, time: "" });
-  };
-  
-  const handleTimeSelect = (time: string) => {
-    setSelectedTime(time);
-    updateBookingData({ time });
+    setSelectedTime("");
   };
   
   const handleContinue = () => {
-    if (selectedDate && selectedTime) {
-      nextStep();
+    if (!selectedDate || !selectedTime) {
+      toast.warning("Selecione uma data e um horário");
+      return;
     }
+    
+    updateBookingData({
+      date: selectedDate,
+      time: selectedTime
+    });
+    
+    nextStep();
   };
-
+  
+  const handlePeriodClick = (period: "morning" | "afternoon" | "evening" | "all") => {
+    setActivePeriod(period);
+  };
+  
+  if (!bookingData.serviceId || !bookingData.professionalId) {
+    return (
+      <Card className="border-none shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl">Erro</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>Serviço ou profissional não selecionado. Por favor, volte e complete as etapas anteriores.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
   return (
     <Card className="border-none shadow-lg">
       <CardHeader>
-        <CardTitle className="text-2xl">Escolha a data e horário</CardTitle>
-        <p className="text-muted-foreground mt-2">
-          Selecione uma data e horário para o serviço
-          {bookingData.serviceName && (
-            <span className="font-medium"> "{bookingData.serviceName}"</span>
-          )}
-          {bookingData.professionalName && (
-            <span> com <span className="font-medium">{bookingData.professionalName}</span></span>
-          )}
+        <CardTitle className="text-2xl">Escolha data e horário</CardTitle>
+        <p className="text-muted-foreground">
+          {bookingData.serviceName} com {bookingData.professionalName}
         </p>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div>
-          <h3 className="text-sm font-medium mb-2">Data</h3>
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={handleDateSelect}
-            locale={ptBR}
-            className="rounded-md border"
-            disabled={{ before: new Date() }}
-          />
-        </div>
+      
+      <CardContent>
+        {!isBusinessOpen && selectedDate && (
+          <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-md">
+            Estamos fechados nesta data. Por favor, selecione outra data.
+          </div>
+        )}
         
-        {selectedDate && (
-          <div>
-            <h3 className="text-sm font-medium mb-2">
-              Horários disponíveis para {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
-            </h3>
-            
-            {isLoading ? (
-              <div className="flex justify-center p-6">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : availableSlots.length > 0 ? (
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                {availableSlots.map((time) => (
-                  <Button
-                    key={time}
-                    variant={selectedTime === time ? "default" : "outline"}
-                    className="w-full"
-                    onClick={() => handleTimeSelect(time)}
-                  >
-                    {time}
-                  </Button>
-                ))}
-              </div>
+        <div className="flex flex-col md:flex-row gap-6">
+          <DateTimeForm 
+            selectedDate={selectedDate}
+            handleDateSelect={handleDateSelect}
+          />
+          
+          <div className="md:w-1/2">
+            {selectedDate && isBusinessOpen ? (
+              <>
+                <PeriodFilter
+                  activePeriod={activePeriod}
+                  handlePeriodClick={handlePeriodClick}
+                  morningSlots={availableMorningSlots}
+                  afternoonSlots={availableAfternoonSlots}
+                  eveningSlots={availableEveningSlots}
+                />
+                
+                {availableTimeSlots.length > 0 ? (
+                  <TimeSlots
+                    morningSlots={availableMorningSlots}
+                    afternoonSlots={availableAfternoonSlots}
+                    eveningSlots={availableEveningSlots}
+                    selectedTime={selectedTime}
+                    setSelectedTime={setSelectedTime}
+                    activePeriod={activePeriod}
+                  />
+                ) : (
+                  <div className="p-4 text-center bg-muted rounded-md">
+                    Não há horários disponíveis para esta data.
+                  </div>
+                )}
+              </>
             ) : (
-              <div className="text-center p-4 border border-dashed rounded-md">
-                <p className="text-muted-foreground">
-                  Não há horários disponíveis nesta data. Por favor, selecione outra data.
-                </p>
+              <div className="p-4 text-center bg-muted rounded-md">
+                Selecione uma data para ver os horários disponíveis.
               </div>
             )}
           </div>
-        )}
+        </div>
       </CardContent>
+      
       <CardFooter>
         <Button 
-          className="w-full" 
-          disabled={!selectedDate || !selectedTime}
-          onClick={handleContinue}
+          onClick={handleContinue} 
+          className="w-full"
+          disabled={!selectedDate || !selectedTime || !isBusinessOpen}
         >
           Continuar
         </Button>

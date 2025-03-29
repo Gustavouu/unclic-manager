@@ -6,6 +6,7 @@ import { Sun, Cloud, Moon } from "lucide-react";
 type TimeSlot = {
   time: string;
   period: "morning" | "afternoon" | "evening";
+  isAvailable?: boolean;
 };
 
 interface TimeSlotsProps {
@@ -50,6 +51,7 @@ export function TimeSlots({
                   selectedTime === slot.time && "hover:bg-primary"
                 )}
                 onClick={() => setSelectedTime(slot.time)}
+                disabled={slot.isAvailable === false}
               >
                 {slot.time}
               </Button>
@@ -76,6 +78,7 @@ export function TimeSlots({
                   selectedTime === slot.time && "hover:bg-primary"
                 )}
                 onClick={() => setSelectedTime(slot.time)}
+                disabled={slot.isAvailable === false}
               >
                 {slot.time}
               </Button>
@@ -102,6 +105,7 @@ export function TimeSlots({
                   selectedTime === slot.time && "hover:bg-primary"
                 )}
                 onClick={() => setSelectedTime(slot.time)}
+                disabled={slot.isAvailable === false}
               >
                 {slot.time}
               </Button>

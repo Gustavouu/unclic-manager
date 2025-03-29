@@ -1,36 +1,58 @@
 
-import React from "react";
 import { BookingProgressProps } from "../types";
 
 export function BookingProgress({ currentStep, getStepTitle }: BookingProgressProps) {
-  const totalSteps = 5;
-  const progress = (currentStep / totalSteps) * 100;
-  
+  const steps = [
+    { id: 0, label: "Serviço" },
+    { id: 1, label: "Profissional" },
+    { id: 2, label: "Data/Hora" },
+    { id: 3, label: "Dados" },
+    { id: 4, label: "Confirmar" }
+  ];
+
   return (
-    <div className="mb-6">
-      {currentStep > 0 && (
-        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden mb-6">
-          <div 
-            className="bg-primary h-full transition-all duration-300 ease-in-out"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
+    <div className="mb-8">
+      <h2 className="text-2xl font-bold text-center mb-6">{getStepTitle()}</h2>
       
-      <div className="flex justify-between items-center">
-        {currentStep > 0 ? (
-          <div></div> // Empty div to maintain layout (previous button is added by StepNavigator)
-        ) : (
-          <div></div> // Empty div to maintain layout
-        )}
-        
-        <h2 className="text-xl font-bold text-center">
-          {getStepTitle ? getStepTitle() : ""}
-        </h2>
-        
-        <span className="text-sm text-muted-foreground">
-          {currentStep > 0 ? `Passo ${currentStep} de 5` : ""}
-        </span>
+      <div className="flex items-center justify-between w-full">
+        {steps.map((step, index) => (
+          <div
+            key={step.id}
+            className="flex flex-col items-center"
+          >
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                currentStep >= step.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {index + 1}
+            </div>
+            
+            <span
+              className={`text-xs mt-2 hidden sm:block ${
+                currentStep >= step.id
+                  ? "text-primary font-medium"
+                  : "text-muted-foreground"
+              }`}
+            >
+              {step.label}
+            </span>
+            
+            {index < steps.length - 1 && (
+              <div
+                className={`absolute left-0 h-0.5 top-4 -z-10 ${
+                  currentStep > index ? "bg-primary" : "bg-muted"
+                }`}
+                style={{
+                  width: `${100 / (steps.length - 1)}%`,
+                  transform: `translateX(${index * (100 / (steps.length - 1))}%)`,
+                }}
+              />
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
