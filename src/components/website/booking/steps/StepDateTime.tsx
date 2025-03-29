@@ -56,8 +56,12 @@ export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepD
       }
     });
     
-    // Filter available time slots
-    const filtered = timeSlots.filter(slot => !bookedTimeSlots.has(slot.time));
+    // Filter available time slots and mark unavailable ones
+    const filtered = timeSlots.map(slot => ({
+      ...slot,
+      isAvailable: !bookedTimeSlots.has(slot.time)
+    }));
+    
     setAvailableTimeSlots(filtered);
     
     // Also filter by period
@@ -70,7 +74,7 @@ export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepD
       setSelectedTime("");
       toast.warning("O horário selecionado não está mais disponível");
     }
-  }, [selectedDate, timeSlots, appointments]);
+  }, [selectedDate, timeSlots, appointments, selectedTime]);
   
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
@@ -141,7 +145,7 @@ export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepD
                   eveningSlots={availableEveningSlots}
                 />
                 
-                {availableTimeSlots.length > 0 ? (
+                {availableTimeSlots.some(slot => slot.isAvailable) ? (
                   <TimeSlots
                     morningSlots={availableMorningSlots}
                     afternoonSlots={availableAfternoonSlots}

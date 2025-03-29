@@ -31,10 +31,20 @@ export function TimeSlots({
     return activePeriod === "all" || activePeriod === period;
   };
 
+  // Filter slots to only show available ones
+  const filterAvailableSlots = (slots: TimeSlot[]) => {
+    return slots.filter(slot => slot.isAvailable !== false);
+  };
+
+  // Get available slots for each period
+  const availableMorningSlots = filterAvailableSlots(morningSlots);
+  const availableAfternoonSlots = filterAvailableSlots(afternoonSlots);
+  const availableEveningSlots = filterAvailableSlots(eveningSlots);
+
   return (
     <>
       {/* Morning slots */}
-      {morningSlots.length > 0 && shouldShowPeriod("morning") && (
+      {availableMorningSlots.length > 0 && shouldShowPeriod("morning") && (
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2 text-sm font-medium text-muted-foreground">
             <Sun className="h-4 w-4" />
@@ -61,7 +71,7 @@ export function TimeSlots({
       )}
       
       {/* Afternoon slots */}
-      {afternoonSlots.length > 0 && shouldShowPeriod("afternoon") && (
+      {availableAfternoonSlots.length > 0 && shouldShowPeriod("afternoon") && (
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2 text-sm font-medium text-muted-foreground">
             <Cloud className="h-4 w-4" />
@@ -88,7 +98,7 @@ export function TimeSlots({
       )}
       
       {/* Evening slots */}
-      {eveningSlots.length > 0 && shouldShowPeriod("evening") && (
+      {availableEveningSlots.length > 0 && shouldShowPeriod("evening") && (
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2 text-sm font-medium text-muted-foreground">
             <Moon className="h-4 w-4" />

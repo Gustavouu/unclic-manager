@@ -38,7 +38,7 @@ export const useAppointmentCreate = (
           .from('negocios')
           .select('id')
           .limit(1)
-          .single();
+          .maybeSingle();
           
         businessId = business?.id || null;
       } catch (error) {
@@ -76,7 +76,7 @@ export const useAppointmentCreate = (
           .from('agendamentos')
           .insert(appointment)
           .select()
-          .single();
+          .maybeSingle();
         
         if (error) {
           console.error("Supabase insert error:", error);
