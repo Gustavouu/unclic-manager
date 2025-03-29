@@ -5,10 +5,13 @@ export interface PaymentRequest {
   serviceId: string;
   amount: number;
   customerId: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
   paymentMethod: string;
   description: string;
   appointmentId?: string;
-  businessId?: string; // Define businessId property here as well
+  businessId?: string;
 }
 
 export interface PaymentResponse {
