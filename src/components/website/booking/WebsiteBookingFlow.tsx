@@ -1,95 +1,58 @@
 
-import { useState, useEffect } from "react";
-import { StepWelcome } from "./steps/StepWelcome";
-import { BookingFormFlow } from "./BookingFormFlow";
+import { useState } from "react";
 import { BookingFlowProps } from "./types";
+import { useStepNavigation } from "./hooks/useStepNavigation";
+import { useBookingData } from "./hooks/useBookingData";
+import { StepContent } from "./flow/StepContent";
 import { BookingProgress } from "./flow/BookingProgress";
 import { StepNavigator } from "./flow/StepNavigator";
-import { StepContent } from "./flow/StepContent";
 import { CloseButton } from "./flow/CloseButton";
-import { Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
-export function WebsiteBookingFlow({ 
-  businessName,
-  closeFlow 
-}: BookingFlowProps) {
-  const [step, setStep] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [businessData, setBusinessData] = useState<any>(null);
+export function WebsiteBookingFlow({ businessName, closeFlow, services = [], staff = [] }: BookingFlowProps) {
+  const { step, nextStep, prevStep, setStep, getStepTitle } = useStepNavigation();
+  const { bookingData, updateBookingData } = useBookingData();
+  const [isCompleted, setIsCompleted] = useState(false);
 
-  // Fetch business data on component mount
-  useEffect(() => {
-    const fetchBusinessData = async () => {
-      setLoading(true);
-      try {
-        // Fetch business info including config
-        const { data: business, error } = await supabase
-          .from('negocios')
-          .select(`
-            id,
-            nome,
-            telefone,
-            email_admin,
-            configuracoes_negocio (*)
-          `)
-          .order('criado_em', { ascending: false })
-          .limit(1)
-          .single();
-        
-        if (error) throw error;
-        setBusinessData(business);
-      } catch (error) {
-        console.error('Error fetching business data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchBusinessData();
-  }, []);
-
-  const nextStep = () => setStep(prev => prev + 1);
-  const prevStep = () => setStep(prev => Math.max(0, prev - 1));
-  
-  const getStepTitle = () => {
-    switch (step) {
-      case 0: return "Bem-vindo";
-      case 1: return "Fazer Agendamento";
-      default: return "";
-    }
+  const handleComplete = () => {
+    setIsCompleted(true);
+    setTimeout(() => {
+      closeFlow();
+    }, 5000); // Close after 5 seconds
   };
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="w-full max-w-4xl mx-auto mt-8 mb-16 px-4 bg-white rounded-xl shadow-lg p-6 flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Carregando informações...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full max-w-4xl mx-auto mt-8 mb-16 px-4 bg-white rounded-xl shadow-lg p-6 relative">
-      <CloseButton onClick={closeFlow} />
-      <StepNavigator step={step} prevStep={prevStep} />
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col min-h-[calc(100vh-2rem)] md:min-h-[600px]">
+      <div className="relative h-16 bg-primary flex items-center justify-center text-white">
+        <h2 className="text-xl font-semibold">{getStepTitle() || businessName}</h2>
+        <CloseButton onClose={closeFlow} />
+      </div>
 
-      <BookingProgress step={step} getStepTitle={getStepTitle} />
-      
-      <StepContent step={step}>
-        {step === 0 && (
-          <StepWelcome 
-            businessName={businessData?.nome || businessName} 
-            nextStep={nextStep} 
+      <div className="flex-1 flex flex-col">
+        {step > 0 && !isCompleted && (
+          <BookingProgress currentStep={step} />
+        )}
+
+        <div className="flex-1 p-6 overflow-y-auto">
+          <StepContent
+            step={step}
+            bookingData={bookingData}
+            updateBookingData={updateBookingData}
+            services={services}
+            staff={staff}
+            onComplete={handleComplete}
+            businessName={businessName}
+          />
+        </div>
+
+        {!isCompleted && step > 0 && step < 5 && (
+          <StepNavigator 
+            step={step}
+            onNext={nextStep}
+            onPrevious={prevStep}
+            bookingData={bookingData}
           />
         )}
-        {step === 1 && (
-          <BookingFormFlow onComplete={closeFlow} />
-        )}
-      </StepContent>
+      </div>
     </div>
   );
 }

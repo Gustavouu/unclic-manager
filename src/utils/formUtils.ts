@@ -1,4 +1,6 @@
 
+import { toast } from "sonner";
+
 export const formatPhone = (value: string): string => {
   if (!value) return '';
   
@@ -21,6 +23,10 @@ export const validateRequired = (value: string, fieldName: string): string | nul
   return value.trim() ? null : `${fieldName} é obrigatório`;
 };
 
+export const createRequiredValidator = (fieldName: string) => {
+  return (value: string): string | null => validateRequired(value, fieldName);
+};
+
 export const validateEmail = (value: string): string | null => {
   if (!value.trim()) return null; // Email is optional
   
@@ -40,9 +46,15 @@ export const showSuccessToast = (message: string) => {
   toast.success(message);
 };
 
-export const showErrorToast = (message: string) => {
+export const showErrorToast = (message: string = "Ocorreu um erro. Por favor, tente novamente.") => {
   toast.error(message);
 };
 
-// Add this import to make the toast functions work
-import { toast } from "sonner";
+// Mock save function for demos
+export const mockSaveFunction = async () => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // Return true to simulate success
+  return true;
+};
