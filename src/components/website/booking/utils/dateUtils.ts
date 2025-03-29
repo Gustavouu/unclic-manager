@@ -13,7 +13,9 @@ export function parseDateFromAppointment(app: Appointment): { date: string; time
     timeStr = format(app.date, 'HH:mm');
   } else if (typeof app.date === 'string') {
     // If it's a string, parse it safely
-    const dateParts = app.date.split('T');
+    // Type assertion to tell TypeScript that app.date is definitely a string here
+    const dateString = app.date as string;
+    const dateParts = dateString.split('T');
     
     if (dateParts && dateParts.length > 0) {
       dateStr = dateParts[0];
