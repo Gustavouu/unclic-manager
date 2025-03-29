@@ -23,6 +23,10 @@ export interface BookingData {
   date?: Date;
   time: string;
   notes: string;
+  clientId?: string;
+  clientName?: string;
+  clientEmail?: string;
+  clientPhone?: string;
 }
 
 export interface ExtendedServiceData {
@@ -45,7 +49,7 @@ export interface ExtendedStaffData {
   availability?: boolean;
 }
 
-// Add interface definitions for the component props
+// Component props interfaces
 export interface CloseButtonProps {
   onClick: () => void;
 }
@@ -57,18 +61,10 @@ export interface BookingProgressProps {
 
 export interface StepContentProps {
   step: number;
-  bookingData: BookingData;
-  updateBookingData: (data: Partial<BookingData>) => void;
-  services: any[];
-  staff: any[];
-  onComplete: () => void;
-  businessName: string;
   children?: React.ReactNode;
 }
 
 export interface StepNavigatorProps {
   step: number;
-  onNext: () => void;
   onPrevious: () => void;
-  bookingData: BookingData;
 }

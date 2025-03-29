@@ -1,74 +1,56 @@
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Filter, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { formatPrice, formatDuration } from "@/components/website/WebsiteUtils";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Clock, DollarSign } from "lucide-react";
 import { BookingData, ExtendedServiceData } from "../types";
+import { cn } from "@/lib/utils";
 
 interface StepServiceProps {
-  services: ExtendedServiceData[];
   bookingData: BookingData;
   updateBookingData: (data: Partial<BookingData>) => void;
   nextStep: () => void;
+  services: ExtendedServiceData[];
 }
 
 export function StepService({ 
-  services, 
   bookingData, 
   updateBookingData, 
-  nextStep 
+  nextStep,
+  services 
 }: StepServiceProps) {
-  const [selectedService, setSelectedService] = useState<string | null>(bookingData.serviceId || null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [priceFilter, setPriceFilter] = useState<string>("all");
-  const [durationFilter, setDurationFilter] = useState<string>("all");
-  const [filteredServices, setFilteredServices] = useState<ExtendedServiceData[]>(services);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedService, setSelectedService] = useState<string>(bookingData.serviceId || "");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   
-  // Extract unique service categories
-  const categories = [...new Set(services.map(service => 
-    service.category || "Sem categoria"
-  ))];
-
-  // Filter services based on search query and filters
-  useEffect(() => {
-    let filtered = services;
+  // Extract unique categories from services
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set<string>();
     
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(service => 
-        service.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    // Apply price filter
-    if (priceFilter !== "all") {
-      if (priceFilter === "low") {
-        filtered = filtered.filter(service => service.price <= 50);
-      } else if (priceFilter === "medium") {
-        filtered = filtered.filter(service => service.price > 50 && service.price <= 100);
-      } else if (priceFilter === "high") {
-        filtered = filtered.filter(service => service.price > 100);
+    services.forEach(service => {
+      if (service.category) {
+        uniqueCategories.add(service.category);
       }
-    }
+    });
     
-    // Apply duration filter
-    if (durationFilter !== "all") {
-      if (durationFilter === "short") {
-        filtered = filtered.filter(service => service.duration <= 30);
-      } else if (durationFilter === "medium") {
-        filtered = filtered.filter(service => service.duration > 30 && service.duration <= 60);
-      } else if (durationFilter === "long") {
-        filtered = filtered.filter(service => service.duration > 60);
-      }
-    }
-    
-    setFilteredServices(filtered);
-  }, [searchQuery, priceFilter, durationFilter, services]);
-
+    return ["all", ...Array.from(uniqueCategories)];
+  }, [services]);
+  
+  // Filter services by search term and category
+  const filteredServices = useMemo(() => {
+    return services.filter(service => {
+      const matchesSearch = searchTerm === "" || 
+        service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (service.description && service.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesCategory = selectedCategory === "all" || 
+        service.category === selectedCategory;
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [services, searchTerm, selectedCategory]);
+  
   const handleServiceSelect = (service: ExtendedServiceData) => {
     setSelectedService(service.id);
     updateBookingData({
@@ -78,7 +60,7 @@ export function StepService({
       serviceDuration: service.duration
     });
   };
-
+  
   const handleContinue = () => {
     if (selectedService) {
       nextStep();
@@ -88,118 +70,80 @@ export function StepService({
   return (
     <Card className="border-none shadow-lg">
       <CardHeader>
-        <CardTitle className="text-2xl">Escolha um Serviço</CardTitle>
+        <CardTitle className="text-2xl">Escolha o serviço</CardTitle>
         <p className="text-muted-foreground mt-2">
-          Selecione o serviço que você deseja agendar
+          Selecione o serviço que deseja agendar
         </p>
-
-        <div className="space-y-4 mt-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar serviços..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex flex-wrap gap-2">
-            <div className="w-full sm:w-auto">
-              <Select value={priceFilter} onValueChange={setPriceFilter}>
-                <SelectTrigger className="w-full sm:w-[150px]">
-                  <div className="flex items-center">
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Preço" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os preços</SelectItem>
-                  <SelectItem value="low">Até R$ 50</SelectItem>
-                  <SelectItem value="medium">R$ 50 a R$ 100</SelectItem>
-                  <SelectItem value="high">Acima de R$ 100</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="w-full sm:w-auto">
-              <Select value={durationFilter} onValueChange={setDurationFilter}>
-                <SelectTrigger className="w-full sm:w-[150px]">
-                  <div className="flex items-center">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Duração" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Qualquer duração</SelectItem>
-                  <SelectItem value="short">Até 30 min</SelectItem>
-                  <SelectItem value="medium">30 a 60 min</SelectItem>
-                  <SelectItem value="long">Mais de 60 min</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {categories.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2 sm:mt-0">
-                {categories.map((category) => (
-                  <Badge 
-                    key={category} 
-                    variant="outline"
-                    className="cursor-pointer hover:bg-primary/10"
-                    onClick={() => setSearchQuery(category)}
-                  >
-                    {category}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
       </CardHeader>
-      <CardContent className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
-        {filteredServices.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Nenhum serviço encontrado.</p>
+      <CardContent className="space-y-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar serviços..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        {categories.length > 1 && (
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? "default" : "outline"}
+                className="text-sm"
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category === "all" ? "Todos" : category}
+              </Button>
+            ))}
           </div>
-        ) : (
-          filteredServices.map((service) => (
-            <div
-              key={service.id}
-              onClick={() => handleServiceSelect(service)}
-              className={`
-                p-4 border rounded-lg transition-all cursor-pointer
-                ${selectedService === service.id 
-                  ? 'border-primary bg-primary/5' 
-                  : 'hover:bg-accent/50'
-                }
-              `}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-medium">{service.name}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">
-                      {formatDuration(service.duration)}
-                    </span>
-                    {service.category && (
-                      <Badge variant="outline" className="text-xs">
-                        {service.category}
-                      </Badge>
+        )}
+        
+        <div className="space-y-3">
+          {filteredServices.length === 0 ? (
+            <div className="text-center p-4 border border-dashed rounded-md">
+              <p className="text-muted-foreground">
+                Nenhum serviço encontrado para sua busca.
+              </p>
+            </div>
+          ) : (
+            filteredServices.map((service) => (
+              <button
+                key={service.id}
+                className={cn(
+                  "w-full text-left p-4 rounded-md border transition-all",
+                  selectedService === service.id
+                    ? "border-primary bg-primary/5"
+                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                )}
+                onClick={() => handleServiceSelect(service)}
+              >
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                  <div>
+                    <h3 className="font-medium">{service.name}</h3>
+                    {service.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                        {service.description}
+                      </p>
                     )}
                   </div>
-                  {service.description && (
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {service.description}
-                    </p>
-                  )}
+                  <div className="flex flex-row sm:flex-col items-center sm:items-end gap-3 sm:gap-1 mt-2 sm:mt-0">
+                    <div className="flex items-center text-sm">
+                      <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                      <span>{service.duration} min</span>
+                    </div>
+                    <div className="flex items-center font-medium">
+                      <DollarSign className="h-4 w-4 mr-1 text-muted-foreground" />
+                      <span>R$ {service.price.toFixed(2)}</span>
+                    </div>
+                  </div>
                 </div>
-                <span className="font-semibold text-lg">
-                  {formatPrice(service.price)}
-                </span>
-              </div>
-            </div>
-          ))
-        )}
+              </button>
+            ))
+          )}
+        </div>
       </CardContent>
       <CardFooter>
         <Button 

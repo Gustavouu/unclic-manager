@@ -1,116 +1,118 @@
 
-import { useState } from "react";
-import { BookingFlowProps } from "./types";
-import { useStepNavigation } from "./hooks/useStepNavigation";
-import { useBookingData } from "./hooks/useBookingData";
-import { StepContent } from "./flow/StepContent";
-import { BookingProgress } from "./flow/BookingProgress";
-import { StepNavigator } from "./flow/StepNavigator";
+import React, { useState } from "react";
+import { Card } from "@/components/ui/card";
 import { CloseButton } from "./flow/CloseButton";
+import { BookingProgress } from "./flow/BookingProgress";
+import { StepContent } from "./flow/StepContent";
+import { StepNavigator } from "./flow/StepNavigator";
+import { StepIntro } from "./steps/StepIntro";
 import { StepService } from "./steps/StepService";
 import { StepProfessional } from "./steps/StepProfessional";
 import { StepDateTime } from "./steps/StepDateTime";
-import { StepPayment } from "./steps/StepPayment";
+import { StepClientInfo } from "./steps/StepClientInfo";
 import { StepConfirmation } from "./steps/StepConfirmation";
-import { StepWelcome } from "./steps/StepWelcome";
+import { BookingFlowProps } from "./types";
+import { useBookingData } from "./hooks/useBookingData";
 
-export function WebsiteBookingFlow({ businessName, closeFlow, services = [], staff = [] }: BookingFlowProps) {
-  const { step, nextStep, prevStep, setStep, getStepTitle } = useStepNavigation();
+export function WebsiteBookingFlow({ 
+  businessName,
+  closeFlow,
+  services = [],
+  staff = []
+}: BookingFlowProps) {
+  const [currentStep, setCurrentStep] = useState(0);
   const { bookingData, updateBookingData } = useBookingData();
-  const [isCompleted, setIsCompleted] = useState(false);
-
-  const handleComplete = () => {
-    setIsCompleted(true);
-    setTimeout(() => {
-      closeFlow();
-    }, 5000); // Close after 5 seconds
+  
+  const handleNextStep = () => {
+    setCurrentStep(prev => prev + 1);
+    window.scrollTo(0, 0);
   };
-
-  const renderStepContent = () => {
-    switch (step) {
-      case 0:
-        return <StepWelcome nextStep={nextStep} />;
-      case 1:
-        return (
-          <StepService
-            services={services}
-            bookingData={bookingData}
-            updateBookingData={updateBookingData}
-            nextStep={nextStep}
-          />
-        );
-      case 2:
-        return (
-          <StepProfessional
-            staff={staff}
-            bookingData={bookingData}
-            updateBookingData={updateBookingData}
-            nextStep={nextStep}
-          />
-        );
-      case 3:
-        return (
-          <StepDateTime
-            bookingData={bookingData}
-            updateBookingData={updateBookingData}
-            nextStep={nextStep}
-          />
-        );
-      case 4:
-        return (
-          <StepPayment
-            bookingData={bookingData}
-            updateBookingData={updateBookingData}
-            nextStep={nextStep}
-          />
-        );
-      case 5:
-        return (
-          <StepConfirmation
-            bookingData={bookingData}
-            businessName={businessName}
-            onComplete={handleComplete}
-          />
-        );
-      default:
-        return null;
+  
+  const handlePreviousStep = () => {
+    setCurrentStep(prev => Math.max(0, prev - 1));
+    window.scrollTo(0, 0);
+  };
+  
+  const completeBooking = () => {
+    closeFlow();
+  };
+  
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 0: return "Bem-vindo";
+      case 1: return "Escolha o serviço";
+      case 2: return "Escolha o profissional";
+      case 3: return "Escolha data e horário";
+      case 4: return "Seus dados";
+      case 5: return "Confirmação";
+      default: return "";
     }
   };
-
+  
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col min-h-[calc(100vh-2rem)] md:min-h-[600px]">
-      <div className="relative h-16 bg-primary flex items-center justify-center text-white">
-        <h2 className="text-xl font-semibold">{getStepTitle() || businessName}</h2>
-        <CloseButton onClick={closeFlow} />
-      </div>
-
-      <div className="flex-1 flex flex-col">
-        {step > 0 && !isCompleted && (
-          <BookingProgress currentStep={step} getStepTitle={getStepTitle} />
-        )}
-
-        <div className="flex-1 p-6 overflow-y-auto">
-          <StepContent
-            step={step}
-            bookingData={bookingData}
-            updateBookingData={updateBookingData}
-            services={services}
-            staff={staff}
-            onComplete={handleComplete}
-            businessName={businessName}
-          >
-            {renderStepContent()}
-          </StepContent>
-        </div>
-
-        {!isCompleted && step > 0 && step < 5 && (
-          <StepNavigator 
-            step={step}
-            onNext={nextStep}
-            onPrevious={prevStep}
-            bookingData={bookingData}
-          />
-        )}
+    <div className="py-6 relative">
+      <CloseButton onClick={closeFlow} />
+      
+      <div className="max-w-3xl mx-auto px-4 lg:px-0">
+        <BookingProgress 
+          currentStep={currentStep} 
+          getStepTitle={() => getStepTitle()} 
+        />
+        
+        <StepContent step={currentStep}>
+          {currentStep === 0 && (
+            <StepIntro 
+              businessName={businessName}
+              nextStep={handleNextStep}
+            />
+          )}
+          
+          {currentStep === 1 && (
+            <StepService 
+              bookingData={bookingData}
+              updateBookingData={updateBookingData}
+              nextStep={handleNextStep}
+              services={services}
+            />
+          )}
+          
+          {currentStep === 2 && (
+            <StepProfessional 
+              bookingData={bookingData}
+              updateBookingData={updateBookingData}
+              nextStep={handleNextStep}
+              staff={staff}
+            />
+          )}
+          
+          {currentStep === 3 && (
+            <StepDateTime 
+              bookingData={bookingData}
+              updateBookingData={updateBookingData}
+              nextStep={handleNextStep}
+            />
+          )}
+          
+          {currentStep === 4 && (
+            <StepClientInfo 
+              bookingData={bookingData}
+              updateBookingData={updateBookingData}
+              nextStep={handleNextStep}
+            />
+          )}
+          
+          {currentStep === 5 && (
+            <StepConfirmation 
+              bookingData={bookingData}
+              onComplete={completeBooking}
+            />
+          )}
+        </StepContent>
+      
+        <StepNavigator 
+          step={currentStep}
+          onPrevious={handlePreviousStep}
+        />
       </div>
     </div>
   );

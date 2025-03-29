@@ -1,11 +1,13 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { BookingData } from "../types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useAvailableTimeSlots } from "@/hooks/useAvailableTimeSlots";
+import { Loader2 } from "lucide-react";
 
 interface StepDateTimeProps {
   bookingData: BookingData;
@@ -16,17 +18,17 @@ interface StepDateTimeProps {
 export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepDateTimeProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(bookingData.date);
   const [selectedTime, setSelectedTime] = useState<string>(bookingData.time || "");
-
-  // Mock available time slots
-  const availableTimeSlots = [
-    "09:00", "09:30", "10:00", "10:30", "11:00", 
-    "11:30", "13:00", "13:30", "14:00", "14:30", 
-    "15:00", "15:30", "16:00", "16:30", "17:00"
-  ];
+  
+  const { availableSlots, isLoading } = useAvailableTimeSlots(
+    selectedDate,
+    bookingData.professionalId, 
+    bookingData.serviceDuration
+  );
   
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
-    updateBookingData({ date });
+    setSelectedTime(""); // Reset time when date changes
+    updateBookingData({ date, time: "" });
   };
   
   const handleTimeSelect = (time: string) => {
@@ -72,18 +74,31 @@ export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepD
             <h3 className="text-sm font-medium mb-2">
               Horários disponíveis para {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
             </h3>
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-              {availableTimeSlots.map((time) => (
-                <Button
-                  key={time}
-                  variant={selectedTime === time ? "default" : "outline"}
-                  className="w-full"
-                  onClick={() => handleTimeSelect(time)}
-                >
-                  {time}
-                </Button>
-              ))}
-            </div>
+            
+            {isLoading ? (
+              <div className="flex justify-center p-6">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : availableSlots.length > 0 ? (
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                {availableSlots.map((time) => (
+                  <Button
+                    key={time}
+                    variant={selectedTime === time ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() => handleTimeSelect(time)}
+                  >
+                    {time}
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center p-4 border border-dashed rounded-md">
+                <p className="text-muted-foreground">
+                  Não há horários disponíveis nesta data. Por favor, selecione outra data.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
