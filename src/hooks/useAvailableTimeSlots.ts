@@ -31,15 +31,15 @@ export const useAvailableTimeSlots = (
         const dayName = dayNames[dayOfWeek];
         
         // If business is closed on this day, return empty slots
-        if (!businessHours[dayName]?.open) {
+        if (!businessHours[dayName]?.enabled) {
           setAvailableSlots([]);
           setIsLoading(false);
           return;
         }
         
         // Get business hours for this day
-        const openTime = businessHours[dayName]?.openTime || "09:00";
-        const closeTime = businessHours[dayName]?.closeTime || "18:00";
+        const openTime = businessHours[dayName]?.start || "09:00";
+        const closeTime = businessHours[dayName]?.end || "18:00";
         
         // Get existing appointments for this professional on this date
         const { data: appointments, error } = await supabase

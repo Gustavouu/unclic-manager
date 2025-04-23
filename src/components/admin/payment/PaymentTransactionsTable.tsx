@@ -72,6 +72,19 @@ export function PaymentTransactionsTable() {
           }
         }
         
+        // Make sure we get the cliente nome correctly, whether it's a single object or array
+        let customerName = "Cliente não identificado";
+        if (item.clientes) {
+          // Check if clientes is an array or a single object
+          if (Array.isArray(item.clientes)) {
+            // If it's an array, use the name of the first item if available
+            customerName = item.clientes[0]?.nome || "Cliente não identificado";
+          } else {
+            // If it's a single object, use its nome property
+            customerName = item.clientes.nome || "Cliente não identificado";
+          }
+        }
+        
         return {
           id: item.id,
           status: item.status,
@@ -79,7 +92,7 @@ export function PaymentTransactionsTable() {
           payment_method: item.metodo_pagamento,
           created_at: item.criado_em,
           updated_at: item.atualizado_em,
-          customer_name: item.clientes?.nome || "Cliente não identificado",
+          customer_name: customerName,
           service_name: service_name,
           transaction_id,
           payment_url

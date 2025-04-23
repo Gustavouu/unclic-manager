@@ -61,11 +61,34 @@ export const useAppointmentsFetch = () => {
           // Ensure we cast the status to AppointmentStatus type
           const status = (item.status || "agendado") as AppointmentStatus;
           
+          // Get cliente name safely, handling both direct return and array return
+          let clientName = "Cliente não identificado";
+          if (item.clientes) {
+            if (typeof item.clientes === 'object' && !Array.isArray(item.clientes)) {
+              clientName = item.clientes.nome || "Cliente não identificado";
+            } else if (Array.isArray(item.clientes) && item.clientes.length > 0) {
+              clientName = item.clientes[0].nome || "Cliente não identificado";
+            }
+          } else if (item.observacoes) {
+            const parts = item.observacoes.split(',');
+            if (parts.length > 0) clientName = parts[0].trim();
+          }
+          
+          // Get service name safely
+          let serviceName = "Serviço não identificado";
+          if (item.servicos) {
+            if (typeof item.servicos === 'object' && !Array.isArray(item.servicos)) {
+              serviceName = item.servicos.nome || "Serviço não identificado";
+            } else if (Array.isArray(item.servicos) && item.servicos.length > 0) {
+              serviceName = item.servicos[0].nome || "Serviço não identificado";
+            }
+          }
+          
           // Create an Appointment object
           return {
             id: item.id,
-            clientName: item.clientes?.nome || item.observacoes?.split(',')[0] || "Cliente não encontrado",
-            serviceName: item.servicos?.nome || "Serviço não encontrado",
+            clientName: clientName,
+            serviceName: serviceName,
             date: appointmentDate,
             status: status,
             price: item.valor || 0,

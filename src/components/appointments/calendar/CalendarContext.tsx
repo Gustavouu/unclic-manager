@@ -1,4 +1,5 @@
 
+// Fix the import and remove dummy implementation
 import { createContext, useContext, useState } from "react";
 import { 
   addMonths, 
@@ -18,7 +19,15 @@ import { AppointmentType, CalendarViewType, ServiceType } from "./types";
 import { toast } from "sonner";
 import { useAppointmentUpdate } from "@/hooks/appointments/useAppointmentUpdate";
 import { useAppointmentConflicts } from "@/hooks/appointments/useAppointmentConflicts";
-import { Appointment } from "../types";
+import { Appointment, AppointmentStatus } from "../types";
+
+// Define the parameters type for validateAppointmentTime
+interface ConflictCheckParams {
+  date: Date;
+  duration: number;
+  professionalId?: string;
+  appointmentId?: string;
+}
 
 interface CalendarContextProps {
   currentDate: Date;
@@ -74,19 +83,23 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentType | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   
-  // Hooks para atualização de agendamentos
+  // Hooks for appointment updates
   const { updateAppointment } = useAppointmentUpdate();
+  
   // Convert AppointmentType[] to Appointment[] for the useAppointmentConflicts hook
   const appointmentsForConflict: Appointment[] = appointments.map(app => ({
     id: app.id,
     clientName: app.clientName,
     serviceName: app.serviceName,
     date: app.date,
-    status: 'agendado',
+    status: (app.status as AppointmentStatus) || "agendado",
     price: app.price,
     serviceType: app.serviceType,
-    duration: app.duration
+    duration: app.duration,
+    professionalId: app.professionalId
   }));
+  
+  // Use the hook with the converted appointments
   const { validateAppointmentTime } = useAppointmentConflicts(appointmentsForConflict);
   
   // Navigation functions
@@ -139,20 +152,25 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     }
     
     try {
-      // Verificar se a nova data e hora é válida
-      const validationResult = validateAppointmentTime({
+      // Check if the new date and time is valid
+      const params: ConflictCheckParams = {
         date: newDate,
         duration: selectedAppointment.duration,
-        professionalId: (selectedAppointment as any).professionalId,
         appointmentId: selectedAppointment.id
-      });
+      };
+      
+      if (selectedAppointment.professionalId) {
+        params.professionalId = selectedAppointment.professionalId;
+      }
+      
+      const validationResult = validateAppointmentTime(params);
       
       if (!validationResult.valid) {
         toast.error(`Não foi possível mover o agendamento: ${validationResult.reason}`);
         return false;
       }
       
-      // Atualizar o agendamento com a nova data
+      // Update the appointment with the new date
       await updateAppointment(selectedAppointment.id, {
         date: newDate
       });

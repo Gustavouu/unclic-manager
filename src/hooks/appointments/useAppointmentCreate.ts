@@ -1,7 +1,8 @@
+
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Appointment } from "@/components/appointments/types";
+import { Appointment, AppointmentStatus } from "@/components/appointments/types";
 import { CreateAppointmentData } from "./types";
 import { isValidUUID } from "./utils";
 import { v4 as uuidv4 } from "uuid";
@@ -63,7 +64,7 @@ export const useAppointmentCreate = (
         hora_fim: endTime,
         duracao: appointmentData.duration,
         valor: appointmentData.price,
-        status: appointmentData.status,
+        status: appointmentData.status as string,
         forma_pagamento: appointmentData.paymentMethod || 'local',
         observacoes: notesWithClientInfo,
         id_servico: serviceId,

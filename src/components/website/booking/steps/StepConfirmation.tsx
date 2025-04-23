@@ -8,6 +8,7 @@ import { ptBR } from "date-fns/locale";
 import { Loader2, CalendarCheck } from "lucide-react";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { toast } from "sonner";
+import { AppointmentStatus } from "@/components/appointments/types";
 
 interface StepConfirmationProps {
   bookingData: BookingData;
@@ -46,7 +47,7 @@ export function StepConfirmation({ bookingData, onComplete }: StepConfirmationPr
         clientName: bookingData.clientName || "Cliente não identificado",
         serviceName: bookingData.serviceName,
         date: appointmentDate,
-        status: "agendado",
+        status: "agendado" as AppointmentStatus,
         price: bookingData.servicePrice,
         serviceType: "servico", 
         duration: bookingData.serviceDuration,

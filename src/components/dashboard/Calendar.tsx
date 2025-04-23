@@ -95,8 +95,21 @@ export const AppointmentCalendar = ({ businessId }: AppointmentCalendarProps) =>
             appointmentDate.setHours(parseInt(hours));
             appointmentDate.setMinutes(parseInt(minutes));
             
-            const clientName = appointment.id_cliente ? appointment.id_cliente.nome : 'Cliente não identificado';
-            const serviceName = appointment.id_servico ? appointment.id_servico.nome : 'Serviço não identificado';
+            // Handle cliente nome correctly
+            let clientName = "Cliente não identificado";
+            if (appointment.id_cliente) {
+              clientName = typeof appointment.id_cliente === 'object' ? 
+                appointment.id_cliente.nome : 
+                "Cliente não identificado";
+            }
+            
+            // Handle servico nome correctly
+            let serviceName = "Serviço não identificado";
+            if (appointment.id_servico) {
+              serviceName = typeof appointment.id_servico === 'object' ? 
+                appointment.id_servico.nome : 
+                "Serviço não identificado";
+            }
             
             return {
               id: appointment.id,

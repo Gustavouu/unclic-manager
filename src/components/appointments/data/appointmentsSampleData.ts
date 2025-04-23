@@ -1,5 +1,5 @@
 
-import { Appointment } from "../types";
+import { Appointment, AppointmentStatus } from "../types";
 
 // Sample data
 export const appointments: Appointment[] = [

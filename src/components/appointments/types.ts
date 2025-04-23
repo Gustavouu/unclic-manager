@@ -35,7 +35,8 @@ export interface AppointmentType {
   serviceType: string;
   duration: number;
   price: number;
-  status?: string;
+  status?: AppointmentStatus;
+  professionalId?: string;
 }
 
 // Map service types to display names for barbershop

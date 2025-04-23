@@ -22,6 +22,7 @@ import { useAppointmentConflicts } from "@/hooks/appointments/useAppointmentConf
 import { v4 as uuidv4 } from "uuid";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { AppointmentStatus } from "../types";
 
 type AppointmentFormProps = {
   onClose: () => void;
@@ -46,7 +47,7 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       notes: "",
-      status: "agendado",
+      status: "agendado" as AppointmentStatus,
       notifications: {
         sendConfirmation: true,
         sendReminder: true,
@@ -115,7 +116,10 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
         clientId: clientId,
         professionalId: professionalId,
         paymentMethod: "local", // Default payment method
-        notifications: values.notifications
+        notifications: {
+          sendConfirmation: true,
+          sendReminder: true
+        }
       });
       
       // Refresh appointments to show the new one

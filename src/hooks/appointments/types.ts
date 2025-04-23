@@ -7,7 +7,7 @@ export type CreateAppointmentData = {
   professionalId: string;
   businessId?: string; // Make this optional to match usage in the code
   date: Date;
-  status: string;
+  status: AppointmentStatus;
   price: number;
   duration: number;
   notes?: string;
