@@ -17,6 +17,7 @@ import { DayView } from "./calendar/DayView";
 import { CalendarFooter } from "./calendar/CalendarFooter";
 import { ServiceFilter } from "./calendar/ServiceFilter";
 import { supabase } from "@/integrations/supabase/client";
+import { CalendarProvider } from "../appointments/calendar/CalendarContext";
 
 // Service types for filter
 export type ServiceType = "all" | "hair" | "barber" | "nails" | "makeup" | "skincare";
@@ -154,63 +155,46 @@ export const AppointmentCalendar = ({ businessId }: AppointmentCalendarProps) =>
     setCalendarView("day");
   };
 
-  // Create calendar grid with correct starting position
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const startWeekday = getDay(monthStart);
-  
-  const calendarDays = Array(startWeekday).fill(null);
-  monthDays.forEach(day => calendarDays.push(day));
-
-  // Filter appointments based on service type and selected date
-  const filteredAppointments = appointments.filter(app => 
-    (serviceFilter === "all" || app.serviceType === serviceFilter)
-  );
-
-  // Filter appointments for selected date
-  const dayAppointments = filteredAppointments.filter(app => 
-    isSameDay(app.date, selectedDate)
-  );
-
   return (
     <div className="bg-white rounded-xl shadow-sm border border-border/40 animate-fade-in overflow-hidden">
-      <div className="p-6 border-b border-border/60">
-        <CalendarHeader 
-          currentMonth={currentMonth}
-          selectedDate={selectedDate}
-          calendarView={calendarView}
-          onPrevMonth={prevMonth}
-          onNextMonth={nextMonth}
-          onSelectDate={handleSelectDate}
-          onViewChange={setCalendarView}
-        />
-        
-        <ServiceFilter 
-          serviceFilter={serviceFilter}
-          onFilterChange={setServiceFilter}
-          serviceTypes={SERVICE_TYPE_NAMES}
-        />
-        
-        {calendarView === "month" && (
-          <MonthView
-            calendarDays={calendarDays}
-            weekDays={weekDays}
+      <CalendarProvider appointments={appointments}>
+        <div className="p-6 border-b border-border/60">
+          <CalendarHeader 
+            currentMonth={currentMonth}
             selectedDate={selectedDate}
-            appointments={filteredAppointments}
-            onSelectDay={handleSelectDay}
+            calendarView={calendarView}
+            onPrevMonth={prevMonth}
+            onNextMonth={nextMonth}
+            onSelectDate={handleSelectDate}
+            onViewChange={setCalendarView}
           />
-        )}
+          
+          <ServiceFilter 
+            serviceFilter={serviceFilter}
+            onFilterChange={setServiceFilter}
+            serviceTypes={SERVICE_TYPE_NAMES}
+          />
+          
+          {calendarView === "month" && (
+            <MonthView
+              calendarDays={[]}
+              weekDays={weekDays}
+              selectedDate={selectedDate}
+              appointments={appointments}
+              onSelectDay={handleSelectDay}
+            />
+          )}
+          
+          {calendarView === "day" && (
+            <DayView 
+              appointments={[]} 
+              selectedDate={selectedDate}
+            />
+          )}
+        </div>
         
-        {calendarView === "day" && (
-          <DayView 
-            appointments={dayAppointments} 
-            selectedDate={selectedDate}
-          />
-        )}
-      </div>
-      
-      <CalendarFooter />
+        <CalendarFooter />
+      </CalendarProvider>
     </div>
   );
 };
