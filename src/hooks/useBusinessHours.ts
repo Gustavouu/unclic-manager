@@ -26,11 +26,26 @@ export const useBusinessHours = () => {
     return hour >= defaultOpenHour && hour < defaultCloseHour;
   };
 
+  // Retorna os horários de funcionamento formatados para o componente de calendário
+  const getCalendarBusinessHours = () => {
+    // Formata os horários para cada dia da semana (0 = domingo, 6 = sábado)
+    return {
+      0: { isOpen: true, hours: '10:00-14:00' }, // domingo
+      1: { isOpen: true, hours: `${defaultOpenHour}:00-${defaultCloseHour}:00` }, // segunda
+      2: { isOpen: true, hours: `${defaultOpenHour}:00-${defaultCloseHour}:00` }, // terça
+      3: { isOpen: true, hours: `${defaultOpenHour}:00-${defaultCloseHour}:00` }, // quarta
+      4: { isOpen: true, hours: `${defaultOpenHour}:00-${defaultCloseHour}:00` }, // quinta
+      5: { isOpen: true, hours: `${defaultOpenHour}:00-${defaultCloseHour}:00` }, // sexta
+      6: { isOpen: true, hours: '10:00-14:00' }, // sábado
+    };
+  };
+
   return {
     isWithinBusinessHours,
     businessHours: {
       open: defaultOpenHour,
       close: defaultCloseHour
-    }
+    },
+    getCalendarBusinessHours
   };
 };
