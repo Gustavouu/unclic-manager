@@ -69,8 +69,8 @@ export const useAppointmentsFetch = () => {
               // Handle case where clientes is a single object with nome property
               if (!Array.isArray(item.clientes)) {
                 // Fix: Type-check and safely access the nome property
-                if (item.clientes && 'nome' in item.clientes && item.clientes.nome !== null) {
-                  clientName = String(item.clientes.nome);
+                if (item.clientes && 'nome' in item.clientes && typeof item.clientes.nome === 'string') {
+                  clientName = item.clientes.nome;
                 }
               } 
               // Handle case where clientes is an array
@@ -78,8 +78,8 @@ export const useAppointmentsFetch = () => {
                 const firstClient = item.clientes[0];
                 // Fix: Type-check and safely access the nome property
                 if (typeof firstClient === 'object' && firstClient !== null && 
-                    'nome' in firstClient && firstClient.nome !== null) {
-                  clientName = String(firstClient.nome);
+                    'nome' in firstClient && typeof firstClient.nome === 'string') {
+                  clientName = firstClient.nome;
                 }
               }
             }
@@ -96,8 +96,8 @@ export const useAppointmentsFetch = () => {
               // Handle case where servicos is a single object with nome property
               if (!Array.isArray(item.servicos)) {
                 // Fix: Type-check and safely access the nome property
-                if (item.servicos && 'nome' in item.servicos && item.servicos.nome !== null) {
-                  serviceName = String(item.servicos.nome);
+                if (item.servicos && 'nome' in item.servicos && typeof item.servicos.nome === 'string') {
+                  serviceName = item.servicos.nome;
                 }
               } 
               // Handle case where servicos is an array
@@ -105,8 +105,8 @@ export const useAppointmentsFetch = () => {
                 const firstService = item.servicos[0];
                 // Fix: Type-check and safely access the nome property
                 if (typeof firstService === 'object' && firstService !== null && 
-                    'nome' in firstService && firstService.nome !== null) {
-                  serviceName = String(firstService.nome);
+                    'nome' in firstService && typeof firstService.nome === 'string') {
+                  serviceName = firstService.nome;
                 }
               }
             }
