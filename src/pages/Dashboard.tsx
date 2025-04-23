@@ -1,26 +1,37 @@
 
-import { Users, Calendar, DollarSign, Scissors, BarChart2, ShoppingBag } from "lucide-react";
-import { StatsCard } from "@/components/common/StatsCard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import { Download, Calendar, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardData } from "@/hooks/dashboard/useDashboardData";
-import { formatCurrency } from "@/lib/format";
-import { NextAppointments } from "@/components/dashboard/NextAppointments";
-import { PopularServices } from "@/components/dashboard/PopularServices";
-import { FinancialChart } from "@/components/dashboard/FinancialChart";
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
-import { useEffect } from "react";
+import { toast } from "sonner";
+
+// Componentes do Dashboard
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
+import { KpiCards } from "@/components/dashboard/KpiCards";
+import { FinancialCharts } from "@/components/dashboard/FinancialCharts";
+import { PopularServicesWidget } from "@/components/dashboard/PopularServicesWidget";
+import { UpcomingAppointmentsWidget } from "@/components/dashboard/UpcomingAppointmentsWidget";
+import { PerformanceMetrics } from "@/components/dashboard/PerformanceMetrics";
+import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
+import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
+
+// Tipos de filtro para o dashboard
+export type FilterPeriod = "today" | "week" | "month" | "quarter" | "year";
 
 const Dashboard = () => {
-  const { stats, loading, error } = useDashboardData();
+  const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>("month");
+  const { stats, loading, error, refreshData } = useDashboardData(filterPeriod);
   const { businessId, loading: businessLoading, error: businessError } = useCurrentBusiness();
   
-  useEffect(() => {
-    // Apenas para log de debug
-    console.log("Dashboard stats:", stats);
-    console.log("Business ID:", businessId);
-  }, [stats, businessId]);
+  const handleExportData = (format: "csv" | "pdf") => {
+    toast.success(`Exportando dados em formato ${format.toUpperCase()}...`);
+    // Implementação da exportação seria adicionada aqui
+  };
   
   if (businessLoading || loading) {
     return <DashboardSkeleton />;
@@ -34,7 +45,7 @@ const Dashboard = () => {
           Não foi possível carregar os dados do seu negócio. Tente novamente mais tarde.
         </p>
         <Button 
-          onClick={() => window.location.reload()}
+          onClick={() => refreshData()}
           variant="outline"
         >
           Tentar novamente
@@ -51,9 +62,7 @@ const Dashboard = () => {
           Para começar, você precisa configurar seu negócio. Acesse as configurações ou complete o processo de onboarding.
         </p>
         <div className="flex gap-2">
-          <Button 
-            onClick={() => window.location.href = "/onboarding"}
-          >
+          <Button onClick={() => window.location.href = "/onboarding"}>
             Iniciar configuração
           </Button>
           <Button 
@@ -68,110 +77,89 @@ const Dashboard = () => {
   }
   
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-display font-bold">Bem-vindo ao Painel</h1>
-        <p className="text-muted-foreground">Confira o resumo do seu estabelecimento.</p>
+    <div className="space-y-6 animate-in fade-in-50">
+      {/* Cabeçalho do Dashboard com título e boas-vindas */}
+      <DashboardHeader />
+      
+      {/* Filtros e Ações */}
+      <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
+        <DashboardFilters 
+          currentPeriod={filterPeriod} 
+          onPeriodChange={setFilterPeriod} 
+        />
+        
+        <div className="flex gap-2 self-end">
+          <Button variant="outline" size="sm" onClick={() => handleExportData("csv")}>
+            <Download className="h-4 w-4 mr-2" />
+            CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handleExportData("pdf")}>
+            <Download className="h-4 w-4 mr-2" />
+            PDF
+          </Button>
+        </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard
-          title="Total de Clientes"
-          value={stats.clientsCount.toString()}
-          description="Clientes cadastrados"
-          icon={<Users size={18} />}
-          iconColor="bg-blue-50 text-blue-500"
-          borderColor="border-l-blue-600"
-        />
-        
-        <StatsCard
-          title="Agendamentos Hoje"
-          value={stats.todayAppointments.toString()}
-          description="Horários marcados"
-          icon={<Calendar size={18} />}
-          iconColor="bg-indigo-50 text-indigo-500"
-          borderColor="border-l-indigo-600"
-        />
-        
-        <StatsCard
-          title="Faturamento Mensal"
-          value={formatCurrency(stats.monthlyRevenue)}
-          description="Mês atual"
-          icon={<DollarSign size={18} />}
-          iconColor="bg-green-50 text-green-500"
-          borderColor="border-l-green-600"
-        />
-        
-        <StatsCard
-          title="Serviços Realizados"
-          value={stats.monthlyServices.toString()}
-          description="Este mês"
-          icon={<Scissors size={18} />}
-          iconColor="bg-amber-50 text-amber-500"
-          borderColor="border-l-amber-600"
-        />
-      </div>
+      {/* Cards de KPIs principais */}
+      <KpiCards stats={stats} period={filterPeriod} />
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Card className="overflow-hidden">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-display">Próximos Agendamentos</CardTitle>
-            <CardDescription>Clientes agendados para hoje e amanhã</CardDescription>
-          </CardHeader>
-          <CardContent className="p-4">
-            <NextAppointments 
-              appointments={stats.nextAppointments} 
-              isLoading={loading} 
-            />
-          </CardContent>
-        </Card>
+      {/* Conteúdo principal - dividido em abas por categoria */}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="financial">Financeiro</TabsTrigger>
+          <TabsTrigger value="clients">Clientes</TabsTrigger>
+          <TabsTrigger value="services">Serviços</TabsTrigger>
+        </TabsList>
         
-        <Card>
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-display">Movimentação Financeira</CardTitle>
-            <CardDescription>Visão geral das receitas recentes</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <FinancialChart data={stats.revenueData} />
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg font-display">Serviços Mais Populares</CardTitle>
-            <CardDescription>Os serviços mais procurados este mês</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PopularServices services={stats.popularServices} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-display">Próximas Tarefas</CardTitle>
-            <CardDescription>Prioridades para hoje</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { title: "Confirmar agendamentos", icon: <Calendar size={16} /> },
-                { title: "Inventário produtos", icon: <ShoppingBag size={16} /> },
-                { title: "Revisar financeiro", icon: <DollarSign size={16} /> },
-                { title: "Análise semanal", icon: <BarChart2 size={16} /> },
-              ].map((task, index) => (
-                <div key={index} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted">
-                  <div className="bg-primary/10 text-primary p-2 rounded-md">
-                    {task.icon}
-                  </div>
-                  <span>{task.title}</span>
-                </div>
-              ))}
+        <TabsContent value="overview" className="space-y-4">
+          {/* Grade de conteúdo principal */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Área de gráficos financeiros - 2/3 da largura */}
+            <div className="lg:col-span-2 space-y-5">
+              <FinancialCharts data={stats.revenueData} />
+              <PerformanceMetrics stats={stats} />
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            
+            {/* Widgets laterais - 1/3 da largura */}
+            <div className="space-y-5">
+              <UpcomingAppointmentsWidget appointments={stats.nextAppointments} />
+              <PopularServicesWidget services={stats.popularServices} />
+              <DashboardInsights stats={stats} />
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="financial">
+          <Card className="p-6">
+            <h3 className="text-lg font-medium mb-4">Detalhes Financeiros</h3>
+            <p className="text-muted-foreground">
+              Informações detalhadas sobre o desempenho financeiro estarão disponíveis nesta seção.
+            </p>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="clients">
+          <Card className="p-6">
+            <h3 className="text-lg font-medium mb-4">Análise de Clientes</h3>
+            <p className="text-muted-foreground">
+              Estatísticas e insights sobre sua base de clientes serão exibidos aqui.
+            </p>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="services">
+          <Card className="p-6">
+            <h3 className="text-lg font-medium mb-4">Desempenho de Serviços</h3>
+            <p className="text-muted-foreground">
+              Análises detalhadas de seus serviços e produtos estarão disponíveis nesta seção.
+            </p>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      
+      {/* Rodapé com informações sobre última atualização */}
+      <DashboardFooter />
     </div>
   );
 };
@@ -184,20 +172,22 @@ const DashboardSkeleton = () => {
         <Skeleton className="h-4 w-96" />
       </div>
       
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
+        <Skeleton className="h-10 w-[300px]" />
+        <Skeleton className="h-10 w-[180px]" />
+      </div>
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array(4).fill(0).map((_, i) => (
           <Skeleton key={i} className="h-32 w-full" />
         ))}
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Skeleton className="h-80 w-full" />
-        <Skeleton className="h-80 w-full" />
-      </div>
-
+      <Skeleton className="h-10 w-[300px]" />
+      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <Skeleton className="h-64 w-full lg:col-span-2" />
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-[350px] w-full lg:col-span-2" />
+        <Skeleton className="h-[350px] w-full" />
       </div>
     </div>
   );

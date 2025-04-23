@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from "react";
 import { 
   addMonths, 
@@ -141,6 +142,7 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     }
     
     try {
+      // Corrigindo o erro: passamos os parâmetros necessários
       const params: ConflictCheckParams = {
         date: newDate,
         duration: selectedAppointment.duration,
