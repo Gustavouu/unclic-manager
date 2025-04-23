@@ -12,8 +12,7 @@ import {
   getDay, 
   isSameDay,
   addWeeks,
-  subWeeks,
-  addMinutes
+  subWeeks
 } from "date-fns";
 import { AppointmentType, CalendarViewType, ServiceType } from "./types";
 import { toast } from "sonner";
@@ -214,7 +213,7 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     }
     
     // Filtro por profissional
-    if (professionalFilter && (app as any).professionalId !== professionalFilter) {
+    if (professionalFilter && app.professionalId !== professionalFilter) {
       return false;
     }
     

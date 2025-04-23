@@ -88,7 +88,7 @@ export function useReportsData(dateRange: string) {
         });
         
         const totalAppointments = filteredAppointments.length;
-        const completedAppointments = filteredAppointments.filter(app => app.status === "concluído").length;
+        const completedAppointments = filteredAppointments.filter(app => fixAppointmentStatusCheck(app)).length;
         const canceledAppointments = filteredAppointments.filter(app => app.status === "cancelado").length;
         
         const prices = filteredAppointments.map(app => app.price);
@@ -255,3 +255,7 @@ export function useReportsData(dateRange: string) {
   
   return { stats, isLoading, error };
 }
+
+export const fixAppointmentStatusCheck = (appointment: any) => {
+  return appointment.status === "concluido";
+};

@@ -31,11 +31,11 @@ export const AppointmentTableRow = ({ appointment }: AppointmentTableRowProps) =
       <TableCell>{format(appointment.date, "dd/MM/yyyy", { locale: ptBR })}</TableCell>
       <TableCell>{format(appointment.date, "HH:mm")}</TableCell>
       <TableCell>R$ {appointment.price.toFixed(2)}</TableCell>
-      <TableCell>{getStatusBadge(appointment.status as AppointmentStatus)}</TableCell>
+      <TableCell>{getStatusBadge(appointment.status)}</TableCell>
       <TableCell>
         <ActionMenu 
           appointmentId={appointment.id} 
-          currentStatus={appointment.status as AppointmentStatus} 
+          currentStatus={appointment.status} 
         />
       </TableCell>
     </TableRow>

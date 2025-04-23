@@ -1,4 +1,6 @@
 
+import { AppointmentStatus } from "../types";
+
 export type ServiceType = "all" | "haircut" | "barber" | "combo" | "treatment";
 export type CalendarViewType = "month" | "week" | "day";
 
@@ -10,7 +12,8 @@ export interface AppointmentType {
   serviceType: string;
   duration: number;
   price: number;
-  status?: string;
+  status?: AppointmentStatus;
+  professionalId?: string;
 }
 
 export interface BusinessHour {

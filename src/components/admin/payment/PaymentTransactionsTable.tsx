@@ -72,16 +72,16 @@ export function PaymentTransactionsTable() {
           }
         }
         
-        // Make sure we get the cliente nome correctly, whether it's a single object or array
+        // Make sure we get the cliente nome correctly
         let customerName = "Cliente não identificado";
         if (item.clientes) {
-          // Check if clientes is an array or a single object
-          if (Array.isArray(item.clientes)) {
-            // If it's an array, use the name of the first item if available
-            customerName = item.clientes[0]?.nome || "Cliente não identificado";
-          } else {
-            // If it's a single object, use its nome property
+          // Check if clientes is directly an object with a nome property
+          if (typeof item.clientes === 'object' && item.clientes !== null && 'nome' in item.clientes) {
             customerName = item.clientes.nome || "Cliente não identificado";
+          } 
+          // If it's an array, try to get the name from the first item
+          else if (Array.isArray(item.clientes) && item.clientes.length > 0 && 'nome' in item.clientes[0]) {
+            customerName = item.clientes[0].nome || "Cliente não identificado";
           }
         }
         

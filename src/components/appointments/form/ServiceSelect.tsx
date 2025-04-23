@@ -3,72 +3,72 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
 import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 
 export interface ServiceSelectProps {
   form: UseFormReturn<AppointmentFormValues>;
-  selectedService?: {
+  selectedService: {
     id: string;
     name: string;
     duration: number;
     price: number;
   } | null;
-  setSelectedService?: (service: {
+  setSelectedService: (service: {
     id: string;
     name: string;
     duration: number;
     price: number;
   } | null) => void;
-  options?: Array<{
-    value: string;
-    label: string;
-    price?: number;
-    duration?: number;
-  }>;
+  label?: string;
+  excludeIds?: string[];
   onServiceSelect?: (service: any) => void;
 }
 
-export const ServiceSelect = ({ 
-  form, 
-  selectedService, 
+export const ServiceSelect = ({
+  form,
+  selectedService,
   setSelectedService,
-  options = [],
+  label = "Serviço",
+  excludeIds = [],
   onServiceSelect
 }: ServiceSelectProps) => {
-  // Fetch services from API or context
-  const services = options.length > 0 ? options : [
-    { value: "s1", label: "Corte de Cabelo", price: 35, duration: 30 },
-    { value: "s2", label: "Barba", price: 25, duration: 20 },
-    { value: "s3", label: "Corte e Barba", price: 55, duration: 45 },
-    { value: "s4", label: "Coloração", price: 80, duration: 60 }
+  // This could come from API or context
+  const services = [
+    { id: "s1", name: "Corte de Cabelo", duration: 30, price: 50 },
+    { id: "s2", name: "Barba", duration: 20, price: 30 },
+    { id: "s3", name: "Corte e Barba", duration: 45, price: 70 },
+    { id: "s4", name: "Coloração", duration: 90, price: 120 },
+    { id: "s5", name: "Hidratação", duration: 60, price: 80 },
   ];
 
-  // Update the form when service is selected
-  const handleServiceSelect = (serviceId: string) => {
-    const service = services.find(s => s.value === serviceId);
+  const filteredServices = services.filter(
+    service => !excludeIds.includes(service.id)
+  );
+
+  const handleSelectService = (serviceId: string) => {
+    const service = services.find(s => s.id === serviceId);
     
-    if (service && setSelectedService) {
+    if (service) {
       setSelectedService({
-        id: service.value,
-        name: service.label,
-        duration: service.duration || 30,
-        price: service.price || 0
+        id: service.id,
+        name: service.name,
+        duration: service.duration,
+        price: service.price
       });
       
-      // Update the form values
-      form.setValue("duration", service.duration || 30);
-      form.setValue("price", service.price || 0);
-    }
-
-    if (service && onServiceSelect) {
-      onServiceSelect({
-        id: service.value,
-        nome: service.label,
-        duracao: service.duration || 30,
-        preco: service.price || 0
-      });
+      if (onServiceSelect) {
+        onServiceSelect(service);
+      }
     }
   };
+
+  // Update the form with the selected service's details when it changes
+  useEffect(() => {
+    if (selectedService) {
+      form.setValue('duration', selectedService.duration);
+      form.setValue('price', selectedService.price);
+    }
+  }, [selectedService, form]);
 
   return (
     <FormField
@@ -76,11 +76,11 @@ export const ServiceSelect = ({
       name="serviceId"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Serviço</FormLabel>
+          <FormLabel>{label}</FormLabel>
           <Select 
             onValueChange={(value) => {
               field.onChange(value);
-              handleServiceSelect(value);
+              handleSelectService(value);
             }}
             defaultValue={field.value}
           >
@@ -90,9 +90,9 @@ export const ServiceSelect = ({
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {services.map((service) => (
-                <SelectItem key={service.value} value={service.value}>
-                  {service.label}
+              {filteredServices.map((service) => (
+                <SelectItem key={service.id} value={service.id}>
+                  {service.name} - R${service.price.toFixed(2)} ({service.duration}min)
                 </SelectItem>
               ))}
             </SelectContent>

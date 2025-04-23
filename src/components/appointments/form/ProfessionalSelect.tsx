@@ -12,9 +12,19 @@ export interface ProfessionalSelectProps {
     description?: string;
   }>;
   onProfessionalSelect?: (professional: any) => void;
+  serviceId?: string;
+  disabled?: boolean;
+  defaultValue?: string;
 }
 
-export const ProfessionalSelect = ({ form, options = [], onProfessionalSelect }: ProfessionalSelectProps) => {
+export const ProfessionalSelect = ({ 
+  form, 
+  options = [], 
+  onProfessionalSelect,
+  serviceId,
+  disabled = false,
+  defaultValue
+}: ProfessionalSelectProps) => {
   // This could come from API or context
   const professionals = options.length > 0 ? options : [
     { value: "p1", label: "João Silva", description: "Cabelereiro" },
@@ -47,7 +57,8 @@ export const ProfessionalSelect = ({ form, options = [], onProfessionalSelect }:
               field.onChange(value);
               handleSelectProfessional(value);
             }}
-            defaultValue={field.value}
+            defaultValue={defaultValue || field.value}
+            disabled={disabled}
           >
             <FormControl>
               <SelectTrigger>
@@ -57,7 +68,7 @@ export const ProfessionalSelect = ({ form, options = [], onProfessionalSelect }:
             <SelectContent>
               {professionals.map((professional) => (
                 <SelectItem key={professional.value} value={professional.value}>
-                  {professional.label} - {professional.description}
+                  {professional.label} {professional.description ? `- ${professional.description}` : ''}
                 </SelectItem>
               ))}
             </SelectContent>

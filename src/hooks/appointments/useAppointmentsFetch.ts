@@ -64,9 +64,9 @@ export const useAppointmentsFetch = () => {
           // Get cliente name safely, handling both direct return and array return
           let clientName = "Cliente não identificado";
           if (item.clientes) {
-            if (typeof item.clientes === 'object' && !Array.isArray(item.clientes)) {
+            if (typeof item.clientes === 'object' && !Array.isArray(item.clientes) && item.clientes !== null) {
               clientName = item.clientes.nome || "Cliente não identificado";
-            } else if (Array.isArray(item.clientes) && item.clientes.length > 0) {
+            } else if (Array.isArray(item.clientes) && item.clientes.length > 0 && item.clientes[0] !== null) {
               clientName = item.clientes[0].nome || "Cliente não identificado";
             }
           } else if (item.observacoes) {
@@ -77,9 +77,9 @@ export const useAppointmentsFetch = () => {
           // Get service name safely
           let serviceName = "Serviço não identificado";
           if (item.servicos) {
-            if (typeof item.servicos === 'object' && !Array.isArray(item.servicos)) {
+            if (typeof item.servicos === 'object' && !Array.isArray(item.servicos) && item.servicos !== null) {
               serviceName = item.servicos.nome || "Serviço não identificado";
-            } else if (Array.isArray(item.servicos) && item.servicos.length > 0) {
+            } else if (Array.isArray(item.servicos) && item.servicos.length > 0 && item.servicos[0] !== null) {
               serviceName = item.servicos[0].nome || "Serviço não identificado";
             }
           }

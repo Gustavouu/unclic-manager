@@ -112,13 +112,13 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
         serviceType: "haircut", // This could be improved with actual categories
         duration: selectedService?.duration || 60,
         notes: values.notes,
-        serviceId: serviceId,
         clientId: clientId,
+        serviceId: serviceId,
         professionalId: professionalId,
-        paymentMethod: "local", // Default payment method
+        paymentMethod: values.paymentMethod || "local",
         notifications: {
-          sendConfirmation: true,
-          sendReminder: true
+          sendConfirmation: values.notifications?.sendConfirmation || true,
+          sendReminder: values.notifications?.sendReminder || true
         }
       });
       
