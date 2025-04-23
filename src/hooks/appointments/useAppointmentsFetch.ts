@@ -68,15 +68,16 @@ export const useAppointmentsFetch = () => {
             if (typeof item.clientes === 'object' && item.clientes !== null) {
               // Handle case where clientes is a single object with nome property
               if (!Array.isArray(item.clientes)) {
-                // Fix: Type-check and safely access the nome property
-                if (item.clientes && 'nome' in item.clientes && typeof item.clientes.nome === 'string') {
-                  clientName = item.clientes.nome;
+                // Fix: Type assertion to safely access nome property
+                const clientsObj = item.clientes as { nome?: string };
+                if (clientsObj && 'nome' in clientsObj && typeof clientsObj.nome === 'string') {
+                  clientName = clientsObj.nome;
                 }
               } 
               // Handle case where clientes is an array
               else if (Array.isArray(item.clientes) && item.clientes.length > 0) {
-                const firstClient = item.clientes[0];
-                // Fix: Type-check and safely access the nome property
+                const firstClient = item.clientes[0] as { nome?: string };
+                // Fix: Type assertion to safely access nome property
                 if (typeof firstClient === 'object' && firstClient !== null && 
                     'nome' in firstClient && typeof firstClient.nome === 'string') {
                   clientName = firstClient.nome;
@@ -95,15 +96,16 @@ export const useAppointmentsFetch = () => {
             if (typeof item.servicos === 'object' && item.servicos !== null) {
               // Handle case where servicos is a single object with nome property
               if (!Array.isArray(item.servicos)) {
-                // Fix: Type-check and safely access the nome property
-                if (item.servicos && 'nome' in item.servicos && typeof item.servicos.nome === 'string') {
-                  serviceName = item.servicos.nome;
+                // Fix: Type assertion to safely access nome property
+                const servicesObj = item.servicos as { nome?: string };
+                if (servicesObj && 'nome' in servicesObj && typeof servicesObj.nome === 'string') {
+                  serviceName = servicesObj.nome;
                 }
               } 
               // Handle case where servicos is an array
               else if (Array.isArray(item.servicos) && item.servicos.length > 0) {
-                const firstService = item.servicos[0];
-                // Fix: Type-check and safely access the nome property
+                const firstService = item.servicos[0] as { nome?: string };
+                // Fix: Type assertion to safely access nome property
                 if (typeof firstService === 'object' && firstService !== null && 
                     'nome' in firstService && typeof firstService.nome === 'string') {
                   serviceName = firstService.nome;
