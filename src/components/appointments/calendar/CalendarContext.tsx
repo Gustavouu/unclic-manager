@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from "react";
 import { 
   addMonths, 
@@ -148,6 +149,7 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
         appointmentId: selectedAppointment.id
       };
       
+      // This was the issue - validateAppointmentTime was being called without arguments
       const validationResult = validateAppointmentTime(params);
       
       if (!validationResult.valid) {
