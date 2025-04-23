@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from 'react';
 import { 
   addMonths, 
@@ -53,9 +54,15 @@ interface CalendarContextType {
   handleDragEnd: (newDate: Date) => Promise<boolean>;
 }
 
+// Define the props interface for the CalendarProvider
+interface CalendarProviderProps {
+  children: React.ReactNode;
+  appointments: AppointmentType[];
+}
+
 const CalendarContext = createContext<CalendarContextType>({} as CalendarContextType);
 
-export const CalendarProvider: React.FC<CalendarProviderProps> = ({ children }) => {
+export const CalendarProvider: React.FC<CalendarProviderProps> = ({ children, appointments }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarView, setCalendarView] = useState<CalendarViewType>("month");
