@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState } from 'react';
 import { 
   addMonths, 
   subMonths, 
@@ -26,7 +25,7 @@ interface ConflictCheckParams {
   appointmentId?: string;
 }
 
-interface CalendarContextProps {
+interface CalendarContextType {
   currentDate: Date;
   selectedDate: Date;
   calendarView: CalendarViewType;
@@ -54,22 +53,9 @@ interface CalendarContextProps {
   handleDragEnd: (newDate: Date) => Promise<boolean>;
 }
 
-const CalendarContext = createContext<CalendarContextProps | undefined>(undefined);
+const CalendarContext = createContext<CalendarContextType>({} as CalendarContextType);
 
-export function useCalendarContext() {
-  const context = useContext(CalendarContext);
-  if (!context) {
-    throw new Error("useCalendarContext must be used within a CalendarProvider");
-  }
-  return context;
-}
-
-interface CalendarProviderProps {
-  appointments: AppointmentType[];
-  children: React.ReactNode;
-}
-
-export function CalendarProvider({ appointments, children }: CalendarProviderProps) {
+export const CalendarProvider: React.FC<CalendarProviderProps> = ({ children }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarView, setCalendarView] = useState<CalendarViewType>("month");
@@ -142,7 +128,6 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     }
     
     try {
-      // Corrigindo o erro: passamos os parâmetros necessários
       const params: ConflictCheckParams = {
         date: newDate,
         duration: selectedAppointment.duration,
@@ -239,9 +224,11 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     handleDragEnd
   };
 
-  return (
-    <CalendarContext.Provider value={value}>
-      {children}
-    </CalendarContext.Provider>
-  );
-}
+  return <CalendarContext.Provider value={value}>{children}</CalendarContext.Provider>;
+};
+
+export const useCalendarContext = () => {
+  const context = useContext(CalendarContext);
+  if (!context) throw new Error('useCalendarContext must be used within CalendarProvider');
+  return context;
+};

@@ -8,7 +8,7 @@ import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentBusiness } from "../useCurrentBusiness";
 import { toast } from "sonner";
-import { FilterPeriod } from "@/pages/Dashboard";
+import { FilterPeriod } from "@/types/dashboard";
 
 export interface DashboardStats {
   clientsCount: number;

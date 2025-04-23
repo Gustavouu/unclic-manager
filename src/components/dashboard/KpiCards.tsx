@@ -4,7 +4,7 @@ import { Users, CalendarClock, DollarSign, Scissors } from "lucide-react";
 import { StatsCard } from "@/components/common/StatsCard";
 import { DashboardStats } from "@/hooks/dashboard/useDashboardData";
 import { formatCurrency } from "@/lib/format";
-import { FilterPeriod } from "@/pages/Dashboard";
+import { FilterPeriod } from "@/types/dashboard";
 
 interface KpiCardsProps {
   stats: DashboardStats;
