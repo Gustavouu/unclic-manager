@@ -68,16 +68,18 @@ export const useAppointmentsFetch = () => {
             if (typeof item.clientes === 'object' && item.clientes !== null) {
               // Handle case where clientes is a single object with nome property
               if (!Array.isArray(item.clientes)) {
-                // Check if nome property exists before accessing it
-                if (item.clientes && 'nome' in item.clientes) {
-                  clientName = String(item.clientes.nome || "Cliente não identificado");
+                // Fix: Type-check and safely access the nome property
+                if (item.clientes && 'nome' in item.clientes && item.clientes.nome !== null) {
+                  clientName = String(item.clientes.nome);
                 }
               } 
               // Handle case where clientes is an array
               else if (Array.isArray(item.clientes) && item.clientes.length > 0) {
                 const firstClient = item.clientes[0];
-                if (typeof firstClient === 'object' && firstClient !== null && 'nome' in firstClient) {
-                  clientName = String(firstClient.nome || "Cliente não identificado");
+                // Fix: Type-check and safely access the nome property
+                if (typeof firstClient === 'object' && firstClient !== null && 
+                    'nome' in firstClient && firstClient.nome !== null) {
+                  clientName = String(firstClient.nome);
                 }
               }
             }
@@ -93,16 +95,18 @@ export const useAppointmentsFetch = () => {
             if (typeof item.servicos === 'object' && item.servicos !== null) {
               // Handle case where servicos is a single object with nome property
               if (!Array.isArray(item.servicos)) {
-                // Check if nome property exists before accessing it
-                if (item.servicos && 'nome' in item.servicos) {
-                  serviceName = String(item.servicos.nome || "Serviço não identificado");
+                // Fix: Type-check and safely access the nome property
+                if (item.servicos && 'nome' in item.servicos && item.servicos.nome !== null) {
+                  serviceName = String(item.servicos.nome);
                 }
               } 
               // Handle case where servicos is an array
               else if (Array.isArray(item.servicos) && item.servicos.length > 0) {
                 const firstService = item.servicos[0];
-                if (typeof firstService === 'object' && firstService !== null && 'nome' in firstService) {
-                  serviceName = String(firstService.nome || "Serviço não identificado");
+                // Fix: Type-check and safely access the nome property
+                if (typeof firstService === 'object' && firstService !== null && 
+                    'nome' in firstService && firstService.nome !== null) {
+                  serviceName = String(firstService.nome);
                 }
               }
             }
