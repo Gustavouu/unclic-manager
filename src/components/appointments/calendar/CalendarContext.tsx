@@ -149,7 +149,7 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
         appointmentId: selectedAppointment.id
       };
       
-      // This was the issue - validateAppointmentTime was being called without arguments
+      // Fix: Pass the params object to validateAppointmentTime
       const validationResult = validateAppointmentTime(params);
       
       if (!validationResult.valid) {
