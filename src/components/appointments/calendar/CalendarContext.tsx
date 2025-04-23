@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from "react";
 import { 
   addMonths, 
@@ -149,7 +148,6 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
         appointmentId: selectedAppointment.id
       };
       
-      // Fix: Pass the params object to validateAppointmentTime
       const validationResult = validateAppointmentTime(params);
       
       if (!validationResult.valid) {
