@@ -162,6 +162,7 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
         params.professionalId = selectedAppointment.professionalId;
       }
       
+      // Pass the params object to validateAppointmentTime
       const validationResult = validateAppointmentTime(params);
       
       if (!validationResult.valid) {

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,7 +116,48 @@ export function TransactionsTable({
 
         if (error) throw error;
         
-        setTransactions(data || []);
+        if (!data) {
+          setTransactions([]);
+          return;
+        }
+
+        // Process the data to ensure it matches our Transaction interface
+        const processedData: Transaction[] = data.map(item => {
+          // Handle cliente properly
+          let customerName = "Cliente não identificado";
+          let cliente: { nome: string } | undefined = undefined;
+          
+          if (item.cliente) {
+            if (typeof item.cliente === 'object' && item.cliente !== null) {
+              if ('nome' in item.cliente) {
+                // If cliente is a single object with nome
+                customerName = (item.cliente as any).nome || "Cliente não identificado";
+                cliente = { nome: customerName };
+              } else if (Array.isArray(item.cliente) && item.cliente.length > 0 && item.cliente[0] !== null) {
+                // If cliente is an array
+                if (typeof item.cliente[0] === 'object' && 'nome' in item.cliente[0]) {
+                  customerName = (item.cliente[0] as any).nome || "Cliente não identificado";
+                  cliente = { nome: customerName };
+                }
+              }
+            }
+          }
+          
+          return {
+            id: item.id,
+            tipo: item.tipo,
+            valor: item.valor,
+            metodo_pagamento: item.metodo_pagamento,
+            status: item.status,
+            descricao: item.descricao,
+            criado_em: item.criado_em,
+            data_pagamento: item.data_pagamento,
+            customer_name: customerName,
+            cliente
+          };
+        });
+        
+        setTransactions(processedData);
       } catch (error) {
         console.error("Erro ao buscar transações:", error);
       } finally {

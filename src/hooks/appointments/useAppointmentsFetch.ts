@@ -67,7 +67,10 @@ export const useAppointmentsFetch = () => {
             if (typeof item.clientes === 'object' && !Array.isArray(item.clientes) && item.clientes !== null) {
               clientName = item.clientes.nome || "Cliente não identificado";
             } else if (Array.isArray(item.clientes) && item.clientes.length > 0 && item.clientes[0] !== null) {
-              clientName = item.clientes[0].nome || "Cliente não identificado";
+              const firstClient = item.clientes[0];
+              if (typeof firstClient === 'object' && firstClient !== null && 'nome' in firstClient) {
+                clientName = firstClient.nome || "Cliente não identificado";
+              }
             }
           } else if (item.observacoes) {
             const parts = item.observacoes.split(',');
@@ -80,7 +83,10 @@ export const useAppointmentsFetch = () => {
             if (typeof item.servicos === 'object' && !Array.isArray(item.servicos) && item.servicos !== null) {
               serviceName = item.servicos.nome || "Serviço não identificado";
             } else if (Array.isArray(item.servicos) && item.servicos.length > 0 && item.servicos[0] !== null) {
-              serviceName = item.servicos[0].nome || "Serviço não identificado";
+              const firstService = item.servicos[0];
+              if (typeof firstService === 'object' && firstService !== null && 'nome' in firstService) {
+                serviceName = firstService.nome || "Serviço não identificado";
+              }
             }
           }
           

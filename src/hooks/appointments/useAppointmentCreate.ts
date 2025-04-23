@@ -39,13 +39,13 @@ export const useAppointmentCreate = (setAppointments: React.Dispatch<React.SetSt
           id_cliente: appointmentData.clientId,
           id_servico: appointmentData.serviceId,
           id_funcionario: appointmentData.professionalId,
-          id_negocio: appointmentData.businessId || localStorage.getItem('currentBusinessId'),
+          id_negocio: localStorage.getItem('currentBusinessId'),
           data: dateStr,
           hora_inicio: timeStr,
           hora_fim: endTimeStr,
           duracao: appointmentData.duration,
           valor: appointmentData.price,
-          status: appointmentData.status as string,
+          status: appointmentData.status,
           forma_pagamento: appointmentData.paymentMethod,
           observacoes: appointmentData.notes,
           servicos_adicionais: additionalServicesJson,
@@ -73,7 +73,6 @@ export const useAppointmentCreate = (setAppointments: React.Dispatch<React.SetSt
         serviceId: appointmentData.serviceId,
         clientId: appointmentData.clientId,
         professionalId: appointmentData.professionalId,
-        businessId: appointmentData.businessId,
       };
       
       setAppointments(prevAppointments => [createdAppointment, ...prevAppointments]);

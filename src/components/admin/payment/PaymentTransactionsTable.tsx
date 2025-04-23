@@ -63,7 +63,7 @@ export function PaymentTransactionsTable() {
         
         if (item.notas) {
           try {
-            const notesData = JSON.parse(item.notas);
+            const notesData = JSON.parse(item.notas as string);
             transaction_id = notesData.transaction_id || '';
             payment_url = notesData.payment_url || '';
             service_name = notesData.service_name || 'N/A';
@@ -75,13 +75,18 @@ export function PaymentTransactionsTable() {
         // Make sure we get the cliente nome correctly
         let customerName = "Cliente não identificado";
         if (item.clientes) {
-          // Check if clientes is directly an object with a nome property
-          if (typeof item.clientes === 'object' && item.clientes !== null && 'nome' in item.clientes) {
-            customerName = item.clientes.nome || "Cliente não identificado";
-          } 
-          // If it's an array, try to get the name from the first item
-          else if (Array.isArray(item.clientes) && item.clientes.length > 0 && 'nome' in item.clientes[0]) {
-            customerName = item.clientes[0].nome || "Cliente não identificado";
+          // Handle different response formats from Supabase
+          if (typeof item.clientes === 'object' && item.clientes !== null) {
+            // Single object case
+            if ('nome' in item.clientes) {
+              customerName = (item.clientes as { nome: string }).nome || "Cliente não identificado";
+            } 
+            // Array case
+            else if (Array.isArray(item.clientes) && item.clientes.length > 0) {
+              if (typeof item.clientes[0] === 'object' && item.clientes[0] !== null && 'nome' in item.clientes[0]) {
+                customerName = (item.clientes[0] as { nome: string }).nome || "Cliente não identificado";
+              }
+            }
           }
         }
         

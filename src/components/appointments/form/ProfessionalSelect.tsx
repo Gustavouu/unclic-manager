@@ -15,6 +15,7 @@ export interface ProfessionalSelectProps {
   serviceId?: string;
   disabled?: boolean;
   defaultValue?: string;
+  readOnly?: boolean;
 }
 
 export const ProfessionalSelect = ({ 
@@ -23,7 +24,8 @@ export const ProfessionalSelect = ({
   onProfessionalSelect,
   serviceId,
   disabled = false,
-  defaultValue
+  defaultValue,
+  readOnly = false
 }: ProfessionalSelectProps) => {
   // This could come from API or context
   const professionals = options.length > 0 ? options : [
@@ -58,7 +60,7 @@ export const ProfessionalSelect = ({
               handleSelectProfessional(value);
             }}
             defaultValue={defaultValue || field.value}
-            disabled={disabled}
+            disabled={disabled || readOnly}
           >
             <FormControl>
               <SelectTrigger>

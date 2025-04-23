@@ -42,6 +42,7 @@
     "@supabase/auth-js": "^2.69.1",
     "@supabase/supabase-js": "^2.49.1",
     "@tanstack/react-query": "^5.56.2",
+    "@vitejs/plugin-react": "^4.4.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",

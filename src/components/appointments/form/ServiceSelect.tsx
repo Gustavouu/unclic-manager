@@ -22,6 +22,12 @@ export interface ServiceSelectProps {
   label?: string;
   excludeIds?: string[];
   onServiceSelect?: (service: any) => void;
+  options?: Array<{
+    value: string;
+    label: string;
+    price?: number;
+    duration?: number;
+  }>;
 }
 
 export const ServiceSelect = ({
@@ -30,16 +36,27 @@ export const ServiceSelect = ({
   setSelectedService,
   label = "Serviço",
   excludeIds = [],
-  onServiceSelect
+  onServiceSelect,
+  options
 }: ServiceSelectProps) => {
   // This could come from API or context
-  const services = [
+  const defaultServices = [
     { id: "s1", name: "Corte de Cabelo", duration: 30, price: 50 },
     { id: "s2", name: "Barba", duration: 20, price: 30 },
     { id: "s3", name: "Corte e Barba", duration: 45, price: 70 },
     { id: "s4", name: "Coloração", duration: 90, price: 120 },
     { id: "s5", name: "Hidratação", duration: 60, price: 80 },
   ];
+
+  // Use provided options or default services
+  const services = options 
+    ? options.map(opt => ({
+        id: opt.value,
+        name: opt.label,
+        duration: opt.duration || 30,
+        price: opt.price || 0
+      }))
+    : defaultServices;
 
   const filteredServices = services.filter(
     service => !excludeIds.includes(service.id)

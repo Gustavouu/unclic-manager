@@ -142,7 +142,7 @@ export const WeekView = ({
                       isDragging && selectedAppointment?.id === appointment.id 
                         ? "opacity-50" 
                         : "opacity-100",
-                      appointment.status === "concluído" 
+                      appointment.status === "concluido" 
                         ? "bg-green-50 border-green-500" 
                         : appointment.status === "cancelado"
                         ? "bg-red-50 border-red-500"

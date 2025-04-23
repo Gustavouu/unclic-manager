@@ -117,8 +117,8 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
         professionalId: professionalId,
         paymentMethod: values.paymentMethod || "local",
         notifications: {
-          sendConfirmation: values.notifications?.sendConfirmation || true,
-          sendReminder: values.notifications?.sendReminder || true
+          sendConfirmation: values.notifications?.sendConfirmation ?? true,
+          sendReminder: values.notifications?.sendReminder ?? true
         }
       });
       

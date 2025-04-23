@@ -223,9 +223,9 @@ export function PaymentRequiredAppointmentForm({
   const handleServiceSelect = (service: any) => {
     setSelectedService({
       id: service.id,
-      name: service.nome,
-      duration: service.duracao,
-      price: service.preco
+      name: service.nome || service.name,
+      duration: service.duracao || service.duration,
+      price: service.preco || service.price
     });
   };
   
@@ -233,7 +233,7 @@ export function PaymentRequiredAppointmentForm({
   const handleProfessionalSelect = (professional: any) => {
     setSelectedProfessional({
       id: professional.id,
-      name: professional.nome
+      name: professional.nome || professional.name
     });
   };
   
@@ -317,8 +317,10 @@ export function PaymentRequiredAppointmentForm({
               <div>
                 <ServiceSelect
                   form={form}
-                  options={serviceOptions}
+                  selectedService={selectedService}
+                  setSelectedService={setSelectedService}
                   onServiceSelect={handleServiceSelect}
+                  options={serviceOptions}
                 />
               </div>
 
@@ -357,8 +359,8 @@ export function PaymentRequiredAppointmentForm({
                   <p>Cliente: {customerName}</p>
                   <p>Serviço: {selectedService?.name || "Não selecionado"}</p>
                   <p>Profissional: {selectedProfessional?.name || "Não selecionado"}</p>
-                  <p>Data: {watchedFields.date ? format(watchedFields.date, "PPP", { locale: ptBR }) : "-"}</p>
-                  <p>Horário: {watchedFields.time || "-"}</p>
+                  <p>Data: {form.watch('date') ? format(form.watch('date'), "PPP", { locale: ptBR }) : "-"}</p>
+                  <p>Horário: {form.watch('time') || "-"}</p>
                   <p className="font-medium">Valor Total: R$ {selectedService?.price.toFixed(2) || "0.00"}</p>
                 </AlertDescription>
               </Alert>
@@ -438,7 +440,7 @@ export function PaymentRequiredAppointmentForm({
                   </Button>
                   
                   {isPaymentComplete && (
-                    <Alert variant="destructive" className="bg-green-50 border-green-200">
+                    <Alert variant="default" className="bg-green-50 border-green-200">
                       <CheckCircle2 className="h-4 w-4 text-green-500" />
                       <AlertTitle className="text-green-700">Pagamento Aprovado</AlertTitle>
                       <AlertDescription className="text-green-600">
@@ -455,14 +457,14 @@ export function PaymentRequiredAppointmentForm({
             <div className="space-y-4">
               <NotificationsOptions form={form} />
               
-              <Alert variant="destructive" className="bg-green-50 border-green-200">
+              <Alert variant="default" className="bg-green-50 border-green-200">
                 <AlertTitle className="text-green-700">Agendamento Confirmado</AlertTitle>
                 <AlertDescription className="text-green-600 space-y-2">
                   <p>Cliente: {customerName}</p>
                   <p>Serviço: {selectedService?.name}</p>
                   <p>Profissional: {selectedProfessional?.name}</p>
-                  <p>Data: {watchedFields.date ? format(watchedFields.date, "PPP", { locale: ptBR }) : "-"}</p>
-                  <p>Horário: {watchedFields.time}</p>
+                  <p>Data: {form.watch('date') ? format(form.watch('date'), "PPP", { locale: ptBR }) : "-"}</p>
+                  <p>Horário: {form.watch('time')}</p>
                   <p>Pagamento: Aprovado</p>
                   
                   <p className="font-medium mt-4">
