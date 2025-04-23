@@ -1,130 +1,26 @@
-import { useState, useEffect } from "react";
+
 import { Users, Calendar, DollarSign, Scissors, BarChart2, ShoppingBag } from "lucide-react";
 import { StatsCard } from "@/components/common/StatsCard";
-import { AppointmentCalendar } from "@/components/dashboard/Calendar";
-import { FinancialChart } from "@/components/dashboard/FinancialChart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
-import { supabase } from "@/lib/supabase";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDashboardData } from "@/hooks/dashboard/useDashboardData";
+import { formatCurrency } from "@/lib/format";
+import { NextAppointments } from "@/components/dashboard/NextAppointments";
+import { PopularServices } from "@/components/dashboard/PopularServices";
+import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
+import { FinancialChart } from "@/components/dashboard/FinancialChart";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 const Dashboard = () => {
+  const { stats, loading, error } = useDashboardData();
   const { businessId, loading: businessLoading, error: businessError } = useCurrentBusiness();
-  const [stats, setStats] = useState({
-    clientsCount: 0,
-    todayAppointments: 0,
-    monthlyRevenue: 0,
-    monthlyServices: 0
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!businessId) return;
-      
-      setLoading(true);
-      try {
-        // Modo de demonstração ativado
-        if (import.meta.env.VITE_ENABLE_DEMO_MODE === "true") {
-          // Dados fictícios para demonstração
-          setStats({
-            clientsCount: 156,
-            todayAppointments: 8,
-            monthlyRevenue: 12580.50,
-            monthlyServices: 124
-          });
-          setLoading(false);
-          return;
-        }
-        
-        // Obter contagem de clientes
-        const { count: clientsCount, error: clientsError } = await supabase
-          .from('clientes')
-          .select('*', { count: 'exact', head: true })
-          .eq('id_negocio', businessId);
-          
-        if (clientsError) throw clientsError;
-        
-        // Obter agendamentos de hoje
-        const today = new Date().toISOString().split('T')[0];
-        const { count: appointmentsCount, error: appointmentsError } = await supabase
-          .from('agendamentos')
-          .select('*', { count: 'exact', head: true })
-          .eq('id_negocio', businessId)
-          .eq('data', today);
-          
-        if (appointmentsError) throw appointmentsError;
-        
-        // Obter faturamento do mês atual
-        const currentMonth = new Date().getMonth() + 1;
-        const currentYear = new Date().getFullYear();
-        const startOfMonth = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
-        const endOfMonth = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
-        
-        const { data: transactionsData, error: transactionsError } = await supabase
-          .from('transacoes')
-          .select('valor')
-          .eq('id_negocio', businessId)
-          .eq('tipo', 'receita')
-          .gte('data_pagamento', startOfMonth)
-          .lte('data_pagamento', endOfMonth);
-          
-        if (transactionsError) throw transactionsError;
-        
-        const monthlyRevenue = transactionsData ? transactionsData.reduce((sum, transaction) => sum + transaction.valor, 0) : 0;
-        
-        // Obter quantidade de serviços realizados no mês
-        const { count: servicesCount, error: servicesError } = await supabase
-          .from('agendamentos')
-          .select('*', { count: 'exact', head: true })
-          .eq('id_negocio', businessId)
-          .eq('status', 'concluido')
-          .gte('data', startOfMonth)
-          .lte('data', endOfMonth);
-          
-        if (servicesError) throw servicesError;
-        
-        setStats({
-          clientsCount: clientsCount || 0,
-          todayAppointments: appointmentsCount || 0,
-          monthlyRevenue: monthlyRevenue || 0,
-          monthlyServices: servicesCount || 0
-        });
-      } catch (error: any) {
-        console.error("Erro ao carregar dados do dashboard:", error);
-        toast.error("Erro ao carregar estatísticas do dashboard");
-        
-        // Definir valores padrão em caso de erro
-        setStats({
-          clientsCount: 0,
-          todayAppointments: 0,
-          monthlyRevenue: 0,
-          monthlyServices: 0
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (businessId) {
-      fetchDashboardData();
-    } else if (!businessLoading && !businessId) {
-      setLoading(false);
-    }
-  }, [businessId, businessLoading]);
-  
-  // Formatação dos valores
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
   
   if (businessLoading || loading) {
     return <DashboardSkeleton />;
   }
   
-  if (businessError) {
+  if (businessError || error) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
         <div className="text-xl font-semibold text-red-500">Erro ao carregar dados</div>
@@ -216,8 +112,11 @@ const Dashboard = () => {
             <CardTitle className="text-lg font-display">Próximos Agendamentos</CardTitle>
             <CardDescription>Clientes agendados para hoje e amanhã</CardDescription>
           </CardHeader>
-          <CardContent className="p-0">
-            <AppointmentCalendar businessId={businessId} />
+          <CardContent className="p-4">
+            <NextAppointments 
+              appointments={stats.nextAppointments} 
+              isLoading={loading} 
+            />
           </CardContent>
         </Card>
         
@@ -227,7 +126,7 @@ const Dashboard = () => {
             <CardDescription>Visão geral das receitas recentes</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
-            <FinancialChart businessId={businessId} />
+            <FinancialChart data={stats.revenueData} />
           </CardContent>
         </Card>
       </div>
@@ -239,27 +138,7 @@ const Dashboard = () => {
             <CardDescription>Os serviços mais procurados este mês</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {[
-                { name: "Corte Masculino", count: 38, percentage: 40 },
-                { name: "Coloração", count: 24, percentage: 25 },
-                { name: "Manicure", count: 18, percentage: 20 },
-                { name: "Barba", count: 13, percentage: 15 },
-              ].map((service) => (
-                <div key={service.name} className="space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium">{service.name}</span>
-                    <span className="text-sm text-muted-foreground">{service.count} agendamentos</span>
-                  </div>
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full"
-                      style={{ width: `${service.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <PopularServices services={stats.popularServices} />
           </CardContent>
         </Card>
 
