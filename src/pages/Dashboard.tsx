@@ -5,11 +5,13 @@ import { AppointmentCalendar } from "@/components/dashboard/Calendar";
 import { FinancialChart } from "@/components/dashboard/FinancialChart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
-  const { businessId, loading: businessLoading } = useCurrentBusiness();
+  const { businessId, loading: businessLoading, error: businessError } = useCurrentBusiness();
   const [stats, setStats] = useState({
     clientsCount: 0,
     todayAppointments: 0,
@@ -24,6 +26,19 @@ const Dashboard = () => {
       
       setLoading(true);
       try {
+        // Modo de demonstração ativado
+        if (import.meta.env.VITE_ENABLE_DEMO_MODE === "true") {
+          // Dados fictícios para demonstração
+          setStats({
+            clientsCount: 156,
+            todayAppointments: 8,
+            monthlyRevenue: 12580.50,
+            monthlyServices: 124
+          });
+          setLoading(false);
+          return;
+        }
+        
         // Obter contagem de clientes
         const { count: clientsCount, error: clientsError } = await supabase
           .from('clientes')
@@ -58,7 +73,7 @@ const Dashboard = () => {
           
         if (transactionsError) throw transactionsError;
         
-        const monthlyRevenue = transactionsData.reduce((sum, transaction) => sum + transaction.valor, 0);
+        const monthlyRevenue = transactionsData ? transactionsData.reduce((sum, transaction) => sum + transaction.valor, 0) : 0;
         
         // Obter quantidade de serviços realizados no mês
         const { count: servicesCount, error: servicesError } = await supabase
@@ -74,11 +89,20 @@ const Dashboard = () => {
         setStats({
           clientsCount: clientsCount || 0,
           todayAppointments: appointmentsCount || 0,
-          monthlyRevenue: monthlyRevenue,
+          monthlyRevenue: monthlyRevenue || 0,
           monthlyServices: servicesCount || 0
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Erro ao carregar dados do dashboard:", error);
+        toast.error("Erro ao carregar estatísticas do dashboard");
+        
+        // Definir valores padrão em caso de erro
+        setStats({
+          clientsCount: 0,
+          todayAppointments: 0,
+          monthlyRevenue: 0,
+          monthlyServices: 0
+        });
       } finally {
         setLoading(false);
       }
@@ -86,8 +110,10 @@ const Dashboard = () => {
     
     if (businessId) {
       fetchDashboardData();
+    } else if (!businessLoading && !businessId) {
+      setLoading(false);
     }
-  }, [businessId]);
+  }, [businessId, businessLoading]);
   
   // Formatação dos valores
   const formatCurrency = (value: number) => {
@@ -96,6 +122,47 @@ const Dashboard = () => {
   
   if (businessLoading || loading) {
     return <DashboardSkeleton />;
+  }
+  
+  if (businessError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
+        <div className="text-xl font-semibold text-red-500">Erro ao carregar dados</div>
+        <p className="text-muted-foreground text-center max-w-md">
+          Não foi possível carregar os dados do seu negócio. Tente novamente mais tarde.
+        </p>
+        <Button 
+          onClick={() => window.location.reload()}
+          variant="outline"
+        >
+          Tentar novamente
+        </Button>
+      </div>
+    );
+  }
+  
+  if (!businessId) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
+        <div className="text-xl font-semibold">Bem-vindo ao Sistema</div>
+        <p className="text-muted-foreground text-center max-w-md">
+          Para começar, você precisa configurar seu negócio. Acesse as configurações ou complete o processo de onboarding.
+        </p>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => window.location.href = "/onboarding"}
+          >
+            Iniciar configuração
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => window.location.href = "/settings"}
+          >
+            Ir para configurações
+          </Button>
+        </div>
+      </div>
+    );
   }
   
   return (
@@ -224,7 +291,6 @@ const Dashboard = () => {
   );
 };
 
-// Componente de skeleton para o carregamento
 const DashboardSkeleton = () => {
   return (
     <div className="space-y-6">
