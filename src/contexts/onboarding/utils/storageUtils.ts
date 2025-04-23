@@ -2,55 +2,81 @@ import { BusinessData } from "../types";
 import { fileToBase64, createFilePreview } from "./fileUtils";
 
 /**
- * Prepares business data for storage in localStorage by
- * handling file conversions and creating URLs for previews
+ * Interface para dados serializáveis do negócio
+ * Exclui propriedades File pois não são serializáveis
  */
-export const prepareDataForStorage = async (data: BusinessData): Promise<Partial<BusinessData>> => {
-  // Create a copy to avoid modifying the original
-  const preparedData = { ...data };
-  
-  // Handle logo file - convert to base64 if needed
-  if (preparedData.logo instanceof File) {
-    try {
-      // Convert file to base64 for storage if not already done
-      preparedData.logoData = await fileToBase64(preparedData.logo);
-      preparedData.logoName = preparedData.logo.name;
-      
-      // Keep the logoUrl as is if it already exists
-      if (!preparedData.logoUrl) {
-        preparedData.logoUrl = createFilePreview(preparedData.logo);
-      }
-    } catch (err) {
-      console.error("Error processing logo file:", err);
-    }
-    
-    // Files can't be serialized, so set to null for storage
-    preparedData.logo = null;
-  } else if (!preparedData.logo && preparedData.logoData) {
-    // If we have logoData but no File, keep the data for persistence
-    preparedData.logoUrl = preparedData.logoUrl || null;
+export interface SerializableBusinessData extends Omit<BusinessData, 'logo' | 'banner'> {
+  logo: null;
+  banner: null;
+  logoData?: string;
+  logoName?: string;
+  logoUrl?: string;
+  bannerData?: string;
+  bannerName?: string;
+  bannerUrl?: string;
+}
+
+/**
+ * Prepara os dados do negócio para armazenamento no localStorage
+ * convertendo arquivos para base64 e criando URLs para previews
+ * 
+ * @param data Dados do negócio com possíveis arquivos
+ * @returns Dados preparados para armazenamento sem objetos File
+ */
+export const prepareDataForStorage = async (data: BusinessData): Promise<SerializableBusinessData> => {
+  if (!data) {
+    throw new Error("Dados do negócio não fornecidos");
   }
   
-  // Handle banner file - convert to base64 if needed
-  if (preparedData.banner instanceof File) {
+  // Cria uma cópia para evitar modificar o original
+  const preparedData: SerializableBusinessData = {
+    ...data,
+    logo: null,
+    banner: null
+  };
+  
+  // Trata o arquivo de logo - converte para base64 se necessário
+  if (data.logo instanceof File) {
     try {
-      // Convert file to base64 for storage if not already done
-      preparedData.bannerData = await fileToBase64(preparedData.banner);
-      preparedData.bannerName = preparedData.banner.name;
+      // Converte arquivo para base64 para armazenamento
+      preparedData.logoData = await fileToBase64(data.logo);
+      preparedData.logoName = data.logo.name;
       
-      // Keep the bannerUrl as is if it already exists
-      if (!preparedData.bannerUrl) {
-        preparedData.bannerUrl = createFilePreview(preparedData.banner);
+      // Mantém a URL do logo se já existir
+      if (!preparedData.logoUrl) {
+        preparedData.logoUrl = createFilePreview(data.logo);
       }
-    } catch (err) {
-      console.error("Error processing banner file:", err);
+    } catch (error) {
+      console.error("Erro ao processar arquivo de logo:", error);
+      // Em caso de erro, limpa os dados para evitar inconsistências
+      preparedData.logoData = undefined;
+      preparedData.logoName = undefined;
     }
-    
-    // Files can't be serialized, so set to null for storage
-    preparedData.banner = null;
-  } else if (!preparedData.banner && preparedData.bannerData) {
-    // If we have bannerData but no File, keep the data for persistence
-    preparedData.bannerUrl = preparedData.bannerUrl || null;
+  } else if (!data.logo && data.logoData) {
+    // Se temos logoData mas não temos File, mantém os dados para persistência
+    preparedData.logoUrl = data.logoUrl || null;
+  }
+  
+  // Trata o arquivo de banner - converte para base64 se necessário
+  if (data.banner instanceof File) {
+    try {
+      // Converte arquivo para base64 para armazenamento
+      preparedData.bannerData = await fileToBase64(data.banner);
+      preparedData.bannerName = data.banner.name;
+      
+      // Mantém a URL do banner se já existir
+      if (!preparedData.bannerUrl) {
+        preparedData.bannerUrl = createFilePreview(data.banner);
+      }
+    } catch (error) {
+      console.error("Erro ao processar arquivo de banner:", error);
+      // Em caso de erro, limpa os dados para evitar inconsistências
+      preparedData.bannerData = undefined;
+      preparedData.bannerName = undefined;
+    }
+  } else if (!data.banner && data.bannerData) {
+    // Se temos bannerData mas não temos File, mantém os dados para persistência
+    preparedData.bannerUrl = data.bannerUrl || null;
   }
   
   return preparedData;

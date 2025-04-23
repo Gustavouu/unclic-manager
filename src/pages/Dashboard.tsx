@@ -1,11 +1,103 @@
-
+import { useState, useEffect } from "react";
 import { Users, Calendar, DollarSign, Scissors, BarChart2, ShoppingBag } from "lucide-react";
-import { StatCard } from "@/components/dashboard/StatCard";
+import { StatsCard } from "@/components/common/StatsCard";
 import { AppointmentCalendar } from "@/components/dashboard/Calendar";
 import { FinancialChart } from "@/components/dashboard/FinancialChart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
+  const { businessId, loading: businessLoading } = useCurrentBusiness();
+  const [stats, setStats] = useState({
+    clientsCount: 0,
+    todayAppointments: 0,
+    monthlyRevenue: 0,
+    monthlyServices: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!businessId) return;
+      
+      setLoading(true);
+      try {
+        // Obter contagem de clientes
+        const { count: clientsCount, error: clientsError } = await supabase
+          .from('clientes')
+          .select('*', { count: 'exact', head: true })
+          .eq('id_negocio', businessId);
+          
+        if (clientsError) throw clientsError;
+        
+        // Obter agendamentos de hoje
+        const today = new Date().toISOString().split('T')[0];
+        const { count: appointmentsCount, error: appointmentsError } = await supabase
+          .from('agendamentos')
+          .select('*', { count: 'exact', head: true })
+          .eq('id_negocio', businessId)
+          .eq('data', today);
+          
+        if (appointmentsError) throw appointmentsError;
+        
+        // Obter faturamento do mês atual
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        const startOfMonth = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
+        const endOfMonth = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
+        
+        const { data: transactionsData, error: transactionsError } = await supabase
+          .from('transacoes')
+          .select('valor')
+          .eq('id_negocio', businessId)
+          .eq('tipo', 'receita')
+          .gte('data_pagamento', startOfMonth)
+          .lte('data_pagamento', endOfMonth);
+          
+        if (transactionsError) throw transactionsError;
+        
+        const monthlyRevenue = transactionsData.reduce((sum, transaction) => sum + transaction.valor, 0);
+        
+        // Obter quantidade de serviços realizados no mês
+        const { count: servicesCount, error: servicesError } = await supabase
+          .from('agendamentos')
+          .select('*', { count: 'exact', head: true })
+          .eq('id_negocio', businessId)
+          .eq('status', 'concluido')
+          .gte('data', startOfMonth)
+          .lte('data', endOfMonth);
+          
+        if (servicesError) throw servicesError;
+        
+        setStats({
+          clientsCount: clientsCount || 0,
+          todayAppointments: appointmentsCount || 0,
+          monthlyRevenue: monthlyRevenue,
+          monthlyServices: servicesCount || 0
+        });
+      } catch (error) {
+        console.error("Erro ao carregar dados do dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (businessId) {
+      fetchDashboardData();
+    }
+  }, [businessId]);
+  
+  // Formatação dos valores
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+  
+  if (businessLoading || loading) {
+    return <DashboardSkeleton />;
+  }
+  
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-2">
@@ -13,39 +105,41 @@ const Dashboard = () => {
         <p className="text-muted-foreground">Confira o resumo do seu estabelecimento.</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard
           title="Total de Clientes"
-          value="128"
-          subtitle="Clientes cadastrados"
+          value={stats.clientsCount.toString()}
+          description="Clientes cadastrados"
           icon={<Users size={18} />}
-          trend={{ value: 12, isPositive: true }}
+          iconColor="bg-blue-50 text-blue-500"
+          borderColor="border-l-blue-600"
         />
         
-        <StatCard
+        <StatsCard
           title="Agendamentos Hoje"
-          value="8"
-          subtitle="Horários marcados"
+          value={stats.todayAppointments.toString()}
+          description="Horários marcados"
           icon={<Calendar size={18} />}
-          iconClassName="bg-blue-50 text-blue-600"
+          iconColor="bg-indigo-50 text-indigo-500"
+          borderColor="border-l-indigo-600"
         />
         
-        <StatCard
+        <StatsCard
           title="Faturamento Mensal"
-          value="R$ 8.459,00"
-          subtitle="Mês atual"
+          value={formatCurrency(stats.monthlyRevenue)}
+          description="Mês atual"
           icon={<DollarSign size={18} />}
-          trend={{ value: 8, isPositive: true }}
-          iconClassName="bg-green-50 text-green-600"
+          iconColor="bg-green-50 text-green-500"
+          borderColor="border-l-green-600"
         />
         
-        <StatCard
+        <StatsCard
           title="Serviços Realizados"
-          value="93"
-          subtitle="Este mês"
+          value={stats.monthlyServices.toString()}
+          description="Este mês"
           icon={<Scissors size={18} />}
-          trend={{ value: 4, isPositive: true }}
-          iconClassName="bg-amber-50 text-amber-600"
+          iconColor="bg-amber-50 text-amber-500"
+          borderColor="border-l-amber-600"
         />
       </div>
       
@@ -56,7 +150,7 @@ const Dashboard = () => {
             <CardDescription>Clientes agendados para hoje e amanhã</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <AppointmentCalendar />
+            <AppointmentCalendar businessId={businessId} />
           </CardContent>
         </Card>
         
@@ -66,7 +160,7 @@ const Dashboard = () => {
             <CardDescription>Visão geral das receitas recentes</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
-            <FinancialChart />
+            <FinancialChart businessId={businessId} />
           </CardContent>
         </Card>
       </div>
@@ -125,6 +219,34 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+    </div>
+  );
+};
+
+// Componente de skeleton para o carregamento
+const DashboardSkeleton = () => {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96" />
+      </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array(4).fill(0).map((_, i) => (
+          <Skeleton key={i} className="h-32 w-full" />
+        ))}
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Skeleton className="h-80 w-full" />
+        <Skeleton className="h-80 w-full" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <Skeleton className="h-64 w-full lg:col-span-2" />
+        <Skeleton className="h-64 w-full" />
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ClientsLayout } from "@/components/clients/ClientsLayout";
 import { ClientsHeader } from "@/components/clients/ClientsHeader";
@@ -8,6 +7,7 @@ import { ClientStats } from "@/components/clients/ClientStats";
 import { useClientData } from "@/hooks/clients";
 import { Card } from "@/components/ui/card";
 import { TablePagination } from "@/components/common/TablePagination";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Clients = () => {
   const [showDetails, setShowDetails] = useState(false);
@@ -16,6 +16,7 @@ const Clients = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   
   const { 
+    clients,
     filteredClients, 
     searchTerm, 
     setSearchTerm, 
@@ -23,7 +24,8 @@ const Clients = () => {
     updateFilterOptions,
     availableCities,
     availableCategories,
-    deleteClient 
+    deleteClient,
+    loading
   } = useClientData();
 
   const handleShowDetails = (clientId: string) => {
@@ -52,11 +54,15 @@ const Clients = () => {
   return (
     <ClientsLayout>
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
-        <h1 className="text-xl font-display font-medium">Gerenciamento de Clientes</h1>
+        {loading ? (
+          <Skeleton className="h-8 w-64" />
+        ) : (
+          <h1 className="text-xl font-display font-medium">Gerenciamento de Clientes</h1>
+        )}
       </div>
       
       {/* Stats cards row */}
-      <ClientStats />
+      <ClientStats clients={clients} loading={loading} />
 
       <ClientsHeader 
         searchTerm={searchTerm} 
@@ -65,28 +71,35 @@ const Clients = () => {
         updateFilterOptions={updateFilterOptions}
         availableCities={availableCities}
         availableCategories={availableCategories}
+        loading={loading}
       />
       
       <Card className="border shadow-sm">
-        <ClientsTable 
-          clients={currentClients} 
-          onShowDetails={handleShowDetails} 
-          onDeleteClient={handleDeleteClient}
-        />
-        
-        <TablePagination 
-          currentPage={currentPage}
-          totalPages={totalPages}
-          itemsPerPage={itemsPerPage}
-          totalItems={filteredClients.length}
-          indexOfFirstItem={indexOfFirstClient}
-          indexOfLastItem={indexOfLastClient}
-          onPageChange={setCurrentPage}
-          onItemsPerPageChange={(value) => {
-            setItemsPerPage(value);
-            setCurrentPage(1); // Reset to first page when changing items per page
-          }}
-        />
+        {loading ? (
+          <Skeleton className="h-96 w-full" />
+        ) : (
+          <>
+            <ClientsTable 
+              clients={currentClients} 
+              onShowDetails={handleShowDetails} 
+              onDeleteClient={handleDeleteClient}
+            />
+            
+            <TablePagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              itemsPerPage={itemsPerPage}
+              totalItems={filteredClients.length}
+              indexOfFirstItem={indexOfFirstClient}
+              indexOfLastItem={indexOfLastClient}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={(value) => {
+                setItemsPerPage(value);
+                setCurrentPage(1); // Reset to first page when changing items per page
+              }}
+            />
+          </>
+        )}
       </Card>
       
       {showDetails && selectedClientId && (

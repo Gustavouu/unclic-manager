@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -87,17 +86,22 @@ export const useAppointmentCreate = (
           throw error;
         }
         
+        if (!data) {
+          console.error("No data returned after insert");
+          throw new Error("Falha ao inserir no banco de dados");
+        }
+        
         console.log("Appointment created successfully:", data);
         
         // Convert database record to app format
         const newAppointment: Appointment = {
           id: data.id,
-          clientName: appointmentData.clientName,
-          serviceName: appointmentData.serviceName,
+          clientName: appointmentData.clientName || "",
+          serviceName: appointmentData.serviceName || "",
           date: appointmentData.date,
           status: appointmentData.status,
           price: appointmentData.price,
-          serviceType: appointmentData.serviceType,
+          serviceType: appointmentData.serviceType || "",
           duration: appointmentData.duration,
           notes: notesWithClientInfo,
           paymentMethod: appointmentData.paymentMethod,
@@ -114,7 +118,6 @@ export const useAppointmentCreate = (
         // Return the new appointment ID
         return data.id;
       } catch (dbError) {
-        // If database operation fails, use in-memory data for demo purposes
         console.warn("Database operation failed, using in-memory fallback:", dbError);
         
         // Generate random ID for demo purposes
@@ -123,12 +126,12 @@ export const useAppointmentCreate = (
         // Create in-memory appointment
         const newAppointment: Appointment = {
           id: demoId,
-          clientName: appointmentData.clientName,
-          serviceName: appointmentData.serviceName,
+          clientName: appointmentData.clientName || "",
+          serviceName: appointmentData.serviceName || "",
           date: appointmentData.date,
           status: appointmentData.status,
           price: appointmentData.price,
-          serviceType: appointmentData.serviceType,
+          serviceType: appointmentData.serviceType || "",
           duration: appointmentData.duration,
           notes: notesWithClientInfo,
           paymentMethod: appointmentData.paymentMethod,

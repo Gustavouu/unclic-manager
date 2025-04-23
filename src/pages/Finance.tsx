@@ -1,10 +1,10 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 import { 
   FinancialChart, 
@@ -20,6 +20,7 @@ export default function Finance() {
   const [activeTab, setActiveTab] = useState("todas");
   const [period, setPeriod] = useState("30days");
   const [searchDate, setSearchDate] = useState<Date | undefined>(undefined);
+  const { businessId } = useCurrentBusiness();
   
   useEffect(() => {
     // Simular o carregamento dos dados
@@ -60,7 +61,7 @@ export default function Finance() {
             <CardTitle>Movimentação Financeira</CardTitle>
           </CardHeader>
           <CardContent>
-            <FinancialChart />
+            <FinancialChart businessId={businessId} />
           </CardContent>
         </Card>
 

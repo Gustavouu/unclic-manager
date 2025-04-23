@@ -1,7 +1,6 @@
-
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { appointmentFormSchema, AppointmentFormValues } from "../schemas/appointmentFormSchema";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -11,12 +10,17 @@ import { ServiceSelect } from "./ServiceSelect";
 import { ProfessionalSelect } from "./ProfessionalSelect";
 import { DateTimeSelect } from "./DateTimeSelect";
 import { NotesField } from "./NotesField";
+import { StatusSelect } from "./StatusSelect";
+import { NotificationsOptions } from "./NotificationsOptions";
 import { clients } from "../data/appointmentMockData";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
+import { useAppointmentConflicts } from "@/hooks/appointments/useAppointmentConflicts";
 import { v4 as uuidv4 } from "uuid";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 type AppointmentFormProps = {
   onClose: () => void;
@@ -30,15 +34,34 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
     price: number;
   } | null>(null);
 
-  const { createAppointment, fetchAppointments } = useAppointments();
+  const { appointments, createAppointment, fetchAppointments } = useAppointments();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  
+  // Use o hook de verificação de conflitos
+  const { validateAppointmentTime } = useAppointmentConflicts(appointments);
 
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       notes: "",
+      status: "agendado",
+      notifications: {
+        sendConfirmation: true,
+        sendReminder: true,
+      },
     },
   });
+  
+  // Limpar erro de validação quando os campos de data, hora ou profissional mudarem
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'date' || name === 'time' || name === 'professionalId') {
+        setValidationError(null);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const onSubmit = async (values: AppointmentFormValues) => {
     try {
@@ -56,6 +79,19 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
       const clientId = values.clientId || uuidv4();
       const professionalId = values.professionalId || uuidv4();
       
+      // Verificar conflitos de agendamento
+      const validationResult = validateAppointmentTime({
+        date: appointmentDate,
+        duration: selectedService?.duration || 60,
+        professionalId: professionalId
+      });
+      
+      if (!validationResult.valid) {
+        setValidationError(validationResult.reason || "Horário inválido para agendamento.");
+        setIsSubmitting(false);
+        return;
+      }
+      
       console.log("Creating appointment with form values:", {
         ...values,
         appointmentDate,
@@ -69,7 +105,7 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
         clientName: client?.name || "Cliente não identificado",
         serviceName: selectedService?.name || "Serviço não identificado",
         date: appointmentDate,
-        status: "agendado",
+        status: values.status,
         price: selectedService?.price || 0,
         serviceType: "haircut", // This could be improved with actual categories
         duration: selectedService?.duration || 60,
@@ -91,6 +127,11 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
         description: `Cliente: ${client?.name}, 
                      Data: ${format(appointmentDate, "d 'de' MMMM", { locale: ptBR })} às ${values.time}`,
       });
+      
+      // Se há configuração para enviar confirmação, mostrar toast informativo
+      if (values.notifications?.sendConfirmation) {
+        toast.info("Enviando confirmação para o cliente...");
+      }
     } catch (error) {
       console.error("Error creating appointment:", error);
       toast.error("Erro ao criar agendamento. Tente novamente.");
@@ -110,7 +151,19 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
         />
         <ProfessionalSelect form={form} />
         <DateTimeSelect form={form} />
+        <StatusSelect form={form} />
         <NotesField form={form} />
+        <NotificationsOptions form={form} />
+        
+        {validationError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Erro de validação</AlertTitle>
+            <AlertDescription>
+              {validationError}
+            </AlertDescription>
+          </Alert>
+        )}
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>

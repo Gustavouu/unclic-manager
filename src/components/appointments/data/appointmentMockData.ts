@@ -1,26 +1,51 @@
+// Dados de exemplo para uso nos componentes quando a API não estiver disponível
 
-// Fake data for the form
 export const clients = [
   { id: "1", name: "Maria Silva" },
-  { id: "2", name: "José Santos" },
+  { id: "2", name: "João Santos" },
   { id: "3", name: "Ana Oliveira" },
-  { id: "4", name: "Paulo Costa" },
-  { id: "5", name: "Fernanda Lima" },
+  { id: "4", name: "Carlos Souza" },
+  { id: "5", name: "Patricia Costa" },
 ];
 
 export const services = [
-  { id: "1", name: "Corte de Cabelo", duration: 30, price: 50 },
-  { id: "2", name: "Coloração", duration: 90, price: 150 },
-  { id: "3", name: "Barba", duration: 30, price: 35 },
-  { id: "4", name: "Manicure", duration: 45, price: 60 },
-  { id: "5", name: "Pedicure", duration: 45, price: 70 },
+  { 
+    id: "1", 
+    name: "Corte de Cabelo", 
+    duration: 30, 
+    price: 50 
+  },
+  { 
+    id: "2", 
+    name: "Barba", 
+    duration: 20, 
+    price: 30 
+  },
+  { 
+    id: "3", 
+    name: "Coloração", 
+    duration: 120, 
+    price: 150 
+  },
+  { 
+    id: "4", 
+    name: "Manicure", 
+    duration: 45, 
+    price: 40 
+  },
+  { 
+    id: "5", 
+    name: "Pedicure", 
+    duration: 60, 
+    price: 50 
+  },
 ];
 
 export const professionals = [
-  { id: "1", name: "Carlos Mendes" },
-  { id: "2", name: "Amanda Sousa" },
-  { id: "3", name: "Roberto Ferreira" },
-  { id: "4", name: "Juliana Martins" },
+  { id: "1", name: "Fernanda Oliveira" },
+  { id: "2", name: "Ricardo Martins" },
+  { id: "3", name: "Juliana Pereira" },
+  { id: "4", name: "Gabriel Castro" },
 ];
 
 // Available time slots

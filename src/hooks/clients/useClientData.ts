@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useClientOperations } from "./useClientOperations";
 import { useClientFilters } from "./useClientFilters";
@@ -13,28 +12,41 @@ export const useClientData = () => {
   const {
     clients,
     setClients,
+    loading,
     filterOptions,
     updateFilterOptions,
     addClient,
-    deleteClient
+    deleteClient,
+    updateClient,
+    addLoyaltyPoints,
+    updateMarketingPreferences,
+    addClientTag,
+    removeClientTag
   } = useClientOperations();
   
   // Get filtered clients
   const filteredClients = useClientFilters(clients, searchTerm, filterOptions);
   
   // Get metadata like available cities and categories
-  const { availableCities, availableCategories } = useClientMetadata(clients);
+  const { availableCities, availableCategories, availableTags } = useClientMetadata(clients);
 
   return {
     clients,
     setClients,
+    loading,
     addClient,
     deleteClient,
+    updateClient,
+    addLoyaltyPoints,
+    updateMarketingPreferences,
+    addClientTag,
+    removeClientTag,
     filteredClients,
     filterOptions,
     updateFilterOptions,
     availableCities,
     availableCategories,
+    availableTags,
     searchTerm,
     setSearchTerm
   };

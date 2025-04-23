@@ -1,4 +1,4 @@
-export type AppointmentStatus = "agendado" | "concluído" | "cancelado";
+export type AppointmentStatus = "agendado" | "confirmado" | "pendente" | "concluido" | "cancelado";
 export type ServiceType = "all" | "haircut" | "barber" | "combo" | "treatment";
 export type DateFilter = "all" | "today" | "tomorrow" | "thisWeek" | "custom";
 export type CalendarViewType = "month" | "week" | "day";

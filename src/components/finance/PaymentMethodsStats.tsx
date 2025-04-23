@@ -1,8 +1,8 @@
-
 import { useEffect, useState } from "react";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 interface PaymentMethodsStatsProps {
   isLoading: boolean;
@@ -16,6 +16,7 @@ interface PaymentMethodStat {
 
 export function PaymentMethodsStats({ isLoading }: PaymentMethodsStatsProps) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodStat[]>([]);
+  const { businessId } = useCurrentBusiness();
   
   useEffect(() => {
     const fetchPaymentMethods = async () => {
@@ -24,7 +25,8 @@ export function PaymentMethodsStats({ isLoading }: PaymentMethodsStatsProps) {
           .from('transacoes')
           .select('metodo_pagamento, valor')
           .eq('tipo', 'receita')
-          .eq('status', 'approved');
+          .eq('status', 'approved')
+          .eq('id_negocio', businessId);
         
         if (error) throw error;
         
@@ -66,10 +68,10 @@ export function PaymentMethodsStats({ isLoading }: PaymentMethodsStatsProps) {
       }
     };
     
-    if (!isLoading) {
+    if (!isLoading && businessId) {
       fetchPaymentMethods();
     }
-  }, [isLoading]);
+  }, [isLoading, businessId]);
   
   if (isLoading) {
     return <Skeleton className="h-[200px] w-full" />;

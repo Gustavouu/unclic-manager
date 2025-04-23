@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -31,6 +30,7 @@ import { z } from "zod";
 import { PlusCircle, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 // Definindo os schemas para os formulários
 const transactionSchema = z.object({
@@ -46,6 +46,7 @@ const transactionSchema = z.object({
 export function FinancialActions() {
   const [isOpen, setIsOpen] = useState(false);
   const [transactionType, setTransactionType] = useState<"receita" | "despesa" | null>(null);
+  const { businessId } = useCurrentBusiness();
   
   const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
@@ -74,7 +75,7 @@ export function FinancialActions() {
           id_categoria: data.id_categoria,
           data_pagamento: data.data_pagamento,
           status: data.status,
-          id_negocio: "1", // Substituir pelo ID real do negócio
+          id_negocio: businessId,
           criado_em: new Date().toISOString()
         });
       

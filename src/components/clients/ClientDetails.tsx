@@ -1,5 +1,5 @@
-
 import { useClientHistory } from "@/hooks/useClientHistory";
+import { useClientData } from "@/hooks/clients";
 import {
   Sheet,
   SheetContent,
@@ -12,8 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClientInfoTab } from "./details/ClientInfoTab";
 import { ServiceHistoryTab } from "./details/ServiceHistoryTab";
 import { PurchaseHistoryTab } from "./details/PurchaseHistoryTab";
+import { ClientLoyaltyTab } from "./details/ClientLoyaltyTab";
+import { ClientMarketingTab } from "./details/ClientMarketingTab";
 import { Button } from "../ui/button";
-import { Calendar, Edit, Phone } from "lucide-react";
+import { Calendar, Edit, Phone, Star, Tag } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type ClientDetailsProps = {
@@ -23,6 +25,13 @@ type ClientDetailsProps = {
 
 export const ClientDetails = ({ clientId, onClose }: ClientDetailsProps) => {
   const { client, serviceHistory, purchaseHistory, isLoading } = useClientHistory(clientId);
+  const { 
+    availableTags = [], 
+    addLoyaltyPoints, 
+    updateMarketingPreferences, 
+    addClientTag, 
+    removeClientTag 
+  } = useClientData();
 
   if (isLoading) {
     return (
@@ -53,6 +62,30 @@ export const ClientDetails = ({ clientId, onClose }: ClientDetailsProps) => {
       </Sheet>
     );
   }
+
+  const handleAddPoints = async (points: number) => {
+    if (addLoyaltyPoints) {
+      await addLoyaltyPoints(clientId, points);
+    }
+  };
+
+  const handleUpdateMarketingPreferences = async (preferences: Partial<any>) => {
+    if (updateMarketingPreferences) {
+      await updateMarketingPreferences(clientId, preferences);
+    }
+  };
+
+  const handleAddTag = async (tag: string) => {
+    if (addClientTag) {
+      await addClientTag(clientId, tag);
+    }
+  };
+
+  const handleRemoveTag = async (tag: string) => {
+    if (removeClientTag) {
+      await removeClientTag(clientId, tag);
+    }
+  };
 
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
@@ -90,10 +123,18 @@ export const ClientDetails = ({ clientId, onClose }: ClientDetailsProps) => {
         </div>
 
         <Tabs defaultValue="info">
-          <TabsList className="grid grid-cols-3 mb-6">
+          <TabsList className="grid grid-cols-5 mb-6">
             <TabsTrigger value="info">Informações</TabsTrigger>
             <TabsTrigger value="services">Serviços</TabsTrigger>
             <TabsTrigger value="purchases">Compras</TabsTrigger>
+            <TabsTrigger value="loyalty">
+              <Star className="h-4 w-4 mr-1" />
+              Fidelidade
+            </TabsTrigger>
+            <TabsTrigger value="marketing">
+              <Tag className="h-4 w-4 mr-1" />
+              Marketing
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="info">
             <ClientInfoTab client={client} />
@@ -103,6 +144,21 @@ export const ClientDetails = ({ clientId, onClose }: ClientDetailsProps) => {
           </TabsContent>
           <TabsContent value="purchases">
             <PurchaseHistoryTab purchaseHistory={purchaseHistory} />
+          </TabsContent>
+          <TabsContent value="loyalty">
+            <ClientLoyaltyTab 
+              client={client} 
+              onAddPoints={handleAddPoints}
+            />
+          </TabsContent>
+          <TabsContent value="marketing">
+            <ClientMarketingTab 
+              client={client}
+              availableTags={availableTags}
+              onUpdateMarketingPreferences={handleUpdateMarketingPreferences}
+              onAddTag={handleAddTag}
+              onRemoveTag={handleRemoveTag}
+            />
           </TabsContent>
         </Tabs>
       </SheetContent>

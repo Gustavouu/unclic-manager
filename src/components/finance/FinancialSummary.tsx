@@ -1,12 +1,12 @@
-
 import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/formatters";
 import { TrendingUp, TrendingDown, CalendarRange, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { StatsCard } from "@/components/common/StatsCard";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 interface FinancialSummaryProps {
   isLoading: boolean;
@@ -19,6 +19,7 @@ export function FinancialSummary({ isLoading }: FinancialSummaryProps) {
     saldo: 0,
     transacoesPendentes: 0
   });
+  const { businessId } = useCurrentBusiness();
   
   useEffect(() => {
     const fetchSummaryData = async () => {
@@ -32,6 +33,7 @@ export function FinancialSummary({ isLoading }: FinancialSummaryProps) {
           .select('valor')
           .eq('tipo', 'receita')
           .eq('status', 'approved')
+          .eq('id_negocio', businessId)
           .gte('criado_em', thirtyDaysAgo.toISOString());
         
         if (receitasError) throw receitasError;
@@ -42,6 +44,7 @@ export function FinancialSummary({ isLoading }: FinancialSummaryProps) {
           .select('valor')
           .eq('tipo', 'despesa')
           .eq('status', 'approved')
+          .eq('id_negocio', businessId)
           .gte('criado_em', thirtyDaysAgo.toISOString());
         
         if (despesasError) throw despesasError;
@@ -51,6 +54,7 @@ export function FinancialSummary({ isLoading }: FinancialSummaryProps) {
           .from('transacoes')
           .select('id')
           .eq('status', 'pending')
+          .eq('id_negocio', businessId)
           .gte('criado_em', thirtyDaysAgo.toISOString());
         
         if (pendentesError) throw pendentesError;
@@ -70,92 +74,60 @@ export function FinancialSummary({ isLoading }: FinancialSummaryProps) {
       }
     };
     
-    if (!isLoading) {
+    if (!isLoading && businessId) {
       fetchSummaryData();
     }
-  }, [isLoading]);
+  }, [isLoading, businessId]);
   
   const currentMonth = format(new Date(), "MMMM 'de' yyyy", { locale: ptBR });
   
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-[100px] w-full" />
+        ))}
+      </div>
+    );
+  }
+  
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Receitas</p>
-              {isLoading ? (
-                <Skeleton className="h-7 w-24 mt-1" />
-              ) : (
-                <h3 className="text-2xl font-bold text-green-600">{formatCurrency(summaryData.receitas)}</h3>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">{currentMonth}</p>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 text-green-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <StatsCard 
+        title="Receitas"
+        value={formatCurrency(summaryData.receitas)}
+        description={currentMonth}
+        icon={<TrendingUp size={18} />}
+        iconColor="bg-green-50 text-green-500"
+        borderColor="border-l-green-600"
+      />
       
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Despesas</p>
-              {isLoading ? (
-                <Skeleton className="h-7 w-24 mt-1" />
-              ) : (
-                <h3 className="text-2xl font-bold text-red-600">{formatCurrency(summaryData.despesas)}</h3>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">{currentMonth}</p>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
-              <TrendingDown className="h-6 w-6 text-red-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <StatsCard 
+        title="Despesas"
+        value={formatCurrency(summaryData.despesas)}
+        description={currentMonth}
+        icon={<TrendingDown size={18} />}
+        iconColor="bg-red-50 text-red-500"
+        borderColor="border-l-red-600"
+      />
       
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Saldo</p>
-              {isLoading ? (
-                <Skeleton className="h-7 w-24 mt-1" />
-              ) : (
-                <h3 className={`text-2xl font-bold ${summaryData.saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(summaryData.saldo)}
-                </h3>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">{currentMonth}</p>
-            </div>
-            <div className={`h-12 w-12 rounded-full ${summaryData.saldo >= 0 ? 'bg-green-100' : 'bg-red-100'} flex items-center justify-center`}>
-              <Wallet className={`h-6 w-6 ${summaryData.saldo >= 0 ? 'text-green-600' : 'text-red-600'}`} />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <StatsCard 
+        title="Saldo"
+        value={formatCurrency(summaryData.saldo)}
+        description={currentMonth}
+        icon={<Wallet size={18} />}
+        iconColor={summaryData.saldo >= 0 ? "bg-green-50 text-green-500" : "bg-red-50 text-red-500"}
+        borderColor={summaryData.saldo >= 0 ? "border-l-green-600" : "border-l-red-600"}
+      />
       
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Pendentes</p>
-              {isLoading ? (
-                <Skeleton className="h-7 w-24 mt-1" />
-              ) : (
-                <h3 className="text-2xl font-bold text-amber-600">{summaryData.transacoesPendentes}</h3>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">Transações</p>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
-              <CalendarRange className="h-6 w-6 text-amber-600" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <StatsCard 
+        title="Pendentes"
+        value={summaryData.transacoesPendentes.toString()}
+        description="Transações"
+        icon={<CalendarRange size={18} />}
+        iconColor="bg-amber-50 text-amber-500"
+        borderColor="border-l-amber-600"
+      />
     </div>
   );
 }

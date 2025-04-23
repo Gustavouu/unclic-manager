@@ -1,0 +1,22 @@
+# Instalar dependências
+npm install
+
+# Iniciar o servidor
+npm run dev
+
+# Construir para produção
+npm run build
+
+# Visualizar versão de produção localmente
+npm run preview
+
+# Executar testes
+npm run test
+
+# Verificar qualidade do código
+npm run lint
+# Instalar dependências
+npm install
+
+# Iniciar o servidor
+npm run dev

@@ -1,5 +1,4 @@
-
-import { Card, CardContent } from "@/components/ui/card";
+import { StatsCard } from "@/components/common/StatsCard";
 import { Scissors, Clock, UserCheck, AlertTriangle } from "lucide-react";
 import { format, isToday, isTomorrow, isAfter, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -50,61 +49,38 @@ export const AppointmentStats = () => {
       <StatsCard 
         title="Hoje"
         value={todayAppointments.length.toString()}
-        icon={<Scissors size={20} className="text-blue-500" />}
+        icon={<Scissors size={20} />}
         description={`${format(today, "dd 'de' MMMM", { locale: ptBR })}`}
-        trending={todayAppointments.length > 0 ? "up" : "neutral"}
+        iconColor="bg-blue-50 text-blue-500"
+        borderColor="border-l-blue-600"
       />
       
       <StatsCard 
         title="Amanhã"
         value={tomorrowAppointments.length.toString()}
-        icon={<Clock size={20} className="text-indigo-500" />}
+        icon={<Clock size={20} />}
         description={`${format(tomorrow, "dd 'de' MMMM", { locale: ptBR })}`}
-        trending="neutral"
+        iconColor="bg-indigo-50 text-indigo-500"
+        borderColor="border-l-indigo-600"
       />
       
       <StatsCard 
         title="Próximo"
         value={nextAppointmentTime}
-        icon={<UserCheck size={20} className="text-green-500" />}
+        icon={<UserCheck size={20} />}
         description={nextAppointmentClient}
-        trending={nextAppointment ? "up" : "neutral"}
+        iconColor="bg-green-50 text-green-500"
+        borderColor="border-l-green-600"
       />
       
       <StatsCard 
         title="Pendentes"
         value={pendingAppointments.length.toString()} 
-        icon={<AlertTriangle size={20} className="text-amber-500" />}
+        icon={<AlertTriangle size={20} />}
         description="A confirmar"
-        trending={pendingAppointments.length > 5 ? "down" : "neutral"}
+        iconColor="bg-amber-50 text-amber-500"
+        borderColor="border-l-amber-600"
       />
     </div>
-  );
-};
-
-interface StatsCardProps {
-  title: string;
-  value: string;
-  icon: React.ReactNode;
-  description: string;
-  trending: "up" | "down" | "neutral";
-}
-
-const StatsCard = ({ title, value, icon, description, trending }: StatsCardProps) => {
-  return (
-    <Card className="border-l-4 border-l-blue-600">
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold mt-1">{value}</p>
-            <p className="text-xs text-muted-foreground mt-1">{description}</p>
-          </div>
-          <div className="bg-blue-50 p-2 rounded-full">
-            {icon}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 };

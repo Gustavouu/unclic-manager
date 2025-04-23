@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { weekDays } from "./calendar/constants";
 import { CalendarFilter } from "./calendar/CalendarFilter";
@@ -7,11 +6,13 @@ import { MonthView } from "./calendar/MonthView";
 import { DayView } from "./calendar/DayView";
 import { WeekView } from "./calendar/WeekView";
 import { CalendarFooter } from "./calendar/CalendarFooter";
-import { CalendarViewType } from "./calendar/types";
+import { CalendarViewType } from "./types";
 import { useBusinessHours } from "@/hooks/useBusinessHours";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
+import { AppointmentDialog } from "./dialog/AppointmentDialog";
 import { CalendarProvider, useCalendarContext } from "./calendar/CalendarContext";
 import { SERVICE_TYPE_NAMES } from "./types";
+import { toast } from "sonner";
 
 interface AppointmentCalendarProps {
   initialView?: CalendarViewType;
@@ -30,7 +31,8 @@ export const AppointmentCalendar = ({ initialView }: AppointmentCalendarProps) =
     serviceType: app.serviceType,
     duration: app.duration || 60,
     price: app.price || 0,
-    status: app.status
+    status: app.status,
+    professionalId: app.professionalId // Adicionado para filtros
   }));
   
   // Refresh appointments when the component mounts and every 30 seconds
@@ -60,6 +62,8 @@ interface CalendarContentProps {
 }
 
 const CalendarContent = ({ isLoading, initialView }: CalendarContentProps) => {
+  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
+  
   const { 
     calendarView, 
     setCalendarView,
@@ -70,8 +74,11 @@ const CalendarContent = ({ isLoading, initialView }: CalendarContentProps) => {
     filteredAppointments,
     dayAppointments,
     weekAppointments,
+    selectedAppointment,
+    setSelectedAppointment,
     handleSelectDay,
-    handleSelectAppointment
+    handleSelectAppointment,
+    isDragging,
   } = useCalendarContext();
   
   // Set initial view from props if provided
@@ -84,6 +91,28 @@ const CalendarContent = ({ isLoading, initialView }: CalendarContentProps) => {
   // Get business hours from the hook
   const { getCalendarBusinessHours } = useBusinessHours();
   const businessHours = getCalendarBusinessHours();
+  
+  // Abrir diálogo de agendamento quando um agendamento é selecionado
+  useEffect(() => {
+    if (selectedAppointment) {
+      setAppointmentDialogOpen(true);
+    }
+  }, [selectedAppointment]);
+  
+  // Fechar o diálogo e limpar o agendamento selecionado
+  const handleDialogClose = () => {
+    setAppointmentDialogOpen(false);
+    setSelectedAppointment(null);
+  };
+  
+  // Quando estamos arrastando um agendamento
+  useEffect(() => {
+    if (isDragging) {
+      toast.info("Arraste para a nova data e hora desejada", {
+        duration: 2000
+      });
+    }
+  }, [isDragging]);
 
   if (isLoading) {
     return (
@@ -105,6 +134,11 @@ const CalendarContent = ({ isLoading, initialView }: CalendarContentProps) => {
               onFilterChange={setServiceFilter}
               serviceTypes={SERVICE_TYPE_NAMES}
             />
+            
+            {/* Instrução de drag-and-drop */}
+            <div className="text-xs text-gray-500 italic ml-2">
+              Arraste e solte os agendamentos para alterar data/hora
+            </div>
           </div>
         </div>
         
@@ -120,7 +154,7 @@ const CalendarContent = ({ isLoading, initialView }: CalendarContentProps) => {
         
         {calendarView === "week" && (
           <WeekView
-            weekAppointments={weekAppointments}
+            weekAppointments={filteredAppointments}
             onSelectAppointment={handleSelectAppointment}
             businessHours={businessHours}
           />
@@ -135,6 +169,15 @@ const CalendarContent = ({ isLoading, initialView }: CalendarContentProps) => {
       </div>
       
       <CalendarFooter />
+      
+      {/* Diálogo de detalhes do agendamento */}
+      {selectedAppointment && (
+        <AppointmentDialog
+          open={appointmentDialogOpen}
+          onClose={handleDialogClose}
+          appointment={selectedAppointment}
+        />
+      )}
     </div>
   );
 };

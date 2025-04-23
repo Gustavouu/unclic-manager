@@ -1,4 +1,3 @@
-
 import { useMemo } from "react";
 import { Client, FilterOptions } from "./types";
 
@@ -65,6 +64,31 @@ export const useClientFilters = (
       // Filtro por gênero
       if (filterOptions.gender && client.gender !== filterOptions.gender) {
         return false;
+      }
+      
+      // Filtro por pontos de fidelidade
+      if (filterOptions.loyaltyPointsRange && client.loyaltyPoints !== undefined) {
+        const [min, max] = filterOptions.loyaltyPointsRange;
+        if (client.loyaltyPoints < min || client.loyaltyPoints > max) {
+          return false;
+        }
+      }
+      
+      // Filtro por tags
+      if (filterOptions.tags && filterOptions.tags.length > 0) {
+        // Verifica se o cliente tem pelo menos uma das tags selecionadas
+        if (!client.tags || !filterOptions.tags.some(tag => client.tags?.includes(tag))) {
+          return false;
+        }
+      }
+      
+      // Filtro por consentimento de marketing
+      if (filterOptions.hasMarketingConsent && client.marketingPreferences) {
+        // Verifica se o cliente consentiu com pelo menos um tipo de marketing
+        const { email, whatsapp, sms } = client.marketingPreferences;
+        if (!email && !whatsapp && !sms) {
+          return false;
+        }
       }
       
       return true;

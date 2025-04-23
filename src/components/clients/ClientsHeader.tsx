@@ -5,6 +5,7 @@ import { useState } from "react";
 import { NewClientDialog } from "./NewClientDialog";
 import { ClientsFiltersSheet } from "./ClientsFiltersSheet";
 import { FilterOptions } from "@/hooks/clients";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ClientsHeaderProps = {
   searchTerm: string;
@@ -13,6 +14,7 @@ type ClientsHeaderProps = {
   updateFilterOptions: (newOptions: Partial<FilterOptions>) => void;
   availableCities: string[];
   availableCategories: string[];
+  loading?: boolean;
 };
 
 export const ClientsHeader = ({ 
@@ -21,7 +23,8 @@ export const ClientsHeader = ({
   filterOptions,
   updateFilterOptions,
   availableCities,
-  availableCategories
+  availableCategories,
+  loading = false
 }: ClientsHeaderProps) => {
   const [showNewClientDialog, setShowNewClientDialog] = useState(false);
   const [showFiltersSheet, setShowFiltersSheet] = useState(false);
@@ -34,6 +37,18 @@ export const ClientsHeader = ({
     filterOptions.categories.length +
     ((filterOptions.spentRange[0] > 0 || filterOptions.spentRange[1] < 1000) ? 1 : 0) +
     (filterOptions.lastVisitRange[0] || filterOptions.lastVisitRange[1] ? 1 : 0);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
+        <Skeleton className="h-10 w-full md:w-96" />
+        <div className="flex gap-2 w-full md:w-auto">
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">

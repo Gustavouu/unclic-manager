@@ -1,13 +1,26 @@
-
-import { Card, CardContent } from "@/components/ui/card";
+import { StatsCard } from "@/components/common/StatsCard";
 import { Users, UserPlus, Star, Clock } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useClientData, Client } from "@/hooks/clients/useClientData"; 
+import { Client } from "@/hooks/clients/useClientData";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export const ClientStats = () => {
-  // Get client data using the hook
-  const { clients } = useClientData();
+interface ClientStatsProps {
+  clients: Client[];
+  loading?: boolean;
+}
+
+export const ClientStats = ({ clients, loading = false }: ClientStatsProps) => {
+  // Exibir skeleton quando estiver carregando
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {Array(4).fill(0).map((_, i) => (
+          <Skeleton key={i} className="h-28 w-full" />
+        ))}
+      </div>
+    );
+  }
   
   // Calculate stats
   const totalClients = clients.length;
@@ -42,61 +55,38 @@ export const ClientStats = () => {
       <StatsCard 
         title="Total de Clientes"
         value={totalClients.toString()}
-        icon={<Users size={20} className="text-blue-500" />}
+        icon={<Users size={20} />}
         description={formattedToday}
-        trending="neutral"
+        iconColor="bg-blue-50 text-blue-500"
+        borderColor="border-l-blue-600"
       />
       
       <StatsCard 
         title="Novos Clientes"
         value={newClients.length.toString()}
-        icon={<UserPlus size={20} className="text-green-500" />}
+        icon={<UserPlus size={20} />}
         description="Últimos 30 dias"
-        trending={newClients.length > 0 ? "up" : "neutral"}
+        iconColor="bg-green-50 text-green-500"
+        borderColor="border-l-green-600"
       />
       
       <StatsCard 
         title="Clientes VIP"
         value={vipClients.length.toString()}
-        icon={<Star size={20} className="text-amber-500" />}
+        icon={<Star size={20} />}
         description="Premium + VIP"
-        trending={vipClients.length > 5 ? "up" : "neutral"}
+        iconColor="bg-amber-50 text-amber-500"
+        borderColor="border-l-amber-600"
       />
       
       <StatsCard 
         title="Sem Visitas Recentes"
         value={inactiveClients.length.toString()}
-        icon={<Clock size={20} className="text-red-500" />}
+        icon={<Clock size={20} />}
         description="+60 dias sem visita"
-        trending={inactiveClients.length > 10 ? "down" : "neutral"}
+        iconColor="bg-red-50 text-red-500"
+        borderColor="border-l-red-600"
       />
     </div>
-  );
-};
-
-interface StatsCardProps {
-  title: string;
-  value: string;
-  icon: React.ReactNode;
-  description: string;
-  trending: "up" | "down" | "neutral";
-}
-
-const StatsCard = ({ title, value, icon, description, trending }: StatsCardProps) => {
-  return (
-    <Card className="border-l-4 border-l-blue-600">
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold mt-1">{value}</p>
-            <p className="text-xs text-muted-foreground mt-1">{description}</p>
-          </div>
-          <div className="bg-blue-50 p-2 rounded-full">
-            {icon}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 };

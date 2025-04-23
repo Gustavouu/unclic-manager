@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   addMonths, 
   subMonths, 
@@ -6,7 +6,8 @@ import {
   endOfMonth, 
   eachDayOfInterval, 
   getDay, 
-  isSameDay 
+  isSameDay,
+  parseISO
 } from "date-fns";
 import { cn } from "@/lib/utils";
 import { CalendarHeader } from "./calendar/CalendarHeader";
@@ -14,31 +15,7 @@ import { MonthView } from "./calendar/MonthView";
 import { DayView } from "./calendar/DayView";
 import { CalendarFooter } from "./calendar/CalendarFooter";
 import { ServiceFilter } from "./calendar/ServiceFilter";
-
-// Sample appointments data for demonstration
-const SAMPLE_APPOINTMENTS = [
-  {
-    id: "1",
-    date: new Date(2024, 6, 12, 10, 0),
-    clientName: "Mariana Silva",
-    serviceName: "Corte e Coloração",
-    serviceType: "hair"
-  },
-  {
-    id: "2",
-    date: new Date(2024, 6, 12, 14, 30),
-    clientName: "Carlos Santos",
-    serviceName: "Barba e Cabelo",
-    serviceType: "barber"
-  },
-  {
-    id: "3",
-    date: new Date(2024, 6, 15, 11, 0),
-    clientName: "Ana Paula Costa",
-    serviceName: "Manicure",
-    serviceType: "nails"
-  },
-];
+import { supabase } from "@/integrations/supabase/client";
 
 // Service types for filter
 export type ServiceType = "all" | "hair" | "barber" | "nails" | "makeup" | "skincare";
@@ -63,11 +40,80 @@ export type AppointmentType = {
   serviceType: string;
 };
 
-export const AppointmentCalendar = () => {
+interface AppointmentCalendarProps {
+  businessId: string | null;
+}
+
+export const AppointmentCalendar = ({ businessId }: AppointmentCalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarView, setCalendarView] = useState<"month" | "day">("month");
   const [serviceFilter, setServiceFilter] = useState<ServiceType>("all");
+  const [appointments, setAppointments] = useState<AppointmentType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Buscar agendamentos do Supabase
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      if (!businessId) return;
+      
+      try {
+        setLoading(true);
+        
+        // Configurar datas para o mês atual
+        const monthStart = startOfMonth(currentMonth);
+        const monthEnd = endOfMonth(currentMonth);
+        
+        const startDate = monthStart.toISOString().split('T')[0];
+        const endDate = monthEnd.toISOString().split('T')[0];
+        
+        // Buscar agendamentos do mês
+        const { data, error } = await supabase
+          .from('agendamentos')
+          .select(`
+            id,
+            data,
+            hora_inicio,
+            id_cliente(id, nome),
+            id_servico(id, nome, id_categoria)
+          `)
+          .eq('id_negocio', businessId)
+          .gte('data', startDate)
+          .lte('data', endDate);
+          
+        if (error) {
+          throw error;
+        }
+        
+        // Converter dados para o formato de AppointmentType
+        const formattedAppointments: AppointmentType[] = data.map(appointment => {
+          // Criar data combinando data e hora
+          const [hours, minutes] = appointment.hora_inicio.split(':');
+          const appointmentDate = parseISO(appointment.data);
+          appointmentDate.setHours(parseInt(hours));
+          appointmentDate.setMinutes(parseInt(minutes));
+          
+          return {
+            id: appointment.id,
+            date: appointmentDate,
+            clientName: appointment.id_cliente?.nome || 'Cliente não identificado',
+            serviceName: appointment.id_servico?.nome || 'Serviço não identificado',
+            serviceType: 'all' // Mapear categoria quando disponível
+          };
+        });
+        
+        setAppointments(formattedAppointments);
+      } catch (error) {
+        console.error("Erro ao buscar agendamentos:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (businessId) {
+      fetchAppointments();
+    }
+  }, [businessId, currentMonth]);
 
   const nextMonth = () => {
     setCurrentMonth(addMonths(currentMonth, 1));
@@ -99,7 +145,7 @@ export const AppointmentCalendar = () => {
   monthDays.forEach(day => calendarDays.push(day));
 
   // Filter appointments based on service type and selected date
-  const filteredAppointments = SAMPLE_APPOINTMENTS.filter(app => 
+  const filteredAppointments = appointments.filter(app => 
     (serviceFilter === "all" || app.serviceType === serviceFilter)
   );
 

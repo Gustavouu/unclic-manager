@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 interface Transaction {
   id: string;
@@ -49,6 +49,7 @@ export function TransactionsTable({
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const { businessId } = useCurrentBusiness();
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -70,6 +71,7 @@ export function TransactionsTable({
               nome
             )
           `)
+          .eq('id_negocio', businessId)
           .order('criado_em', { ascending: false });
         
         if (filterType !== "all") {
@@ -121,10 +123,10 @@ export function TransactionsTable({
       }
     };
 
-    if (!isLoading) {
+    if (!isLoading && businessId) {
       fetchTransactions();
     }
-  }, [isLoading, filterType, period, searchDate, searchQuery]);
+  }, [isLoading, filterType, period, searchDate, searchQuery, businessId]);
 
   const getPaymentMethodLabel = (method: string | null) => {
     if (!method) return "Não informado";

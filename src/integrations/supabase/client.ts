@@ -2,10 +2,16 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://jcdymkgmtxpryceziazt.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjZHlta2dtdHhwcnljZXppYXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1MjQyNTIsImV4cCI6MjA1ODEwMDI1Mn0.xQxEnFLVLRP_x3TXETogDGTQ4g5qksHLlDWszrEFxwA";
+// Obtenha as variáveis de ambiente do Vite
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://jcdymkgmtxpryceziazt.supabase.co";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjZHlta2dtdHhwcnljZXppYXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI1MjQyNTIsImV4cCI6MjA1ODEwMDI1Mn0.xQxEnFLVLRP_x3TXETogDGTQ4g5qksHLlDWszrEFxwA";
+
+// Log apenas para desenvolvimento, não em produção
+if (import.meta.env.DEV && (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY)) {
+  console.warn('⚠️ Variáveis de ambiente do Supabase não encontradas. Usando valores padrão.');
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);

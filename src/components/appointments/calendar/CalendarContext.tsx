@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState } from "react";
 import { 
   addMonths, 
@@ -11,30 +10,42 @@ import {
   getDay, 
   isSameDay,
   addWeeks,
-  subWeeks
+  subWeeks,
+  addMinutes
 } from "date-fns";
 import { AppointmentType, CalendarViewType, ServiceType } from "./types";
+import { toast } from "sonner";
+import { useAppointmentUpdate } from "@/hooks/appointments/useAppointmentUpdate";
+import { useAppointmentConflicts } from "@/hooks/appointments/useAppointmentConflicts";
 
 interface CalendarContextProps {
   currentDate: Date;
   selectedDate: Date;
   calendarView: CalendarViewType;
   serviceFilter: ServiceType;
+  professionalFilter: string | null;
   calendarDays: (Date | null)[];
   filteredAppointments: AppointmentType[];
   dayAppointments: AppointmentType[];
   weekAppointments: AppointmentType[];
+  selectedAppointment: AppointmentType | null;
+  isDragging: boolean;
   
   // Actions
   setCurrentDate: (date: Date) => void;
   setSelectedDate: (date: Date) => void;
   setCalendarView: (view: CalendarViewType) => void;
   setServiceFilter: (filter: ServiceType) => void;
+  setProfessionalFilter: (professionalId: string | null) => void;
+  setSelectedAppointment: (appointment: AppointmentType | null) => void;
   nextPeriod: () => void;
   prevPeriod: () => void;
   handleSelectDate: (date: Date | undefined) => void;
   handleSelectDay: (day: Date) => void;
-  handleSelectAppointment: (date: Date) => void;
+  handleSelectAppointment: (appointment: AppointmentType) => void;
+  // Drag and drop
+  handleDragStart: (appointmentId: string) => void;
+  handleDragEnd: (newDate: Date) => Promise<boolean>;
 }
 
 const CalendarContext = createContext<CalendarContextProps | undefined>(undefined);
@@ -57,6 +68,13 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarView, setCalendarView] = useState<CalendarViewType>("month");
   const [serviceFilter, setServiceFilter] = useState<ServiceType>("all");
+  const [professionalFilter, setProfessionalFilter] = useState<string | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentType | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  // Hooks para atualização de agendamentos
+  const { updateAppointment } = useAppointmentUpdate();
+  const { validateAppointmentTime } = useAppointmentConflicts(appointments);
   
   // Navigation functions
   const nextPeriod = () => {
@@ -87,9 +105,53 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     setCalendarView("day");
   };
 
-  const handleSelectAppointment = (date: Date) => {
-    setSelectedDate(date);
-    setCalendarView("day");
+  const handleSelectAppointment = (appointment: AppointmentType) => {
+    setSelectedAppointment(appointment);
+  };
+  
+  // Drag & Drop handlers
+  const handleDragStart = (appointmentId: string) => {
+    const appointment = appointments.find(app => app.id === appointmentId);
+    if (appointment) {
+      setSelectedAppointment(appointment);
+      setIsDragging(true);
+    }
+  };
+  
+  const handleDragEnd = async (newDate: Date): Promise<boolean> => {
+    setIsDragging(false);
+    
+    if (!selectedAppointment) {
+      return false;
+    }
+    
+    try {
+      // Verificar se a nova data e hora é válida
+      const validationResult = validateAppointmentTime({
+        date: newDate,
+        duration: selectedAppointment.duration,
+        professionalId: (selectedAppointment as any).professionalId,
+        appointmentId: selectedAppointment.id
+      });
+      
+      if (!validationResult.valid) {
+        toast.error(`Não foi possível mover o agendamento: ${validationResult.reason}`);
+        return false;
+      }
+      
+      // Atualizar o agendamento com a nova data
+      await updateAppointment(selectedAppointment.id, {
+        date: newDate
+      });
+      
+      toast.success(`Agendamento movido para ${newDate.toLocaleString()}`);
+      setSelectedAppointment(null);
+      return true;
+    } catch (error) {
+      console.error("Erro ao atualizar agendamento:", error);
+      toast.error("Erro ao mover agendamento");
+      return false;
+    }
   };
 
   // Create calendar days based on current view
@@ -113,10 +175,20 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     calendarDays = weekDays;
   }
 
-  // Filter appointments based on service type
-  const filteredAppointments = appointments.filter(app => 
-    (serviceFilter === "all" || app.serviceType === serviceFilter)
-  );
+  // Filtrar agendamentos com base nos filtros selecionados
+  const filteredAppointments = appointments.filter(app => {
+    // Filtro por tipo de serviço
+    if (serviceFilter !== "all" && app.serviceType !== serviceFilter) {
+      return false;
+    }
+    
+    // Filtro por profissional
+    if (professionalFilter && (app as any).professionalId !== professionalFilter) {
+      return false;
+    }
+    
+    return true;
+  });
 
   // Filter appointments for selected date
   const dayAppointments = filteredAppointments.filter(app => 
@@ -135,20 +207,27 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     selectedDate,
     calendarView,
     serviceFilter,
+    professionalFilter,
     calendarDays,
     filteredAppointments,
     dayAppointments,
     weekAppointments,
+    selectedAppointment,
+    isDragging,
     
     setCurrentDate,
     setSelectedDate,
     setCalendarView,
     setServiceFilter,
+    setProfessionalFilter,
+    setSelectedAppointment,
     nextPeriod,
     prevPeriod,
     handleSelectDate,
     handleSelectDay,
-    handleSelectAppointment
+    handleSelectAppointment,
+    handleDragStart,
+    handleDragEnd
   };
 
   return (

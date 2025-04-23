@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -6,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AppointmentForm } from "./form/AppointmentForm";
+import { AppointmentStepperForm } from "./form/StepperForm";
 
 type NewAppointmentDialogProps = {
   open: boolean;
@@ -19,15 +18,17 @@ export const NewAppointmentDialog = ({
 }: NewAppointmentDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] md:max-w-[700px] max-h-[85vh] overflow-hidden flex flex-col p-6">
+        <DialogHeader className="mb-4">
           <DialogTitle>Novo Agendamento</DialogTitle>
           <DialogDescription>
-            Preencha os campos abaixo para criar um novo agendamento.
+            Preencha os campos para criar um novo agendamento.
           </DialogDescription>
         </DialogHeader>
 
-        <AppointmentForm onClose={() => onOpenChange(false)} />
+        <div className="overflow-y-auto flex-grow pr-2">
+          <AppointmentStepperForm onClose={() => onOpenChange(false)} />
+        </div>
       </DialogContent>
     </Dialog>
   );

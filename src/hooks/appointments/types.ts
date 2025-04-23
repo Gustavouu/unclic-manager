@@ -1,21 +1,30 @@
-
 import { Appointment, AppointmentStatus } from "@/components/appointments/types";
 
-export interface CreateAppointmentData {
-  clientName: string;
-  serviceName: string;
+export type CreateAppointmentData = {
+  clientId: string;
+  serviceId: string;
+  professionalId: string;
   date: Date;
-  status: AppointmentStatus;
+  status: string;
   price: number;
-  serviceType: string;
   duration: number;
   notes?: string;
-  serviceId?: string;
-  clientId?: string;
-  professionalId?: string;
-  businessId?: string; 
-  paymentMethod?: string;
-}
+  paymentMethod: string;
+  serviceType: string;
+  clientName: string;
+  serviceName: string;
+  notifications: {
+    sendConfirmation: boolean;
+    sendReminder: boolean;
+  };
+  additionalServices?: Array<{
+    serviceId: string;
+    duration: number;
+    price: number;
+  }>;
+  isEmergency?: boolean;
+  emergencyReason?: string;
+};
 
 export interface AppointmentHookReturn {
   appointments: Appointment[];
