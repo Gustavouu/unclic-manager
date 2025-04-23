@@ -121,11 +121,11 @@ export const AppointmentsList = () => {
                         <div className="text-xs mt-1">
                           <Badge variant="outline" className={`
                             ${appointment.status === 'agendado' ? 'bg-green-50 text-green-700 border-green-200' : ''}
-                            ${appointment.status === 'concluído' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : ''}
+                            ${appointment.status === 'concluido' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : ''}
                             ${appointment.status === 'cancelado' ? 'bg-red-50 text-red-700 border-red-200' : ''}
                           `}>
                             {appointment.status === 'agendado' ? 'Confirmado' : 
-                             appointment.status === 'concluído' ? 'Concluído' : 
+                             appointment.status === 'concluido' ? 'Concluído' : 
                              appointment.status === 'cancelado' ? 'Cancelado' : 
                              appointment.status}
                           </Badge>

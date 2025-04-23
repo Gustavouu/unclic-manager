@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState } from "react";
 import { 
   addMonths, 
@@ -17,6 +18,7 @@ import { AppointmentType, CalendarViewType, ServiceType } from "./types";
 import { toast } from "sonner";
 import { useAppointmentUpdate } from "@/hooks/appointments/useAppointmentUpdate";
 import { useAppointmentConflicts } from "@/hooks/appointments/useAppointmentConflicts";
+import { Appointment } from "../types";
 
 interface CalendarContextProps {
   currentDate: Date;
@@ -74,7 +76,18 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
   
   // Hooks para atualização de agendamentos
   const { updateAppointment } = useAppointmentUpdate();
-  const { validateAppointmentTime } = useAppointmentConflicts(appointments);
+  // Convert AppointmentType[] to Appointment[] for the useAppointmentConflicts hook
+  const appointmentsForConflict: Appointment[] = appointments.map(app => ({
+    id: app.id,
+    clientName: app.clientName,
+    serviceName: app.serviceName,
+    date: app.date,
+    status: 'agendado',
+    price: app.price,
+    serviceType: app.serviceType,
+    duration: app.duration
+  }));
+  const { validateAppointmentTime } = useAppointmentConflicts(appointmentsForConflict);
   
   // Navigation functions
   const nextPeriod = () => {

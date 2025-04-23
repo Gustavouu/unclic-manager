@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   addMonths, 
@@ -86,23 +87,28 @@ export const AppointmentCalendar = ({ businessId }: AppointmentCalendarProps) =>
         }
         
         // Converter dados para o formato de AppointmentType
-        const formattedAppointments: AppointmentType[] = data.map(appointment => {
-          // Criar data combinando data e hora
-          const [hours, minutes] = appointment.hora_inicio.split(':');
-          const appointmentDate = parseISO(appointment.data);
-          appointmentDate.setHours(parseInt(hours));
-          appointmentDate.setMinutes(parseInt(minutes));
+        if (data) {
+          const formattedAppointments: AppointmentType[] = data.map((appointment: any) => {
+            // Criar data combinando data e hora
+            const [hours, minutes] = appointment.hora_inicio.split(':');
+            const appointmentDate = parseISO(appointment.data);
+            appointmentDate.setHours(parseInt(hours));
+            appointmentDate.setMinutes(parseInt(minutes));
+            
+            const clientName = appointment.id_cliente ? appointment.id_cliente.nome : 'Cliente não identificado';
+            const serviceName = appointment.id_servico ? appointment.id_servico.nome : 'Serviço não identificado';
+            
+            return {
+              id: appointment.id,
+              date: appointmentDate,
+              clientName: clientName,
+              serviceName: serviceName,
+              serviceType: 'all' // Mapear categoria quando disponível
+            };
+          });
           
-          return {
-            id: appointment.id,
-            date: appointmentDate,
-            clientName: appointment.id_cliente?.nome || 'Cliente não identificado',
-            serviceName: appointment.id_servico?.nome || 'Serviço não identificado',
-            serviceType: 'all' // Mapear categoria quando disponível
-          };
-        });
-        
-        setAppointments(formattedAppointments);
+          setAppointments(formattedAppointments);
+        }
       } catch (error) {
         console.error("Erro ao buscar agendamentos:", error);
       } finally {

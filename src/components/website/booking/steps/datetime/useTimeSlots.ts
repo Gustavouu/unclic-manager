@@ -32,17 +32,17 @@ export function useTimeSlots(selectedDate?: Date) {
     }
     
     // Skip if business is closed on this day
-    if (!businessHours[dayName].open) {
+    if (!businessHours[dayName].enabled) {
       return slots;
     }
     
     // Get business hours for the selected day
-    const openTime = businessHours[dayName].openTime;
-    const closeTime = businessHours[dayName].closeTime;
+    const startTime = businessHours[dayName].start;
+    const endTime = businessHours[dayName].end;
     
     // Parse opening and closing times
-    const [openHour, openMinute] = openTime.split(':').map(Number);
-    const [closeHour, closeMinute] = closeTime.split(':').map(Number);
+    const [openHour, openMinute] = startTime.split(':').map(Number);
+    const [closeHour, closeMinute] = endTime.split(':').map(Number);
     
     // Generate slots based on business hours
     for (let hour = openHour; hour <= closeHour; hour++) {
@@ -107,7 +107,7 @@ export function useTimeSlots(selectedDate?: Date) {
   const isBusinessOpen = useMemo(() => {
     const dayName = getDayName(selectedDate);
     if (!dayName || !businessHours[dayName]) return false;
-    return businessHours[dayName].open;
+    return businessHours[dayName].enabled;
   }, [businessHours, selectedDate]);
 
   return {

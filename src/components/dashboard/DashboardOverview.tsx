@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { formatCurrency } from "@/lib/format";
@@ -32,11 +33,7 @@ export function DashboardOverview() {
 
   // Calcula a receita diária (agendamentos de hoje)
   const dailyRevenue = todayAppointments.reduce((total, appointment) => {
-    const appointmentValue = appointment.service.price || 0;
-    const additionalServicesValue = appointment.additionalServices?.reduce((sum, service) => {
-      return sum + (service.price || 0);
-    }, 0) || 0;
-    return total + appointmentValue + additionalServicesValue;
+    return total + appointment.price;
   }, 0);
 
   return (

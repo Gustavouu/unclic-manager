@@ -1,28 +1,40 @@
+
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
 import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
-import { professionals } from "../data/appointmentMockData";
 
-export type ProfessionalSelectProps = {
+export interface ProfessionalSelectProps {
   form: UseFormReturn<AppointmentFormValues>;
-  serviceId?: string;
-  disabled?: boolean;
-  defaultValue?: string;
-  readOnly?: boolean;
-};
+  options?: Array<{
+    value: string;
+    label: string;
+    description?: string;
+  }>;
+  onProfessionalSelect?: (professional: any) => void;
+}
 
-export const ProfessionalSelect = ({ 
-  form, 
-  serviceId, 
-  disabled = false,
-  defaultValue,
-  readOnly = false
-}: ProfessionalSelectProps) => {
-  // Filtra profissionais baseado no serviço selecionado se necessário
-  // (por exemplo, apenas profissionais qualificados para o serviço)
-  const filteredProfessionals = professionals;
-  
+export const ProfessionalSelect = ({ form, options = [], onProfessionalSelect }: ProfessionalSelectProps) => {
+  // This could come from API or context
+  const professionals = options.length > 0 ? options : [
+    { value: "p1", label: "João Silva", description: "Cabelereiro" },
+    { value: "p2", label: "Maria Oliveira", description: "Barbeira" },
+    { value: "p3", label: "Carlos Pereira", description: "Estilista" },
+    { value: "p4", label: "Ana Santos", description: "Manicure" }
+  ];
+
+  const handleSelectProfessional = (professionalId: string) => {
+    const professional = professionals.find(p => p.value === professionalId);
+    
+    if (professional && onProfessionalSelect) {
+      onProfessionalSelect({
+        id: professional.value,
+        nome: professional.label,
+        cargo: professional.description
+      });
+    }
+  };
+
   return (
     <FormField
       control={form.control}
@@ -31,9 +43,11 @@ export const ProfessionalSelect = ({
         <FormItem>
           <FormLabel>Profissional</FormLabel>
           <Select 
-            onValueChange={field.onChange} 
-            defaultValue={defaultValue || field.value}
-            disabled={disabled || readOnly}
+            onValueChange={(value) => {
+              field.onChange(value);
+              handleSelectProfessional(value);
+            }}
+            defaultValue={field.value}
           >
             <FormControl>
               <SelectTrigger>
@@ -41,13 +55,9 @@ export const ProfessionalSelect = ({
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {filteredProfessionals.map((professional) => (
-                <SelectItem 
-                  key={professional.id} 
-                  value={professional.id}
-                  disabled={readOnly && professional.id !== defaultValue}
-                >
-                  {professional.name}
+              {professionals.map((professional) => (
+                <SelectItem key={professional.value} value={professional.value}>
+                  {professional.label} - {professional.description}
                 </SelectItem>
               ))}
             </SelectContent>

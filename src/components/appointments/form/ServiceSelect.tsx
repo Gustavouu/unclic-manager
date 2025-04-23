@@ -1,78 +1,103 @@
+
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
 import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
-import { services } from "../data/appointmentMockData";
+import { useEffect } from "react";
 
-export type ServiceSelectProps = {
+export interface ServiceSelectProps {
   form: UseFormReturn<AppointmentFormValues>;
-  label?: string;
-  excludeIds?: string[];
-  onServiceSelect?: (service: {
+  selectedService?: {
     id: string;
     name: string;
     duration: number;
     price: number;
-  }) => void;
-  optional?: boolean;
-};
+  } | null;
+  setSelectedService?: (service: {
+    id: string;
+    name: string;
+    duration: number;
+    price: number;
+  } | null) => void;
+  options?: Array<{
+    value: string;
+    label: string;
+    price?: number;
+    duration?: number;
+  }>;
+  onServiceSelect?: (service: any) => void;
+}
 
 export const ServiceSelect = ({ 
   form, 
-  label = "Serviço", 
-  excludeIds = [], 
-  onServiceSelect,
-  optional = false
+  selectedService, 
+  setSelectedService,
+  options = [],
+  onServiceSelect
 }: ServiceSelectProps) => {
-  const availableServices = services.filter(
-    service => !excludeIds.includes(service.id)
-  );
-  
+  // Fetch services from API or context
+  const services = options.length > 0 ? options : [
+    { value: "s1", label: "Corte de Cabelo", price: 35, duration: 30 },
+    { value: "s2", label: "Barba", price: 25, duration: 20 },
+    { value: "s3", label: "Corte e Barba", price: 55, duration: 45 },
+    { value: "s4", label: "Coloração", price: 80, duration: 60 }
+  ];
+
+  // Update the form when service is selected
+  const handleServiceSelect = (serviceId: string) => {
+    const service = services.find(s => s.value === serviceId);
+    
+    if (service && setSelectedService) {
+      setSelectedService({
+        id: service.value,
+        name: service.label,
+        duration: service.duration || 30,
+        price: service.price || 0
+      });
+      
+      // Update the form values
+      form.setValue("duration", service.duration || 30);
+      form.setValue("price", service.price || 0);
+    }
+
+    if (service && onServiceSelect) {
+      onServiceSelect({
+        id: service.value,
+        nome: service.label,
+        duracao: service.duration || 30,
+        preco: service.price || 0
+      });
+    }
+  };
+
   return (
     <FormField
       control={form.control}
       name="serviceId"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel>Serviço</FormLabel>
           <Select 
             onValueChange={(value) => {
               field.onChange(value);
-              
-              // Se o callback existir, encontrar o serviço selecionado e chamar
-              if (onServiceSelect) {
-                const selectedService = services.find(s => s.id === value);
-                if (selectedService) {
-                  onServiceSelect({
-                    id: selectedService.id,
-                    name: selectedService.name,
-                    duration: selectedService.duration,
-                    price: selectedService.price
-                  });
-                }
-              }
-            }} 
+              handleServiceSelect(value);
+            }}
             defaultValue={field.value}
           >
             <FormControl>
               <SelectTrigger>
-                <SelectValue placeholder={`Selecione um ${label.toLowerCase()}`} />
+                <SelectValue placeholder="Selecione um serviço" />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {availableServices.map((service) => (
-                <SelectItem key={service.id} value={service.id}>
-                  {service.name} - {service.duration}min - R$ {service.price.toFixed(2)}
+              {services.map((service) => (
+                <SelectItem key={service.value} value={service.value}>
+                  {service.label}
                 </SelectItem>
               ))}
-              {availableServices.length === 0 && (
-                <SelectItem value="" disabled>
-                  Nenhum serviço disponível
-                </SelectItem>
-              )}
             </SelectContent>
           </Select>
-          {!optional && <FormMessage />}
+          <FormMessage />
         </FormItem>
       )}
     />

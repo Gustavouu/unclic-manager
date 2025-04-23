@@ -1,6 +1,7 @@
+
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { AppointmentStatus, AppointmentType } from "../types";
+import { AppointmentStatus, AppointmentType, Appointment } from "../types";
 import { useState } from "react";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { 
@@ -74,7 +75,7 @@ export function AppointmentDialog({
   
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "concluído":
+      case "concluido":
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Concluído</Badge>;
       case "cancelado":
         return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Cancelado</Badge>;
@@ -181,8 +182,8 @@ export function AppointmentDialog({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => handleStatusChange("concluído")}
-                  className={appointment.status === "concluído" ? "bg-green-50" : ""}
+                  onClick={() => handleStatusChange("concluido")}
+                  className={appointment.status === "concluido" ? "bg-green-50" : ""}
                 >
                   Concluído
                 </Button>
@@ -223,4 +224,4 @@ export function AppointmentDialog({
       </DialogContent>
     </Dialog>
   );
-} 
+}

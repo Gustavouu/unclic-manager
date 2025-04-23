@@ -14,7 +14,7 @@ export const getStatusBadge = (status: AppointmentStatus) => {
   switch (status) {
     case "agendado":
       return <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">Agendado</Badge>;
-    case "concluído":
+    case "concluido":
       return <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Concluído</Badge>;
     case "cancelado":
       return <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">Cancelado</Badge>;

@@ -11,17 +11,17 @@ export const appointments: Appointment[] = [
     status: "agendado",
     price: 180,
     serviceType: "hair",
-    duration: 120 // Adding the required duration property
+    duration: 120
   },
   {
     id: "2",
     clientName: "Carlos Santos",
     serviceName: "Barba e Cabelo",
     date: new Date(2024, 6, 12, 14, 30),
-    status: "concluído",
+    status: "concluido",
     price: 95,
     serviceType: "barber",
-    duration: 60 // Adding the required duration property
+    duration: 60
   },
   {
     id: "3",
@@ -31,7 +31,7 @@ export const appointments: Appointment[] = [
     status: "cancelado",
     price: 60,
     serviceType: "nails",
-    duration: 45 // Adding the required duration property
+    duration: 45
   },
   {
     id: "4",
@@ -41,7 +41,7 @@ export const appointments: Appointment[] = [
     status: "agendado",
     price: 120,
     serviceType: "makeup",
-    duration: 90 // Adding the required duration property
+    duration: 90
   },
   {
     id: "5",
@@ -51,6 +51,6 @@ export const appointments: Appointment[] = [
     status: "agendado",
     price: 150,
     serviceType: "skincare",
-    duration: 75 // Adding the required duration property
+    duration: 75
   },
 ];

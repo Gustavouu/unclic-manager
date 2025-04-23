@@ -54,7 +54,11 @@ export function StepConfirmation({ bookingData, onComplete }: StepConfirmationPr
         serviceId: bookingData.serviceId,
         clientId: bookingData.clientId,
         professionalId: bookingData.professionalId,
-        paymentMethod: "local" // Default payment method
+        paymentMethod: "local", // Default payment method
+        notifications: {
+          sendConfirmation: true,
+          sendReminder: true
+        }
       });
       
       // Refresh the appointments list to show the new appointment
@@ -73,73 +77,83 @@ export function StepConfirmation({ bookingData, onComplete }: StepConfirmationPr
   
   // Format date for display
   const formattedDate = bookingData.date 
-    ? format(bookingData.date, "EEEE, d 'de' MMMM", { locale: ptBR })
+    ? format(bookingData.date, "EEEE, dd 'de' MMMM", { locale: ptBR })
     : "";
   
   return (
-    <Card className="border-none shadow-lg">
-      <CardHeader>
-        <div className="flex flex-col items-center">
-          <div className="flex justify-center mb-4">
-            <div className="bg-primary/10 p-4 rounded-full">
-              <CalendarCheck className="h-12 w-12 text-primary" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl">Confirme seu agendamento</CardTitle>
-        </div>
-      </CardHeader>
+    <div className="flex flex-col items-center space-y-4">
+      <CalendarCheck className="h-12 w-12 text-green-500 mb-2" />
       
-      <CardContent className="space-y-6">
-        <div className="grid gap-2 border-b pb-4">
-          <div className="text-lg font-medium">{bookingData.serviceName}</div>
-          <div className="text-sm text-muted-foreground">
-            {formattedDate}, às {bookingData.time}
-          </div>
-          <div className="text-sm text-muted-foreground">
-            com {bookingData.professionalName}
-          </div>
-          <div className="text-sm font-medium mt-2">
-            Valor: R$ {bookingData.servicePrice.toFixed(2).replace('.', ',')}
-          </div>
-        </div>
-        
-        <div className="grid gap-2">
-          <div className="text-md font-medium">Seus dados</div>
-          <div className="text-sm">
-            {bookingData.clientName}
-          </div>
-          <div className="text-sm text-muted-foreground">
-            {bookingData.clientEmail}
-            {bookingData.clientPhone && ` • ${bookingData.clientPhone}`}
-          </div>
-        </div>
-        
-        {bookingData.notes && (
-          <div className="grid gap-2">
-            <div className="text-md font-medium">Observações</div>
-            <div className="text-sm text-muted-foreground">
-              {bookingData.notes}
-            </div>
-          </div>
-        )}
-      </CardContent>
+      <h2 className="text-xl font-semibold text-center">Confirme seu agendamento</h2>
       
-      <CardFooter>
-        <Button 
-          onClick={handleCompleteBooking} 
-          className="w-full"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processando...
-            </>
-          ) : (
-            "Confirmar Agendamento"
-          )}
-        </Button>
-      </CardFooter>
-    </Card>
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Detalhes do Agendamento</CardTitle>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="text-sm text-gray-500">Serviço:</div>
+            <div className="text-sm font-medium">{bookingData.serviceName}</div>
+            
+            <div className="text-sm text-gray-500">Profissional:</div>
+            <div className="text-sm font-medium">{bookingData.professionalName}</div>
+            
+            <div className="text-sm text-gray-500">Data:</div>
+            <div className="text-sm font-medium">{formattedDate}</div>
+            
+            <div className="text-sm text-gray-500">Horário:</div>
+            <div className="text-sm font-medium">{bookingData.time}</div>
+            
+            <div className="text-sm text-gray-500">Duração:</div>
+            <div className="text-sm font-medium">{bookingData.serviceDuration} min</div>
+            
+            <div className="text-sm text-gray-500">Preço:</div>
+            <div className="text-sm font-medium">R$ {bookingData.servicePrice.toFixed(2)}</div>
+            
+            {bookingData.notes && (
+              <>
+                <div className="text-sm text-gray-500">Observações:</div>
+                <div className="text-sm font-medium">{bookingData.notes}</div>
+              </>
+            )}
+            
+            <div className="text-sm text-gray-500">Cliente:</div>
+            <div className="text-sm font-medium">{bookingData.clientName}</div>
+            
+            {bookingData.clientEmail && (
+              <>
+                <div className="text-sm text-gray-500">Email:</div>
+                <div className="text-sm font-medium">{bookingData.clientEmail}</div>
+              </>
+            )}
+            
+            {bookingData.clientPhone && (
+              <>
+                <div className="text-sm text-gray-500">Telefone:</div>
+                <div className="text-sm font-medium">{bookingData.clientPhone}</div>
+              </>
+            )}
+          </div>
+        </CardContent>
+        
+        <CardFooter>
+          <Button 
+            onClick={handleCompleteBooking}
+            disabled={isSubmitting}
+            className="w-full"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processando...
+              </>
+            ) : (
+              "Confirmar Agendamento"
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }

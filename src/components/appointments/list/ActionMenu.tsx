@@ -56,7 +56,7 @@ export const ActionMenu = ({ appointmentId, currentStatus }: ActionMenuProps) =>
           Editar
         </DropdownMenuItem>
         
-        {currentStatus !== "concluído" && (
+        {currentStatus !== "concluido" && (
           <DropdownMenuItem className="flex items-center gap-2" onClick={handleComplete}>
             <Check className="h-4 w-4" />
             Marcar como concluído

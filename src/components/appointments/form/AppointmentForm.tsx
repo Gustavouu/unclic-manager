@@ -1,3 +1,4 @@
+
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useEffect } from "react";
@@ -113,7 +114,8 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
         serviceId: serviceId,
         clientId: clientId,
         professionalId: professionalId,
-        paymentMethod: "local" // Default payment method
+        paymentMethod: "local", // Default payment method
+        notifications: values.notifications
       });
       
       // Refresh appointments to show the new one

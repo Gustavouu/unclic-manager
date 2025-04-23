@@ -1,9 +1,11 @@
+
 import { Appointment, AppointmentStatus } from "@/components/appointments/types";
 
 export type CreateAppointmentData = {
   clientId: string;
   serviceId: string;
   professionalId: string;
+  businessId?: string; // Make this optional to match usage in the code
   date: Date;
   status: string;
   price: number;

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -79,7 +80,7 @@ export function PaymentRequiredAppointmentForm({
       clientId: customerId,
       status: "pendente",
       notes: "",
-      paymentMethod: "online",
+      paymentMethod: "credit_card", // Changed from "online" to a valid value
       notifications: {
         sendConfirmation: true,
         sendReminder: true,
@@ -203,6 +204,39 @@ export function PaymentRequiredAppointmentForm({
     }
   };
   
+  // Convert Supabase service format to form component format
+  const serviceOptions = availableServices.map(service => ({
+    value: service.id,
+    label: `${service.nome} - ${service.duracao}min - R$${service.preco.toFixed(2)}`,
+    price: service.preco,
+    duration: service.duracao
+  }));
+
+  // Convert Supabase staff format to form component format
+  const professionalOptions = availableStaff.map(staff => ({
+    value: staff.id,
+    label: staff.nome,
+    description: staff.cargo
+  }));
+
+  // Handle service selection
+  const handleServiceSelect = (service: any) => {
+    setSelectedService({
+      id: service.id,
+      name: service.nome,
+      duration: service.duracao,
+      price: service.preco
+    });
+  };
+  
+  // Handle professional selection
+  const handleProfessionalSelect = (professional: any) => {
+    setSelectedProfessional({
+      id: professional.id,
+      name: professional.nome
+    });
+  };
+  
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -283,20 +317,8 @@ export function PaymentRequiredAppointmentForm({
               <div>
                 <ServiceSelect
                   form={form}
-                  options={availableServices.map(service => ({
-                    value: service.id,
-                    label: `${service.nome} - ${service.duracao}min - R$${service.preco.toFixed(2)}`,
-                    price: service.preco,
-                    duration: service.duracao
-                  }))}
-                  onServiceSelect={(service) => {
-                    setSelectedService({
-                      id: service.id,
-                      name: service.nome,
-                      duration: service.duracao,
-                      price: service.preco
-                    });
-                  }}
+                  options={serviceOptions}
+                  onServiceSelect={handleServiceSelect}
                 />
               </div>
 
@@ -304,17 +326,8 @@ export function PaymentRequiredAppointmentForm({
               <div>
                 <ProfessionalSelect
                   form={form}
-                  options={availableStaff.map(staff => ({
-                    value: staff.id,
-                    label: staff.nome,
-                    description: staff.cargo
-                  }))}
-                  onProfessionalSelect={(professional) => {
-                    setSelectedProfessional({
-                      id: professional.id,
-                      name: professional.nome
-                    });
-                  }}
+                  options={professionalOptions}
+                  onProfessionalSelect={handleProfessionalSelect}
                 />
               </div>
             </div>
@@ -425,7 +438,7 @@ export function PaymentRequiredAppointmentForm({
                   </Button>
                   
                   {isPaymentComplete && (
-                    <Alert variant="success" className="bg-green-50 border-green-200">
+                    <Alert variant="destructive" className="bg-green-50 border-green-200">
                       <CheckCircle2 className="h-4 w-4 text-green-500" />
                       <AlertTitle className="text-green-700">Pagamento Aprovado</AlertTitle>
                       <AlertDescription className="text-green-600">
@@ -442,7 +455,7 @@ export function PaymentRequiredAppointmentForm({
             <div className="space-y-4">
               <NotificationsOptions form={form} />
               
-              <Alert className="bg-green-50 border-green-200">
+              <Alert variant="destructive" className="bg-green-50 border-green-200">
                 <AlertTitle className="text-green-700">Agendamento Confirmado</AlertTitle>
                 <AlertDescription className="text-green-600 space-y-2">
                   <p>Cliente: {customerName}</p>
