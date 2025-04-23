@@ -8,13 +8,19 @@ import { useDashboardData } from "@/hooks/dashboard/useDashboardData";
 import { formatCurrency } from "@/lib/format";
 import { NextAppointments } from "@/components/dashboard/NextAppointments";
 import { PopularServices } from "@/components/dashboard/PopularServices";
-import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 import { FinancialChart } from "@/components/dashboard/FinancialChart";
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
+import { useEffect } from "react";
 
 const Dashboard = () => {
   const { stats, loading, error } = useDashboardData();
   const { businessId, loading: businessLoading, error: businessError } = useCurrentBusiness();
+  
+  useEffect(() => {
+    // Apenas para log de debug
+    console.log("Dashboard stats:", stats);
+    console.log("Business ID:", businessId);
+  }, [stats, businessId]);
   
   if (businessLoading || loading) {
     return <DashboardSkeleton />;
