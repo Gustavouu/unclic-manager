@@ -64,15 +64,18 @@ export const useAppointmentsFetch = () => {
           // Get cliente name safely, handling potential null values and different data structures
           let clientName = "Cliente não identificado";
           if (item.clientes) {
-            // Handle case where clientes is a single object
-            if (typeof item.clientes === 'object' && item.clientes !== null && !Array.isArray(item.clientes)) {
-              clientName = item.clientes.nome || "Cliente não identificado";
-            } 
-            // Handle case where clientes is an array
-            else if (Array.isArray(item.clientes) && item.clientes.length > 0) {
-              const firstClient = item.clientes[0];
-              if (typeof firstClient === 'object' && firstClient !== null && 'nome' in firstClient) {
-                clientName = firstClient.nome || "Cliente não identificado";
+            // Check if clientes is an object with a nome property
+            if (typeof item.clientes === 'object' && item.clientes !== null) {
+              // Handle case where clientes is a single object
+              if (!Array.isArray(item.clientes) && 'nome' in item.clientes) {
+                clientName = item.clientes.nome || "Cliente não identificado";
+              } 
+              // Handle case where clientes is an array
+              else if (Array.isArray(item.clientes) && item.clientes.length > 0) {
+                const firstClient = item.clientes[0];
+                if (typeof firstClient === 'object' && firstClient !== null && 'nome' in firstClient) {
+                  clientName = firstClient.nome || "Cliente não identificado";
+                }
               }
             }
           } else if (item.observacoes) {
@@ -83,15 +86,18 @@ export const useAppointmentsFetch = () => {
           // Get service name safely
           let serviceName = "Serviço não identificado";
           if (item.servicos) {
-            // Handle case where servicos is a single object
-            if (typeof item.servicos === 'object' && item.servicos !== null && !Array.isArray(item.servicos)) {
-              serviceName = item.servicos.nome || "Serviço não identificado";
-            } 
-            // Handle case where servicos is an array
-            else if (Array.isArray(item.servicos) && item.servicos.length > 0) {
-              const firstService = item.servicos[0];
-              if (typeof firstService === 'object' && firstService !== null && 'nome' in firstService) {
-                serviceName = firstService.nome || "Serviço não identificado";
+            // Check if servicos is an object with a nome property
+            if (typeof item.servicos === 'object' && item.servicos !== null) {
+              // Handle case where servicos is a single object
+              if (!Array.isArray(item.servicos) && 'nome' in item.servicos) {
+                serviceName = item.servicos.nome || "Serviço não identificado";
+              } 
+              // Handle case where servicos is an array
+              else if (Array.isArray(item.servicos) && item.servicos.length > 0) {
+                const firstService = item.servicos[0];
+                if (typeof firstService === 'object' && firstService !== null && 'nome' in firstService) {
+                  serviceName = firstService.nome || "Serviço não identificado";
+                }
               }
             }
           }

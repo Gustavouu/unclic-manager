@@ -7,13 +7,13 @@ import { useState, useEffect } from "react";
 
 export interface ServiceSelectProps {
   form: UseFormReturn<AppointmentFormValues>;
-  selectedService: {
+  selectedService?: {
     id: string;
     name: string;
     duration: number;
     price: number;
   } | null;
-  setSelectedService: (service: {
+  setSelectedService?: (service: {
     id: string;
     name: string;
     duration: number;
@@ -33,8 +33,8 @@ export interface ServiceSelectProps {
 
 export const ServiceSelect = ({
   form,
-  selectedService,
-  setSelectedService,
+  selectedService = null,
+  setSelectedService = () => {},
   label = "Serviço",
   excludeIds = [],
   onServiceSelect,

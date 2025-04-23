@@ -1,9 +1,9 @@
 
-// Fix any comparison of appointment status with "concluído" to "concluido"
 import { useState, useEffect } from "react";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { format, addDays, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AppointmentStatus } from "../types"; // Fix import
 
 export type ReportTimeframe = "daily" | "weekly" | "monthly" | "yearly";
 
