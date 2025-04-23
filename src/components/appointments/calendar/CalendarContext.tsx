@@ -18,7 +18,6 @@ import { useAppointmentUpdate } from "@/hooks/appointments/useAppointmentUpdate"
 import { useAppointmentConflicts } from "@/hooks/appointments/useAppointmentConflicts";
 import { Appointment, AppointmentStatus } from "../types";
 
-// Define the parameters type for validateAppointmentTime
 interface ConflictCheckParams {
   date: Date;
   duration: number;
@@ -39,7 +38,6 @@ interface CalendarContextProps {
   selectedAppointment: AppointmentType | null;
   isDragging: boolean;
   
-  // Actions
   setCurrentDate: (date: Date) => void;
   setSelectedDate: (date: Date) => void;
   setCalendarView: (view: CalendarViewType) => void;
@@ -51,7 +49,6 @@ interface CalendarContextProps {
   handleSelectDate: (date: Date | undefined) => void;
   handleSelectDay: (day: Date) => void;
   handleSelectAppointment: (appointment: AppointmentType) => void;
-  // Drag and drop
   handleDragStart: (appointmentId: string) => void;
   handleDragEnd: (newDate: Date) => Promise<boolean>;
 }
@@ -80,10 +77,8 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentType | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   
-  // Hooks for appointment updates
   const { updateAppointment } = useAppointmentUpdate();
   
-  // Convert AppointmentType[] to Appointment[] for the useAppointmentConflicts hook
   const appointmentsForConflict: Appointment[] = appointments.map(app => ({
     id: app.id,
     clientName: app.clientName,
@@ -96,10 +91,8 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     professionalId: app.professionalId
   }));
   
-  // Use the hook with the converted appointments
   const { validateAppointmentTime } = useAppointmentConflicts(appointmentsForConflict);
   
-  // Navigation functions
   const nextPeriod = () => {
     if (calendarView === "month") {
       setCurrentDate(addMonths(currentDate, 1));
@@ -132,7 +125,6 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     setSelectedAppointment(appointment);
   };
   
-  // Drag & Drop handlers
   const handleDragStart = (appointmentId: string) => {
     const appointment = appointments.find(app => app.id === appointmentId);
     if (appointment) {
@@ -149,18 +141,13 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     }
     
     try {
-      // Check if the new date and time is valid
       const params: ConflictCheckParams = {
         date: newDate,
         duration: selectedAppointment.duration,
+        professionalId: selectedAppointment.professionalId,
         appointmentId: selectedAppointment.id
       };
       
-      if (selectedAppointment.professionalId) {
-        params.professionalId = selectedAppointment.professionalId;
-      }
-      
-      // Fix: Pass the params object to validateAppointmentTime
       const validationResult = validateAppointmentTime(params);
       
       if (!validationResult.valid) {
@@ -168,7 +155,6 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
         return false;
       }
       
-      // Update the appointment with the new date
       await updateAppointment(selectedAppointment.id, {
         date: newDate
       });
@@ -183,11 +169,9 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     }
   };
 
-  // Create calendar days based on current view
   let calendarDays: (Date | null)[] = [];
   
   if (calendarView === "month") {
-    // Month view logic
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
     const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -196,7 +180,6 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     calendarDays = Array(startWeekday).fill(null);
     monthDays.forEach(day => calendarDays.push(day));
   } else if (calendarView === "week") {
-    // Week view logic
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
     const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
     const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
@@ -204,14 +187,11 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     calendarDays = weekDays;
   }
 
-  // Filtrar agendamentos com base nos filtros selecionados
   const filteredAppointments = appointments.filter(app => {
-    // Filtro por tipo de serviço
     if (serviceFilter !== "all" && app.serviceType !== serviceFilter) {
       return false;
     }
     
-    // Filtro por profissional
     if (professionalFilter && app.professionalId !== professionalFilter) {
       return false;
     }
@@ -219,12 +199,10 @@ export function CalendarProvider({ appointments, children }: CalendarProviderPro
     return true;
   });
 
-  // Filter appointments for selected date
   const dayAppointments = filteredAppointments.filter(app => 
     isSameDay(app.date, selectedDate)
   );
 
-  // Filter appointments for current week
   const weekAppointments = filteredAppointments.filter(app => {
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
     const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
