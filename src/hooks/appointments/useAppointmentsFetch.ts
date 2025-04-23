@@ -61,12 +61,15 @@ export const useAppointmentsFetch = () => {
           // Ensure we cast the status to AppointmentStatus type
           const status = (item.status || "agendado") as AppointmentStatus;
           
-          // Get cliente name safely, handling both direct return and array return
+          // Get cliente name safely, handling potential null values and different data structures
           let clientName = "Cliente não identificado";
           if (item.clientes) {
-            if (typeof item.clientes === 'object' && !Array.isArray(item.clientes) && item.clientes !== null) {
+            // Handle case where clientes is a single object
+            if (typeof item.clientes === 'object' && item.clientes !== null && !Array.isArray(item.clientes)) {
               clientName = item.clientes.nome || "Cliente não identificado";
-            } else if (Array.isArray(item.clientes) && item.clientes.length > 0 && item.clientes[0] !== null) {
+            } 
+            // Handle case where clientes is an array
+            else if (Array.isArray(item.clientes) && item.clientes.length > 0) {
               const firstClient = item.clientes[0];
               if (typeof firstClient === 'object' && firstClient !== null && 'nome' in firstClient) {
                 clientName = firstClient.nome || "Cliente não identificado";
@@ -80,9 +83,12 @@ export const useAppointmentsFetch = () => {
           // Get service name safely
           let serviceName = "Serviço não identificado";
           if (item.servicos) {
-            if (typeof item.servicos === 'object' && !Array.isArray(item.servicos) && item.servicos !== null) {
+            // Handle case where servicos is a single object
+            if (typeof item.servicos === 'object' && item.servicos !== null && !Array.isArray(item.servicos)) {
               serviceName = item.servicos.nome || "Serviço não identificado";
-            } else if (Array.isArray(item.servicos) && item.servicos.length > 0 && item.servicos[0] !== null) {
+            } 
+            // Handle case where servicos is an array
+            else if (Array.isArray(item.servicos) && item.servicos.length > 0) {
               const firstService = item.servicos[0];
               if (typeof firstService === 'object' && firstService !== null && 'nome' in firstService) {
                 serviceName = firstService.nome || "Serviço não identificado";

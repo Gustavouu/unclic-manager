@@ -28,6 +28,7 @@ export interface ServiceSelectProps {
     price?: number;
     duration?: number;
   }>;
+  optional?: boolean; // Add this property for StepperForm
 }
 
 export const ServiceSelect = ({
@@ -37,7 +38,8 @@ export const ServiceSelect = ({
   label = "Serviço",
   excludeIds = [],
   onServiceSelect,
-  options
+  options,
+  optional = false // Default value for new property
 }: ServiceSelectProps) => {
   // This could come from API or context
   const defaultServices = [
