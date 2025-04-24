@@ -1,10 +1,10 @@
 
 import { useState } from "react";
-import { Appointment } from "../../components/appointments/types";
+import { Appointment, AppointmentStatus } from "../../components/appointments/types";
 
 interface UpdatedAppointmentData {
   date?: Date;
-  status?: string;
+  status?: AppointmentStatus;
   [key: string]: any;
 }
 
@@ -12,7 +12,7 @@ export function useAppointmentUpdate(setAppointments?: React.Dispatch<React.SetS
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const updateAppointment = async (id: string, data: UpdatedAppointmentData): Promise<boolean> => {
+  const updateAppointment = async (id: string, data: UpdatedAppointmentData): Promise<void> => {
     try {
       setIsUpdating(true);
       
@@ -30,11 +30,10 @@ export function useAppointmentUpdate(setAppointments?: React.Dispatch<React.SetS
         );
       }
       
-      return true;
     } catch (err) {
       console.error("Error updating appointment:", err);
       setError(err instanceof Error ? err : new Error(String(err)));
-      return false;
+      throw err;
     } finally {
       setIsUpdating(false);
     }
