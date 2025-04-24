@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import {
   CalendarRange,
@@ -30,6 +31,7 @@ export function MenuSections() {
       items: [
         { icon: CalendarRange, title: "Agenda", path: "/appointments" },
         { icon: Scissors, title: "Serviços", path: "/services" },
+        { icon: Users, title: "Clientes", path: "/clients" },
         { icon: Users, title: "Profissionais", path: "/professionals" },
         { icon: Package, title: "Estoque", path: "/inventory" },
         { icon: WalletCards, title: "Financeiro", path: "/finance" },

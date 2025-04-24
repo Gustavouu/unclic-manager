@@ -29,6 +29,7 @@ import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
 import BusinessWebsite from "./pages/BusinessWebsite";
 import PaymentApiTest from "./pages/PaymentApiTest";
+import Clients from "./pages/Clients";
 
 function App() {
   return (
@@ -81,6 +82,16 @@ function App() {
               <RequireAuth>
                 <AppLayout breadcrumb={[{ label: "Dashboard", path: "/dashboard" }, { label: "Serviços" }]}>
                   <Services />
+                </AppLayout>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/clients"
+            element={
+              <RequireAuth>
+                <AppLayout breadcrumb={[{ label: "Dashboard", path: "/dashboard" }, { label: "Clientes" }]}>
+                  <Clients />
                 </AppLayout>
               </RequireAuth>
             }
