@@ -26,6 +26,7 @@ export const ProfessionalsTable = ({
   const indexOfLastProfessional = currentPage * itemsPerPage;
   const indexOfFirstProfessional = indexOfLastProfessional - itemsPerPage;
   const currentProfessionals = professionals.slice(indexOfFirstProfessional, indexOfLastProfessional);
+  const totalPages = Math.ceil(professionals.length / itemsPerPage);
   
   const paginate = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -128,8 +129,7 @@ export const ProfessionalsTable = ({
       
       <ProfessionalsPagination
         currentPage={currentPage}
-        totalItems={professionals.length}
-        itemsPerPage={itemsPerPage}
+        totalPages={totalPages}
         onPageChange={paginate}
       />
     </div>

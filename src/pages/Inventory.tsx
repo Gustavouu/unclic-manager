@@ -1,6 +1,5 @@
 
-import React from 'react';
-import { InventoryContent } from "@/components/inventory/InventoryContent";
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Plus } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -9,9 +8,41 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InventoryStats } from '@/components/inventory/InventoryStats';
 import { InventoryTable } from '@/components/inventory/InventoryTable';
 import { NewProductDialog } from '@/components/inventory/NewProductDialog';
+import { useInventory } from '@/hooks/inventory/useInventory';
+import { Product } from '@/hooks/inventory/types';
 
 export default function Inventory() {
-  const [showNewProductDialog, setShowNewProductDialog] = React.useState(false);
+  const [showNewProductDialog, setShowNewProductDialog] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  
+  const { 
+    products, 
+    isLoading, 
+    addProduct, 
+    updateProduct, 
+    deleteProduct 
+  } = useInventory();
+
+  const handleAddOrUpdateProduct = (data: any) => {
+    if (editingProduct) {
+      updateProduct(editingProduct.id, data);
+    } else {
+      addProduct(data);
+    }
+    setShowNewProductDialog(false);
+    setEditingProduct(null);
+  };
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setShowNewProductDialog(true);
+  };
+
+  const handleDelete = (product: Product) => {
+    if (window.confirm(`Tem certeza que deseja excluir o produto "${product.name}"?`)) {
+      deleteProduct(product.id);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -70,7 +101,7 @@ export default function Inventory() {
         </div>
       </div>
       
-      <InventoryStats />
+      <InventoryStats products={products} />
 
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="pb-3 border-b bg-white">
@@ -93,15 +124,33 @@ export default function Inventory() {
             </div>
             
             <TabsContent value="all" className="mt-0">
-              <InventoryTable filterType="all" />
+              <InventoryTable 
+                products={products} 
+                isLoading={isLoading} 
+                filterType="all"
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             </TabsContent>
             
             <TabsContent value="low" className="mt-0">
-              <InventoryTable filterType="low" />
+              <InventoryTable 
+                products={products} 
+                isLoading={isLoading} 
+                filterType="low"
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             </TabsContent>
             
             <TabsContent value="out" className="mt-0">
-              <InventoryTable filterType="out" />
+              <InventoryTable 
+                products={products} 
+                isLoading={isLoading} 
+                filterType="out"
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -110,6 +159,8 @@ export default function Inventory() {
       <NewProductDialog 
         open={showNewProductDialog}
         onOpenChange={setShowNewProductDialog}
+        onAddProduct={handleAddOrUpdateProduct}
+        product={editingProduct}
       />
     </div>
   );

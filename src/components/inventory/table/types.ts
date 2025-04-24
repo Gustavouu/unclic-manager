@@ -1,12 +1,20 @@
 
 import { Product } from '@/hooks/inventory/types';
 
-export type SortField = 'name' | 'category' | 'price' | 'quantity' | null;
-export type SortDirection = 'asc' | 'desc';
-
 export interface InventoryTableProps {
   products: Product[];
-  isLoading: boolean;
+  isLoading?: boolean;
+  filterType?: string; // Add this optional property
   onEdit?: (product: Product) => void;
   onDelete?: (product: Product) => void;
+}
+
+export interface InventoryPaginationProps {
+  currentPage: number;
+  totalPages: number;
+  itemsPerPage: number;
+  totalItems: number;
+  indexOfFirstItem: number;
+  indexOfLastItem: number;
+  onPageChange: (pageNumber: number) => void;
 }

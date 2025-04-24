@@ -13,10 +13,19 @@ const Clients = () => {
   const { clients, isLoading } = useClients();
   const [showFilters, setShowFilters] = useState(false);
   const [filteredClients, setFilteredClients] = useState(clients);
+  const [activeTab, setActiveTab] = useState('all');
 
   const toggleFilters = () => {
     setShowFilters(!showFilters);
   };
+
+  const clientsForActiveTab = activeTab === 'all' 
+    ? filteredClients
+    : filteredClients.filter(client => {
+        // Assuming clients may have a status field or we default to 'active'
+        const clientStatus = client.status || 'active'; 
+        return clientStatus === activeTab;
+      });
 
   return (
     <div className="space-y-6">
@@ -29,7 +38,7 @@ const Clients = () => {
           <CardTitle className="text-lg">Gerenciamento de Clientes</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Tabs defaultValue="all" className="w-full">
+          <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
             <div className="flex items-center justify-between px-4 py-3 border-b bg-white">
               <TabsList className="bg-slate-100">
                 <TabsTrigger value="all" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
@@ -70,14 +79,14 @@ const Clients = () => {
                 <div className="hidden lg:block w-64 shrink-0 border-r p-4">
                   <h3 className="text-sm font-medium mb-4">Filtros</h3>
                   <ClientsFilters 
-                    clients={clients.filter(client => client.status === "active")} 
+                    clients={clientsForActiveTab} 
                     onFilteredClientsChange={setFilteredClients} 
                   />
                 </div>
                 
                 <div className="flex-1">
                   <ClientsTable 
-                    clients={filteredClients.filter(client => client.status === "active")} 
+                    clients={clientsForActiveTab} 
                     isLoading={isLoading} 
                     showFiltersButton
                     onToggleFilters={toggleFilters}
@@ -91,14 +100,14 @@ const Clients = () => {
                 <div className="hidden lg:block w-64 shrink-0 border-r p-4">
                   <h3 className="text-sm font-medium mb-4">Filtros</h3>
                   <ClientsFilters 
-                    clients={clients.filter(client => client.status === "inactive")} 
+                    clients={clientsForActiveTab} 
                     onFilteredClientsChange={setFilteredClients} 
                   />
                 </div>
                 
                 <div className="flex-1">
                   <ClientsTable 
-                    clients={filteredClients.filter(client => client.status === "inactive")} 
+                    clients={clientsForActiveTab} 
                     isLoading={isLoading} 
                     showFiltersButton
                     onToggleFilters={toggleFilters}

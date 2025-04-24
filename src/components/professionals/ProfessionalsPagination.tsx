@@ -12,6 +12,8 @@ import {
 interface ProfessionalsPaginationProps {
   currentPage: number;
   totalPages: number;
+  totalItems?: number; // Make this optional
+  itemsPerPage?: number; // Add this optional prop
   onPageChange: (page: number) => void;
 }
 

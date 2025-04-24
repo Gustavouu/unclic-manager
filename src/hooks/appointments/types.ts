@@ -6,8 +6,7 @@ export type AppointmentStatus =
   | "confirmado" 
   | "pendente" 
   | "concluido" 
-  | "cancelado"
-  | "concluído"; // Keeping both spellings for compatibility
+  | "cancelado";
 
 export interface Appointment {
   id: string;

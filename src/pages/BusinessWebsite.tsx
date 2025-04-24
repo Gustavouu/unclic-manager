@@ -44,6 +44,7 @@ const BusinessWebsite = () => {
     neighborhood: businessData.neighborhood || "Centro",
     city: businessData.city || "São Paulo",
     state: businessData.state || "SP",
+    description: businessData.description || "Descrição não disponível",
     ...businessData
   };
 
@@ -85,7 +86,7 @@ const BusinessWebsite = () => {
                   <div className="md:w-2/3">
                     <h2 className="text-xl font-semibold mb-2">{displayBusinessData.name}</h2>
                     <p className="text-muted-foreground mb-4">
-                      {businessData.description || "Descrição não disponível"}
+                      {displayBusinessData.description}
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>

@@ -88,7 +88,7 @@ export function useReportsData(dateRange: string) {
         });
         
         const totalAppointments = filteredAppointments.length;
-        const completedAppointments = filteredAppointments.filter(app => fixAppointmentStatusCheck(app)).length;
+        const completedAppointments = filteredAppointments.filter(app => app.status === "concluido").length;
         const canceledAppointments = filteredAppointments.filter(app => app.status === "cancelado").length;
         
         const prices = filteredAppointments.map(app => app.price);

@@ -7,8 +7,17 @@ import { InventoryTableView } from './table/InventoryTableView';
 import { InventoryPagination } from './table/InventoryPagination';
 import { InventoryTableProps } from './table/types';
 
-export const InventoryTable = ({ products, isLoading, onEdit, onDelete }: InventoryTableProps) => {
-  const { sortField, sortDirection, sortedProducts, handleSort } = useInventorySort(products);
+export const InventoryTable = ({ 
+  products, 
+  isLoading, 
+  filterType,
+  onEdit, 
+  onDelete 
+}: InventoryTableProps) => {
+  // Filter products based on filterType if provided
+  const filteredProducts = filterType ? filterByType(products, filterType) : products;
+  
+  const { sortField, sortDirection, sortedProducts, handleSort } = useInventorySort(filteredProducts);
   
   const {
     currentPage,
@@ -37,7 +46,7 @@ export const InventoryTable = ({ products, isLoading, onEdit, onDelete }: Invent
           currentPage={currentPage}
           totalPages={totalPages}
           itemsPerPage={itemsPerPage}
-          totalItems={products.length}
+          totalItems={filteredProducts.length}
           indexOfFirstItem={indexOfFirstItem}
           indexOfLastItem={indexOfLastItem}
           onPageChange={setCurrentPage}
@@ -45,4 +54,17 @@ export const InventoryTable = ({ products, isLoading, onEdit, onDelete }: Invent
       )}
     </div>
   );
+};
+
+// Helper function to filter products based on type
+const filterByType = (products: Product[], filterType: string): Product[] => {
+  switch (filterType) {
+    case 'low':
+      return products.filter(product => product.quantity <= product.minQuantity);
+    case 'out':
+      return products.filter(product => product.quantity === 0);
+    case 'all':
+    default:
+      return products;
+  }
 };

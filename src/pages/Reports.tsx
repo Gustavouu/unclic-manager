@@ -17,6 +17,13 @@ const Reports = () => {
     fetchAppointments();
   }, [fetchAppointments]);
 
+  // Calculate derived statistics if they don't exist directly
+  const appointmentsCount = stats.totalAppointments || 0;
+  const clientsCount = stats.totalClients || 0;
+  const completionRate = stats.completedAppointments && stats.totalAppointments 
+    ? Math.round((stats.completedAppointments / stats.totalAppointments) * 100) 
+    : 0;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -49,7 +56,7 @@ const Reports = () => {
             <CardContent className="p-4 flex flex-col items-center justify-center">
               <h3 className="text-lg font-medium mb-1">Agendamentos</h3>
               <p className="text-3xl font-bold text-green-600">
-                {stats.appointmentsCount || 0}
+                {appointmentsCount}
               </p>
               <p className="text-sm text-muted-foreground">No período</p>
             </CardContent>
@@ -59,7 +66,7 @@ const Reports = () => {
             <CardContent className="p-4 flex flex-col items-center justify-center">
               <h3 className="text-lg font-medium mb-1">Clientes</h3>
               <p className="text-3xl font-bold text-amber-600">
-                {stats.clientsCount || 0}
+                {clientsCount}
               </p>
               <p className="text-sm text-muted-foreground">No período</p>
             </CardContent>
@@ -69,7 +76,7 @@ const Reports = () => {
             <CardContent className="p-4 flex flex-col items-center justify-center">
               <h3 className="text-lg font-medium mb-1">Taxa de Conclusão</h3>
               <p className="text-3xl font-bold text-purple-600">
-                {stats.completionRate ? `${stats.completionRate}%` : '0%'}
+                {completionRate}%
               </p>
               <p className="text-sm text-muted-foreground">Agendamentos</p>
             </CardContent>
