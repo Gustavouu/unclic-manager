@@ -11,7 +11,8 @@ export const appointments: Appointment[] = [
     status: "agendado",
     price: 180,
     serviceType: "hair",
-    duration: 120
+    duration: 120,
+    clientId: "client1" // Added required clientId
   },
   {
     id: "2",
@@ -21,7 +22,8 @@ export const appointments: Appointment[] = [
     status: "concluido",
     price: 95,
     serviceType: "barber",
-    duration: 60
+    duration: 60,
+    clientId: "client2" // Added required clientId
   },
   {
     id: "3",
@@ -31,7 +33,8 @@ export const appointments: Appointment[] = [
     status: "cancelado",
     price: 60,
     serviceType: "nails",
-    duration: 45
+    duration: 45,
+    clientId: "client3" // Added required clientId
   },
   {
     id: "4",
@@ -41,7 +44,8 @@ export const appointments: Appointment[] = [
     status: "agendado",
     price: 120,
     serviceType: "makeup",
-    duration: 90
+    duration: 90,
+    clientId: "client4" // Added required clientId
   },
   {
     id: "5",
@@ -51,6 +55,7 @@ export const appointments: Appointment[] = [
     status: "agendado",
     price: 150,
     serviceType: "skincare",
-    duration: 75
+    duration: 75,
+    clientId: "client5" // Added required clientId
   },
 ];

@@ -1,4 +1,3 @@
-
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useEffect } from "react";
@@ -22,7 +21,7 @@ import { useAppointmentConflicts } from "@/hooks/appointments/useAppointmentConf
 import { v4 as uuidv4 } from "uuid";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { Appointment, AppointmentStatus } from "@/hooks/appointments/types"; // Using the hooks appointments type
+import { Appointment, AppointmentStatus } from "@/hooks/appointments/types";
 
 type AppointmentFormProps = {
   onClose: () => void;
@@ -40,10 +39,7 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   
-  // Convert the appointments to the correct type for conflict validation
   const appointmentsForConflict = appointments;
-  
-  // Use the hook for checking conflicts
   const { validateAppointmentTime } = useAppointmentConflicts(appointmentsForConflict);
 
   const form = useForm<AppointmentFormValues>({
@@ -57,8 +53,7 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
       },
     },
   });
-  
-  // Clear validation error when the fields of date, time, or professional change
+
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === 'date' || name === 'time' || name === 'professionalId') {
@@ -72,19 +67,16 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
     try {
       setIsSubmitting(true);
       
-      // Build the appointment date from form values
       const appointmentDate = new Date(values.date);
       const [hours, minutes] = values.time.split(':').map(Number);
       appointmentDate.setHours(hours, minutes, 0, 0);
       
       const client = clients.find(c => c.id === values.clientId);
       
-      // Generate valid UUIDs if they're missing
       const serviceId = values.serviceId || uuidv4();
       const clientId = values.clientId || uuidv4();
       const professionalId = values.professionalId || uuidv4();
       
-      // Verify appointment conflicts
       const validationResult = validateAppointmentTime({
         date: appointmentDate,
         duration: selectedService?.duration || 60,
@@ -105,14 +97,13 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
         professionalId
       });
       
-      // Create the appointment through the hook
       await createAppointment({
         clientName: client?.name || "Cliente não identificado",
         serviceName: selectedService?.name || "Serviço não identificado",
         date: appointmentDate,
         status: values.status,
         price: selectedService?.price || 0,
-        serviceType: "haircut", // This could be improved with actual categories
+        serviceType: "haircut",
         duration: selectedService?.duration || 60,
         notes: values.notes,
         clientId: clientId,
@@ -125,10 +116,7 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
         }
       });
       
-      // Refresh appointments to show the new one
       fetchAppointments();
-      
-      // Close the dialog and reset form
       onClose();
       form.reset();
       
@@ -137,7 +125,6 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
                      Data: ${format(appointmentDate, "d 'de' MMMM", { locale: ptBR })} às ${values.time}`,
       });
       
-      // If notification settings are set to send confirmation, show an info toast
       if (values.notifications?.sendConfirmation) {
         toast.info("Enviando confirmação para o cliente...");
       }

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { 
   addMonths, 
@@ -70,8 +69,9 @@ export const CalendarProvider: React.FC<CalendarProviderProps> = ({ children, ap
   const [professionalFilter, setProfessionalFilter] = useState<string | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentType | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [localAppointments, setLocalAppointments] = useState<AppointmentType[]>(appointments);
   
-  const { updateAppointment } = useAppointmentUpdate(setAppointments); // Passing the required argument
+  const { updateAppointment } = useAppointmentUpdate(setLocalAppointments);
   
   const appointmentsForConflict: Appointment[] = appointments.map(app => ({
     id: app.id,
@@ -82,7 +82,7 @@ export const CalendarProvider: React.FC<CalendarProviderProps> = ({ children, ap
     price: app.price,
     serviceType: app.serviceType,
     duration: app.duration,
-    clientId: "default-client-id", // Adding a default value since clientId is required
+    clientId: "default-client-id",
     professionalId: app.professionalId
   }));
   
