@@ -163,10 +163,11 @@ export const AppointmentCalendar = ({ businessId }: AppointmentCalendarProps) =>
     clientName: app.clientName,
     serviceName: app.serviceName,
     serviceType: app.serviceType,
-    // Add missing required properties
+    // Add required properties from CalendarAppointmentType
     duration: 60, // Default duration of 60 minutes
     price: 0,     // Default price of 0
-    // Optional properties can be left undefined
+    professionalId: "default", // Default professional ID
+    status: "agendado" // Default status
   }));
 
   return (
