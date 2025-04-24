@@ -1,10 +1,13 @@
 
 import { Product } from '@/hooks/inventory/types';
 
+export type SortField = 'name' | 'quantity' | 'price' | 'category';
+export type SortDirection = 'asc' | 'desc';
+
 export interface InventoryTableProps {
   products: Product[];
   isLoading?: boolean;
-  filterType?: string; // Add this optional property
+  filterType?: string;
   onEdit?: (product: Product) => void;
   onDelete?: (product: Product) => void;
 }
