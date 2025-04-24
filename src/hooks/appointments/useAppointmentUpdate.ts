@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Appointment } from "@/components/appointments/types";
 
 export const useAppointmentUpdate = (
-  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
+  setAppointments?: React.Dispatch<React.SetStateAction<Appointment[]>>
 ) => {
   const updateAppointment = async (id: string, changes: Partial<Appointment>) => {
     try {
@@ -37,10 +37,12 @@ export const useAppointmentUpdate = (
       
       if (error) throw error;
       
-      // Update in state
-      setAppointments(prev => 
-        prev.map(app => app.id === id ? { ...app, ...changes } : app)
-      );
+      // Update in state if setAppointments is provided
+      if (setAppointments) {
+        setAppointments(prev => 
+          prev.map(app => app.id === id ? { ...app, ...changes } : app)
+        );
+      }
       
       toast.success("Agendamento atualizado com sucesso!");
     } catch (err) {

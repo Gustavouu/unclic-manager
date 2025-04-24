@@ -18,6 +18,7 @@ import { CalendarFooter } from "./calendar/CalendarFooter";
 import { ServiceFilter } from "./calendar/ServiceFilter";
 import { supabase } from "@/integrations/supabase/client";
 import { CalendarProvider } from "../appointments/calendar/CalendarContext";
+import { AppointmentType as CalendarAppointmentType } from "../appointments/calendar/types";
 
 // Service types for filter
 export type ServiceType = "all" | "hair" | "barber" | "nails" | "makeup" | "skincare";
@@ -155,9 +156,22 @@ export const AppointmentCalendar = ({ businessId }: AppointmentCalendarProps) =>
     setCalendarView("day");
   };
 
+  // Transform appointments to match the CalendarAppointmentType
+  const calendarAppointments: CalendarAppointmentType[] = appointments.map(app => ({
+    id: app.id,
+    date: app.date,
+    clientName: app.clientName,
+    serviceName: app.serviceName,
+    serviceType: app.serviceType,
+    // Add missing required properties
+    duration: 60, // Default duration of 60 minutes
+    price: 0,     // Default price of 0
+    // Optional properties can be left undefined
+  }));
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-border/40 animate-fade-in overflow-hidden">
-      <CalendarProvider appointments={appointments}>
+      <CalendarProvider appointments={calendarAppointments}>
         <div className="p-6 border-b border-border/60">
           <CalendarHeader 
             currentMonth={currentMonth}
@@ -180,14 +194,14 @@ export const AppointmentCalendar = ({ businessId }: AppointmentCalendarProps) =>
               calendarDays={[]}
               weekDays={weekDays}
               selectedDate={selectedDate}
-              appointments={appointments}
+              appointments={calendarAppointments}
               onSelectDay={handleSelectDay}
             />
           )}
           
           {calendarView === "day" && (
             <DayView 
-              appointments={[]} 
+              appointments={calendarAppointments.filter(app => isSameDay(app.date, selectedDate))} 
               selectedDate={selectedDate}
             />
           )}
