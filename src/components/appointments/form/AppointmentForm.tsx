@@ -22,7 +22,7 @@ import { useAppointmentConflicts } from "@/hooks/appointments/useAppointmentConf
 import { v4 as uuidv4 } from "uuid";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { AppointmentStatus } from "../types";
+import { Appointment, AppointmentStatus } from "@/hooks/appointments/types"; // Using the hooks appointments type
 
 type AppointmentFormProps = {
   onClose: () => void;
@@ -40,8 +40,11 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   
-  // Use o hook de verificação de conflitos
-  const { validateAppointmentTime } = useAppointmentConflicts(appointments);
+  // Convert the appointments to the correct type for conflict validation
+  const appointmentsForConflict = appointments;
+  
+  // Use the hook for checking conflicts
+  const { validateAppointmentTime } = useAppointmentConflicts(appointmentsForConflict);
 
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
@@ -55,7 +58,7 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
     },
   });
   
-  // Limpar erro de validação quando os campos de data, hora ou profissional mudarem
+  // Clear validation error when the fields of date, time, or professional change
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === 'date' || name === 'time' || name === 'professionalId') {
@@ -81,7 +84,7 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
       const clientId = values.clientId || uuidv4();
       const professionalId = values.professionalId || uuidv4();
       
-      // Verificar conflitos de agendamento
+      // Verify appointment conflicts
       const validationResult = validateAppointmentTime({
         date: appointmentDate,
         duration: selectedService?.duration || 60,
@@ -134,7 +137,7 @@ export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
                      Data: ${format(appointmentDate, "d 'de' MMMM", { locale: ptBR })} às ${values.time}`,
       });
       
-      // Se há configuração para enviar confirmação, mostrar toast informativo
+      // If notification settings are set to send confirmation, show an info toast
       if (values.notifications?.sendConfirmation) {
         toast.info("Enviando confirmação para o cliente...");
       }

@@ -28,7 +28,7 @@ export function useAppointments(): AppointmentHookReturn {
   return {
     appointments,
     isLoading,
-    error,
+    error: error as Error, // Cast error to Error type
     fetchAppointments,
     createAppointment,
     updateAppointment,

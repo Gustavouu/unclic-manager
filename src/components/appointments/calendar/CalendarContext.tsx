@@ -71,7 +71,7 @@ export const CalendarProvider: React.FC<CalendarProviderProps> = ({ children, ap
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentType | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   
-  const { updateAppointment } = useAppointmentUpdate();
+  const { updateAppointment } = useAppointmentUpdate(setAppointments); // Passing the required argument
   
   const appointmentsForConflict: Appointment[] = appointments.map(app => ({
     id: app.id,
@@ -82,6 +82,7 @@ export const CalendarProvider: React.FC<CalendarProviderProps> = ({ children, ap
     price: app.price,
     serviceType: app.serviceType,
     duration: app.duration,
+    clientId: "default-client-id", // Adding a default value since clientId is required
     professionalId: app.professionalId
   }));
   

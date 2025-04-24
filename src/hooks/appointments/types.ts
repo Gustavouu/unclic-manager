@@ -7,7 +7,7 @@ export type AppointmentStatus =
   | "pendente" 
   | "concluido" 
   | "cancelado"
-  | "concluído"; // Added for compatibility with different spellings
+  | "concluído"; // Keeping both spellings for compatibility
 
 export interface Appointment {
   id: string;
@@ -25,6 +25,10 @@ export interface Appointment {
   notes?: string;
   paymentMethod?: string;
   confirmed?: boolean;
+  notifications?: { // Added notifications property
+    sendConfirmation: boolean;
+    sendReminder: boolean;
+  };
   additionalServices?: Array<{
     id?: string;
     name?: string;
@@ -48,6 +52,10 @@ export interface UpdatedAppointmentData {
   notes?: string;
   paymentMethod?: string;
   confirmed?: boolean;
+  notifications?: { // Added notifications property
+    sendConfirmation: boolean;
+    sendReminder: boolean;
+  };
   additionalServices?: Array<{
     id?: string;
     name?: string;

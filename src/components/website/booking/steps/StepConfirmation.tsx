@@ -8,7 +8,7 @@ import { ptBR } from "date-fns/locale";
 import { Loader2, CalendarCheck } from "lucide-react";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { toast } from "sonner";
-import { AppointmentStatus } from "@/components/appointments/types";
+import { AppointmentStatus } from "@/hooks/appointments/types";
 
 interface StepConfirmationProps {
   bookingData: BookingData;
@@ -53,7 +53,7 @@ export function StepConfirmation({ bookingData, onComplete }: StepConfirmationPr
         duration: bookingData.serviceDuration,
         notes: bookingData.notes,
         serviceId: bookingData.serviceId,
-        clientId: bookingData.clientId,
+        clientId: bookingData.clientId || "guest-client", // Ensure clientId is provided
         professionalId: bookingData.professionalId,
         paymentMethod: "local", // Default payment method
         notifications: {

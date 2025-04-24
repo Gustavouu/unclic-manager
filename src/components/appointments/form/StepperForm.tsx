@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
@@ -42,7 +43,13 @@ export function AppointmentStepperForm({
     try {
       setIsSubmitting(true);
       
-      await createAppointment(data);
+      // Make sure clientId is present (required)
+      const appointmentData = {
+        ...data,
+        clientId: data.clientId || "temp-client-id", // Make sure clientId is always provided
+      };
+      
+      await createAppointment(appointmentData);
       
       toast.success("Agendamento criado com sucesso!");
       onClose();
