@@ -20,30 +20,16 @@ interface ClientAppointmentsTabProps {
 }
 
 export function ClientAppointmentsTab({ clientId }: ClientAppointmentsTabProps) {
-  const { getAppointments } = useAppointments();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { appointments, isLoading } = useAppointments();
+  const [clientAppointments, setClientAppointments] = useState<Appointment[]>([]);
 
   useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        setIsLoading(true);
-        // In a real implementation, you would filter appointments by clientId
-        const allAppointments = await getAppointments();
-        setAppointments(
-          allAppointments.filter(appointment => 
-            appointment.clientId === clientId
-          )
-        );
-      } catch (error) {
-        console.error("Error fetching client appointments:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAppointments();
-  }, [clientId, getAppointments]);
+    // Filter appointments for this client
+    const filteredAppointments = appointments.filter(
+      appointment => appointment.clientId === clientId
+    );
+    setClientAppointments(filteredAppointments);
+  }, [clientId, appointments]);
 
   const statusMap = {
     "scheduled": { label: "Agendado", className: "bg-blue-100 text-blue-800 border-blue-200" },
@@ -111,7 +97,7 @@ export function ClientAppointmentsTab({ clientId }: ClientAppointmentsTabProps) 
                     </TableCell>
                   </TableRow>
                 ))
-            ) : appointments.length === 0 ? (
+            ) : clientAppointments.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-32 text-center">
                   <div className="flex flex-col items-center justify-center">
@@ -124,7 +110,7 @@ export function ClientAppointmentsTab({ clientId }: ClientAppointmentsTabProps) 
                 </TableCell>
               </TableRow>
             ) : (
-              appointments.map((appointment) => (
+              clientAppointments.map((appointment) => (
                 <TableRow key={appointment.id}>
                   <TableCell>
                     <div className="flex flex-col">
@@ -142,7 +128,7 @@ export function ClientAppointmentsTab({ clientId }: ClientAppointmentsTabProps) 
                     <span className="font-medium">{appointment.serviceName}</span>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {appointment.professionalName}
+                    {appointment.professionalId}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {formatCurrency(appointment.price)}

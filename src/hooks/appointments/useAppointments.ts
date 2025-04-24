@@ -1,10 +1,10 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAppointmentsFetch } from "./useAppointmentsFetch";
 import { useAppointmentCreate } from "./useAppointmentCreate";
 import { useAppointmentUpdate } from "./useAppointmentUpdate";
 import { useAppointmentDelete } from "./useAppointmentDelete";
-import { AppointmentHookReturn, CreateAppointmentData } from "./types";
+import { AppointmentHookReturn, Appointment } from "./types";
 
 export function useAppointments(): AppointmentHookReturn {
   const { 

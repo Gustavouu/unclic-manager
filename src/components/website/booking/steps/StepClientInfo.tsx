@@ -1,261 +1,189 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { BookingData } from "../types";
-import { useClients } from "@/hooks/useClients";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Loader2 } from "lucide-react";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { useClients } from "@/hooks/useClients";
+import { BookingData } from "../types";
+import { toast } from "sonner";
+
+const clientFormSchema = z.object({
+  nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
+  email: z.string().email("Digite um e-mail válido"),
+  telefone: z.string().min(10, "Digite um telefone válido"),
+});
+
+type ClientFormData = z.infer<typeof clientFormSchema>;
 
 interface StepClientInfoProps {
   bookingData: BookingData;
-  updateBookingData: (data: Partial<BookingData>) => void;
-  nextStep: () => void;
+  onUpdateBookingData: (data: Partial<BookingData>) => void;
+  onNext: () => void;
+  onBack: () => void;
 }
 
-const clientFormSchema = z.object({
-  name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
-  email: z.string().email({ message: "Email inválido" }),
-  phone: z.string().min(10, { message: "Telefone deve ter pelo menos 10 dígitos" }).optional(),
-  notes: z.string().optional()
-});
+export function StepClientInfo({ bookingData, onUpdateBookingData, onNext, onBack }: StepClientInfoProps) {
+  const { findClientByEmail, createClient } = useClients();
+  const [isSearching, setIsSearching] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
-type ClientFormValues = z.infer<typeof clientFormSchema>;
-
-export function StepClientInfo({ bookingData, updateBookingData, nextStep }: StepClientInfoProps) {
-  const { findClientByEmail, createClient, isLoading } = useClients();
-  const [clientChecked, setClientChecked] = useState(false);
-  
-  const form = useForm<ClientFormValues>({
+  const form = useForm<ClientFormData>({
     resolver: zodResolver(clientFormSchema),
     defaultValues: {
-      name: bookingData.clientName || "",
-      email: bookingData.clientEmail || "",
-      phone: bookingData.clientPhone || "",
-      notes: bookingData.notes || ""
-    }
+      nome: "",
+      email: "",
+      telefone: "",
+    },
   });
-  
-  // Format phone as user types
-  const formatPhoneInput = (value: string) => {
-    // Remove all non-numeric characters
-    const numbersOnly = value.replace(/\D/g, '');
+
+  const handleSearchClient = async (email: string) => {
+    if (!email) return;
     
-    // Apply mask as user types
-    if (numbersOnly.length <= 2) {
-      return `(${numbersOnly}`;
-    } else if (numbersOnly.length <= 6) {
-      return `(${numbersOnly.slice(0, 2)}) ${numbersOnly.slice(2)}`;
-    } else if (numbersOnly.length <= 10) {
-      return `(${numbersOnly.slice(0, 2)}) ${numbersOnly.slice(2, 6)}-${numbersOnly.slice(6)}`;
-    } else {
-      return `(${numbersOnly.slice(0, 2)}) ${numbersOnly.slice(2, 7)}-${numbersOnly.slice(7, 11)}`;
-    }
-  };
-  
-  // Handle phone input changes with formatting
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPhoneInput(e.target.value);
-    form.setValue('phone', formatted);
-  };
-  
-  useEffect(() => {
-    // Update form with booking data if available
-    if (bookingData.clientName) {
-      form.setValue('name', bookingData.clientName);
-    }
-    if (bookingData.clientEmail) {
-      form.setValue('email', bookingData.clientEmail);
-    }
-    if (bookingData.clientPhone) {
-      form.setValue('phone', bookingData.clientPhone);
-    }
-    if (bookingData.notes) {
-      form.setValue('notes', bookingData.notes);
-    }
-  }, [bookingData, form]);
-  
-  const handleEmailBlur = async () => {
-    const email = form.getValues("email");
-    
-    if (email && !clientChecked && email.includes('@')) {
-      try {
-        const client = await findClientByEmail(email);
-        if (client) {
-          form.setValue("name", client.name);
-          if (client.phone) form.setValue("phone", client.phone);
-          
-          updateBookingData({
-            clientId: client.id,
-            clientName: client.name,
-            clientEmail: client.email,
-            clientPhone: client.phone
-          });
-        }
-        setClientChecked(true);
-      } catch (error) {
-        console.error("Error checking for existing client:", error);
+    try {
+      setIsSearching(true);
+      const client = await findClientByEmail(email);
+      
+      if (client) {
+        // Found client, auto-fill the form
+        form.setValue("nome", client.nome);
+        form.setValue("telefone", client.telefone || "");
+        
+        // Update booking data
+        onUpdateBookingData({
+          clientId: client.id,
+          clientName: client.nome,
+          clientEmail: client.email,
+          clientPhone: client.telefone,
+        });
+        
+        toast.success("Cliente encontrado!");
+      } else {
+        toast.info("Cliente não encontrado, preencha os dados para cadastro");
       }
+    } catch (error) {
+      console.error("Error searching client:", error);
+      toast.error("Erro ao buscar cliente");
+    } finally {
+      setIsSearching(false);
     }
   };
-  
-  const onSubmit = async (data: ClientFormValues) => {
+
+  const onSubmit = async (data: ClientFormData) => {
     try {
       if (!bookingData.clientId) {
-        try {
-          // Create new client
-          const newClient = await createClient({
-            name: data.name,
-            email: data.email,
-            phone: data.phone
-          });
-          
-          if (newClient) {
-            updateBookingData({
-              clientId: newClient.id,
-              clientName: newClient.name,
-              clientEmail: newClient.email,
-              clientPhone: newClient.phone,
-              notes: data.notes || ""
-            });
-          } else {
-            // If client creation fails, just store the data without client ID
-            updateBookingData({
-              clientName: data.name,
-              clientEmail: data.email,
-              clientPhone: data.phone,
-              notes: data.notes || ""
-            });
-          }
-        } catch (error) {
-          console.error("Error creating client:", error);
-          // In case of error, just store the data without creating client
-          updateBookingData({
-            clientName: data.name,
-            clientEmail: data.email,
-            clientPhone: data.phone,
-            notes: data.notes || ""
+        // Create new client if not found
+        setIsCreating(true);
+        const newClient = await createClient({
+          nome: data.nome,
+          email: data.email,
+          telefone: data.telefone
+        });
+
+        if (newClient) {
+          onUpdateBookingData({
+            clientId: newClient.id,
+            clientName: newClient.nome,
+            clientEmail: newClient.email,
+            clientPhone: newClient.telefone,
           });
         }
-      } else {
-        // Just update the booking data with form values
-        updateBookingData({
-          clientName: data.name,
-          clientEmail: data.email,
-          clientPhone: data.phone,
-          notes: data.notes || ""
-        });
+        setIsCreating(false);
       }
       
-      nextStep();
+      // Move to next step
+      onNext();
     } catch (error) {
-      console.error("Error processing client information:", error);
+      console.error("Error in client step:", error);
+      toast.error("Erro ao salvar informações do cliente");
     }
   };
 
   return (
-    <Card className="border-none shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-2xl">Seus dados</CardTitle>
-        <p className="text-muted-foreground mt-2">
-          Preencha seus dados para confirmar o agendamento
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold mb-2">Informações do Cliente</h2>
+        <p className="text-sm text-muted-foreground">
+          Informe seus dados para continuar com o agendamento
         </p>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome completo</FormLabel>
+      </div>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <div className="flex gap-2">
                   <FormControl>
-                    <Input {...field} placeholder="Seu nome completo" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input 
-                      {...field} 
-                      placeholder="seu.email@exemplo.com" 
-                      type="email"
-                      onBlur={handleEmailBlur}
+                    <Input
+                      placeholder="seu.email@exemplo.com"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                      }}
+                      onBlur={(e) => {
+                        field.onBlur();
+                        handleSearchClient(e.target.value);
+                      }}
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Telefone</FormLabel>
-                  <FormControl>
-                    <Input 
-                      {...field} 
-                      placeholder="(00) 00000-0000" 
-                      onChange={handlePhoneChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Observações (opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      {...field} 
-                      placeholder="Alguma informação adicional que gostaria de compartilhar?"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <CardFooter className="px-0 pt-4">
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading || form.formState.isSubmitting}
-              >
-                {isLoading || form.formState.isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  "Finalizar Agendamento"
-                )}
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleSearchClient(form.getValues("email"))}
+                    disabled={isSearching || !form.getValues("email")}
+                  >
+                    {isSearching ? "Buscando..." : "Buscar"}
+                  </Button>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="nome"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome completo</FormLabel>
+                <FormControl>
+                  <Input placeholder="Seu nome completo" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="telefone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Telefone</FormLabel>
+                <FormControl>
+                  <Input placeholder="(00) 00000-0000" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="flex justify-between pt-4">
+            <Button type="button" variant="outline" onClick={onBack}>
+              Voltar
+            </Button>
+            <Button type="submit" disabled={isCreating}>
+              {isCreating ? "Salvando..." : "Continuar"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 }
