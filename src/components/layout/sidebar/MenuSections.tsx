@@ -1,11 +1,9 @@
-
 import * as React from "react";
 import {
   CalendarRange,
   LayoutDashboard,
   Package,
   Scissors,
-  UserRound,
   Users,
   WalletCards,
   Settings,
@@ -31,7 +29,6 @@ export function MenuSections() {
       group: "Gestão",
       items: [
         { icon: CalendarRange, title: "Agenda", path: "/appointments" },
-        { icon: UserRound, title: "Clientes", path: "/clients" },
         { icon: Scissors, title: "Serviços", path: "/services" },
         { icon: Users, title: "Profissionais", path: "/professionals" },
         { icon: Package, title: "Estoque", path: "/inventory" },

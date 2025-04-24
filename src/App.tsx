@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Routes,
@@ -16,7 +17,6 @@ import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
 import Dashboard from "./pages/Dashboard";
-import Clients from "./pages/Clients";
 import Appointments from "./pages/Appointments";
 import Services from "./pages/Services";
 import Professionals from "./pages/Professionals";
@@ -61,16 +61,6 @@ function App() {
               <RequireAuth>
                 <AppLayout breadcrumb={[{ label: "Dashboard" }]}>
                   <Dashboard />
-                </AppLayout>
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/clients"
-            element={
-              <RequireAuth>
-                <AppLayout breadcrumb={[{ label: "Dashboard", path: "/dashboard" }, { label: "Clientes" }]}>
-                  <Clients />
                 </AppLayout>
               </RequireAuth>
             }
