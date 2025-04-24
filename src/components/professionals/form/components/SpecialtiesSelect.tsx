@@ -1,3 +1,4 @@
+
 import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,8 +48,8 @@ export const SpecialtiesSelect = ({ form, specialties = [] }: SpecialtiesSelectP
             <FormLabel>Especialização *</FormLabel>
             <Select 
               onValueChange={(value) => field.onChange([value])}
-              value={Array.isArray(field.value) && field.value.length > 0 ? field.value[0] : ""}
-              defaultValue=""
+              value={Array.isArray(field.value) && field.value.length > 0 ? field.value[0] : "default"}
+              defaultValue="default"
             >
               <FormControl>
                 <SelectTrigger>
@@ -56,6 +57,9 @@ export const SpecialtiesSelect = ({ form, specialties = [] }: SpecialtiesSelectP
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
+                <SelectItem value="default" disabled>
+                  Selecione uma especialização
+                </SelectItem>
                 {safeSpecialties.length > 0 ? (
                   safeSpecialties.map((specialty) => (
                     <SelectItem key={specialty} value={specialty}>
@@ -63,7 +67,7 @@ export const SpecialtiesSelect = ({ form, specialties = [] }: SpecialtiesSelectP
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="no-options" disabled>
                     Sem especializações disponíveis
                   </SelectItem>
                 )}
