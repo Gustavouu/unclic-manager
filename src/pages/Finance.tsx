@@ -1,7 +1,7 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
@@ -40,82 +40,87 @@ export default function Finance() {
   };
   
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Financeiro</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Financeiro</h1>
+          <p className="text-sm text-muted-foreground">
             Gerenciamento de transações e análises financeiras
           </p>
         </div>
         <FinancialActions />
       </div>
       
-      <Separator className="my-6" />
-      
       <FinancialSummary isLoading={isLoading} />
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Movimentação Financeira</CardTitle>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-2 border shadow-sm">
+          <CardHeader className="pb-3 border-b bg-white">
+            <CardTitle className="text-lg">Movimentação Financeira</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <FinancialChart businessId={businessId} />
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Métodos de Pagamento</CardTitle>
+        <Card className="border shadow-sm">
+          <CardHeader className="pb-3 border-b bg-white">
+            <CardTitle className="text-lg">Métodos de Pagamento</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <PaymentMethodsStats isLoading={isLoading} />
           </CardContent>
         </Card>
       </div>
       
-      <Tabs defaultValue="todas" className="mt-8" onValueChange={setActiveTab}>
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
-          <TabsList>
-            <TabsTrigger value="todas">Todas</TabsTrigger>
-            <TabsTrigger value="receitas">Receitas</TabsTrigger>
-            <TabsTrigger value="despesas">Despesas</TabsTrigger>
-          </TabsList>
-          
-          <TransactionFilters 
-            onPeriodChange={handlePeriodChange}
-            onDateChange={handleDateChange}
-          />
-        </div>
-        
-        <TabsContent value="todas" className="mt-0">
-          <TransactionsTable
-            isLoading={isLoading}
-            filterType="all"
-            period={period}
-            searchDate={searchDate}
-          />
-        </TabsContent>
-        
-        <TabsContent value="receitas" className="mt-0">
-          <TransactionsTable
-            isLoading={isLoading}
-            filterType="receita"
-            period={period}
-            searchDate={searchDate}
-          />
-        </TabsContent>
-        
-        <TabsContent value="despesas" className="mt-0">
-          <TransactionsTable
-            isLoading={isLoading}
-            filterType="despesa"
-            period={period}
-            searchDate={searchDate}
-          />
-        </TabsContent>
-      </Tabs>
+      <Card className="border shadow-sm overflow-hidden">
+        <CardHeader className="pb-3 border-b bg-white">
+          <CardTitle className="text-lg">Transações</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Tabs defaultValue="todas" className="w-full" onValueChange={setActiveTab}>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center px-4 py-3 border-b bg-white gap-4">
+              <TabsList className="bg-slate-100">
+                <TabsTrigger value="todas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">Todas</TabsTrigger>
+                <TabsTrigger value="receitas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">Receitas</TabsTrigger>
+                <TabsTrigger value="despesas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">Despesas</TabsTrigger>
+              </TabsList>
+              
+              <TransactionFilters 
+                onPeriodChange={handlePeriodChange}
+                onDateChange={handleDateChange}
+              />
+            </div>
+            
+            <TabsContent value="todas" className="mt-0">
+              <TransactionsTable
+                isLoading={isLoading}
+                filterType="all"
+                period={period}
+                searchDate={searchDate}
+              />
+            </TabsContent>
+            
+            <TabsContent value="receitas" className="mt-0">
+              <TransactionsTable
+                isLoading={isLoading}
+                filterType="receita"
+                period={period}
+                searchDate={searchDate}
+              />
+            </TabsContent>
+            
+            <TabsContent value="despesas" className="mt-0">
+              <TransactionsTable
+                isLoading={isLoading}
+                filterType="despesa"
+                period={period}
+                searchDate={searchDate}
+              />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }

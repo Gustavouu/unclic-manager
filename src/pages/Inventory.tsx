@@ -2,65 +2,115 @@
 import React from 'react';
 import { InventoryContent } from "@/components/inventory/InventoryContent";
 import { Button } from "@/components/ui/button";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Plus } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { InventoryStats } from '@/components/inventory/InventoryStats';
+import { InventoryTable } from '@/components/inventory/InventoryTable';
+import { NewProductDialog } from '@/components/inventory/NewProductDialog';
 
 export default function Inventory() {
+  const [showNewProductDialog, setShowNewProductDialog] = React.useState(false);
+
   return (
-    <div className="container mx-auto px-0 py-4">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Gestão de Estoque</h1>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Inventário</h1>
+          <p className="text-sm text-muted-foreground">
+            Gerencie seu estoque e produtos
+          </p>
+        </div>
         
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1 text-xs h-8">
-              <HelpCircle className="h-3 w-3" />
-              Dicas gerais
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-72 p-3" side="left">
-            <div className="space-y-3 text-xs">
-              <div>
-                <h3 className="font-medium flex items-center gap-1.5">
-                  <span className="bg-blue-100 text-blue-700 p-1 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                  </span>
-                  Controle de Estoque
-                </h3>
-                <p className="text-xs text-muted-foreground ml-6">
-                  Monitore seus produtos, defina alertas de estoque baixo e gerencie seu inventário.
-                </p>
+        <div className="flex items-center gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1 text-xs h-9">
+                <HelpCircle className="h-3 w-3" />
+                Dicas gerais
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-3" side="left">
+              <div className="space-y-3 text-xs">
+                <div>
+                  <h3 className="font-medium flex items-center gap-1.5">
+                    <span className="bg-blue-100 text-blue-700 p-1 rounded-full">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    </span>
+                    Controle de Estoque
+                  </h3>
+                  <p className="text-xs text-muted-foreground ml-6">
+                    Monitore seus produtos, defina alertas de estoque baixo e gerencie seu inventário.
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium flex items-center gap-1.5">
+                    <span className="bg-green-100 text-green-700 p-1 rounded-full">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
+                    </span>
+                    Benefícios
+                  </h3>
+                  <p className="text-xs text-muted-foreground ml-6">
+                    Evite quebras de estoque, reduza custos e otimize seu investimento.
+                  </p>
+                </div>
               </div>
-              
-              <div>
-                <h3 className="font-medium flex items-center gap-1.5">
-                  <span className="bg-green-100 text-green-700 p-1 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
-                  </span>
-                  Benefícios
-                </h3>
-                <p className="text-xs text-muted-foreground ml-6">
-                  Evite quebras de estoque, reduza custos e otimize seu investimento.
-                </p>
-              </div>
-              
-              <div>
-                <h3 className="font-medium flex items-center gap-1.5">
-                  <span className="bg-yellow-100 text-yellow-700 p-1 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide-alert-triangle"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-                  </span>
-                  Atenção
-                </h3>
-                <p className="text-xs text-muted-foreground ml-6">
-                  Produtos com estoque abaixo do mínimo estão destacados com indicadores visuais.
-                </p>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+            </PopoverContent>
+          </Popover>
+          
+          <Button 
+            onClick={() => setShowNewProductDialog(true)}
+            className="gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus size={16} />
+            Novo Produto
+          </Button>
+        </div>
       </div>
       
-      <InventoryContent />
+      <InventoryStats />
+
+      <Card className="border shadow-sm overflow-hidden">
+        <CardHeader className="pb-3 border-b bg-white">
+          <CardTitle className="text-lg">Produtos em Estoque</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Tabs defaultValue="all" className="w-full">
+            <div className="flex items-center justify-between px-4 py-3 border-b bg-white">
+              <TabsList className="bg-slate-100">
+                <TabsTrigger value="all" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                  Todos
+                </TabsTrigger>
+                <TabsTrigger value="low" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                  Estoque Baixo
+                </TabsTrigger>
+                <TabsTrigger value="out" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                  Sem Estoque
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            
+            <TabsContent value="all" className="mt-0">
+              <InventoryTable filterType="all" />
+            </TabsContent>
+            
+            <TabsContent value="low" className="mt-0">
+              <InventoryTable filterType="low" />
+            </TabsContent>
+            
+            <TabsContent value="out" className="mt-0">
+              <InventoryTable filterType="out" />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+      
+      <NewProductDialog 
+        open={showNewProductDialog}
+        onOpenChange={setShowNewProductDialog}
+      />
     </div>
   );
 }

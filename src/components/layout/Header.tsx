@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Bell, Calendar, ChevronDown, Search } from "lucide-react";
+import { Bell, Search, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -39,7 +39,7 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
   };
   
   return (
-    <header className="sticky top-0 z-30 flex flex-col border-b border-border/50 py-2 px-4 md:px-6 bg-background/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-30 flex flex-col border-b border-border/50 py-2 px-4 md:px-6 bg-white backdrop-blur-sm">
       <div className="flex items-center justify-between h-12">
         <div className="flex items-center gap-4">
           {breadcrumb.length > 0 && (
@@ -84,22 +84,18 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
             <Bell size={18} className="text-muted-foreground" />
           </Button>
           
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Calendar size={18} className="text-muted-foreground" />
-          </Button>
-          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 ml-2 p-1 pr-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="" />
-                  <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                    {user?.name ? user.name.substring(0, 2).toUpperCase() : 'SA'}
+                  <AvatarFallback className="bg-blue-100 text-blue-600 font-medium">
+                    {user?.name ? user.name.substring(0, 2).toUpperCase() : 'GH'}
                   </AvatarFallback>
                 </Avatar>
                 {!isMobile && (
                   <>
-                    <span className="text-sm font-medium">{user?.name || "Salão Exemplo"}</span>
+                    <span className="text-sm font-medium">{user?.name || "Gustavo Henriqueq"}</span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </>
                 )}

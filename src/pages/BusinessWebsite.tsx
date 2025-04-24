@@ -6,6 +6,7 @@ import { WebsiteLoading } from "@/components/website/WebsiteLoading";
 import { WebsiteMainContent } from "@/components/website/WebsiteMainContent";
 import { WebsiteBookingModal } from "@/components/website/WebsiteBookingModal";
 import { useBusinessWebsite } from "@/hooks/website/useBusinessWebsite";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const BusinessWebsite = () => {
   const {
@@ -65,15 +66,56 @@ const BusinessWebsite = () => {
         )}
       </AnimatePresence>
 
-      <div className="container mx-auto px-4 pt-16 pb-8">
+      <div className="container mx-auto px-4 py-6">
         {!showBookingFlow && (
-          <WebsiteMainContent 
-            businessData={displayBusinessData}
-            businessHours={businessHours}
-            availableServices={availableServices}
-            staff={staff}
-            onStartBooking={handleStartBooking}
-          />
+          <div className="space-y-6">
+            <Card className="border shadow-sm">
+              <CardHeader className="pb-3 border-b bg-white">
+                <CardTitle className="text-lg">Sobre o Estabelecimento</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="flex flex-col md:flex-row gap-6">
+                  <div className="md:w-1/3">
+                    <img 
+                      src={businessData.logoUrl || "https://via.placeholder.com/300x200?text=Logo"} 
+                      alt={`${displayBusinessData.name} logo`}
+                      className="w-full h-auto rounded-lg shadow-sm"
+                    />
+                  </div>
+                  <div className="md:w-2/3">
+                    <h2 className="text-xl font-semibold mb-2">{displayBusinessData.name}</h2>
+                    <p className="text-muted-foreground mb-4">
+                      {businessData.description || "Descrição não disponível"}
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h3 className="font-medium mb-1">Contato</h3>
+                        <p className="text-sm">{displayBusinessData.email}</p>
+                        <p className="text-sm">{displayBusinessData.phone}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-medium mb-1">Endereço</h3>
+                        <p className="text-sm">
+                          {displayBusinessData.address}, {displayBusinessData.number}
+                        </p>
+                        <p className="text-sm">
+                          {displayBusinessData.neighborhood} - {displayBusinessData.city}/{displayBusinessData.state}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <WebsiteMainContent 
+              businessData={displayBusinessData}
+              businessHours={businessHours}
+              availableServices={availableServices}
+              staff={staff}
+              onStartBooking={handleStartBooking}
+            />
+          </div>
         )}
       </div>
     </div>

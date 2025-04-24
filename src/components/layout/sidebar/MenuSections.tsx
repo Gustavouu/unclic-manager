@@ -56,7 +56,7 @@ export function MenuSections() {
                   className={cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                     isActive 
-                      ? "bg-primary text-primary-foreground" 
+                      ? "bg-blue-600 text-white" 
                       : "hover:bg-muted"
                   )}
                 >
