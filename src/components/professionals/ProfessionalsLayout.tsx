@@ -5,14 +5,13 @@ import { Professional } from "@/hooks/professionals/types";
 import React from "react";
 
 interface ProfessionalsLayoutProps {
-  view: "grid" | "list";
+  view: "list";
   onViewDetails: (id: string) => void;
   onEditProfessional: (professional: Professional) => void;
   onDeleteProfessional: (professional: Professional) => void;
 }
 
 export const ProfessionalsLayout = ({ 
-  view,
   onViewDetails,
   onEditProfessional,
   onDeleteProfessional
@@ -48,7 +47,7 @@ export const ProfessionalsLayout = ({
 
   return (
     <ProfessionalsContent
-      view={view}
+      view="list"
       professionals={professionals}
       onProfessionalClick={handleProfessionalClick}
       onEditClick={handleEditClick}

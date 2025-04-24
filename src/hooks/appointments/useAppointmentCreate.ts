@@ -3,13 +3,12 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMinutes } from "date-fns";
 import { toast } from "sonner";
-import { CreateAppointmentData } from "./types";
-import { Appointment, AppointmentStatus } from "@/components/appointments/types";
+import { Appointment, AppointmentStatus } from "./types";
 
 export const useAppointmentCreate = (setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>) => {
   const [isCreating, setIsCreating] = useState(false);
 
-  const createAppointment = async (appointmentData: CreateAppointmentData): Promise<string> => {
+  const createAppointment = async (appointmentData: Omit<Appointment, "id">): Promise<string> => {
     setIsCreating(true);
     
     try {
@@ -28,8 +27,8 @@ export const useAppointmentCreate = (setAppointments: React.Dispatch<React.SetSt
       
       // Create notifications JSON
       const notificationsJson = JSON.stringify({
-        enviar_confirmacao: appointmentData.notifications.sendConfirmation,
-        enviar_lembrete: appointmentData.notifications.sendReminder
+        enviar_confirmacao: true,
+        enviar_lembrete: true
       });
       
       // Insert to database
@@ -50,8 +49,6 @@ export const useAppointmentCreate = (setAppointments: React.Dispatch<React.SetSt
           observacoes: appointmentData.notes,
           servicos_adicionais: additionalServicesJson,
           notificacoes: notificationsJson,
-          is_emergencia: appointmentData.isEmergency || false,
-          motivo_emergencia: appointmentData.emergencyReason,
         })
         .select('id')
         .single();
@@ -73,6 +70,7 @@ export const useAppointmentCreate = (setAppointments: React.Dispatch<React.SetSt
         serviceId: appointmentData.serviceId,
         clientId: appointmentData.clientId,
         professionalId: appointmentData.professionalId,
+        professionalName: appointmentData.professionalName,
       };
       
       setAppointments(prevAppointments => [createdAppointment, ...prevAppointments]);

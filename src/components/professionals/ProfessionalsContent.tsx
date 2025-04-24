@@ -1,11 +1,10 @@
 
 import { Professional } from "@/hooks/professionals/types";
-import { ProfessionalsGrid, ProfessionalsGridProps } from "./ProfessionalsGrid";
 import { ProfessionalsTable, ProfessionalsTableProps } from "./ProfessionalsTable";
 import React from "react";
 
 interface ProfessionalsContentProps {
-  view: "grid" | "list";
+  view: "list";
   professionals: Professional[];
   onProfessionalClick: (id: string) => void;
   onEditClick: (professional: Professional, e: React.MouseEvent) => void;
@@ -13,7 +12,6 @@ interface ProfessionalsContentProps {
 }
 
 export const ProfessionalsContent = ({
-  view,
   professionals,
   onProfessionalClick,
   onEditClick,
@@ -30,14 +28,7 @@ export const ProfessionalsContent = ({
     );
   }
   
-  return view === "grid" ? (
-    <ProfessionalsGrid 
-      professionals={safeProfessionals} 
-      onProfessionalClick={onProfessionalClick}
-      onEditClick={onEditClick}
-      onDeleteClick={onDeleteClick}
-    />
-  ) : (
+  return (
     <ProfessionalsTable 
       professionals={safeProfessionals} 
       onProfessionalClick={onProfessionalClick}

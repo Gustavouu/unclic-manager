@@ -32,9 +32,9 @@ export const ProfessionalsTable = ({
   };
 
   return (
-    <div className="border rounded-md">
+    <div className="border-none rounded-md">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-gray-50">
           <TableRow>
             <TableHead>Profissional</TableHead>
             <TableHead>Cargo</TableHead>
@@ -85,6 +85,7 @@ export const ProfessionalsTable = ({
                     size="icon"
                     className="h-8 w-8 text-blue-600"
                     onClick={() => onProfessionalClick(professional.id)}
+                    title="Ver detalhes"
                   >
                     <Eye size={16} />
                   </Button>
@@ -93,6 +94,7 @@ export const ProfessionalsTable = ({
                     size="icon"
                     className="h-8 w-8 text-amber-600"
                     onClick={(e) => onEditClick(professional, e)}
+                    title="Editar"
                   >
                     <Edit size={16} />
                   </Button>
@@ -101,6 +103,7 @@ export const ProfessionalsTable = ({
                     size="icon"
                     className="h-8 w-8 text-red-600"
                     onClick={(e) => onDeleteClick(professional, e)}
+                    title="Excluir"
                   >
                     <Trash2 size={16} />
                   </Button>

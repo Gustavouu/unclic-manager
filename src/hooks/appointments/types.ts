@@ -56,6 +56,34 @@ export interface UpdatedAppointmentData {
   }>;
 }
 
+export interface CreateAppointmentData {
+  date: Date;
+  clientId: string;
+  clientName: string;
+  serviceId?: string;
+  serviceName: string;
+  serviceType: string;
+  professionalId?: string;
+  professionalName?: string;
+  duration: number;
+  price: number;
+  status: AppointmentStatus;
+  notes?: string;
+  paymentMethod?: string;
+  isEmergency?: boolean;
+  emergencyReason?: string;
+  notifications?: {
+    sendConfirmation: boolean;
+    sendReminder: boolean;
+  };
+  additionalServices?: Array<{
+    id?: string;
+    name?: string;
+    duration?: number;
+    price: number;
+  }>;
+}
+
 export interface AppointmentHookReturn {
   appointments: Appointment[];
   isLoading: boolean;
