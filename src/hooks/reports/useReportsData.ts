@@ -1,12 +1,56 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentBusiness } from "../useCurrentBusiness";
+
+export interface PaymentMethod {
+  name: string;
+  valor: number;
+}
+
+export interface MonthlyRevenue {
+  name: string;
+  receita: number;
+  despesa: number;
+}
+
+export interface ServicePopularity {
+  name: string;
+  count: number;
+}
+
+export interface ProfessionalRevenue {
+  name: string;
+  revenue: number;
+}
+
+export interface ProfessionalProductivity {
+  name: string;
+  count: number;
+}
 
 export interface ReportStatistics {
   totalRevenue: number;
   appointmentsCount: number;
   clientsCount: number;
   completionRate: number;
+  
+  // Additional properties used in charts and sections
+  totalAppointments: number;
+  completedAppointments: number;
+  totalClients: number;
+  newClientsCount: number;
+  retentionRate: number;
+  averageDuration: number;
+  averagePrice: number;
+  occupancyRate: number;
+  
+  // Chart data
+  paymentMethods: PaymentMethod[];
+  monthlyRevenue: MonthlyRevenue[];
+  servicePopularity: ServicePopularity[];
+  professionalRevenue: ProfessionalRevenue[];
+  professionalProductivity: ProfessionalProductivity[];
 }
 
 export const useReportsData = (dateRange: string) => {
@@ -15,6 +59,19 @@ export const useReportsData = (dateRange: string) => {
     appointmentsCount: 0,
     clientsCount: 0,
     completionRate: 0,
+    totalAppointments: 0,
+    completedAppointments: 0,
+    totalClients: 0,
+    newClientsCount: 0,
+    retentionRate: 0,
+    averageDuration: 0,
+    averagePrice: 0,
+    occupancyRate: 0,
+    paymentMethods: [],
+    monthlyRevenue: [],
+    servicePopularity: [],
+    professionalRevenue: [],
+    professionalProductivity: []
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,11 +156,63 @@ export const useReportsData = (dateRange: string) => {
 
         const completionRate = appointmentsCount > 0 ? (completedAppointments / appointmentsCount) * 100 : 0;
 
+        // Generate mock data for charts since we don't have actual data
+        const paymentMethods = [
+          { name: 'Cartão de Crédito', valor: 45 },
+          { name: 'Cartão de Débito', valor: 30 },
+          { name: 'Dinheiro', valor: 15 },
+          { name: 'PIX', valor: 10 },
+        ];
+
+        const monthlyRevenue = [
+          { name: 'Jan', receita: 4000, despesa: 2400 },
+          { name: 'Fev', receita: 3000, despesa: 1398 },
+          { name: 'Mar', receita: 2000, despesa: 9800 },
+          { name: 'Abr', receita: 2780, despesa: 3908 },
+          { name: 'Mai', receita: 1890, despesa: 4800 },
+          { name: 'Jun', receita: 2390, despesa: 3800 },
+        ];
+
+        const servicePopularity = [
+          { name: 'Corte Masculino', count: 35 },
+          { name: 'Corte Feminino', count: 28 },
+          { name: 'Barba', count: 22 },
+          { name: 'Coloração', count: 18 },
+          { name: 'Escova', count: 15 },
+        ];
+
+        const professionalRevenue = [
+          { name: 'Ana', revenue: 4500 },
+          { name: 'Carlos', revenue: 3800 },
+          { name: 'Maria', revenue: 3200 },
+          { name: 'João', revenue: 2500 },
+        ];
+
+        const professionalProductivity = [
+          { name: 'Ana', count: 45 },
+          { name: 'Carlos', count: 38 },
+          { name: 'Maria', count: 32 },
+          { name: 'João', count: 25 },
+        ];
+
         setStats({
           totalRevenue,
           appointmentsCount,
           clientsCount,
           completionRate,
+          totalAppointments: appointmentsCount,
+          completedAppointments,
+          totalClients: clientsCount,
+          newClientsCount: Math.round(clientsCount * 0.3), // Mock data
+          retentionRate: 72, // Mock data
+          averageDuration: 45, // Mock data
+          averagePrice: totalRevenue / (appointmentsCount || 1),
+          occupancyRate: 65, // Mock data
+          paymentMethods,
+          monthlyRevenue,
+          servicePopularity,
+          professionalRevenue,
+          professionalProductivity
         });
       } catch (err: any) {
         setError(err.message || "Failed to fetch reports data");
