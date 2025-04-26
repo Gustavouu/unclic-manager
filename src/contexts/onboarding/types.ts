@@ -6,21 +6,22 @@ export interface BusinessData {
   name: string;
   email: string;
   phone: string;
+  description?: string;  // Added optional description
   logo?: File | null;
-  logoUrl?: string;  // URL do preview do logo (blob ou base64)
-  logoName?: string;  // Nome do arquivo do logo
-  logoData?: string;  // Dados base64 do logo para persistência
+  logoUrl?: string;  
+  logoName?: string;  
+  logoData?: string;  
   banner?: File | null;
-  bannerUrl?: string;  // URL do preview do banner (blob ou base64) 
-  bannerName?: string;  // Nome do arquivo do banner
-  bannerData?: string;  // Dados base64 do banner para persistência
+  bannerUrl?: string;  
+  bannerName?: string;  
+  bannerData?: string;  
   cep: string;
   address: string;
   number: string;
   neighborhood: string;
   city: string;
   state: string;
-  website?: string;  // URL do site do estabelecimento
+  website?: string;  
   socialMedia?: {
     facebook?: string;
     instagram?: string;
