@@ -1,500 +1,227 @@
-import React, { useState } from 'react';
-import { Layout } from './components/Layout';
-import { Card } from './components/Card';
-import { Button } from './components/Button';
-import { 
-  Save, Building, Clock, Scissors, Users, 
-  Calendar, CreditCard, Bell, Database, Shield, 
-  Settings as SettingsIcon, Phone, Instagram, Mail, Globe
-} from 'lucide-react';
+import { useState } from "react";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { HelpCircle, Save, Rocket } from "lucide-react";
+import { SettingsTabs } from "@/components/settings/SettingsTabs";
+import { BusinessProfileTab } from "@/components/settings/tabs/BusinessProfileTab";
+import { HoursTab } from "@/components/settings/tabs/HoursTab";
+import { ServicesTab } from "@/components/settings/tabs/ServicesTab";
+import { StaffTab } from "@/components/settings/tabs/StaffTab";
+import { AppointmentsTab } from "@/components/settings/tabs/AppointmentsTab";
+import { FinancialTab } from "@/components/settings/tabs/FinancialTab";
+import { NotificationsTab } from "@/components/settings/tabs/NotificationsTab";
+import { IntegrationsTab } from "@/components/settings/tabs/IntegrationsTab";
+import { PermissionsTab } from "@/components/settings/tabs/PermissionsTab";
+import { OtherTab } from "@/components/settings/tabs/OtherTab";
+import { mockSaveFunction, showSuccessToast, showErrorToast } from "@/utils/formUtils";
+import { Toaster } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
+import { Card, CardContent } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import React from 'react';
+import { Input } from './components/Input';
+import { Label } from './components/Label';
+import { Checkbox } from './components/Checkbox';
+import { Textarea } from './components/Textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/Select';
+import { Switch } from './components/Switch';
+import { Slider } from './components/Slider';
+import { Calendar } from './components/Calendar';
+import { CalendarIcon, CheckCheck, ChevronsUpDown, Facebook, Instagram } from 'lucide-react';
+import { PopoverClose } from '@radix-ui/react-popover';
+import { cn } from '@/lib/utils';
 
-const SettingsPrototype: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('business');
+const Settings = () => {
+  const [activeTab, setActiveTab] = useState("business");
+  const [isSaving, setIsSaving] = useState(false);
+  const navigate = useNavigate();
+  
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
+  const handleGlobalSave = async () => {
+    setIsSaving(true);
+    
+    try {
+      const success = await mockSaveFunction();
+      
+      if (success) {
+        showSuccessToast("Todas as configurações foram salvas com sucesso!");
+      } else {
+        showErrorToast();
+      }
+    } catch (error) {
+      showErrorToast();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleOnboarding = () => {
+    navigate("/onboarding");
+  };
 
   return (
-    <Layout title="Configurações" subtitle="Gerencie as configurações do seu negócio">
-      {/* Header Actions */}
-      <div className="flex justify-end mb-6">
-        <Button 
-          variant="primary" 
-          size="md" 
-          icon={<Save size={16} />}
-        >
-          Salvar Alterações
-        </Button>
-      </div>
-
-      {/* Settings Container */}
-      <Card>
-        <div className="flex flex-col md:flex-row">
-          {/* Left Sidebar - Tabs */}
-          <div className="md:w-64 p-4 border-r">
-            <h3 className="text-lg font-medium mb-4">Configurações</h3>
-            <nav className="space-y-1">
-              <button 
-                className={`flex items-center w-full px-3 py-2 text-sm rounded-md ${
-                  activeTab === 'business' 
-                    ? 'bg-blue-50 text-blue-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setActiveTab('business')}
-              >
-                <Building size={18} className="mr-3" />
-                <span>Perfil do Negócio</span>
-              </button>
-              
-              <button 
-                className={`flex items-center w-full px-3 py-2 text-sm rounded-md ${
-                  activeTab === 'hours' 
-                    ? 'bg-blue-50 text-blue-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setActiveTab('hours')}
-              >
-                <Clock size={18} className="mr-3" />
-                <span>Horário de Funcionamento</span>
-              </button>
-              
-              <button 
-                className={`flex items-center w-full px-3 py-2 text-sm rounded-md ${
-                  activeTab === 'services' 
-                    ? 'bg-blue-50 text-blue-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setActiveTab('services')}
-              >
-                <Scissors size={18} className="mr-3" />
-                <span>Serviços</span>
-              </button>
-              
-              <button 
-                className={`flex items-center w-full px-3 py-2 text-sm rounded-md ${
-                  activeTab === 'staff' 
-                    ? 'bg-blue-50 text-blue-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setActiveTab('staff')}
-              >
-                <Users size={18} className="mr-3" />
-                <span>Equipe</span>
-              </button>
-              
-              <button 
-                className={`flex items-center w-full px-3 py-2 text-sm rounded-md ${
-                  activeTab === 'appointments' 
-                    ? 'bg-blue-50 text-blue-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setActiveTab('appointments')}
-              >
-                <Calendar size={18} className="mr-3" />
-                <span>Agendamentos</span>
-              </button>
-              
-              <button 
-                className={`flex items-center w-full px-3 py-2 text-sm rounded-md ${
-                  activeTab === 'financial' 
-                    ? 'bg-blue-50 text-blue-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setActiveTab('financial')}
-              >
-                <CreditCard size={18} className="mr-3" />
-                <span>Financeiro</span>
-              </button>
-              
-              <button 
-                className={`flex items-center w-full px-3 py-2 text-sm rounded-md ${
-                  activeTab === 'notifications' 
-                    ? 'bg-blue-50 text-blue-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setActiveTab('notifications')}
-              >
-                <Bell size={18} className="mr-3" />
-                <span>Notificações</span>
-              </button>
-              
-              <button 
-                className={`flex items-center w-full px-3 py-2 text-sm rounded-md ${
-                  activeTab === 'integrations' 
-                    ? 'bg-blue-50 text-blue-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setActiveTab('integrations')}
-              >
-                <Database size={18} className="mr-3" />
-                <span>Integrações</span>
-              </button>
-              
-              <button 
-                className={`flex items-center w-full px-3 py-2 text-sm rounded-md ${
-                  activeTab === 'permissions' 
-                    ? 'bg-blue-50 text-blue-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setActiveTab('permissions')}
-              >
-                <Shield size={18} className="mr-3" />
-                <span>Permissões</span>
-              </button>
-              
-              <button 
-                className={`flex items-center w-full px-3 py-2 text-sm rounded-md ${
-                  activeTab === 'advanced' 
-                    ? 'bg-blue-50 text-blue-700' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setActiveTab('advanced')}
-              >
-                <SettingsIcon size={18} className="mr-3" />
-                <span>Configurações Avançadas</span>
-              </button>
-            </nav>
+    <OnboardingProvider>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Configurações</h1>
+            <p className="text-sm text-muted-foreground">
+              Gerencie as configurações do seu negócio
+            </p>
           </div>
           
-          {/* Right Content Area */}
-          <div className="flex-1 p-6">
-            {/* Business Profile */}
-            {activeTab === 'business' && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-lg font-medium mb-4">Perfil do Negócio</h2>
-                  <p className="text-sm text-gray-500 mb-6">
-                    Configure as informações básicas do seu estabelecimento.
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1 h-9">
+                  <HelpCircle className="h-4 w-4" />
+                  Ajuda
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72" side="left">
+                <div className="space-y-2">
+                  <h3 className="font-medium">Configurações do Negócio</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Configure todos os aspectos do seu negócio, como perfil da empresa, horários de funcionamento, serviços e colaboradores.
                   </p>
                 </div>
-                
-                {/* General Information */}
-                <div className="space-y-4">
-                  <h3 className="text-md font-medium">Informações Gerais</h3>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nome do Estabelecimento
-                    </label>
-                    <input 
-                      type="text" 
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Nome do estabelecimento"
-                      defaultValue="Barbearia Modelo"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Email
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                          <Mail size={16} className="text-gray-400" />
-                        </div>
-                        <input 
-                          type="email" 
-                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="contato@exemplo.com"
-                          defaultValue="contato@barbearia.com"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Telefone
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                          <Phone size={16} className="text-gray-400" />
-                        </div>
-                        <input 
-                          type="tel" 
-                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="(00) 00000-0000"
-                          defaultValue="(11) 99999-8888"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Descrição
-                    </label>
-                    <textarea 
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Descreva seu estabelecimento"
-                      defaultValue="Barbearia com foco em atendimento de alta qualidade e ambiente agradável."
-                      rows={4}
-                    />
-                  </div>
-                </div>
-                
-                {/* Web and Social */}
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="text-md font-medium">Web e Redes Sociais</h3>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Website
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <Globe size={16} className="text-gray-400" />
-                      </div>
-                      <input 
-                        type="url" 
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="https://www.exemplo.com"
-                        defaultValue="https://www.barbearia.com"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Instagram
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <Instagram size={16} className="text-gray-400" />
-                      </div>
-                      <input 
-                        type="text" 
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="@nomedapagina"
-                        defaultValue="@barbearia"
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Address */}
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="text-md font-medium">Endereço</h3>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        CEP
-                      </label>
-                      <input 
-                        type="text" 
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="00000-000"
-                        defaultValue="01234-567"
-                      />
-                    </div>
-                    
-                    <div className="col-span-2 md:col-span-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Endereço
-                      </label>
-                      <input 
-                        type="text" 
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Rua, Avenida, etc"
-                        defaultValue="Av. Paulista"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Número
-                      </label>
-                      <input 
-                        type="text" 
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Número"
-                        defaultValue="1000"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Complemento
-                      </label>
-                      <input 
-                        type="text" 
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Sala, Andar, etc."
-                        defaultValue="Sala 101"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Bairro
-                      </label>
-                      <input 
-                        type="text" 
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Bairro"
-                        defaultValue="Bela Vista"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Cidade
-                      </label>
-                      <input 
-                        type="text" 
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Cidade"
-                        defaultValue="São Paulo"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Estado
-                      </label>
-                      <select 
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="SP" selected>São Paulo</option>
-                        <option value="RJ">Rio de Janeiro</option>
-                        <option value="MG">Minas Gerais</option>
-                        <option value="RS">Rio Grande do Sul</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Logos and Images */}
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="text-md font-medium">Logo e Imagens</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Logo
-                      </label>
-                      <div className="flex items-center">
-                        <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden mr-4">
-                          <div className="text-gray-400">Logo</div>
-                        </div>
-                        <div>
-                          <Button variant="outline" size="sm" className="mb-2">
-                            Alterar Logo
-                          </Button>
-                          <p className="text-xs text-gray-500">
-                            Recomendado: 200x200px, PNG ou JPG
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Banner
-                      </label>
-                      <div className="flex items-center">
-                        <div className="w-32 h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden mr-4">
-                          <div className="text-gray-400">Banner</div>
-                        </div>
-                        <div>
-                          <Button variant="outline" size="sm" className="mb-2">
-                            Alterar Banner
-                          </Button>
-                          <p className="text-xs text-gray-500">
-                            Recomendado: 1200x600px, PNG ou JPG
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="pt-4 border-t flex justify-end">
-                  <Button 
-                    variant="primary" 
-                    icon={<Save size={16} />}
-                  >
-                    Salvar Alterações
-                  </Button>
-                </div>
-              </div>
-            )}
+              </PopoverContent>
+            </Popover>
             
-            {/* Business Hours */}
-            {activeTab === 'hours' && (
-              <div>
-                <h2 className="text-lg font-medium mb-4">Horário de Funcionamento</h2>
-                <p className="text-sm text-gray-500 mb-6">
-                  Configure os horários de funcionamento do seu estabelecimento.
-                </p>
-                
-                <div className="space-y-4">
-                  <div className="grid grid-cols-3 items-center py-2 border-b">
-                    <div className="font-medium">Dia</div>
-                    <div className="font-medium">Horário de Abertura</div>
-                    <div className="font-medium">Horário de Fechamento</div>
-                  </div>
-                  
-                  {['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'].map((day, index) => (
-                    <div key={index} className="grid grid-cols-3 items-center py-2 border-b">
-                      <div className="flex items-center">
-                        <input 
-                          type="checkbox" 
-                          id={`day-${index}`} 
-                          className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          defaultChecked={index < 6} 
-                        />
-                        <label htmlFor={`day-${index}`}>{day}</label>
-                      </div>
-                      <div>
-                        <select 
-                          disabled={index === 6} 
-                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          <option value="08:00">08:00</option>
-                          <option value="09:00">09:00</option>
-                          <option value="10:00" selected>10:00</option>
-                          <option value="11:00">11:00</option>
-                          <option value="12:00">12:00</option>
-                        </select>
-                      </div>
-                      <div>
-                        <select 
-                          disabled={index === 6} 
-                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          <option value="17:00">17:00</option>
-                          <option value="18:00">18:00</option>
-                          <option value="19:00" selected>19:00</option>
-                          <option value="20:00">20:00</option>
-                          <option value="21:00">21:00</option>
-                        </select>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="pt-6 flex justify-end">
-                  <Button 
-                    variant="primary" 
-                    icon={<Save size={16} />}
-                  >
-                    Salvar Alterações
-                  </Button>
-                </div>
-              </div>
-            )}
+            <Button variant="outline" onClick={handleOnboarding}>
+              <Rocket className="mr-2 h-4 w-4" />
+              Onboarding
+            </Button>
             
-            {/* Other tabs would be implemented similarly */}
-            {activeTab !== 'business' && activeTab !== 'hours' && (
-              <div className="text-center py-16">
-                <h3 className="text-lg font-medium text-gray-700 mb-2">Configurações de {activeTab}</h3>
-                <p className="text-gray-500">Esta seção não está implementada no protótipo.</p>
-              </div>
-            )}
+            <Button onClick={handleGlobalSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
+              <Save className="mr-2 h-4 w-4" />
+              {isSaving ? "Salvando..." : "Salvar Alterações"}
+            </Button>
           </div>
         </div>
-      </Card>
-    </Layout>
+
+        <Card className="border shadow-sm overflow-hidden">
+          <CardContent className="p-0">
+            <Tabs defaultValue="business" value={activeTab} onValueChange={handleTabChange} className="w-full">
+              <SettingsTabs activeTab={activeTab} onTabChange={handleTabChange} />
+
+              <div className="p-6">
+                <TabsContent value="business">
+                  <form className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label htmlFor="businessName">Nome do Negócio</Label>
+                        <Input type="text" id="businessName" placeholder="Nome Fantasia" />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input type="email" id="email" placeholder="Email de Contato" />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label htmlFor="phone">Telefone</Label>
+                        <Input type="tel" id="phone" placeholder="(XX) XXXX-XXXX" />
+                      </div>
+                      <div>
+                        <Label htmlFor="website">Website</Label>
+                        <Input type="url" id="website" placeholder="https://seunegocio.com.br" />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="description">Descrição</Label>
+                      <Textarea id="description" placeholder="Descreva seu negócio" />
+                    </div>
+                    
+                    <div>
+                      <Label>Redes Sociais</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <Facebook size={16} className="text-gray-400" />
+                          </div>
+                          <Input 
+                            type="text"
+                            id="facebook"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5"
+                            placeholder="https://facebook.com/seunegocio"
+                          />
+                        </div>
+                        
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <Instagram size={16} className="text-gray-400" />
+                          </div>
+                          <input 
+                            type="text"
+                            id="instagram"
+                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5"
+                            placeholder="@seuinstagram"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label>Preferências</Label>
+                      <div className="flex items-center space-x-4">
+                        <Switch id="newsletter" />
+                        <Label htmlFor="newsletter">Assinar Newsletter</Label>
+                      </div>
+                    </div>
+                  </form>
+                </TabsContent>
+
+                <TabsContent value="services">
+                  <ServicesTab />
+                </TabsContent>
+
+                <TabsContent value="staff">
+                  <StaffTab />
+                </TabsContent>
+
+                <TabsContent value="hours">
+                  <HoursTab />
+                </TabsContent>
+
+                <TabsContent value="appointments">
+                  <AppointmentsTab />
+                </TabsContent>
+
+                <TabsContent value="financial">
+                  <FinancialTab />
+                </TabsContent>
+
+                <TabsContent value="notifications">
+                  <NotificationsTab />
+                </TabsContent>
+
+                <TabsContent value="integrations">
+                  <IntegrationsTab />
+                </TabsContent>
+
+                <TabsContent value="permissions">
+                  <PermissionsTab />
+                </TabsContent>
+
+                <TabsContent value="other">
+                  <OtherTab />
+                </TabsContent>
+              </div>
+            </Tabs>
+          </CardContent>
+        </Card>
+        
+        <Toaster position="top-right" />
+      </div>
+    </OnboardingProvider>
   );
 };
 
-export default SettingsPrototype;
+export default Settings;
