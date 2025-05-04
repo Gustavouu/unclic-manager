@@ -98,11 +98,15 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display font-medium tracking-tight;
+    @apply font-medium tracking-tight;
   }
 }
 
 @layer components {
+  .font-display {
+    font-family: 'SF Pro Display', 'Inter', sans-serif;
+  }
+  
   .sidebar-item {
     @apply flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 ease-in-out relative text-xs;
   }
