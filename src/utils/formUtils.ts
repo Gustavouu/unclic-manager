@@ -79,11 +79,51 @@ export const formatDate = (date: Date): string => {
 /**
  * Validates if a string is a valid email
  * @param email Email to validate
+ * @returns Error message or null if valid
+ */
+export const validateEmail = (email: string): string | null => {
+  if (!email) return "Email é obrigatório";
+  if (!isValidEmail(email)) return "Email inválido";
+  return null;
+};
+
+/**
+ * Validates if a string is a valid email
+ * @param email Email to validate
  * @returns Boolean indicating if the email is valid
  */
 export const isValidEmail = (email: string): boolean => {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
+};
+
+/**
+ * Validates if a field is required
+ * @param value Value to validate
+ * @param fieldName Name of the field for error message
+ * @returns Error message or null if valid
+ */
+export const validateRequired = (value: string, fieldName: string): string | null => {
+  return value ? null : `${fieldName} é obrigatório`;
+};
+
+/**
+ * Validates if a string is a valid phone number
+ * @param phone Phone to validate
+ * @returns Error message or null if valid
+ */
+export const validatePhone = (phone: string): string | null => {
+  if (!phone) return "Telefone é obrigatório";
+  
+  // Remove all non-digit characters
+  const numbers = phone.replace(/\D/g, '');
+  
+  // Check if it has at least 10 digits (including area code)
+  if (numbers.length < 10) {
+    return "Telefone inválido";
+  }
+  
+  return null;
 };
 
 /**
