@@ -68,13 +68,18 @@ export function BookingFormFlow({ onComplete }: BookingFormFlowProps) {
     setStep("new-client");
   };
 
-  const handleClientCreated = (clientId: string, clientName: string, clientEmail?: string, clientPhone?: string) => {
+  const handleClientCreated = (clientData: any) => {
+    // In a real app, we would create the client in the database here
+    // and get back the client ID
+    const mockClientId = "new-client-" + Date.now();
+    
     setClientData({ 
-      id: clientId, 
-      name: clientName,
-      email: clientEmail,
-      phone: clientPhone
+      id: mockClientId, 
+      name: `${clientData.firstName} ${clientData.lastName}`,
+      email: clientData.email,
+      phone: clientData.phone
     });
+    
     setStep("appointment");
   };
 
@@ -101,7 +106,7 @@ export function BookingFormFlow({ onComplete }: BookingFormFlowProps) {
         {step === "new-client" && clientData?.phone && (
           <NewClientForm
             phone={clientData.phone}
-            onClientCreated={handleClientCreated}
+            onComplete={handleClientCreated}
             onBack={handleBack}
           />
         )}

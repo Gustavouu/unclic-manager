@@ -7,17 +7,18 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { validateRequired, validateEmail, formatPhone } from "@/utils/formUtils";
 
-type NewClientFormProps = {
+interface NewClientFormProps {
+  phone?: string; // Make phone optional but available
   onComplete: (clientData: any) => void;
   onBack: () => void;
-};
+}
 
-export const NewClientForm: React.FC<NewClientFormProps> = ({ onComplete, onBack }) => {
+export const NewClientForm: React.FC<NewClientFormProps> = ({ phone = "", onComplete, onBack }) => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
-    phone: "",
+    phone: phone, // Initialize with the passed phone number if available
     marketingConsent: true
   });
   
