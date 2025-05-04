@@ -1,60 +1,79 @@
 
 import React from "react";
-import { Input } from "./input";
-import { Label } from "./label";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-interface FormFieldProps {
+export interface FormFieldProps {
   id: string;
   label: string;
-  type?: React.InputHTMLAttributes<HTMLInputElement>["type"];
-  placeholder?: string;
   value: string;
   onChange: (value: string) => void;
-  error?: string | null;
+  error?: string | boolean | null;
   touched?: boolean;
   required?: boolean;
-  className?: string;
   disabled?: boolean;
+  placeholder?: string;
+  type?: React.HTMLInputTypeAttribute;
+  className?: string;
+  maxLength?: number;
+  description?: string;
+  helper?: React.ReactNode;
 }
 
-export const FormField = ({
+export const FormField: React.FC<FormFieldProps> = ({
   id,
   label,
-  type = "text",
-  placeholder,
   value,
   onChange,
   error,
-  touched,
+  touched = false,
   required = false,
-  className,
   disabled = false,
-}: FormFieldProps) => {
-  const hasError = touched && error;
+  placeholder = "",
+  type = "text",
+  className = "",
+  maxLength,
+  description,
+  helper
+}) => {
+  const showError = error && touched;
+  const errorMessage = typeof error === 'string' ? error : '';
   
   return (
     <div className={cn("space-y-2", className)}>
-      <Label 
-        htmlFor={id} 
-        className={hasError ? "text-destructive" : ""}
-      >
-        {label}
-        {required && <span className="text-destructive ml-1">*</span>}
-      </Label>
+      <div className="flex justify-between">
+        <Label 
+          htmlFor={id}
+          className={cn(showError ? "text-destructive" : "")}
+        >
+          {label}
+          {required && <span className="text-destructive ml-1">*</span>}
+        </Label>
+        {description && (
+          <span className="text-xs text-muted-foreground">{description}</span>
+        )}
+      </div>
       
       <Input
         id={id}
         type={type}
-        placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={hasError ? "border-destructive" : ""}
+        placeholder={placeholder}
         disabled={disabled}
+        className={cn(showError ? "border-destructive" : "")}
+        maxLength={maxLength}
       />
       
-      {hasError && (
-        <p className="text-sm font-medium text-destructive">{error}</p>
+      {showError && errorMessage && (
+        <p className="text-xs text-destructive">{errorMessage}</p>
+      )}
+      
+      {helper && (
+        <div className="text-xs text-muted-foreground">
+          {helper}
+        </div>
       )}
     </div>
   );

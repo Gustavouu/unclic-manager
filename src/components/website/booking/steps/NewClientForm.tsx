@@ -1,141 +1,165 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { FormField } from "@/components/ui/form-field";
-import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
-import { UserPlusIcon } from "lucide-react";
-import { validateRequired, validateEmail } from "@/utils/formUtils";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { validateRequired, validateEmail, formatPhone } from "@/utils/formUtils";
 
-interface NewClientFormProps {
-  phone: string;
-  onClientCreated: (clientId: string, clientName: string, clientEmail?: string, clientPhone?: string) => void;
+type NewClientFormProps = {
+  onComplete: (clientData: any) => void;
   onBack: () => void;
-}
+};
 
-export function NewClientForm({ phone, onClientCreated, onBack }: NewClientFormProps) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [errors, setErrors] = useState<{
-    name: string | null;
-    email: string | null;
-    birthDate: string | null;
-  }>({
-    name: null,
-    email: null,
-    birthDate: null
+export const NewClientForm: React.FC<NewClientFormProps> = ({ onComplete, onBack }) => {
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    marketingConsent: true
   });
-
-  const validateForm = () => {
+  
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  
+  const handleChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setTouched(prev => ({ ...prev, [field]: true }));
+  };
+  
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedPhone = formatPhone(e.target.value);
+    handleChange("phone", formattedPhone);
+  };
+  
+  const validate = () => {
     const newErrors = {
-      name: validateRequired(name, "Nome completo"),
-      email: email ? validateEmail(email) : null,
-      birthDate: validateRequired(birthDate, "Data de nascimento")
+      firstName: validateRequired(formData.firstName, "Nome"),
+      lastName: validateRequired(formData.lastName, "Sobrenome"),
+      email: validateEmail(formData.email),
+      phone: validateRequired(formData.phone, "Telefone")
     };
-
+    
     setErrors(newErrors);
+    
+    // Mark all fields as touched
+    const allTouched = Object.keys(formData).reduce((acc, key) => ({
+      ...acc,
+      [key]: true
+    }), {});
+    setTouched(allTouched);
+    
+    // Check if there are any errors
     return !Object.values(newErrors).some(error => error !== null);
   };
-
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Generate a unique client ID
-      const clientId = uuidv4();
-      
-      // Instead of trying to create in the database (which is failing with policy errors),
-      // we'll just simulate a successful creation and pass the data to the parent component
-      const clientData = {
-        id: clientId,
-        nome: name,
-        email: email || null,
-        telefone: phone,
-        data_nascimento: birthDate
-      };
-      
-      // Simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Show success message
-      toast.success("Cadastro realizado com sucesso!");
-      
-      // Pass the client data to the parent component
-      onClientCreated(clientData.id, clientData.nome, clientData.email, clientData.telefone);
-    } catch (error) {
-      console.error("Erro ao processar cadastro:", error);
-      toast.error("Ocorreu um erro ao criar seu cadastro. Por favor, tente novamente.");
-    } finally {
-      setIsSubmitting(false);
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (validate()) {
+      onComplete(formData);
     }
   };
-
+  
   return (
-    <div className="space-y-4">
-      <div className="text-center mb-6">
-        <UserPlusIcon className="mx-auto h-12 w-12 text-primary mb-4" />
-        <h3 className="text-xl font-semibold mb-2">Novo Cliente</h3>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold mb-2">Seus Dados</h2>
         <p className="text-muted-foreground">
-          Precisamos de algumas informações para criar seu cadastro
+          Precisamos de algumas informações para criar seu cadastro.
         </p>
       </div>
       
-      <FormField
-        id="name"
-        label="Nome completo"
-        value={name}
-        onChange={setName}
-        error={errors.name}
-        touched={true}
-        required
-      />
+      <Separator />
       
-      <FormField
-        id="birthDate"
-        label="Data de nascimento"
-        type="date"
-        value={birthDate}
-        onChange={setBirthDate}
-        error={errors.birthDate}
-        touched={true}
-        required
-      />
-      
-      <FormField
-        id="email"
-        label="Email"
-        type="email"
-        value={email}
-        onChange={setEmail}
-        error={errors.email}
-        touched={!!email}
-      />
-      
-      <div className="flex gap-3 mt-6">
-        <Button 
-          type="button" 
-          variant="outline" 
-          className="flex-1"
-          onClick={onBack}
-        >
-          Voltar
-        </Button>
-        <Button 
-          type="button"
-          className="flex-1"
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Salvando..." : "Continuar"}
-        </Button>
-      </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="firstName" className={errors.firstName && touched.firstName ? "text-destructive" : ""}>
+              Nome*
+            </Label>
+            <Input 
+              id="firstName"
+              value={formData.firstName}
+              onChange={(e) => handleChange("firstName", e.target.value)}
+              className={errors.firstName && touched.firstName ? "border-destructive" : ""}
+            />
+            {errors.firstName && touched.firstName && (
+              <p className="text-xs text-destructive">{errors.firstName}</p>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="lastName" className={errors.lastName && touched.lastName ? "text-destructive" : ""}>
+              Sobrenome*
+            </Label>
+            <Input 
+              id="lastName"
+              value={formData.lastName}
+              onChange={(e) => handleChange("lastName", e.target.value)}
+              className={errors.lastName && touched.lastName ? "border-destructive" : ""}
+            />
+            {errors.lastName && touched.lastName && (
+              <p className="text-xs text-destructive">{errors.lastName}</p>
+            )}
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="email" className={errors.email && touched.email ? "text-destructive" : ""}>
+            Email*
+          </Label>
+          <Input 
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => handleChange("email", e.target.value)}
+            className={errors.email && touched.email ? "border-destructive" : ""}
+          />
+          {errors.email && touched.email && (
+            <p className="text-xs text-destructive">{errors.email}</p>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="phone" className={errors.phone && touched.phone ? "text-destructive" : ""}>
+            Telefone*
+          </Label>
+          <Input 
+            id="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={handlePhoneChange}
+            placeholder="(00) 00000-0000"
+            className={errors.phone && touched.phone ? "border-destructive" : ""}
+          />
+          {errors.phone && touched.phone && (
+            <p className="text-xs text-destructive">{errors.phone}</p>
+          )}
+        </div>
+        
+        <div className="flex items-center space-x-2 pt-2">
+          <Checkbox 
+            id="marketingConsent" 
+            checked={formData.marketingConsent}
+            onCheckedChange={(checked) => handleChange("marketingConsent", !!checked)}
+          />
+          <Label htmlFor="marketingConsent" className="text-sm text-muted-foreground">
+            Aceito receber novidades, promoções e comunicados via email e WhatsApp
+          </Label>
+        </div>
+        
+        <div className="flex justify-between pt-4">
+          <Button type="button" variant="outline" onClick={onBack}>
+            Voltar
+          </Button>
+          <Button type="submit">
+            Continuar
+          </Button>
+        </div>
+      </form>
     </div>
   );
-}
+};
