@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -20,14 +21,14 @@ import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import React from 'react';
-import { Input } from './components/Input';
-import { Label } from './components/Label';
-import { Checkbox } from './components/Checkbox';
-import { Textarea } from './components/Textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/Select';
-import { Switch } from './components/Switch';
-import { Slider } from './components/Slider';
-import { Calendar } from './components/Calendar';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, CheckCheck, ChevronsUpDown, Facebook, Instagram } from 'lucide-react';
 import { PopoverClose } from '@radix-ui/react-popover';
 import { cn } from '@/lib/utils';
@@ -158,7 +159,7 @@ const Settings = () => {
                           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <Instagram size={16} className="text-gray-400" />
                           </div>
-                          <input 
+                          <Input 
                             type="text"
                             id="instagram"
                             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5"
