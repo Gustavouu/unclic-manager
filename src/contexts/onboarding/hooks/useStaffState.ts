@@ -1,25 +1,27 @@
 
-import { useState, useCallback } from "react";
-import { StaffData } from "../types";
+import { useState } from 'react';
+import { StaffData } from '../types';
 
 export const useStaffState = () => {
   const [staffMembers, setStaffMembers] = useState<StaffData[]>([]);
   const [hasStaff, setHasStaff] = useState<boolean>(false);
 
-  // Staff management functions
-  const addStaffMember = useCallback((staff: StaffData) => {
+  // Function to add a new staff member
+  const addStaffMember = (staff: StaffData) => {
     setStaffMembers(prev => [...prev, staff]);
-  }, []);
+  };
 
-  const removeStaffMember = useCallback((id: string) => {
+  // Function to remove a staff member
+  const removeStaffMember = (id: string) => {
     setStaffMembers(prev => prev.filter(staff => staff.id !== id));
-  }, []);
+  };
 
-  const updateStaffMember = useCallback((id: string, data: Partial<StaffData>) => {
-    setStaffMembers(prev => 
-      prev.map(staff => staff.id === id ? { ...staff, ...data } : staff)
+  // Function to update a staff member
+  const updateStaffMember = (id: string, data: Partial<StaffData>) => {
+    setStaffMembers(prev =>
+      prev.map(staff => (staff.id === id ? { ...staff, ...data } : staff))
     );
-  }, []);
+  };
 
   return {
     staffMembers,
@@ -28,6 +30,6 @@ export const useStaffState = () => {
     setHasStaff,
     addStaffMember,
     removeStaffMember,
-    updateStaffMember
+    updateStaffMember,
   };
 };

@@ -1,13 +1,13 @@
 
 import React from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Input } from "./input";
+import { Label } from "./label";
 import { cn } from "@/lib/utils";
 
 interface FormFieldProps {
   id: string;
   label: string;
-  type?: string;
+  type?: React.InputHTMLAttributes<HTMLInputElement>["type"];
   placeholder?: string;
   value: string;
   onChange: (value: string) => void;
@@ -15,6 +15,7 @@ interface FormFieldProps {
   touched?: boolean;
   required?: boolean;
   className?: string;
+  disabled?: boolean;
 }
 
 export const FormField = ({
@@ -28,26 +29,31 @@ export const FormField = ({
   touched,
   required = false,
   className,
+  disabled = false,
 }: FormFieldProps) => {
-  const showError = touched && error;
+  const hasError = touched && error;
   
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="flex justify-between">
-        <Label htmlFor={id} className={cn(showError && "text-destructive")}>
-          {label}
-          {required && <span className="text-destructive ml-1">*</span>}
-        </Label>
-      </div>
+      <Label 
+        htmlFor={id} 
+        className={hasError ? "text-destructive" : ""}
+      >
+        {label}
+        {required && <span className="text-destructive ml-1">*</span>}
+      </Label>
+      
       <Input
         id={id}
         type={type}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={cn(showError && "border-destructive")}
+        className={hasError ? "border-destructive" : ""}
+        disabled={disabled}
       />
-      {showError && (
+      
+      {hasError && (
         <p className="text-sm font-medium text-destructive">{error}</p>
       )}
     </div>

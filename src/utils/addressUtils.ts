@@ -1,80 +1,78 @@
 
-import { toast } from "sonner";
-
-// Valida formato do CEP
-export const validateCEP = (cep: string): string | null => {
-  if (!cep) return null;
-  
-  const cepRegex = /^\d{5}-?\d{3}$/;
-  if (!cepRegex.test(cep)) {
-    return "CEP inválido (formato: 00000-000)";
-  }
-  return null;
-};
-
-// Função para formatar CEP
-export const formatCEP = (cep: string): string => {
-  // Remove tudo que não for número
-  const numericCEP = cep.replace(/\D/g, '');
-  
-  // Formata como 00000-000
-  if (numericCEP.length <= 5) {
-    return numericCEP;
-  }
-  
-  return `${numericCEP.slice(0, 5)}-${numericCEP.slice(5, 8)}`;
-};
-
-// Interface para os dados de endereço
 export interface AddressData {
+  cep?: string;
   street?: string;
   neighborhood?: string;
   city?: string;
   state?: string;
-  zipCode?: string;
   error?: string;
 }
 
-// Busca endereço pelo CEP usando a API ViaCEP
+/**
+ * Fetches address information using a CEP (Brazilian postal code)
+ * @param cep Brazilian postal code (CEP)
+ * @returns Object with address data or error message
+ */
 export const fetchAddressByCEP = async (cep: string): Promise<AddressData> => {
+  // Clean up CEP format
+  const cleanCep = cep.replace(/\D/g, '');
+  
+  // Validate CEP format
+  if (cleanCep.length !== 8) {
+    return { error: 'CEP inválido. Formato correto: 00000-000' };
+  }
+  
   try {
-    // Remove caracteres não numéricos
-    const cleanCEP = cep.replace(/\D/g, '');
-    
-    // Verifica se o CEP tem o tamanho correto
-    if (cleanCEP.length !== 8) {
-      return { error: "CEP deve conter 8 dígitos" };
-    }
-    
-    const response = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`);
+    const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
     const data = await response.json();
     
+    // Check for error in ViaCEP response
     if (data.erro) {
-      return { error: "CEP não encontrado" };
+      return { error: 'CEP não encontrado' };
     }
     
     return {
+      cep: data.cep,
       street: data.logradouro,
       neighborhood: data.bairro,
       city: data.localidade,
-      state: data.uf,
-      zipCode: cleanCEP
+      state: data.uf
     };
   } catch (error) {
-    console.error("Erro ao buscar CEP:", error);
-    return { error: "Erro ao buscar informações do CEP" };
+    console.error('Erro ao buscar CEP:', error);
+    return { error: 'Ocorreu um erro ao buscar o CEP' };
   }
 };
 
-// Função para gerar endereço formatado
-export const formatAddress = (addressData: AddressData): string => {
-  const { street, neighborhood, city, state } = addressData;
+/**
+ * Formats a Brazilian address string
+ * @param street Street name
+ * @param number Street number
+ * @param neighborhood Neighborhood
+ * @param city City
+ * @param state State
+ * @returns Formatted address string
+ */
+export const formatAddress = (
+  street: string,
+  number: string,
+  neighborhood: string,
+  city: string,
+  state: string
+): string => {
+  const parts: string[] = [];
   
-  const parts = [
-    street,
-    neighborhood ? neighborhood : null,
-    city && state ? `${city} - ${state}` : city || state
-  ].filter(Boolean);
+  if (street) {
+    parts.push(number ? `${street}, ${number}` : street);
+  }
+  
+  if (neighborhood) {
+    parts.push(neighborhood);
+  }
+  
+  if (city || state) {
+    parts.push([city, state].filter(Boolean).join(' - '));
+  }
   
   return parts.join(', ');
 };

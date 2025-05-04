@@ -33,6 +33,77 @@ import { CalendarIcon, CheckCheck, ChevronsUpDown, Facebook, Instagram } from 'l
 import { PopoverClose } from '@radix-ui/react-popover';
 import { cn } from '@/lib/utils';
 
+// Let's refactor this large component by extracting the business profile form into its own component
+const BusinessProfileForm = () => {
+  return (
+    <form className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <Label htmlFor="businessName">Nome do Negócio</Label>
+          <Input type="text" id="businessName" placeholder="Nome Fantasia" />
+        </div>
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input type="email" id="email" placeholder="Email de Contato" />
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <Label htmlFor="phone">Telefone</Label>
+          <Input type="tel" id="phone" placeholder="(XX) XXXX-XXXX" />
+        </div>
+        <div>
+          <Label htmlFor="website">Website</Label>
+          <Input type="url" id="website" placeholder="https://seunegocio.com.br" />
+        </div>
+      </div>
+      
+      <div>
+        <Label htmlFor="description">Descrição</Label>
+        <Textarea id="description" placeholder="Descreva seu negócio" />
+      </div>
+      
+      <div>
+        <Label>Redes Sociais</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <Facebook size={16} className="text-gray-400" />
+            </div>
+            <Input 
+              type="text"
+              id="facebook"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5"
+              placeholder="https://facebook.com/seunegocio"
+            />
+          </div>
+          
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <Instagram size={16} className="text-gray-400" />
+            </div>
+            <Input 
+              type="text"
+              id="instagram"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5"
+              placeholder="@seuinstagram"
+            />
+          </div>
+        </div>
+      </div>
+      
+      <div>
+        <Label>Preferências</Label>
+        <div className="flex items-center space-x-4">
+          <Switch id="newsletter" />
+          <Label htmlFor="newsletter">Assinar Newsletter</Label>
+        </div>
+      </div>
+    </form>
+  );
+};
+
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("business");
   const [isSaving, setIsSaving] = useState(false);
@@ -112,71 +183,7 @@ const Settings = () => {
 
               <div className="p-6">
                 <TabsContent value="business">
-                  <form className="space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <Label htmlFor="businessName">Nome do Negócio</Label>
-                        <Input type="text" id="businessName" placeholder="Nome Fantasia" />
-                      </div>
-                      <div>
-                        <Label htmlFor="email">Email</Label>
-                        <Input type="email" id="email" placeholder="Email de Contato" />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <Label htmlFor="phone">Telefone</Label>
-                        <Input type="tel" id="phone" placeholder="(XX) XXXX-XXXX" />
-                      </div>
-                      <div>
-                        <Label htmlFor="website">Website</Label>
-                        <Input type="url" id="website" placeholder="https://seunegocio.com.br" />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="description">Descrição</Label>
-                      <Textarea id="description" placeholder="Descreva seu negócio" />
-                    </div>
-                    
-                    <div>
-                      <Label>Redes Sociais</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <Facebook size={16} className="text-gray-400" />
-                          </div>
-                          <Input 
-                            type="text"
-                            id="facebook"
-                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5"
-                            placeholder="https://facebook.com/seunegocio"
-                          />
-                        </div>
-                        
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <Instagram size={16} className="text-gray-400" />
-                          </div>
-                          <Input 
-                            type="text"
-                            id="instagram"
-                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5"
-                            placeholder="@seuinstagram"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label>Preferências</Label>
-                      <div className="flex items-center space-x-4">
-                        <Switch id="newsletter" />
-                        <Label htmlFor="newsletter">Assinar Newsletter</Label>
-                      </div>
-                    </div>
-                  </form>
+                  <BusinessProfileForm />
                 </TabsContent>
 
                 <TabsContent value="services">

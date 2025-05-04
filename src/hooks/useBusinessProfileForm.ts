@@ -1,129 +1,153 @@
 
-import { useState, useEffect } from "react";
-import { useFormValidation } from "@/hooks/useFormValidation";
-import { mockSaveFunction, showSuccessToast, showErrorToast, createRequiredValidator, validateEmail, validatePhone, formatPhone } from "@/utils/formUtils";
+import { useState, useCallback } from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
+import { toast } from "sonner";
+
+type FieldErrors = {
+  [key: string]: string | null;
+};
+
+type TouchedFields = {
+  [key: string]: boolean;
+};
 
 export const useBusinessProfileForm = () => {
+  const { businessData, updateBusinessData, saveProgress } = useOnboarding();
   const [isSaving, setIsSaving] = useState(false);
-  const { businessData, updateBusinessData } = useOnboarding();
+  const [formValues, setFormValues] = useState({
+    businessName: businessData.name || "",
+    businessEmail: businessData.email || "",
+    businessPhone: businessData.phone || "",
+    businessAddress: businessData.address || "",
+    businessWebsite: businessData.website || "",
+    facebookLink: businessData.socialMedia?.facebook || "",
+    instagramLink: businessData.socialMedia?.instagram || "",
+    linkedinLink: businessData.socialMedia?.linkedin || "",
+    twitterLink: businessData.socialMedia?.twitter || "",
+  });
   
-  const formValidation = useFormValidation([
-    { name: "businessName", value: "", validators: [createRequiredValidator("Nome do Negócio")] },
-    { name: "businessEmail", value: "", validators: [createRequiredValidator("Email de Contato"), validateEmail] },
-    { name: "businessPhone", value: "", validators: [createRequiredValidator("Telefone"), validatePhone] },
-    { name: "businessAddress", value: "", validators: [createRequiredValidator("Endereço")] },
-    { name: "businessWebsite", value: "", validators: [] },
-    { name: "facebookLink", value: "", validators: [] },
-    { name: "instagramLink", value: "", validators: [] },
-    { name: "linkedinLink", value: "", validators: [] },
-    { name: "twitterLink", value: "", validators: [] },
-  ]);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<TouchedFields>({});
 
-  const {
-    updateField,
-    validateAllFields,
-    getFieldValue,
-    getFieldError,
-    hasFieldBeenTouched,
-    resetForm,
-    fields
-  } = formValidation;
-
-  // Load business data from onboarding when component mounts
-  useEffect(() => {
-    if (businessData) {
-      // Instead of using setInitialValues, we'll manually update each field
-      if (businessData.name) {
-        updateField("businessName", businessData.name);
-      }
-      if (businessData.email) {
-        updateField("businessEmail", businessData.email);
-      }
-      if (businessData.phone) {
-        // Format the phone number with mask
-        updateField("businessPhone", formatPhone(businessData.phone));
-      }
-      if (businessData.address) {
-        const addressStr = `${businessData.address}, ${businessData.number || ''} - ${businessData.neighborhood || ''}, ${businessData.city || ''}, ${businessData.state || ''}`;
-        updateField("businessAddress", addressStr);
-      }
-      // Set website if it exists
-      if (businessData.website) {
-        updateField("businessWebsite", businessData.website);
-      }
-      // Set social media links if they exist
-      if (businessData.socialMedia?.facebook) {
-        updateField("facebookLink", businessData.socialMedia.facebook);
-      }
-      if (businessData.socialMedia?.instagram) {
-        updateField("instagramLink", businessData.socialMedia.instagram);
-      }
-      if (businessData.socialMedia?.linkedin) {
-        updateField("linkedinLink", businessData.socialMedia.linkedin);
-      }
-      if (businessData.socialMedia?.twitter) {
-        updateField("twitterLink", businessData.socialMedia.twitter);
-      }
-    }
-  }, [businessData, updateField]);
-
-  const handleSave = async () => {
-    const isValid = validateAllFields();
+  const validate = () => {
+    const newErrors: FieldErrors = {};
     
-    if (!isValid) {
-      showErrorToast("Por favor, corrija os erros antes de salvar.");
+    // Required fields
+    if (!formValues.businessName) {
+      newErrors.businessName = "Nome do negócio é obrigatório";
+    }
+    
+    if (!formValues.businessEmail) {
+      newErrors.businessEmail = "Email é obrigatório";
+    } else if (!/^\S+@\S+\.\S+$/.test(formValues.businessEmail)) {
+      newErrors.businessEmail = "Email inválido";
+    }
+    
+    if (!formValues.businessPhone) {
+      newErrors.businessPhone = "Telefone é obrigatório";
+    }
+    
+    // Website validation (optional field)
+    if (formValues.businessWebsite && !/^(https?:\/\/)?\S+\.\S+/.test(formValues.businessWebsite)) {
+      newErrors.businessWebsite = "Website inválido";
+    }
+    
+    // Social media validations (optional fields)
+    if (formValues.facebookLink && !formValues.facebookLink.includes("facebook.com")) {
+      newErrors.facebookLink = "URL do Facebook inválida";
+    }
+    
+    if (formValues.instagramLink && !formValues.instagramLink.includes("instagram.com") && !formValues.instagramLink.startsWith("@")) {
+      newErrors.instagramLink = "URL do Instagram inválida";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  
+  const updateField = (name: string, value: string) => {
+    setFormValues(prev => ({ ...prev, [name]: value }));
+    setTouched(prev => ({ ...prev, [name]: true }));
+  };
+  
+  const getFieldValue = (name: string) => formValues[name as keyof typeof formValues] || "";
+  
+  const getFieldError = (name: string) => errors[name] || null;
+  
+  const hasFieldBeenTouched = (name: string) => touched[name] || false;
+  
+  const handleSave = async () => {
+    // Mark all fields as touched for validation
+    const allTouched = Object.keys(formValues).reduce((acc, key) => ({
+      ...acc,
+      [key]: true
+    }), {});
+    
+    setTouched(allTouched);
+    
+    if (!validate()) {
+      toast.error("Por favor, corrija os erros no formulário");
       return;
     }
     
     setIsSaving(true);
     
     try {
-      // Update onboarding context with the new values
+      // Update onboarding context with form values
       updateBusinessData({
-        name: getFieldValue("businessName"),
-        email: getFieldValue("businessEmail"),
-        phone: getFieldValue("businessPhone").replace(/\D/g, ''), // Remove mask before saving
-        website: getFieldValue("businessWebsite"),
-        // Note: we're not updating address here as it would require parsing the combined address field
+        name: formValues.businessName,
+        email: formValues.businessEmail,
+        phone: formValues.businessPhone,
+        address: formValues.businessAddress,
+        website: formValues.businessWebsite,
         socialMedia: {
-          facebook: getFieldValue("facebookLink"),
-          instagram: getFieldValue("instagramLink"),
-          linkedin: getFieldValue("linkedinLink"),
-          twitter: getFieldValue("twitterLink")
+          facebook: formValues.facebookLink,
+          instagram: formValues.instagramLink,
+          linkedin: formValues.linkedinLink,
+          twitter: formValues.twitterLink
         }
       });
       
-      const success = await mockSaveFunction();
-      
-      if (success) {
-        showSuccessToast("Perfil do negócio atualizado com sucesso!");
-      } else {
-        showErrorToast();
-      }
+      // Save the updated data
+      await saveProgress();
+      toast.success("Perfil do negócio salvo com sucesso!");
     } catch (error) {
-      showErrorToast();
+      console.error("Erro ao salvar o perfil do negócio:", error);
+      toast.error("Ocorreu um erro ao salvar o perfil");
     } finally {
       setIsSaving(false);
     }
   };
-
+  
   const handleCancel = () => {
-    resetForm();
-    showSuccessToast("Formulário restaurado ao estado inicial");
+    // Reset form to original business data
+    setFormValues({
+      businessName: businessData.name || "",
+      businessEmail: businessData.email || "",
+      businessPhone: businessData.phone || "",
+      businessAddress: businessData.address || "",
+      businessWebsite: businessData.website || "",
+      facebookLink: businessData.socialMedia?.facebook || "",
+      instagramLink: businessData.socialMedia?.instagram || "",
+      linkedinLink: businessData.socialMedia?.linkedin || "",
+      twitterLink: businessData.socialMedia?.twitter || "",
+    });
+    
+    // Clear touched state and errors
+    setTouched({});
+    setErrors({});
+    toast.info("Alterações descartadas");
   };
-
-  const formProps = {
-    updateField,
-    getFieldValue,
-    getFieldError,
-    hasFieldBeenTouched
-  };
-
+  
   return {
     isSaving,
     handleSave,
     handleCancel,
-    formProps
+    formProps: {
+      updateField,
+      getFieldValue,
+      getFieldError,
+      hasFieldBeenTouched
+    }
   };
 };
