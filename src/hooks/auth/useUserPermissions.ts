@@ -1,6 +1,7 @@
-import { useAuth } from "./useAuth";
+
+import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UserPermissions {
   // Permissões básicas
