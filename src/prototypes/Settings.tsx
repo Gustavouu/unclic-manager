@@ -1,15 +1,16 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Save, Rocket } from "lucide-react";
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
-import { BusinessProfileTab } from "@/components/settings/tabs/BusinessProfileTab";
+import BusinessProfileTab from "@/components/settings/tabs/BusinessProfileTab";
 import { HoursTab } from "@/components/settings/tabs/HoursTab";
 import { ServicesTab } from "@/components/settings/tabs/ServicesTab";
 import { StaffTab } from "@/components/settings/tabs/StaffTab";
 import { AppointmentsTab } from "@/components/settings/tabs/AppointmentsTab";
 import { FinancialTab } from "@/components/settings/tabs/FinancialTab";
-import { NotificationsTab } from "@/components/settings/tabs/NotificationsTab";
+import NotificationsTab from "@/components/settings/tabs/NotificationsTab";
 import { IntegrationsTab } from "@/components/settings/tabs/IntegrationsTab";
 import { PermissionsTab } from "@/components/settings/tabs/PermissionsTab";
 import { OtherTab } from "@/components/settings/tabs/OtherTab";

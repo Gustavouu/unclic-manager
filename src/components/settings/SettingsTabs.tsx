@@ -1,13 +1,13 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BusinessProfileTab } from "./tabs/BusinessProfileTab";
+import BusinessProfileTab from "./tabs/BusinessProfileTab";
 import { AppointmentsTab } from "./tabs/AppointmentsTab";
 import { HoursTab } from "./tabs/HoursTab";
 import { ServicesTab } from "./tabs/ServicesTab";
 import { StaffTab } from "./tabs/StaffTab";
 import { FinancialTab } from "./tabs/FinancialTab";
-import { NotificationsTab } from "./tabs/NotificationsTab";
+import NotificationsTab from "./tabs/NotificationsTab";
 import { IntegrationsTab } from "./tabs/IntegrationsTab";
 import { PermissionsTab } from "./tabs/PermissionsTab";
 import { OtherTab } from "./tabs/OtherTab";
