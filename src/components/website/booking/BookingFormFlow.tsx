@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { PhoneVerificationStep } from "./steps/PhoneVerificationStep";
 import { NewClientForm } from "./steps/NewClientForm";
 import { PaymentRequiredAppointmentForm } from "@/components/appointments/form/PaymentRequiredAppointmentForm";
 import { Card, CardContent } from "@/components/ui/card";
 import { ClientData } from "./types";
+import { supabase } from "@/integrations/supabase/client"; // Updated import path
 
 interface BookingFormFlowProps {
   onComplete?: () => void;
