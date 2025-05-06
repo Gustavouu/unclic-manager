@@ -1,72 +1,72 @@
 
-import { cn } from "@/lib/utils";
-import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Building,
-  Clock,
-  Scissors,
-  Users,
-  CalendarDays,
-  DollarSign,
-  Bell,
-  Link,
-  UserCog,
-  Settings2
-} from "lucide-react";
+import React from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import BusinessProfileTab from "./tabs/BusinessProfileTab";
+import AppointmentsTab from "./tabs/AppointmentsTab";
+import HoursTab from "./tabs/HoursTab";
+import ServicesTab from "./tabs/ServicesTab";
+import StaffTab from "./tabs/StaffTab";
+import FinancialTab from "./tabs/FinancialTab";
+import NotificationsTab from "./tabs/NotificationsTab";
+import IntegrationsTab from "./tabs/IntegrationsTab";
+import PermissionsTab from "./tabs/PermissionsTab";
+import OtherTab from "./tabs/OtherTab";
+import { useSearchParams } from "react-router-dom";
 
-interface SettingsTabsProps {
-  activeTab: string;
-  onTabChange: (value: string) => void;
-}
+export const SettingsTabs = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") || "business-profile";
 
-interface SettingsTabItem {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-}
-
-export const SettingsTabs: React.FC<SettingsTabsProps> = ({
-  activeTab,
-  onTabChange
-}) => {
-  const tabs: SettingsTabItem[] = [
-    { id: "business", label: "Perfil do Negócio", icon: Building },
-    { id: "services", label: "Serviços e Preços", icon: Scissors },
-    { id: "staff", label: "Funcionários", icon: Users },
-    { id: "hours", label: "Horários", icon: Clock },
-    { id: "appointments", label: "Agendamentos", icon: CalendarDays },
-    { id: "financial", label: "Financeiro", icon: DollarSign },
-    { id: "notifications", label: "Notificações", icon: Bell },
-    { id: "integrations", label: "Integrações", icon: Link },
-    { id: "permissions", label: "Permissões", icon: UserCog },
-    { id: "other", label: "Outros", icon: Settings2 },
-  ];
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
 
   return (
-    <div className="border-b">
-      <div className="overflow-x-auto">
-        <TabsList className="h-auto p-0 bg-transparent flex flex-nowrap">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-3 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none focus:outline-none focus:ring-0 whitespace-nowrap",
-                  activeTab === tab.id
-                    ? "text-primary border-primary font-medium"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                onClick={() => onTabChange(tab.id)}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
-      </div>
-    </div>
+    <Tabs defaultValue={initialTab} onValueChange={handleTabChange} className="w-full">
+      <TabsList className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 mb-8">
+        <TabsTrigger value="business-profile">Perfil</TabsTrigger>
+        <TabsTrigger value="appointments">Agendamentos</TabsTrigger>
+        <TabsTrigger value="hours">Horários</TabsTrigger>
+        <TabsTrigger value="services">Serviços</TabsTrigger>
+        <TabsTrigger value="staff">Funcionários</TabsTrigger>
+        <TabsTrigger value="financial">Financeiro</TabsTrigger>
+        <TabsTrigger value="notifications">Notificações</TabsTrigger>
+        <TabsTrigger value="integrations">Integrações</TabsTrigger>
+        <TabsTrigger value="permissions">Permissões</TabsTrigger>
+        <TabsTrigger value="other">Outros</TabsTrigger>
+      </TabsList>
+      <TabsContent value="business-profile">
+        <BusinessProfileTab />
+      </TabsContent>
+      <TabsContent value="appointments">
+        <AppointmentsTab />
+      </TabsContent>
+      <TabsContent value="hours">
+        <HoursTab />
+      </TabsContent>
+      <TabsContent value="services">
+        <ServicesTab />
+      </TabsContent>
+      <TabsContent value="staff">
+        <StaffTab />
+      </TabsContent>
+      <TabsContent value="financial">
+        <FinancialTab />
+      </TabsContent>
+      <TabsContent value="notifications">
+        <NotificationsTab />
+      </TabsContent>
+      <TabsContent value="integrations">
+        <IntegrationsTab />
+      </TabsContent>
+      <TabsContent value="permissions">
+        <PermissionsTab />
+      </TabsContent>
+      <TabsContent value="other">
+        <OtherTab />
+      </TabsContent>
+    </Tabs>
   );
 };
+
+export default SettingsTabs;

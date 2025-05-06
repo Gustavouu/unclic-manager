@@ -3082,6 +3082,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_business_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_permission: {
         Args: { permission_name: string }
         Returns: boolean
