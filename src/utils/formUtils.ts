@@ -51,9 +51,28 @@ export const formatPhone = (phone: string): string => {
   }
 };
 
-export const showErrorToast = (message: string) => {
+export const showErrorToast = (message: string = "Ocorreu um erro. Tente novamente.") => {
   toast.error(message, {
     duration: 5000,
     position: 'top-right'
+  });
+};
+
+export const showSuccessToast = (message: string = "Operação realizada com sucesso!") => {
+  toast.success(message, {
+    duration: 5000,
+    position: 'top-right'
+  });
+};
+
+// Mock function to simulate saving data to the server
+export const mockSaveFunction = async (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    // Simulate API call delay
+    setTimeout(() => {
+      // 90% chance of success
+      const success = Math.random() < 0.9;
+      resolve(success);
+    }, 1000);
   });
 };
