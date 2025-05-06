@@ -1,7 +1,7 @@
 
 import { BusinessProfileCard } from "../business-profile/BusinessProfileCard";
 
-export const BusinessProfileTab = () => {
+const BusinessProfileTab = () => {
   return <BusinessProfileCard />;
 };
 

@@ -36,6 +36,7 @@ const formSchema = z.object({
   messageTemplate: z.string().min(10, "Modelo de mensagem deve ter pelo menos 10 caracteres"),
 });
 
+// Only define the component once, as a function expression
 const NotificationsTab = () => {
   const { settings, loading, saving, saveSettings } = useNotificationSettings();
 
@@ -358,6 +359,6 @@ const NotificationsTab = () => {
   );
 };
 
-// Export both as a named export and default export, but avoid duplicate names
-export { NotificationsTab };
+// Use a single export pattern to avoid duplicate exports
+// Export as default
 export default NotificationsTab;
