@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,7 +36,7 @@ const formSchema = z.object({
   messageTemplate: z.string().min(10, "Modelo de mensagem deve ter pelo menos 10 caracteres"),
 });
 
-export function NotificationsTab() {
+const NotificationsTab = () => {
   const { settings, loading, saving, saveSettings } = useNotificationSettings();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -355,7 +356,8 @@ export function NotificationsTab() {
       </Form>
     </div>
   );
-}
+};
 
+// Export both as a named export and default export, but avoid duplicate names
 export { NotificationsTab };
 export default NotificationsTab;
