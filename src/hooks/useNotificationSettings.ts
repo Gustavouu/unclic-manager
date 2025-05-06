@@ -50,15 +50,15 @@ export const useNotificationSettings = () => {
 
         if (data) {
           setSettings({
-            pushEnabled: data.push_enabled,
-            emailEnabled: data.email_enabled,
-            smsEnabled: data.sms_enabled,
-            newAppointmentAlert: data.new_appointment_alert,
-            cancelAppointmentAlert: data.cancel_appointment_alert,
-            clientFeedbackAlert: data.client_feedback_alert,
-            quietHoursStart: data.quiet_hours_start,
-            quietHoursEnd: data.quiet_hours_end,
-            messageTemplate: data.message_template
+            pushEnabled: data.push_enabled ?? defaultSettings.pushEnabled,
+            emailEnabled: data.email_enabled ?? defaultSettings.emailEnabled,
+            smsEnabled: data.sms_enabled ?? defaultSettings.smsEnabled,
+            newAppointmentAlert: data.new_appointment_alert ?? defaultSettings.newAppointmentAlert,
+            cancelAppointmentAlert: data.cancel_appointment_alert ?? defaultSettings.cancelAppointmentAlert,
+            clientFeedbackAlert: data.client_feedback_alert ?? defaultSettings.clientFeedbackAlert,
+            quietHoursStart: data.quiet_hours_start ?? defaultSettings.quietHoursStart,
+            quietHoursEnd: data.quiet_hours_end ?? defaultSettings.quietHoursEnd,
+            messageTemplate: data.message_template ?? defaultSettings.messageTemplate
           });
         }
       } catch (error) {
@@ -72,8 +72,14 @@ export const useNotificationSettings = () => {
     fetchSettings();
   }, [businessId]);
 
-  const saveSettings = async (newSettings: NotificationSettings) => {
+  const saveSettings = async (newSettings: Partial<NotificationSettings>) => {
     if (!businessId) return false;
+    
+    // Ensure all required properties are present by merging with current settings
+    const completeSettings: NotificationSettings = {
+      ...settings,
+      ...newSettings
+    };
     
     try {
       setSaving(true);
@@ -82,21 +88,21 @@ export const useNotificationSettings = () => {
         .from('notification_settings')
         .upsert({
           id_negocio: businessId,
-          push_enabled: newSettings.pushEnabled,
-          email_enabled: newSettings.emailEnabled,
-          sms_enabled: newSettings.smsEnabled,
-          new_appointment_alert: newSettings.newAppointmentAlert,
-          cancel_appointment_alert: newSettings.cancelAppointmentAlert,
-          client_feedback_alert: newSettings.clientFeedbackAlert,
-          quiet_hours_start: newSettings.quietHoursStart,
-          quiet_hours_end: newSettings.quietHoursEnd,
-          message_template: newSettings.messageTemplate,
+          push_enabled: completeSettings.pushEnabled,
+          email_enabled: completeSettings.emailEnabled,
+          sms_enabled: completeSettings.smsEnabled,
+          new_appointment_alert: completeSettings.newAppointmentAlert,
+          cancel_appointment_alert: completeSettings.cancelAppointmentAlert,
+          client_feedback_alert: completeSettings.clientFeedbackAlert,
+          quiet_hours_start: completeSettings.quietHoursStart,
+          quiet_hours_end: completeSettings.quietHoursEnd,
+          message_template: completeSettings.messageTemplate,
           updated_at: new Date().toISOString()
         }, { onConflict: 'id_negocio' });
 
       if (error) throw error;
       
-      setSettings(newSettings);
+      setSettings(completeSettings);
       toast.success('Configurações de notificação salvas com sucesso!');
       return true;
     } catch (error) {

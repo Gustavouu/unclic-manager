@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState("business");
+  const [activeTab, setActiveTab] = useState("business-profile");
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
   
@@ -95,11 +94,11 @@ const Settings = () => {
 
         <Card className="border shadow-sm overflow-hidden">
           <CardContent className="p-0">
-            <Tabs defaultValue="business" value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <Tabs defaultValue={activeTab} value={activeTab} onValueChange={handleTabChange} className="w-full">
               <SettingsTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
               <div className="p-6">
-                <TabsContent value="business">
+                <TabsContent value="business-profile">
                   <BusinessProfileTab />
                 </TabsContent>
 

@@ -1,24 +1,33 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import BusinessProfileTab from "./tabs/BusinessProfileTab";
-import AppointmentsTab from "./tabs/AppointmentsTab";
-import HoursTab from "./tabs/HoursTab";
-import ServicesTab from "./tabs/ServicesTab";
-import StaffTab from "./tabs/StaffTab";
-import FinancialTab from "./tabs/FinancialTab";
-import NotificationsTab from "./tabs/NotificationsTab";
-import IntegrationsTab from "./tabs/IntegrationsTab";
-import PermissionsTab from "./tabs/PermissionsTab";
-import OtherTab from "./tabs/OtherTab";
+import { BusinessProfileTab } from "./tabs/BusinessProfileTab";
+import { AppointmentsTab } from "./tabs/AppointmentsTab";
+import { HoursTab } from "./tabs/HoursTab";
+import { ServicesTab } from "./tabs/ServicesTab";
+import { StaffTab } from "./tabs/StaffTab";
+import { FinancialTab } from "./tabs/FinancialTab";
+import { NotificationsTab } from "./tabs/NotificationsTab";
+import { IntegrationsTab } from "./tabs/IntegrationsTab";
+import { PermissionsTab } from "./tabs/PermissionsTab";
+import { OtherTab } from "./tabs/OtherTab";
 import { useSearchParams } from "react-router-dom";
 
-export const SettingsTabs = () => {
+interface SettingsTabsProps {
+  activeTab?: string;
+  onTabChange?: (value: string) => void;
+}
+
+export const SettingsTabs = ({ activeTab, onTabChange }: SettingsTabsProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get("tab") || "business-profile";
+  const initialTab = activeTab || searchParams.get("tab") || "business-profile";
 
   const handleTabChange = (value: string) => {
-    setSearchParams({ tab: value });
+    if (onTabChange) {
+      onTabChange(value);
+    } else {
+      setSearchParams({ tab: value });
+    }
   };
 
   return (

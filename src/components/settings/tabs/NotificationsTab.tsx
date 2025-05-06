@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useNotificationSettings } from "@/hooks/useNotificationSettings";
+import { useNotificationSettings, NotificationSettings } from "@/hooks/useNotificationSettings";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 
@@ -53,7 +52,20 @@ export function NotificationsTab() {
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      const success = await saveSettings(data);
+      // Ensure all required fields are present in the form data
+      const formData: NotificationSettings = {
+        pushEnabled: data.pushEnabled,
+        emailEnabled: data.emailEnabled,
+        smsEnabled: data.smsEnabled,
+        newAppointmentAlert: data.newAppointmentAlert,
+        cancelAppointmentAlert: data.cancelAppointmentAlert,
+        clientFeedbackAlert: data.clientFeedbackAlert,
+        quietHoursStart: data.quietHoursStart,
+        quietHoursEnd: data.quietHoursEnd,
+        messageTemplate: data.messageTemplate
+      };
+      
+      const success = await saveSettings(formData);
       if (success) {
         toast.success("Configurações de notificação salvas com sucesso!");
       }
@@ -345,4 +357,5 @@ export function NotificationsTab() {
   );
 }
 
+export { NotificationsTab };
 export default NotificationsTab;
