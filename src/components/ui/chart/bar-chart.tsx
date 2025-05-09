@@ -9,11 +9,13 @@ import {
   Tooltip,
   Legend,
   CartesianGrid,
+  Payload,
+  ValueType,
+  NameType
 } from "recharts"
 import { ChartContainer } from "./chart-container"
 import { ChartTooltipContent } from "./chart-tooltip"
 import { ChartConfig } from "./types"
-import { useChart } from "./context"
 
 interface BarChartProps {
   data: any[]
