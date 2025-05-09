@@ -1,1 +1,11 @@
+
 project_id = "jcdymkgmtxpryceziazt"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+
+# Allow public access to the webhook endpoint without authentication
+[functions.efipay-webhook]
+verify_jwt = false
