@@ -120,15 +120,33 @@ export function useFinancialMetrics(dateRange?: { start: Date; end: Date }) {
       // Calculate MRR by normalizing all subscription plans to monthly revenue
       let mrr = 0;
       for (const sub of activeSubsWithPlans) {
-        // Fix: TypeScript was confused because it expected subscription_plans to be an array
-        // But it's actually an object containing the plan properties
-        const plan = sub.subscription_plans;
-        if (!plan) continue;
+        // The issue is here - subscription_plans is returned as an object by Supabase's join
+        // but we need to handle it properly based on its actual structure
 
-        // Make sure we access the properties correctly
-        const price = Number(plan.price || 0);
-        const interval = String(plan.interval || 'month');
-        const intervalCount = Number(plan.interval_count || 1);
+        // First, check if subscription_plans exists and what type it is
+        const planData = sub.subscription_plans;
+        
+        // If planData is null or undefined, skip this subscription
+        if (!planData) continue;
+        
+        // Check if planData is an array or a single object and extract values accordingly
+        let price = 0;
+        let interval = 'month';
+        let intervalCount = 1;
+        
+        if (Array.isArray(planData) && planData.length > 0) {
+          // If it's an array (like in some Supabase joins), take the first item
+          price = Number(planData[0].price || 0);
+          interval = String(planData[0].interval || 'month');
+          intervalCount = Number(planData[0].interval_count || 1);
+        } else {
+          // If it's a direct object (single record join)
+          // Use type assertion to tell TypeScript it's an object with specific properties
+          const planObj = planData as unknown as { price: any; interval: any; interval_count: any };
+          price = Number(planObj.price || 0);
+          interval = String(planObj.interval || 'month');
+          intervalCount = Number(planObj.interval_count || 1);
+        }
 
         // Convert price to monthly equivalent
         switch (interval) {
