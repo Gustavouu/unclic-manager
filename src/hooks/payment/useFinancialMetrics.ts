@@ -120,13 +120,15 @@ export function useFinancialMetrics(dateRange?: { start: Date; end: Date }) {
       // Calculate MRR by normalizing all subscription plans to monthly revenue
       let mrr = 0;
       for (const sub of activeSubsWithPlans) {
+        // Fix: TypeScript was confused because it expected subscription_plans to be an array
+        // But it's actually an object containing the plan properties
         const plan = sub.subscription_plans;
         if (!plan) continue;
 
-        // Fix: Accessing properties from plan object, not an array
-        const price = Number(plan.price);
-        const interval = plan.interval;
-        const intervalCount = plan.interval_count || 1;
+        // Make sure we access the properties correctly
+        const price = Number(plan.price || 0);
+        const interval = String(plan.interval || 'month');
+        const intervalCount = Number(plan.interval_count || 1);
 
         // Convert price to monthly equivalent
         switch (interval) {
