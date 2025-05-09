@@ -123,6 +123,7 @@ export function useFinancialMetrics(dateRange?: { start: Date; end: Date }) {
         const plan = sub.subscription_plans;
         if (!plan) continue;
 
+        // Fix: Accessing properties from plan object, not an array
         const price = Number(plan.price);
         const interval = plan.interval;
         const intervalCount = plan.interval_count || 1;
