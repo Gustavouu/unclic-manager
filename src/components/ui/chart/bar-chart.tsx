@@ -9,9 +9,6 @@ import {
   Tooltip,
   Legend,
   CartesianGrid,
-  Payload,
-  ValueType,
-  NameType
 } from "recharts"
 import { ChartContainer } from "./chart-container"
 import { ChartTooltipContent } from "./chart-tooltip"
