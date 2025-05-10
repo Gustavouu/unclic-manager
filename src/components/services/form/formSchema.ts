@@ -4,7 +4,12 @@ import { z } from "zod";
 export const serviceFormSchema = z.object({
   name: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
   duration: z.coerce.number().min(5, { message: "Duração mínima de 5 minutos" }),
-  price: z.coerce.number().min(0, { message: "Preço não pode ser negativo" }),
+  price: z.union([
+    z.coerce.number().min(0, { message: "Preço não pode ser negativo" }),
+    z.string().refine((val) => !isNaN(parseFloat(val)), { 
+      message: "Preço deve ser um número válido" 
+    })
+  ]),
   isPopular: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
   description: z.string().optional(),

@@ -44,11 +44,14 @@ export function ServicesTable({
     }
   };
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number | string) => {
+    // Ensure price is a number before formatting
+    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+    
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(price);
+    }).format(numericPrice);
   };
 
   // Render loading state

@@ -1,15 +1,16 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { ServiceData, StaffData } from "@/contexts/onboarding/types";
+import { ServiceData as OnboardingServiceData, StaffData } from "@/contexts/onboarding/types";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { services as mockServices } from "@/components/services/servicesData";
+import { ServiceData as ComponentServiceData } from "@/components/services/servicesData";
 
 export const useBusinessWebsite = () => {
   const { businessData, loadProgress, services, staffMembers, businessHours } = useOnboarding();
   const { businessName } = useParams();
-  const [availableServices, setAvailableServices] = useState<ServiceData[]>([]);
+  const [availableServices, setAvailableServices] = useState<OnboardingServiceData[]>([]);
   const [staff, setStaff] = useState<StaffData[]>([]);
   const { professionals } = useProfessionals();
   const [isLoading, setIsLoading] = useState(true);
@@ -34,8 +35,15 @@ export const useBusinessWebsite = () => {
     if (services && services.length > 0) {
       setAvailableServices(services);
     } else {
-      // Use mock services as fallback
-      setAvailableServices(mockServices);
+      // Convert mock services to the expected format
+      const convertedServices = mockServices.map(service => ({
+        id: service.id,
+        name: service.name,
+        duration: service.duration,
+        price: typeof service.price === 'string' ? parseFloat(service.price) : service.price,
+        description: service.description
+      }));
+      setAvailableServices(convertedServices as OnboardingServiceData[]);
     }
   }, [services]);
 

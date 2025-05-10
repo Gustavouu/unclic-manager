@@ -20,13 +20,19 @@ interface ServiceFormProps {
 }
 
 export function ServiceForm({ service, onSubmit, onCancel }: ServiceFormProps) {
+  // Ensure the price is a number in the form
+  const getInitialPrice = (price: string | number | undefined): number => {
+    if (price === undefined) return 0;
+    return typeof price === 'string' ? parseFloat(price) : price;
+  };
+
   const form = useForm<ServiceFormValues>({
     resolver: zodResolver(serviceFormSchema),
     defaultValues: service 
       ? { 
           name: service.name,
           duration: service.duration,
-          price: service.price,
+          price: getInitialPrice(service.price),
           isPopular: service.isPopular,
           isFeatured: service.isFeatured,
           description: service.description || "",
