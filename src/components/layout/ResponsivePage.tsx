@@ -38,14 +38,14 @@ export function ResponsivePage({
   return (
     <div
       className={cn(
-        'w-full h-full',
-        !noPadding && 'px-4 py-4 sm:px-6 sm:py-6',
+        'w-full',
+        !noPadding && 'px-4 py-6 sm:px-6 sm:py-6',
         className
       )}
     >
       <div
         className={cn(
-          'w-full h-full',
+          'w-full',
           !fullWidth && maxWidthClasses[maxWidth],
           centered && 'mx-auto',
           contentClassName

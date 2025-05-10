@@ -46,7 +46,7 @@ export function MenuSections() {
     <>
       {menuItems.map((section) => (
         <SidebarGroup title={section.group} key={section.group}>
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             {section.items.map((item) => {
               const isActive = pathname === item.path;
               return (
@@ -69,8 +69,8 @@ export function MenuSections() {
         </SidebarGroup>
       ))}
       
-      <div className="mt-auto px-2 py-2">
-        <div className="flex items-center justify-between rounded-md p-2">
+      <div className="mt-auto px-3 py-3">
+        <div className="flex items-center justify-between rounded-md p-2 bg-gray-50 dark:bg-neutral-900">
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             <span className="text-sm">Tema</span>

@@ -18,8 +18,8 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <div className="hidden border-r bg-white dark:bg-neutral-950 md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 shadow-sm">
-      <div className="flex flex-col h-full py-4">
-        <div className="px-3 py-2">
+      <div className="flex flex-col h-full">
+        <div className="px-3 py-4 border-b">
           <MainNav className="mx-auto" />
         </div>
         
