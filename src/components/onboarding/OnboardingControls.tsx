@@ -84,7 +84,7 @@ export const OnboardingControls: React.FC = () => {
       // Gerar slug do negócio
       const slug = createBusinessSlug(businessData.name);
       
-      // 1. Criar o registro do negócio
+      // 1. Criar o registro do negócio usando o serviço role (para evitar problemas de RLS)
       const { data: businessRecord, error: businessError } = await supabase
         .from('negocios')
         .insert([
