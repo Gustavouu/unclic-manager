@@ -14,7 +14,10 @@ export const ServiceStats: React.FC<ServiceStatsProps> = ({ services }) => {
   
   // Calculate total estimated revenue
   const totalRevenue = services.reduce((sum, service) => {
-    const price = parseFloat(service.price.replace(/[^\d.,]/g, '').replace(',', '.'));
+    // Check if price is a number or string and handle accordingly
+    const price = typeof service.price === 'string' 
+      ? parseFloat(service.price.replace(/[^\d.,]/g, '').replace(',', '.'))
+      : service.price;
     return sum + (isNaN(price) ? 0 : price);
   }, 0);
   
@@ -25,8 +28,8 @@ export const ServiceStats: React.FC<ServiceStatsProps> = ({ services }) => {
   
   const averageDuration = services.length ? Math.round(totalDuration / services.length) : 0;
   
-  // Count active services
-  const activeServices = services.filter(service => service.status === 'active').length;
+  // Count active services (checking for isActive property since status is not available)
+  const activeServices = services.filter(service => service.isActive !== false).length;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -48,7 +51,7 @@ export const ServiceStats: React.FC<ServiceStatsProps> = ({ services }) => {
       <StatCard
         title="Serviços Ativos"
         value={activeServices}
-        subtitle={`${Math.round(activeServices / totalServices * 100)}% do total`}
+        subtitle={`${Math.round((activeServices / totalServices) * 100) || 0}% do total`}
         icon={<Bookmark size={18} />}
         className="h-full"
         iconClassName="bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"

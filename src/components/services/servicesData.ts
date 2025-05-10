@@ -32,6 +32,7 @@ export const services: ServiceData[] = [
     category: "Cabelo",
     isPopular: true,
     isFeatured: false,
+    isActive: true,
     description: "Corte moderno e rápido para cabelo masculino, inclui lavagem."
   },
   {
@@ -42,6 +43,7 @@ export const services: ServiceData[] = [
     category: "Cabelo",
     isPopular: false,
     isFeatured: true,
+    isActive: true,
     description: "Coloração completa com produtos de alta qualidade, inclui tratamento pós-coloração."
   },
   {
@@ -52,6 +54,7 @@ export const services: ServiceData[] = [
     category: "Tratamento",
     isPopular: false,
     isFeatured: false,
+    isActive: true,
     description: "Tratamento intensivo para cabelos danificados, inclui produtos especiais de reconstrução."
   },
   {
@@ -62,6 +65,7 @@ export const services: ServiceData[] = [
     category: "Unhas",
     isPopular: true,
     isFeatured: false,
+    isActive: true,
     description: "Cuidado completo para unhas das mãos, inclui esfoliação, hidratação e esmalte."
   },
   {
@@ -72,6 +76,7 @@ export const services: ServiceData[] = [
     category: "Unhas",
     isPopular: false,
     isFeatured: false,
+    isActive: true,
     description: "Tratamento completo para os pés, inclui esfoliação, hidratação e esmalte."
   },
   {
@@ -82,6 +87,7 @@ export const services: ServiceData[] = [
     category: "Rosto",
     isPopular: false,
     isFeatured: true,
+    isActive: true,
     description: "Limpeza profunda com extração de cravos e aplicação de máscara hidratante."
   },
   {
@@ -92,6 +98,7 @@ export const services: ServiceData[] = [
     category: "Rosto",
     isPopular: true,
     isFeatured: false,
+    isActive: true,
     description: "Modelagem e design personalizado de sobrancelhas com linha ou pinça."
   },
 ];

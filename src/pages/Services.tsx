@@ -101,7 +101,10 @@ const Services = () => {
     
     // Apply tab filter
     if (tab !== 'all') {
-      filtered = filtered.filter(service => service.status === tab);
+      // Use isActive instead of status
+      filtered = filtered.filter(service => 
+        tab === 'active' ? service.isActive !== false : service.isActive === false
+      );
     }
     
     // Apply search filter

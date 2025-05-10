@@ -10,19 +10,24 @@ import {
 import { MoreHorizontal, Pencil, Trash, Eye } from "lucide-react";
 import { ServiceData } from "./servicesData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingState } from "@/hooks/use-loading-state";
 
 interface ServicesTableProps {
   services: ServiceData[];
   onServiceUpdated?: (service: ServiceData) => void;
   onServiceDeleted?: (id: string) => void;
   readonly?: boolean;
+  state?: LoadingState;
+  error?: string;
 }
 
 export function ServicesTable({ 
   services, 
   onServiceUpdated, 
   onServiceDeleted,
-  readonly = false
+  readonly = false,
+  state = 'success',
+  error
 }: ServicesTableProps) {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
@@ -47,7 +52,7 @@ export function ServicesTable({
   };
 
   // Render loading state
-  if (!services) {
+  if (state === 'loading') {
     return (
       <div>
         {[...Array(5)].map((_, index) => (
@@ -59,6 +64,15 @@ export function ServicesTable({
             </div>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  // Render error state
+  if (state === 'error') {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-red-500">{error || "Erro ao carregar os serviços"}</p>
       </div>
     );
   }
