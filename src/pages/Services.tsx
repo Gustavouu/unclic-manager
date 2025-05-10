@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { CardContainer } from "@/components/ui/card-container";
@@ -128,7 +127,7 @@ const Services = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Serviços</h1>
           <p className="text-sm text-muted-foreground">

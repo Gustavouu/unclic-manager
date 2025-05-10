@@ -9,7 +9,13 @@ export const serviceFormSchema = z.object({
     z.string().refine((val) => !isNaN(parseFloat(val)), { 
       message: "Preço deve ser um número válido" 
     })
-  ]),
+  ]).transform(val => {
+    // Ensure we always have a number
+    if (typeof val === 'string') {
+      return parseFloat(val);
+    }
+    return val;
+  }),
   isPopular: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
   description: z.string().optional(),

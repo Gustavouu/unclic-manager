@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ReportsHeader } from "@/components/reports/ReportsHeader";
 import { ReportsTabs } from "@/components/reports/ReportsTabs";
@@ -6,6 +5,9 @@ import { useReportsData } from "@/hooks/reports/useReportsData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatsCard } from "@/components/common/StatsCard";
+import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
+import { DollarSign, Calendar, Users, Percent } from "lucide-react";
 
 const Reports = () => {
   const [dateRange, setDateRange] = useState("last30days");
@@ -26,7 +28,7 @@ const Reports = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Relatórios</h1>
           <p className="text-sm text-muted-foreground">
@@ -41,47 +43,42 @@ const Reports = () => {
       </div>
       
       {!isLoading && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-blue-50 border-blue-200">
-            <CardContent className="p-4 flex flex-col items-center justify-center">
-              <h3 className="text-lg font-medium mb-1">Receita</h3>
-              <p className="text-3xl font-bold text-blue-600">
-                R$ {stats.totalRevenue?.toFixed(2) || '0.00'}
-              </p>
-              <p className="text-sm text-muted-foreground">No período</p>
-            </CardContent>
-          </Card>
+        <ResponsiveGrid columns={{ default: 1, sm: 4 }} gap="md" equalHeight>
+          <StatsCard
+            title="Receita"
+            value={`R$ ${stats.totalRevenue?.toFixed(2) || '0.00'}`}
+            icon={<DollarSign size={18} />}
+            iconColor="text-blue-600 bg-blue-50"
+            borderColor="border-l-blue-600"
+          />
           
-          <Card className="bg-green-50 border-green-200">
-            <CardContent className="p-4 flex flex-col items-center justify-center">
-              <h3 className="text-lg font-medium mb-1">Agendamentos</h3>
-              <p className="text-3xl font-bold text-green-600">
-                {appointmentsCount}
-              </p>
-              <p className="text-sm text-muted-foreground">No período</p>
-            </CardContent>
-          </Card>
+          <StatsCard
+            title="Agendamentos"
+            value={appointmentsCount.toString()}
+            icon={<Calendar size={18} />}
+            iconColor="text-green-600 bg-green-50"
+            borderColor="border-l-green-600"
+            description="No período"
+          />
           
-          <Card className="bg-amber-50 border-amber-200">
-            <CardContent className="p-4 flex flex-col items-center justify-center">
-              <h3 className="text-lg font-medium mb-1">Clientes</h3>
-              <p className="text-3xl font-bold text-amber-600">
-                {clientsCount}
-              </p>
-              <p className="text-sm text-muted-foreground">No período</p>
-            </CardContent>
-          </Card>
+          <StatsCard
+            title="Clientes"
+            value={clientsCount.toString()}
+            icon={<Users size={18} />}
+            iconColor="text-amber-600 bg-amber-50"
+            borderColor="border-l-amber-600"
+            description="No período"
+          />
           
-          <Card className="bg-purple-50 border-purple-200">
-            <CardContent className="p-4 flex flex-col items-center justify-center">
-              <h3 className="text-lg font-medium mb-1">Taxa de Conclusão</h3>
-              <p className="text-3xl font-bold text-purple-600">
-                {completionRate}%
-              </p>
-              <p className="text-sm text-muted-foreground">Agendamentos</p>
-            </CardContent>
-          </Card>
-        </div>
+          <StatsCard
+            title="Taxa de Conclusão"
+            value={`${completionRate}%`}
+            icon={<Percent size={18} />}
+            iconColor="text-purple-600 bg-purple-50"
+            borderColor="border-l-purple-600"
+            description="Agendamentos"
+          />
+        </ResponsiveGrid>
       )}
       
       {error && (
