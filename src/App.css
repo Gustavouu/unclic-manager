@@ -1,10 +1,15 @@
+
+/* Reset the problematic #root styles that were causing layout issues */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+  height: 100%;
 }
 
+/* Keep other styles */
 .logo {
   height: 6em;
   padding: 1.5em;

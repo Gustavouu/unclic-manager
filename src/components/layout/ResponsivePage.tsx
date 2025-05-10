@@ -39,7 +39,7 @@ export function ResponsivePage({
     <div
       className={cn(
         'w-full',
-        !noPadding && 'px-4 pb-6 sm:px-6',
+        !noPadding && 'px-4 sm:px-6',
         className
       )}
     >

@@ -46,7 +46,7 @@ export function MenuSections() {
     <div className="py-2">
       {menuItems.map((section) => (
         <SidebarGroup title={section.group} key={section.group}>
-          <div className="space-y-1 px-2">
+          <div className="space-y-1 px-3">
             {section.items.map((item) => {
               const isActive = pathname === item.path;
               return (
@@ -54,10 +54,10 @@ export function MenuSections() {
                   key={item.path}
                   to={item.path}
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                     isActive 
-                      ? "bg-blue-600 text-white" 
-                      : "hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-700 dark:text-gray-200"
+                      ? "bg-blue-600 text-white font-medium shadow-sm" 
+                      : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-800"
                   )}
                 >
                   <item.icon className="h-4 w-4" />
