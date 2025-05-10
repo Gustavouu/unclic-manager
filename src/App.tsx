@@ -1,113 +1,30 @@
 
-import { Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from './components/theme-provider';
-import { AppLayout } from './components/layout/AppLayout';
-import { ToastProvider } from './components/ui/toast-provider';
-import './App.css';
-import RequireAuth from './components/auth/RequireAuth';
-
-// Import pages
-import Services from './pages/Services';
-import Dashboard from './pages/Dashboard';
-import Login from './pages/auth/Login';
-import Settings from './pages/Settings';
-import Inventory from './pages/Inventory';
-import Professionals from './pages/Professionals';
-import Clients from './pages/Clients';
-import Appointments from './pages/Appointments';
-import Index from './pages/Index';
-import SignUp from './pages/auth/SignUp';
-import ResetPassword from './pages/auth/ResetPassword';
-import Finance from './pages/Finance';
-import Payments from './pages/Payments';
-import Reports from './pages/Reports';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
+import Appointments from "./pages/Appointments";
+import Clients from "./pages/Clients";
+import Reports from "./pages/Reports";
+import Finance from "./pages/Finance";
+import Settings from "./pages/Settings";
+import NotFound from "./pages/NotFound";
+import Layout from "./components/layout/Layout";
+import "./services/InitializationService"; // Import initialization service
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="unclic-theme">
-      <ToastProvider />
+    <Router>
       <Routes>
-        {/* Root path redirects based on auth state */}
-        <Route path="/" element={<Index />} />
-        
-        {/* Public routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-
-        {/* Protected routes */}
-        <Route path="/dashboard" element={
-          <RequireAuth>
-            <AppLayout>
-              <Dashboard />
-            </AppLayout>
-          </RequireAuth>
-        } />
-        <Route path="/services" element={
-          <RequireAuth>
-            <AppLayout breadcrumb={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Serviços' }]}>
-              <Services />
-            </AppLayout>
-          </RequireAuth>
-        } />
-        <Route path="/inventory" element={
-          <RequireAuth>
-            <AppLayout breadcrumb={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Estoque' }]}>
-              <Inventory />
-            </AppLayout>
-          </RequireAuth>
-        } />
-        <Route path="/professionals" element={
-          <RequireAuth>
-            <AppLayout breadcrumb={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Colaboradores' }]}>
-              <Professionals />
-            </AppLayout>
-          </RequireAuth>
-        } />
-        <Route path="/clients" element={
-          <RequireAuth>
-            <AppLayout breadcrumb={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Clientes' }]}>
-              <Clients />
-            </AppLayout>
-          </RequireAuth>
-        } />
-        <Route path="/appointments" element={
-          <RequireAuth>
-            <AppLayout breadcrumb={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Agendamentos' }]}>
-              <Appointments />
-            </AppLayout>
-          </RequireAuth>
-        } />
-        <Route path="/finance" element={
-          <RequireAuth>
-            <AppLayout breadcrumb={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Financeiro' }]}>
-              <Finance />
-            </AppLayout>
-          </RequireAuth>
-        } />
-        <Route path="/payments" element={
-          <RequireAuth>
-            <AppLayout breadcrumb={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Pagamentos' }]}>
-              <Payments />
-            </AppLayout>
-          </RequireAuth>
-        } />
-        <Route path="/reports" element={
-          <RequireAuth>
-            <AppLayout breadcrumb={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Relatórios' }]}>
-              <Reports />
-            </AppLayout>
-          </RequireAuth>
-        } />
-        <Route path="/settings/*" element={
-          <RequireAuth>
-            <AppLayout breadcrumb={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Configurações' }]}>
-              <Settings />
-            </AppLayout>
-          </RequireAuth>
-        } />
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="appointments" element={<Appointments />} />
+          <Route path="clients" element={<Clients />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="finance" element={<Finance />} />
+          <Route path="settings/*" element={<Settings />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
       </Routes>
-    </ThemeProvider>
+    </Router>
   );
 }
 
