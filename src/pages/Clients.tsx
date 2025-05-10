@@ -32,12 +32,12 @@ const Clients = () => {
   // Calculate stats for cards
   const activeClients = clients.filter(client => client.status !== 'inactive').length;
   const newClientsThisMonth = clients.filter(client => {
-    const createdAt = client.createdAt ? new Date(client.createdAt) : null;
-    if (!createdAt) return false;
+    const createdDate = client.criado_em ? new Date(client.criado_em) : null;
+    if (!createdDate) return false;
     
     const now = new Date();
-    return createdAt.getMonth() === now.getMonth() && 
-           createdAt.getFullYear() === now.getFullYear();
+    return createdDate.getMonth() === now.getMonth() && 
+           createdDate.getFullYear() === now.getFullYear();
   }).length;
 
   return (
