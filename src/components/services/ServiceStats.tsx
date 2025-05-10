@@ -4,6 +4,7 @@ import { ServiceData } from './servicesData';
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Scissors, Calendar, BadgeDollarSign, Bookmark } from "lucide-react";
 import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
+import { formatCurrency } from "@/lib/formatters";
 
 interface ServiceStatsProps {
   services: ServiceData[];
@@ -33,13 +34,6 @@ export const ServiceStats: React.FC<ServiceStatsProps> = ({ services }) => {
   
   // Count active services (checking for isActive property since status is not available)
   const activeServices = services.filter(service => service.isActive !== false).length;
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   return (
     <ResponsiveGrid columns={{ default: 1, sm: 4 }} gap="md" equalHeight>

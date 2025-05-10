@@ -3,7 +3,7 @@ export interface ServiceData {
   id: string;
   name: string;
   duration: number;
-  price: number;
+  price: number | string; // Updated to allow both number and string
   category: string;
   isPopular: boolean;
   isFeatured: boolean;
