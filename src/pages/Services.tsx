@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServicesHeader } from "@/components/services/ServicesHeader";
@@ -7,7 +6,7 @@ import { ServiceStats } from "@/components/services/ServiceStats";
 import { services as initialServices, ServiceData } from "@/components/services/servicesData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
-import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { useUserPermissions } from "@/hooks/auth/useUserPermissions";
 
 const Services = () => {
   const [services, setServices] = useState<ServiceData[]>([]);

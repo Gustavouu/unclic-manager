@@ -7,6 +7,7 @@ export interface ServiceData {
   category: string;
   isPopular: boolean;
   isFeatured: boolean;
+  isActive?: boolean;
   description?: string;
 }
 
@@ -20,6 +21,7 @@ export const services: ServiceData[] = [
     category: "Cabelo",
     isPopular: true,
     isFeatured: true,
+    isActive: true,
     description: "Corte personalizado para todos os tipos de cabelo feminino, incluindo lavagem e finalização."
   },
   {

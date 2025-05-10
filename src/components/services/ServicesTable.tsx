@@ -99,8 +99,8 @@ export function ServicesTable({
                   <TableCell>{formatDuration(service.duration)}</TableCell>
                   <TableCell>{formatPrice(service.price)}</TableCell>
                   <TableCell>
-                    <Badge variant={service.isActive ? "default" : "outline"}>
-                      {service.isActive ? "Ativo" : "Inativo"}
+                    <Badge variant={service.isActive !== false ? "default" : "outline"}>
+                      {service.isActive !== false ? "Ativo" : "Inativo"}
                     </Badge>
                   </TableCell>
                   {!readonly && (
