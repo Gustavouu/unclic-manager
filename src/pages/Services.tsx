@@ -1,15 +1,16 @@
+
 import { useState, useEffect } from "react";
-import { PageHeader } from "@/components/ui/page-header";
-import { CardContainer } from "@/components/ui/card-container";
-import { ServicesHeader } from "@/components/services/ServicesHeader";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServicesTable } from "@/components/services/ServicesTable";
-import { ServiceStats } from "@/components/services/ServiceStats";
+import { StatsCard } from "@/components/common/StatsCard";
 import { services as initialServices, ServiceData } from "@/components/services/servicesData";
 import { useToast } from "@/hooks/use-toast";
 import { useUserPermissions } from "@/components/hooks/useUserPermissions";
 import { LoadingState } from "@/hooks/use-loading-state";
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Scissors, Calendar, BadgeDollarSign, Bookmark } from "lucide-react";
+import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
+import { ServicesHeader } from "@/components/services/ServicesHeader";
 
 const Services = () => {
   const [services, setServices] = useState<ServiceData[]>([]);
@@ -125,6 +126,20 @@ const Services = () => {
 
   const canManageServices = canAccess(['services.manage']);
 
+  // Calculate statistics for the cards
+  const totalServices = services.length;
+  const activeServices = services.filter(service => service.isActive !== false).length;
+  
+  // Calculate average duration
+  const totalDuration = services.reduce((sum, service) => sum + (service.duration || 0), 0);
+  const averageDuration = services.length ? Math.round(totalDuration / services.length) : 0;
+  
+  // Calculate total estimated revenue
+  const totalRevenue = services.reduce((sum, service) => {
+    let price = typeof service.price === 'string' ? parseFloat(service.price) : service.price;
+    return sum + (isNaN(price) ? 0 : price);
+  }, 0);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -141,7 +156,40 @@ const Services = () => {
         />
       </div>
       
-      <ServiceStats services={services} />
+      <ResponsiveGrid columns={{ default: 1, sm: 4 }} gap="md" equalHeight>
+        <StatsCard
+          title="Total de Serviços"
+          value={totalServices.toString()}
+          icon={<Scissors size={18} />}
+          iconColor="text-blue-600 bg-blue-50"
+          borderColor="border-l-blue-600"
+        />
+        
+        <StatsCard
+          title="Serviços Ativos"
+          value={activeServices.toString()}
+          icon={<Bookmark size={18} />}
+          iconColor="text-green-600 bg-green-50"
+          borderColor="border-l-green-600"
+          description={`${Math.round((activeServices / totalServices) * 100) || 0}% do total`}
+        />
+        
+        <StatsCard
+          title="Duração Média"
+          value={`${averageDuration} min`}
+          icon={<Calendar size={18} />}
+          iconColor="text-amber-600 bg-amber-50"
+          borderColor="border-l-amber-600"
+        />
+        
+        <StatsCard
+          title="Receita Estimada"
+          value={`R$ ${totalRevenue.toFixed(2)}`}
+          icon={<BadgeDollarSign size={18} />}
+          iconColor="text-purple-600 bg-purple-50"
+          borderColor="border-l-purple-600"
+        />
+      </ResponsiveGrid>
       
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="pb-3 border-b bg-white">

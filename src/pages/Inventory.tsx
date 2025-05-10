@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { HelpCircle, Plus } from "lucide-react";
+import { HelpCircle, Plus, Package, AlertCircle, DollarSign } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,7 +9,8 @@ import { InventoryTable } from '@/components/inventory/InventoryTable';
 import { NewProductDialog } from '@/components/inventory/NewProductDialog';
 import { useInventory } from '@/hooks/inventory/useInventory';
 import { Product } from '@/hooks/inventory/types';
-import { InventoryStats } from '@/components/inventory/InventoryStats';
+import { StatsCard } from '@/components/common/StatsCard';
+import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
 
 export default function Inventory() {
   const [showNewProductDialog, setShowNewProductDialog] = useState(false);
@@ -42,6 +44,17 @@ export default function Inventory() {
       deleteProduct(product.id);
     }
   };
+
+  // Calculate statistics for stat cards
+  const totalItems = products.length;
+  
+  const lowStockItems = products.filter(product => 
+    product.quantity <= product.minQuantity
+  ).length;
+  
+  const totalValue = products.reduce((sum, product) => 
+    sum + (product.price * product.quantity), 0
+  ).toFixed(2);
 
   return (
     <div className="space-y-6">
@@ -100,9 +113,33 @@ export default function Inventory() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <InventoryStats products={products} />
-      </div>
+      <ResponsiveGrid columns={{ default: 1, sm: 3 }} gap="md" equalHeight>
+        <StatsCard
+          title="Total de Produtos"
+          value={totalItems.toString()}
+          icon={<Package size={18} />}
+          iconColor="text-blue-600 bg-blue-50"
+          borderColor="border-l-blue-600"
+        />
+        
+        <StatsCard
+          title="Estoque Baixo"
+          value={lowStockItems.toString()}
+          icon={<AlertCircle size={18} />}
+          iconColor="text-orange-600 bg-orange-50"
+          borderColor="border-l-orange-600"
+          description="Produtos abaixo do mínimo"
+        />
+        
+        <StatsCard
+          title="Valor Total"
+          value={`R$ ${totalValue}`}
+          icon={<DollarSign size={18} />}
+          iconColor="text-green-600 bg-green-50"
+          borderColor="border-l-green-600"
+          description="Valor em estoque"
+        />
+      </ResponsiveGrid>
 
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="pb-3 border-b bg-white">

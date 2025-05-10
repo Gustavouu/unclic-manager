@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ClientsHeader } from "@/components/clients/ClientsHeader";
 import { ClientsTable } from "@/components/clients/ClientsTable";
@@ -6,7 +7,9 @@ import { useClients } from "@/hooks/useClients";
 import { ClientsFiltersSheet } from "@/components/clients/ClientsFiltersSheet";
 import { ClientsFilters } from "@/components/clients/ClientsFilters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClientStats } from "@/components/clients/ClientStats";
+import { Users, UserCheck, Clock, Phone } from "lucide-react";
+import { StatsCard } from "@/components/common/StatsCard";
+import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
 
 const Clients = () => {
   const { clients, isLoading } = useClients();
@@ -26,6 +29,17 @@ const Clients = () => {
         return clientStatus === activeTab;
       });
 
+  // Calculate stats for cards
+  const activeClients = clients.filter(client => client.status !== 'inactive').length;
+  const newClientsThisMonth = clients.filter(client => {
+    const createdAt = client.createdAt ? new Date(client.createdAt) : null;
+    if (!createdAt) return false;
+    
+    const now = new Date();
+    return createdAt.getMonth() === now.getMonth() && 
+           createdAt.getFullYear() === now.getFullYear();
+  }).length;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -38,7 +52,42 @@ const Clients = () => {
         <ClientsHeader />
       </div>
       
-      <ClientStats clients={clients} />
+      <ResponsiveGrid columns={{ default: 1, sm: 4 }} gap="md" equalHeight>
+        <StatsCard
+          title="Total de Clientes"
+          value={clients.length.toString()}
+          icon={<Users size={18} />}
+          iconColor="text-blue-600 bg-blue-50"
+          borderColor="border-l-blue-600"
+        />
+        
+        <StatsCard
+          title="Clientes Ativos"
+          value={activeClients.toString()}
+          icon={<UserCheck size={18} />}
+          iconColor="text-green-600 bg-green-50"
+          borderColor="border-l-green-600"
+          description={`${Math.round((activeClients / clients.length) * 100) || 0}% do total`}
+        />
+        
+        <StatsCard
+          title="Novos Clientes"
+          value={newClientsThisMonth.toString()}
+          icon={<Clock size={18} />}
+          iconColor="text-amber-600 bg-amber-50"
+          borderColor="border-l-amber-600"
+          description="Este mês"
+        />
+        
+        <StatsCard
+          title="Taxa de Contato"
+          value="80%"
+          icon={<Phone size={18} />}
+          iconColor="text-purple-600 bg-purple-50"
+          borderColor="border-l-purple-600"
+          description="Resposta"
+        />
+      </ResponsiveGrid>
       
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="pb-3 border-b bg-white">

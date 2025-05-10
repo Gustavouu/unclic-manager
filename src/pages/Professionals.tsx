@@ -11,7 +11,7 @@ import { ProfessionalDetailsDialog } from "@/components/professionals/Profession
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { ProfessionalsTable } from "@/components/professionals/ProfessionalsTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StatCard } from "@/components/dashboard/StatCard";
+import { StatsCard } from "@/components/common/StatsCard";
 import { Users, Award, Briefcase, Calendar } from "lucide-react";
 import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
 
@@ -56,7 +56,7 @@ const Professionals = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Profissionais</h1>
           <p className="text-sm text-muted-foreground">
@@ -74,40 +74,40 @@ const Professionals = () => {
       </div>
 
       <ResponsiveGrid columns={{ default: 1, sm: 4 }} gap="md" equalHeight>
-        <StatCard
+        <StatsCard
           title="Total"
-          value={professionals.length}
-          subtitle="Profissionais"
+          value={professionals.length.toString()}
           icon={<Users size={18} />}
-          className="h-full"
-          iconClassName="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+          iconColor="text-blue-600 bg-blue-50"
+          borderColor="border-l-blue-600"
+          description="Profissionais"
         />
         
-        <StatCard
+        <StatsCard
           title="Ativos"
-          value={professionals.filter(p => p.status === 'active').length}
-          subtitle="Profissionais"
+          value={professionals.filter(p => p.status === 'active').length.toString()}
           icon={<Users size={18} />}
-          className="h-full"
-          iconClassName="bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+          iconColor="text-green-600 bg-green-50"
+          borderColor="border-l-green-600"
+          description="Profissionais"
         />
         
-        <StatCard
+        <StatsCard
           title="Especialidades"
-          value={uniqueSpecialties}
-          subtitle="Únicas"
+          value={uniqueSpecialties.toString()}
           icon={<Award size={18} />}
-          className="h-full"
-          iconClassName="bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
+          iconColor="text-amber-600 bg-amber-50"
+          borderColor="border-l-amber-600"
+          description="Únicas"
         />
         
-        <StatCard
+        <StatsCard
           title="Agendamentos"
           value="--"
-          subtitle="Este mês"
           icon={<Calendar size={18} />}
-          className="h-full"
-          iconClassName="bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400"
+          iconColor="text-purple-600 bg-purple-50"
+          borderColor="border-l-purple-600"
+          description="Este mês"
         />
       </ResponsiveGrid>
 
