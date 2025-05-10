@@ -1902,6 +1902,51 @@ export type Database = {
           },
         ]
       }
+      metricas_dashboard: {
+        Row: {
+          created_at: string | null
+          data_referencia: string
+          horarios_pico: Json | null
+          id: string
+          novos_clientes: number
+          servicos_populares: Json | null
+          taxa_cancelamento: number
+          tenant_id: string
+          ticket_medio: number
+          total_agendamentos: number
+          total_vendas: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_referencia: string
+          horarios_pico?: Json | null
+          id?: string
+          novos_clientes?: number
+          servicos_populares?: Json | null
+          taxa_cancelamento?: number
+          tenant_id: string
+          ticket_medio?: number
+          total_agendamentos?: number
+          total_vendas?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_referencia?: string
+          horarios_pico?: Json | null
+          id?: string
+          novos_clientes?: number
+          servicos_populares?: Json | null
+          taxa_cancelamento?: number
+          tenant_id?: string
+          ticket_medio?: number
+          total_agendamentos?: number
+          total_vendas?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       negocios: {
         Row: {
           atualizado_em: string | null
@@ -2035,6 +2080,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pagamentos: {
+        Row: {
+          agendamento_id: string | null
+          created_at: string | null
+          data_pagamento: string | null
+          id: string
+          metodo_pagamento: string
+          status: string
+          tenant_id: string
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          agendamento_id?: string | null
+          created_at?: string | null
+          data_pagamento?: string | null
+          id?: string
+          metodo_pagamento: string
+          status: string
+          tenant_id: string
+          updated_at?: string | null
+          valor: number
+        }
+        Update: {
+          agendamento_id?: string | null
+          created_at?: string | null
+          data_pagamento?: string | null
+          id?: string
+          metodo_pagamento?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: []
       }
       partnership_deals: {
         Row: {
@@ -3486,6 +3567,19 @@ export type Database = {
       has_permission: {
         Args: { permission_name: string }
         Returns: boolean
+      }
+      obter_metricas_periodo: {
+        Args: { p_tenant_id: string; p_data_inicio: string; p_data_fim: string }
+        Returns: {
+          data_referencia: string
+          total_agendamentos: number
+          total_vendas: number
+          ticket_medio: number
+          taxa_cancelamento: number
+          novos_clientes: number
+          servicos_populares: Json
+          horarios_pico: Json
+        }[]
       }
     }
     Enums: {

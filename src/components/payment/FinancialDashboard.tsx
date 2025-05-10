@@ -5,12 +5,13 @@ import { usePlans } from '@/hooks/payment/usePlans';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart, LineChart } from '@/components/ui/chart';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Download, RefreshCw } from 'lucide-react';
+import { Download, RefreshCw, Plus, BarChart as BarChartIcon, LineChart as LineChartIcon } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { RevenueBarChart } from '@/components/ui/chart/RevenueBarChart';
+import { RevenueLineChart } from '@/components/ui/chart/RevenueLineChart';
 
 const dateRangeOptions = [
   { value: '30', label: 'Last 30 Days' },
@@ -22,6 +23,7 @@ const dateRangeOptions = [
 export const FinancialDashboard = () => {
   const [dateRange, setDateRange] = useState('180');
   const [activeTab, setActiveTab] = useState('overview');
+  const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
   
   // Calculate date range
   const calculateDateRange = () => {
@@ -48,6 +50,10 @@ export const FinancialDashboard = () => {
   const handleExport = () => {
     // Export functionality would be implemented here
     console.log('Export data');
+  };
+
+  const toggleChartType = () => {
+    setChartType(prev => prev === 'bar' ? 'line' : 'bar');
   };
 
   return (
@@ -129,21 +135,32 @@ export const FinancialDashboard = () => {
         <TabsContent value="overview" className="pt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Revenue Growth</CardTitle>
-                <CardDescription>Monthly revenue over time</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <div>
+                  <CardTitle>Revenue Growth</CardTitle>
+                  <CardDescription>Monthly revenue over time</CardDescription>
+                </div>
+                <Button variant="ghost" size="icon" onClick={toggleChartType}>
+                  {chartType === 'bar' ? <LineChartIcon className="h-4 w-4" /> : <BarChartIcon className="h-4 w-4" />}
+                </Button>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <Skeleton className="w-full h-[300px]" />
                 ) : (
-                  <BarChart 
-                    data={revenueChartData}
-                    categories={['revenue']}
-                    index="month"
-                    valueFormatter={(value) => formatCurrency(value)}
-                    className="w-full h-[300px]"
-                  />
+                  chartType === 'bar' ? (
+                    <RevenueBarChart 
+                      data={revenueChartData} 
+                      className="w-full h-[300px]"
+                      showSubscriptions={false}
+                    />
+                  ) : (
+                    <RevenueLineChart 
+                      data={revenueChartData}
+                      className="w-full h-[300px]"
+                      showSubscriptions={false}
+                    />
+                  )
                 )}
               </CardContent>
             </Card>
@@ -157,12 +174,10 @@ export const FinancialDashboard = () => {
                 {isLoading ? (
                   <Skeleton className="w-full h-[300px]" />
                 ) : (
-                  <LineChart 
+                  <RevenueLineChart 
                     data={revenueChartData}
-                    categories={['subscriptions']}
-                    index="month"
-                    valueFormatter={(value) => value.toString()}
                     className="w-full h-[300px]"
+                    showSubscriptions={true}
                   />
                 )}
               </CardContent>
