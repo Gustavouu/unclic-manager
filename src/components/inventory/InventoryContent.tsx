@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { InventoryTable } from './InventoryTable';
 import { InventoryStats } from './InventoryStats';
