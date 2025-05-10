@@ -7,11 +7,13 @@ import {
   Package, 
   BarChart3,
   Settings,
-  CreditCard
+  CreditCard,
+  Scissors
 } from "lucide-react";
 import { MainNav } from "@/components/main-nav";
 import { StockNotifications } from "@/components/inventory/StockNotifications";
 import { cn } from "@/lib/utils";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 
 export function Sidebar() {
   const { pathname } = useLocation();
@@ -19,7 +21,9 @@ export function Sidebar() {
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/" },
     { icon: Calendar, label: "Agendamentos", path: "/appointments" },
+    { icon: Scissors, label: "Serviços", path: "/services" },
     { icon: Users, label: "Clientes", path: "/clients" },
+    { icon: Users, label: "Profissionais", path: "/professionals" },
     { icon: Package, label: "Estoque", path: "/inventory" },
     { icon: CreditCard, label: "Financeiro", path: "/finance" },
     { icon: BarChart3, label: "Relatórios", path: "/reports" },
@@ -56,16 +60,26 @@ export function Sidebar() {
       </div>
       
       <div className="mt-auto border-t p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-            U
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between rounded-md p-2 bg-gray-50 dark:bg-neutral-900">
+            <div className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="text-sm">Tema</span>
+            </div>
+            <ThemeSwitcher />
           </div>
-          <div className="truncate">
-            <p className="text-sm font-medium">Usuário Demo</p>
-            <p className="text-xs text-gray-500">admin@unclic.app</p>
-          </div>
-          <div className="ml-auto">
-            <StockNotifications />
+          
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+              U
+            </div>
+            <div className="truncate">
+              <p className="text-sm font-medium">Usuário Demo</p>
+              <p className="text-xs text-gray-500">admin@unclic.app</p>
+            </div>
+            <div className="ml-auto">
+              <StockNotifications />
+            </div>
           </div>
         </div>
       </div>

@@ -23,7 +23,7 @@ export function MenuSections() {
     {
       group: "Menu",
       items: [
-        { icon: LayoutDashboard, title: "Dashboard", path: "/dashboard" }
+        { icon: LayoutDashboard, title: "Dashboard", path: "/" }
       ]
     },
     {

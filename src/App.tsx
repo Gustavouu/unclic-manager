@@ -10,6 +10,8 @@ import NotFound from "./pages/NotFound";
 import Layout from "./components/layout/Layout";
 import Index from "./pages/Index";
 import Inventory from "./pages/Inventory";
+import Professionals from "./pages/Professionals";
+import Services from "./pages/Services";
 import "./services/InitializationService"; // Import initialization service
 import { RequireAuth } from "./components/auth/RequireAuth";
 
@@ -27,6 +29,8 @@ function App() {
         <Route index element={<Dashboard />} />
         <Route path="appointments" element={<Appointments />} />
         <Route path="clients" element={<Clients />} />
+        <Route path="services" element={<Services />} />
+        <Route path="professionals" element={<Professionals />} />
         <Route path="reports" element={<Reports />} />
         <Route path="finance" element={<Finance />} />
         <Route path="inventory" element={<Inventory />} />
