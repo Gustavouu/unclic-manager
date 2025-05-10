@@ -17,11 +17,12 @@ export function Sidebar({ className }: SidebarProps) {
   }
 
   return (
-    <div className="hidden border-r bg-gray-100 dark:bg-neutral-950 md:flex md:w-60 md:flex-col md:fixed md:inset-y-0">
-      <div className="space-y-4 py-4">
+    <div className="hidden border-r bg-white dark:bg-neutral-950 md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 shadow-sm">
+      <div className="flex flex-col h-full py-4">
         <div className="px-3 py-2">
           <MainNav className="mx-auto" />
         </div>
+        
         <SidebarMain>
           <MenuSections />
         </SidebarMain>

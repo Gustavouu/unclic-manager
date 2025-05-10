@@ -46,7 +46,7 @@ export function MenuSections() {
     <>
       {menuItems.map((section) => (
         <SidebarGroup title={section.group} key={section.group}>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {section.items.map((item) => {
               const isActive = pathname === item.path;
               return (
@@ -57,7 +57,7 @@ export function MenuSections() {
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                     isActive 
                       ? "bg-blue-600 text-white" 
-                      : "hover:bg-muted"
+                      : "hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-700 dark:text-gray-200"
                   )}
                 >
                   <item.icon className="h-4 w-4" />
@@ -69,7 +69,7 @@ export function MenuSections() {
         </SidebarGroup>
       ))}
       
-      <div className="mt-auto px-3 py-2">
+      <div className="mt-auto px-2 py-2">
         <div className="flex items-center justify-between rounded-md p-2">
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
