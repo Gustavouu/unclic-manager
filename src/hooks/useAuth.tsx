@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -14,7 +15,7 @@ export type AuthContextType = {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 };
 
@@ -23,14 +24,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
+  
   useEffect(() => {
     // Check if user is already logged in
     const checkUser = async () => {
       setLoading(true);
       try {
-        // Utilizar Supabase Auth
         const { data } = await supabase.auth.getUser();
         
         if (data?.user) {
@@ -52,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Configura o listener para mudanças na autenticação
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log("Evento de autenticação:", event, session);
         if (event === 'SIGNED_IN' && session?.user) {
           setUser({
@@ -97,11 +96,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
         
         toast.success("Login realizado com sucesso!");
-        navigate("/dashboard");
       }
     } catch (error: any) {
       console.error("Erro de login:", error);
       toast.error(error.message || "Erro ao fazer login. Verifique suas credenciais.");
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -151,12 +150,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           toast.error("Conta criada, mas houve um erro ao configurar o perfil.");
         } else {
           toast.success("Conta criada com sucesso!");
-          navigate("/onboarding");
         }
       }
     } catch (error: any) {
       console.error("Erro de cadastro:", error);
       toast.error(error.message || "Erro ao criar conta. Tente novamente.");
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -169,7 +168,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await supabase.auth.signOut();
       
       setUser(null);
-      navigate("/login");
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
       toast.error("Erro ao fazer logout");
@@ -198,8 +196,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const value = {
+    user,
+    loading,
+    login,
+    signup,
+    logout,
+    resetPassword,
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, resetPassword }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

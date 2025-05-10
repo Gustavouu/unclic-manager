@@ -1,82 +1,75 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Logo } from "@/components/common/Logo";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Toaster, toast } from "sonner";
 
 const ResetPassword = () => {
+  const { resetPassword, loading } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isEmailSent, setIsEmailSent] = useState(false);
-  const { resetPassword } = useAuth();
-
+  const [resetSent, setResetSent] = useState(false);
+  
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!email) {
-      toast.error("Por favor, insira seu email.");
-      return;
-    }
+    setIsSubmitting(true);
     
     try {
-      setIsSubmitting(true);
       await resetPassword(email);
-      setIsEmailSent(true);
-      toast.success("Email de recuperação enviado com sucesso!");
+      setResetSent(true);
+      toast.success("Instruções enviadas para seu email");
     } catch (error: any) {
-      console.error("Erro ao solicitar redefinição de senha:", error);
-      toast.error(error.message || "Erro ao enviar email de recuperação. Tente novamente.");
+      console.error("Erro ao resetar senha:", error);
+      toast.error(error.message || "Erro ao solicitar redefinição de senha");
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-4">
-      <div className="w-full max-w-md mb-6">
-        <Logo className="h-10 mx-auto" />
-      </div>
-      
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
+      <Toaster position="top-right" />
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl font-bold">Recuperar Senha</CardTitle>
-          <CardDescription className="text-center">
-            {!isEmailSent 
-              ? "Insira seu email para receber instruções de recuperação de senha" 
-              : "Verifique sua caixa de entrada"}
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Redefinir senha</CardTitle>
+          <CardDescription>
+            {resetSent
+              ? "Verifique seu email para instruções"
+              : "Enviaremos um link para redefinir sua senha"}
           </CardDescription>
         </CardHeader>
-        
         <CardContent>
-          {!isEmailSent ? (
+          {!resetSent ? (
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="seu@email.com" 
+                <label htmlFor="email" className="text-sm font-medium">Email</label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={isSubmitting || loading}
                 />
               </div>
-              
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Enviando..." : "Enviar instruções"}
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isSubmitting || loading}
+              >
+                {isSubmitting || loading ? "Enviando..." : "Enviar instruções"}
               </Button>
             </form>
           ) : (
-            <div className="text-center space-y-4">
-              <CheckCircle className="mx-auto text-green-500 h-16 w-16 mb-4" />
-              <p>
-                Se houver uma conta associada ao email <strong>{email}</strong>, você receberá instruções para redefinir sua senha.
+            <div className="text-center py-4">
+              <p className="mb-4">
+                Se houver uma conta associada ao email <strong>{email}</strong>,
+                você receberá um link para redefinir sua senha.
               </p>
               <p className="text-sm text-muted-foreground">
                 Verifique também sua pasta de spam caso não encontre o email.
@@ -84,13 +77,12 @@ const ResetPassword = () => {
             </div>
           )}
         </CardContent>
-        
         <CardFooter className="flex justify-center">
-          <Button variant="ghost" asChild>
-            <Link to="/login" className="flex items-center gap-2">
-              <ArrowLeft size={16} />
-              Voltar para o login
-            </Link>
+          <Button
+            variant="link"
+            onClick={() => navigate("/login")}
+          >
+            Voltar para o login
           </Button>
         </CardFooter>
       </Card>

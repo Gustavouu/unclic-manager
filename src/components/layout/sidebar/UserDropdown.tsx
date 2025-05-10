@@ -16,11 +16,21 @@ export function UserDropdown() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   
-  const handleLogout = () => {
+  const handleLogout = async () => {
     // Use the logout function from auth context
-    logout();
+    await logout();
     // Navigate to login
     navigate("/login");
+  };
+
+  const getInitials = (name?: string) => {
+    if (!name) return "UN";
+    return name
+      .split(" ")
+      .map(n => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
   };
 
   return (
@@ -30,13 +40,13 @@ export function UserDropdown() {
           <Button variant="ghost" className="flex h-14 w-full p-3">
             <Avatar className="mr-2 h-6 w-6">
               <AvatarImage src="/images/barber-avatar.png" alt="Avatar" />
-              <AvatarFallback>SA</AvatarFallback>
+              <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
             </Avatar>
             <span className="text-left font-normal">
-              <span className="font-semibold">{user?.name || "Salão Exemplo"}</span>
+              <span className="font-semibold">{user?.name || "Usuário"}</span>
               <br />
               <span className="text-xs text-muted-foreground">
-                {user?.email || "admin@exemplo.com"}
+                {user?.email || ""}
               </span>
             </span>
           </Button>
