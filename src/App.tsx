@@ -18,6 +18,9 @@ import Appointments from './pages/Appointments';
 import Index from './pages/Index';
 import SignUp from './pages/auth/SignUp';
 import ResetPassword from './pages/auth/ResetPassword';
+import Finance from './pages/Finance';
+import Payments from './pages/Payments';
+import Reports from './pages/Reports';
 
 function App() {
   return (
@@ -72,6 +75,27 @@ function App() {
           <RequireAuth>
             <AppLayout breadcrumb={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Agendamentos' }]}>
               <Appointments />
+            </AppLayout>
+          </RequireAuth>
+        } />
+        <Route path="/finance" element={
+          <RequireAuth>
+            <AppLayout breadcrumb={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Financeiro' }]}>
+              <Finance />
+            </AppLayout>
+          </RequireAuth>
+        } />
+        <Route path="/payments" element={
+          <RequireAuth>
+            <AppLayout breadcrumb={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Pagamentos' }]}>
+              <Payments />
+            </AppLayout>
+          </RequireAuth>
+        } />
+        <Route path="/reports" element={
+          <RequireAuth>
+            <AppLayout breadcrumb={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Relatórios' }]}>
+              <Reports />
             </AppLayout>
           </RequireAuth>
         } />

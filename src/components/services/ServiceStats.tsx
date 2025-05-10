@@ -14,10 +14,13 @@ export const ServiceStats: React.FC<ServiceStatsProps> = ({ services }) => {
   
   // Calculate total estimated revenue
   const totalRevenue = services.reduce((sum, service) => {
-    // Check if price is a number or string and handle accordingly
-    const price = typeof service.price === 'string' 
-      ? parseFloat(service.price.replace(/[^\d.,]/g, '').replace(',', '.'))
-      : service.price;
+    // Handle price based on its type
+    let price: number;
+    if (typeof service.price === 'string') {
+      price = parseFloat(service.price.replace(/[^\d.,]/g, '').replace(',', '.'));
+    } else {
+      price = service.price;
+    }
     return sum + (isNaN(price) ? 0 : price);
   }, 0);
   
