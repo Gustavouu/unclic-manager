@@ -46,3 +46,33 @@ export function calculateCLV(
     ? (avgRevenuePerCustomer / (churnRatePercent / 100)) * profitMargin 
     : 0;
 }
+
+/**
+ * Format currency value
+ */
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2
+  }).format(value);
+}
+
+/**
+ * Format percentage value
+ */
+export function formatPercentage(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'percent',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  }).format(value / 100);
+}
+
+/**
+ * Calculate growth rate between two values
+ */
+export function calculateGrowthRate(currentValue: number, previousValue: number): number {
+  if (previousValue === 0) return 0;
+  return ((currentValue - previousValue) / previousValue) * 100;
+}

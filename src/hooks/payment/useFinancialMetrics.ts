@@ -2,6 +2,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
+import { 
+  calculateARR, calculateChurnRate, calculateConversionRate, calculateARPC, calculateCLV 
+} from '@/utils/financialCalculations';
+import { 
+  fetchActiveSubscriptionsWithPlans, calculateMonthlyRecurringRevenue, SubscriptionWithPlan 
+} from '@/hooks/payment/useSubscriptionData';
 
 export interface FinancialMetrics {
   totalRevenue: number;
@@ -20,26 +26,116 @@ export interface RevenueChartData {
   subscriptions: number;
 }
 
-// Interface for subscription plan data from Supabase
-interface SubscriptionPlan {
-  price: number;
-  interval: string;
-  interval_count: number;
-}
-
-// Interface for subscription with plan data
-interface SubscriptionWithPlan {
-  id: string;
-  plan_id: string;
-  subscription_plans: SubscriptionPlan | SubscriptionPlan[] | null;
-}
-
+/**
+ * Fetches and calculates financial metrics for the current business
+ */
 export function useFinancialMetrics(dateRange?: { start: Date; end: Date }) {
   const [metrics, setMetrics] = useState<FinancialMetrics | null>(null);
   const [revenueChartData, setRevenueChartData] = useState<RevenueChartData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const { businessId } = useCurrentBusiness();
+
+  // Função para obter todas as faturas pagas no período
+  async function fetchPaidInvoices(startStr: string, endStr: string) {
+    const { data, error } = await supabase
+      .from('invoices')
+      .select('amount, paid_date, status, subscription_id, customer_id')
+      .eq('status', 'paid')
+      .gte('paid_date', startStr)
+      .lte('paid_date', endStr)
+      .order('paid_date', { ascending: true });
+      
+    if (error) {
+      throw new Error(`Failed to fetch invoices: ${error.message}`);
+    }
+    
+    return data || [];
+  }
+  
+  // Função para obter assinaturas ativas
+  async function fetchActiveSubscriptions() {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('id, start_date, status, customer_id')
+      .in('status', ['active', 'trialing'])
+      .order('start_date', { ascending: true });
+      
+    if (error) {
+      throw new Error(`Failed to fetch subscriptions: ${error.message}`);
+    }
+    
+    return data || [];
+  }
+  
+  // Função para obter assinaturas canceladas
+  async function fetchCanceledSubscriptions(thirtyDaysAgoStr: string) {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('id, canceled_at')
+      .eq('status', 'canceled')
+      .gte('canceled_at', thirtyDaysAgoStr);
+      
+    if (error) {
+      throw new Error(`Failed to fetch canceled subscriptions: ${error.message}`);
+    }
+    
+    return data || [];
+  }
+  
+  // Função para obter todos os clientes
+  async function fetchCustomers() {
+    const { data, error } = await supabase
+      .from('clientes')
+      .select('id');
+      
+    if (error) {
+      throw new Error(`Failed to fetch customers: ${error.message}`);
+    }
+    
+    return data || [];
+  }
+
+  // Função para gerar dados do gráfico de receita
+  function generateRevenueChartData(invoices: any[], subscriptions: any[]) {
+    const chartData: RevenueChartData[] = [];
+    const months = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const monthDate = new Date();
+      monthDate.setMonth(monthDate.getMonth() - i);
+      months.push({
+        date: monthDate,
+        month: monthDate.toLocaleString('default', { month: 'short' }),
+        year: monthDate.getFullYear()
+      });
+    }
+
+    for (const monthInfo of months) {
+      const monthStart = new Date(monthInfo.year, monthInfo.date.getMonth(), 1);
+      const monthEnd = new Date(monthInfo.year, monthInfo.date.getMonth() + 1, 0);
+
+      const monthInvoices = invoices.filter(inv => {
+        const paidDate = new Date(inv.paid_date!);
+        return paidDate >= monthStart && paidDate <= monthEnd;
+      });
+
+      const monthRevenue = monthInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
+      
+      const monthSubscriptions = subscriptions.filter(sub => {
+        const startDate = new Date(sub.start_date);
+        return startDate <= monthEnd;
+      }).length;
+
+      chartData.push({
+        month: `${monthInfo.month} ${monthInfo.year}`,
+        revenue: monthRevenue,
+        subscriptions: monthSubscriptions
+      });
+    }
+    
+    return chartData;
+  }
 
   const calculateMetrics = async () => {
     if (!businessId) return;
@@ -56,189 +152,31 @@ export function useFinancialMetrics(dateRange?: { start: Date; end: Date }) {
       // Format dates for query
       const startStr = startDate.toISOString();
       const endStr = endDate.toISOString();
-
-      // Get all paid invoices in the date range
-      const { data: invoices, error: invoicesError } = await supabase
-        .from('invoices')
-        .select('amount, paid_date, status, subscription_id, customer_id')
-        .eq('status', 'paid')
-        .gte('paid_date', startStr)
-        .lte('paid_date', endStr)
-        .order('paid_date', { ascending: true });
-
-      if (invoicesError) {
-        throw new Error(`Failed to fetch invoices: ${invoicesError.message}`);
-      }
-
-      // Get active subscriptions
-      const { data: subscriptions, error: subsError } = await supabase
-        .from('subscriptions')
-        .select('id, start_date, status, customer_id')
-        .in('status', ['active', 'trialing'])
-        .order('start_date', { ascending: true });
-
-      if (subsError) {
-        throw new Error(`Failed to fetch subscriptions: ${subsError.message}`);
-      }
-
-      // Get all customers
-      const { data: customers, error: customersError } = await supabase
-        .from('clientes')
-        .select('id');
-
-      if (customersError) {
-        throw new Error(`Failed to fetch customers: ${customersError.message}`);
-      }
-
-      // Get canceled subscriptions in the last 30 days
+      
+      // Get data for last 30 days for churn calculation
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
 
-      const { data: canceledSubs, error: canceledSubsError } = await supabase
-        .from('subscriptions')
-        .select('id, canceled_at')
-        .eq('status', 'canceled')
-        .gte('canceled_at', thirtyDaysAgoStr);
-
-      if (canceledSubsError) {
-        throw new Error(`Failed to fetch canceled subscriptions: ${canceledSubsError.message}`);
-      }
-
-      // Calculate total revenue
-      const totalRevenue = invoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
-
-      // Calculate MRR (Monthly Recurring Revenue) - using current active subscriptions
-      const { data: plans, error: plansError } = await supabase
-        .from('subscription_plans')
-        .select('id, price, interval, interval_count');
-
-      if (plansError) {
-        throw new Error(`Failed to fetch plans: ${plansError.message}`);
-      }
-
-      // Get all active subscriptions with their plans
-      const { data: activeSubsWithPlans, error: activeSubsError } = await supabase
-        .from('subscriptions')
-        .select(`
-          id,
-          plan_id,
-          subscription_plans(price, interval, interval_count)
-        `)
-        .in('status', ['active', 'trialing']);
-
-      if (activeSubsError) {
-        throw new Error(`Failed to fetch active subscriptions with plans: ${activeSubsError.message}`);
-      }
-
-      // Calculate MRR by normalizing all subscription plans to monthly revenue
-      let mrr = 0;
-      for (const sub of activeSubsWithPlans as SubscriptionWithPlan[]) {
-        // First, check if subscription_plans exists and what type it is
-        const planData = sub.subscription_plans;
-        
-        // If planData is null or undefined, skip this subscription
-        if (!planData) continue;
-        
-        // Check if planData is an array or a single object and extract values accordingly
-        let price = 0;
-        let interval = 'month';
-        let intervalCount = 1;
-        
-        if (Array.isArray(planData) && planData.length > 0) {
-          // If it's an array (like in some Supabase joins), take the first item
-          price = Number(planData[0].price || 0);
-          interval = String(planData[0].interval || 'month');
-          intervalCount = Number(planData[0].interval_count || 1);
-        } else {
-          // If it's a direct object (single record join)
-          // Use type assertion to tell TypeScript it's an object with specific properties
-          const planObj = planData as unknown as SubscriptionPlan;
-          price = Number(planObj.price || 0);
-          interval = String(planObj.interval || 'month');
-          intervalCount = Number(planObj.interval_count || 1);
-        }
-
-        // Convert price to monthly equivalent
-        switch (interval) {
-          case 'day':
-            mrr += (price * 30) / intervalCount;
-            break;
-          case 'week':
-            mrr += (price * 4) / intervalCount;
-            break;
-          case 'month':
-            mrr += price / intervalCount;
-            break;
-          case 'year':
-            mrr += price / (12 * intervalCount);
-            break;
-        }
-      }
-
-      // ARR is just MRR * 12
-      const arr = mrr * 12;
-
-      // Active subscriptions count
-      const activeSubscriptions = subscriptions.length;
-
-      // Calculate conversion rate (active subscriptions / total customers)
-      const conversionRate = customers.length > 0 
-        ? (activeSubscriptions / customers.length) * 100 
-        : 0;
-
-      // Calculate churn rate (canceled in last 30 days / total active at start of period)
-      const totalSubscriptionsAtStartOfPeriod = activeSubscriptions + canceledSubs.length;
-      const churnRate = totalSubscriptionsAtStartOfPeriod > 0 
-        ? (canceledSubs.length / totalSubscriptionsAtStartOfPeriod) * 100 
-        : 0;
-
-      // Average revenue per customer
-      const avgRevenuePerCustomer = activeSubscriptions > 0 ? mrr / activeSubscriptions : 0;
-
-      // Customer lifetime value (avg revenue per customer / churn rate) * profit margin
-      // Assuming 80% profit margin for subscription business
-      const profitMargin = 0.8;
-      const customerLifetimeValue = churnRate > 0 
-        ? (avgRevenuePerCustomer / (churnRate / 100)) * profitMargin 
-        : 0;
-
-      // Generate revenue chart data (last 6 months)
-      const chartData: RevenueChartData[] = [];
-      const months = [];
+      // Fetch all required data
+      const invoices = await fetchPaidInvoices(startStr, endStr);
+      const subscriptions = await fetchActiveSubscriptions();
+      const customers = await fetchCustomers();
+      const canceledSubs = await fetchCanceledSubscriptions(thirtyDaysAgoStr);
+      const activeSubsWithPlans = await fetchActiveSubscriptionsWithPlans();
       
-      for (let i = 5; i >= 0; i--) {
-        const monthDate = new Date();
-        monthDate.setMonth(monthDate.getMonth() - i);
-        months.push({
-          date: monthDate,
-          month: monthDate.toLocaleString('default', { month: 'short' }),
-          year: monthDate.getFullYear()
-        });
-      }
-
-      for (const monthInfo of months) {
-        const monthStart = new Date(monthInfo.year, monthInfo.date.getMonth(), 1);
-        const monthEnd = new Date(monthInfo.year, monthInfo.date.getMonth() + 1, 0);
-
-        const monthInvoices = invoices.filter(inv => {
-          const paidDate = new Date(inv.paid_date!);
-          return paidDate >= monthStart && paidDate <= monthEnd;
-        });
-
-        const monthRevenue = monthInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
-        
-        const monthSubscriptions = subscriptions.filter(sub => {
-          const startDate = new Date(sub.start_date);
-          return startDate <= monthEnd;
-        }).length;
-
-        chartData.push({
-          month: `${monthInfo.month} ${monthInfo.year}`,
-          revenue: monthRevenue,
-          subscriptions: monthSubscriptions
-        });
-      }
+      // Calculate metrics
+      const totalRevenue = invoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
+      const mrr = calculateMonthlyRecurringRevenue(activeSubsWithPlans);
+      const arr = calculateARR(mrr);
+      const activeSubscriptions = subscriptions.length;
+      const conversionRate = calculateConversionRate(activeSubscriptions, customers.length);
+      const churnRate = calculateChurnRate(canceledSubs.length, activeSubscriptions);
+      const avgRevenuePerCustomer = calculateARPC(mrr, activeSubscriptions);
+      const customerLifetimeValue = calculateCLV(avgRevenuePerCustomer, churnRate);
+      
+      // Gerar dados do gráfico de receita
+      const chartData = generateRevenueChartData(invoices, subscriptions);
 
       setMetrics({
         totalRevenue,

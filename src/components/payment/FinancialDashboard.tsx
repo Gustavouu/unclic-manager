@@ -9,15 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Download, RefreshCw, Plus, BarChart as BarChartIcon, LineChart as LineChartIcon } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/utils/financialCalculations';
 import { RevenueBarChart } from '@/components/ui/chart/RevenueBarChart';
 import { RevenueLineChart } from '@/components/ui/chart/RevenueLineChart';
 
 const dateRangeOptions = [
-  { value: '30', label: 'Last 30 Days' },
-  { value: '90', label: 'Last 90 Days' },
-  { value: '180', label: 'Last 180 Days' },
-  { value: '365', label: 'Last Year' },
+  { value: '30', label: 'Últimos 30 Dias' },
+  { value: '90', label: 'Últimos 90 Dias' },
+  { value: '180', label: 'Últimos 180 Dias' },
+  { value: '365', label: 'Último Ano' },
 ];
 
 export const FinancialDashboard = () => {
@@ -60,9 +60,9 @@ export const FinancialDashboard = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Financial Dashboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Painel Financeiro</h1>
           <p className="text-muted-foreground">
-            Track your business performance and key financial metrics
+            Acompanhe o desempenho do seu negócio e métricas financeiras principais
           </p>
         </div>
         
@@ -72,7 +72,7 @@ export const FinancialDashboard = () => {
             onValueChange={(value) => setDateRange(value)}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Date Range" />
+              <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>
               {dateRangeOptions.map((option) => (
@@ -89,37 +89,37 @@ export const FinancialDashboard = () => {
           
           <Button variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
-            Export
+            Exportar
           </Button>
         </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard 
-          title="Monthly Recurring Revenue"
+          title="Receita Mensal Recorrente"
           value={metrics?.mrr ?? 0}
-          description="Current MRR"
+          description="MRR atual"
           loading={isLoading}
           format="currency"
         />
         <MetricCard 
-          title="Annual Recurring Revenue"
+          title="Receita Anual Recorrente"
           value={metrics?.arr ?? 0}
-          description="Current ARR"
+          description="ARR atual"
           loading={isLoading}
           format="currency"
         />
         <MetricCard 
-          title="Active Subscriptions"
+          title="Assinaturas Ativas"
           value={metrics?.activeSubscriptions ?? 0}
-          description="Total active subscribers"
+          description="Total de assinantes ativos"
           loading={isLoading}
           format="number"
         />
         <MetricCard 
-          title="Customer Lifetime Value"
+          title="Valor Vitalício do Cliente"
           value={metrics?.customerLifetimeValue ?? 0}
-          description="Avg. CLV"
+          description="Média CLV"
           loading={isLoading}
           format="currency"
         />
@@ -127,9 +127,9 @@ export const FinancialDashboard = () => {
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-          <TabsTrigger value="plans">Plans</TabsTrigger>
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="subscriptions">Assinaturas</TabsTrigger>
+          <TabsTrigger value="plans">Planos</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="pt-4">
@@ -137,8 +137,8 @@ export const FinancialDashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div>
-                  <CardTitle>Revenue Growth</CardTitle>
-                  <CardDescription>Monthly revenue over time</CardDescription>
+                  <CardTitle>Crescimento de Receita</CardTitle>
+                  <CardDescription>Receita mensal ao longo do tempo</CardDescription>
                 </div>
                 <Button variant="ghost" size="icon" onClick={toggleChartType}>
                   {chartType === 'bar' ? <LineChartIcon className="h-4 w-4" /> : <BarChartIcon className="h-4 w-4" />}
@@ -167,8 +167,8 @@ export const FinancialDashboard = () => {
             
             <Card>
               <CardHeader>
-                <CardTitle>Subscription Growth</CardTitle>
-                <CardDescription>Total subscriptions over time</CardDescription>
+                <CardTitle>Crescimento de Assinaturas</CardTitle>
+                <CardDescription>Total de assinaturas ao longo do tempo</CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -185,27 +185,27 @@ export const FinancialDashboard = () => {
             
             <Card className="md:col-span-2">
               <CardHeader>
-                <CardTitle>Key Performance Indicators</CardTitle>
-                <CardDescription>Business health metrics</CardDescription>
+                <CardTitle>Indicadores de Desempenho</CardTitle>
+                <CardDescription>Métricas de saúde do negócio</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-1">
-                    <Label className="text-sm font-medium text-muted-foreground">Conversion Rate</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">Taxa de Conversão</Label>
                     <p className="text-2xl font-bold">
                       {isLoading ? <Skeleton className="h-8 w-16" /> : `${metrics?.conversionRate.toFixed(1)}%`}
                     </p>
                   </div>
                   
                   <div className="space-y-1">
-                    <Label className="text-sm font-medium text-muted-foreground">Churn Rate</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">Taxa de Cancelamento</Label>
                     <p className="text-2xl font-bold">
                       {isLoading ? <Skeleton className="h-8 w-16" /> : `${metrics?.churnRate.toFixed(1)}%`}
                     </p>
                   </div>
                   
                   <div className="space-y-1">
-                    <Label className="text-sm font-medium text-muted-foreground">Avg. Revenue Per User</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">Receita por Usuário</Label>
                     <p className="text-2xl font-bold">
                       {isLoading ? (
                         <Skeleton className="h-8 w-16" />
@@ -216,7 +216,7 @@ export const FinancialDashboard = () => {
                   </div>
                   
                   <div className="space-y-1">
-                    <Label className="text-sm font-medium text-muted-foreground">Total Revenue</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">Receita Total</Label>
                     <p className="text-2xl font-bold">
                       {isLoading ? (
                         <Skeleton className="h-8 w-16" />
@@ -234,12 +234,12 @@ export const FinancialDashboard = () => {
         <TabsContent value="subscriptions" className="pt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Subscription Analytics</CardTitle>
-              <CardDescription>Detailed subscription metrics</CardDescription>
+              <CardTitle>Análise de Assinaturas</CardTitle>
+              <CardDescription>Métricas detalhadas de assinatura</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-center py-8 text-muted-foreground">
-                Subscription analytics content would go here
+                O conteúdo de análise de assinaturas será exibido aqui
               </p>
             </CardContent>
           </Card>
@@ -249,19 +249,19 @@ export const FinancialDashboard = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Subscription Plans</CardTitle>
-                <CardDescription>Manage your subscription offerings</CardDescription>
+                <CardTitle>Planos de Assinatura</CardTitle>
+                <CardDescription>Gerencie suas ofertas de assinatura</CardDescription>
               </div>
               <Button size="sm">
                 <Plus className="h-4 w-4 mr-2" />
-                New Plan
+                Novo Plano
               </Button>
             </CardHeader>
             <CardContent>
               {plans.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">No subscription plans found</p>
-                  <Button>Create your first plan</Button>
+                  <p className="text-muted-foreground mb-4">Nenhum plano de assinatura encontrado</p>
+                  <Button>Criar seu primeiro plano</Button>
                 </div>
               ) : (
                 <div className="border rounded-md divide-y">

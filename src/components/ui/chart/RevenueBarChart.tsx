@@ -1,40 +1,71 @@
 
 import React from 'react';
-import { BarChart } from '@/components/ui/chart';
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { RevenueChartData } from '@/hooks/payment/useFinancialMetrics';
-import { formatCurrency } from '@/lib/utils';
 
 interface RevenueBarChartProps {
   data: RevenueChartData[];
-  height?: number;
-  showSubscriptions?: boolean;
   className?: string;
+  showSubscriptions?: boolean;
 }
 
-export function RevenueBarChart({
+export const RevenueBarChart: React.FC<RevenueBarChartProps> = ({
   data,
-  height = 300,
-  showSubscriptions = true,
-  className,
-}: RevenueBarChartProps) {
-  const categories = showSubscriptions
-    ? ['revenue', 'subscriptions']
-    : ['revenue'];
+  className = 'w-full h-[300px]',
+  showSubscriptions = true
+}) => {
+  if (!data?.length) {
+    return (
+      <div className={`flex items-center justify-center ${className}`}>
+        <p className="text-muted-foreground">Não há dados disponíveis</p>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ height: `${height}px` }} className={className}>
+    <ResponsiveContainer width="100%" height="100%" className={className}>
       <BarChart
         data={data}
-        index="month"
-        categories={categories}
-        valueFormatter={(value) => 
-          categories.includes('revenue') && value > 1000 
-            ? formatCurrency(value) 
-            : value.toString()
-        }
-        colors={["#22c55e", "#3b82f6"]}
-        className="h-full"
-      />
-    </div>
+        margin={{
+          top: 5,
+          right: 30,
+          left: 20,
+          bottom: 5,
+        }}
+      >
+        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+        <XAxis 
+          dataKey="month"
+          tick={{ fontSize: 12 }}
+          tickLine={false}
+          axisLine={{ opacity: 0.3 }}
+        />
+        <YAxis 
+          tick={{ fontSize: 12 }}
+          tickLine={false}
+          axisLine={{ opacity: 0.3 }}
+          tickFormatter={(value) => `R$ ${value}`}
+        />
+        <Tooltip 
+          formatter={(value: number) => [`R$ ${value.toLocaleString()}`, 'Receita']}
+          labelFormatter={(label) => `Período: ${label}`}
+        />
+        <Legend />
+        <Bar 
+          dataKey="revenue" 
+          name="Receita" 
+          fill="var(--color-primary, #3b82f6)" 
+          radius={[4, 4, 0, 0]}
+        />
+        {showSubscriptions && (
+          <Bar 
+            dataKey="subscriptions" 
+            name="Assinaturas" 
+            fill="var(--color-secondary, #22c55e)" 
+            radius={[4, 4, 0, 0]}
+          />
+        )}
+      </BarChart>
+    </ResponsiveContainer>
   );
-}
+};

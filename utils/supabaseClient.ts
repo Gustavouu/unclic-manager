@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Obter variáveis de ambiente
@@ -85,4 +86,50 @@ export async function getUserTenants() {
     console.error('Erro ao obter tenants do usuário:', error);
     return { data: null, error: error.message };
   }
+}
+
+/**
+ * Função para buscar dados com cache
+ * @param cacheKey Chave única para o cache
+ * @param fetchFunction Função que realiza a busca dos dados
+ * @param ttlMinutes Tempo de vida do cache em minutos
+ */
+export async function fetchWithCache<T>(
+  cacheKey: string, 
+  fetchFunction: () => Promise<T>, 
+  ttlMinutes: number = 5
+): Promise<T> {
+  // Verificar se há dados em cache
+  const cachedData = localStorage.getItem(cacheKey);
+  
+  if (cachedData) {
+    try {
+      const { data, timestamp } = JSON.parse(cachedData);
+      const cacheAge = (Date.now() - timestamp) / (1000 * 60); // em minutos
+      
+      // Se o cache ainda é válido, retornar os dados
+      if (cacheAge < ttlMinutes) {
+        return data as T;
+      }
+    } catch (error) {
+      console.error('Erro ao processar cache:', error);
+      // Continuar e buscar dados novos se houver erro no cache
+    }
+  }
+  
+  // Buscar dados novos
+  const data = await fetchFunction();
+  
+  // Armazenar em cache
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (error) {
+    console.error('Erro ao armazenar em cache:', error);
+    // Continuar mesmo se o cache falhar
+  }
+  
+  return data;
 }
