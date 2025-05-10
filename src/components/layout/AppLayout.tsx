@@ -1,8 +1,9 @@
 
 import { ReactNode } from "react";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { Sidebar } from "@/components/layout/sidebar/Sidebar";
 import { Header } from "./Header";
 import { cn } from "@/lib/utils";
+import { MobileSidebar } from "./sidebar/MobileSidebar";
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -13,6 +14,7 @@ export const AppLayout = ({ children, breadcrumb }: AppLayoutProps) => {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-background">
       <Sidebar />
+      <MobileSidebar />
       
       <div className="flex-1 flex flex-col ml-16 md:ml-60">
         <Header breadcrumb={breadcrumb} />

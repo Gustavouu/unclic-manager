@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Bell, Search, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,13 +23,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 
-export const Header = () => {
+interface HeaderProps {
+  breadcrumb?: { label: string; path?: string }[];
+}
+
+export const Header = ({ breadcrumb }: HeaderProps = {}) => {
   const isMobile = useMobile();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
   
   const getBreadcrumb = () => {
+    // If breadcrumb prop is provided, use it
+    if (breadcrumb) return breadcrumb;
+    
+    // Otherwise generate from pathname
     const path = pathname.split('/').filter(Boolean);
     
     const breadcrumbItems = [
@@ -50,7 +57,7 @@ export const Header = () => {
     return breadcrumbItems;
   };
   
-  const breadcrumb = getBreadcrumb();
+  const currentBreadcrumb = getBreadcrumb();
   
   const handleLogout = () => {
     logout();
@@ -61,11 +68,11 @@ export const Header = () => {
     <header className="sticky top-0 z-30 flex flex-col border-b border-border/50 py-2 px-4 md:px-6 bg-background/80 backdrop-blur-sm transition-all duration-200">
       <div className="flex items-center justify-between h-12">
         <div className="flex items-center gap-6 overflow-hidden">
-          {breadcrumb.length > 0 && (
+          {currentBreadcrumb.length > 0 && (
             <Breadcrumb className="hidden sm:flex">
               <BreadcrumbList>
-                {breadcrumb.map((item, index) => {
-                  if (index === breadcrumb.length - 1) {
+                {currentBreadcrumb.map((item, index) => {
+                  if (index === currentBreadcrumb.length - 1) {
                     return (
                       <BreadcrumbItem key={index}>
                         <BreadcrumbPage>{item.label}</BreadcrumbPage>
@@ -78,7 +85,7 @@ export const Header = () => {
                       <BreadcrumbItem>
                         <BreadcrumbLink href={item.path}>{item.label}</BreadcrumbLink>
                       </BreadcrumbItem>
-                      {index < breadcrumb.length - 1 && <BreadcrumbSeparator />}
+                      {index < currentBreadcrumb.length - 1 && <BreadcrumbSeparator />}
                     </React.Fragment>
                   );
                 })}
