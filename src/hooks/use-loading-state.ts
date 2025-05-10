@@ -9,11 +9,11 @@ interface UseLoadingStateProps {
 
 export function useLoadingState({ initialState = 'idle' }: UseLoadingStateProps = {}) {
   const [state, setState] = useState<LoadingState>(initialState);
-  const [error, setError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const startLoading = useCallback(() => {
     setState('loading');
-    setError(null);
+    setErrorMessage(null);
   }, []);
 
   const setSuccess = useCallback(() => {
@@ -22,12 +22,12 @@ export function useLoadingState({ initialState = 'idle' }: UseLoadingStateProps 
 
   const setError = useCallback((message: string) => {
     setState('error');
-    setError(message);
+    setErrorMessage(message);
   }, []);
 
   const reset = useCallback(() => {
     setState('idle');
-    setError(null);
+    setErrorMessage(null);
   }, []);
 
   return {
@@ -36,7 +36,7 @@ export function useLoadingState({ initialState = 'idle' }: UseLoadingStateProps 
     isError: state === 'error',
     isIdle: state === 'idle',
     state,
-    error,
+    error: errorMessage,
     startLoading,
     setSuccess,
     setError,

@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { AppLayout } from './components/layout/AppLayout';
@@ -7,7 +8,7 @@ import './App.css';
 // Import pages
 import Services from './pages/Services';
 import Dashboard from './pages/Dashboard';
-import Login from './pages/Login';
+import Login from './pages/auth/Login';
 import Settings from './pages/Settings';
 import Inventory from './pages/Inventory';
 import Professionals from './pages/Professionals';
