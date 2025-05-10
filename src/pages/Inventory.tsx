@@ -9,7 +9,7 @@ export default function Inventory() {
         title="Estoque"
         description="Visualize e gerencie seu inventário"
         breadcrumb={[
-          { label: "Dashboard", path: "/" },
+          { label: "Início", path: "/" },
           { label: "Estoque" }
         ]}
       />

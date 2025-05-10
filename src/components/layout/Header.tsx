@@ -1,5 +1,5 @@
 import React from "react";
-import { Bell, Search, ChevronDown } from "lucide-react";
+import { Bell, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -20,7 +20,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 
 interface HeaderProps {
@@ -41,14 +40,31 @@ export const Header = ({ breadcrumb }: HeaderProps = {}) => {
     const path = pathname.split('/').filter(Boolean);
     
     const breadcrumbItems = [
-      { label: "Dashboard", path: "/" }
+      { label: "Início", path: "/" }
     ];
+    
+    // Mapeamento de rotas para nomes em português
+    const routeTranslations: Record<string, string> = {
+      'appointments': 'Agendamentos',
+      'clients': 'Clientes',
+      'services': 'Serviços',
+      'professionals': 'Profissionais',
+      'inventory': 'Estoque',
+      'finance': 'Financeiro',
+      'reports': 'Relatórios',
+      'settings': 'Configurações',
+      'payments': 'Pagamentos'
+    };
     
     if (path.length > 0) {
       path.forEach((segment, index) => {
         const segmentPath = `/${path.slice(0, index + 1).join('/')}`;
+        // Usar a tradução se disponível, ou capitalize a primeira letra
+        const label = routeTranslations[segment] || 
+          (segment.charAt(0).toUpperCase() + segment.slice(1));
+        
         breadcrumbItems.push({
-          label: segment.charAt(0).toUpperCase() + segment.slice(1),
+          label,
           path: segmentPath
         });
       });
@@ -69,7 +85,7 @@ export const Header = ({ breadcrumb }: HeaderProps = {}) => {
       <div className="flex items-center justify-between h-12">
         <div className="flex items-center gap-6 overflow-hidden">
           {currentBreadcrumb.length > 0 && (
-            <Breadcrumb className="hidden sm:flex">
+            <Breadcrumb className="flex">
               <BreadcrumbList>
                 {currentBreadcrumb.map((item, index) => {
                   if (index === currentBreadcrumb.length - 1) {
@@ -91,17 +107,6 @@ export const Header = ({ breadcrumb }: HeaderProps = {}) => {
                 })}
               </BreadcrumbList>
             </Breadcrumb>
-          )}
-          
-          {!isMobile && (
-            <div className="relative w-full max-w-sm">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Buscar..."
-                className="w-full pl-9 bg-muted/40 border-muted focus-visible:ring-primary"
-              />
-            </div>
           )}
         </div>
         
