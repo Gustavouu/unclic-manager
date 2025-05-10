@@ -9,7 +9,7 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/layout/Layout";
 import Index from "./pages/Index";
-import Inventory from "./pages/Inventory"; // Added missing import
+import Inventory from "./pages/Inventory";
 import "./services/InitializationService"; // Import initialization service
 import { RequireAuth } from "./components/auth/RequireAuth";
 
