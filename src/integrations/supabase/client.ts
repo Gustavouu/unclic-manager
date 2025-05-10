@@ -127,7 +127,7 @@ export async function getUserTenants(): Promise<{ data: Tenant[] | null, error: 
     
     if (error) throw error;
     
-    // Correção aqui: mapear cada item do array individualmente
+    // Transformar os dados corretamente acessando as propriedades aninhadas
     const tenants = data.map(item => ({
       id: item.tenant_id,
       name: item.tenants?.name || '',
