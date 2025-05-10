@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ClientsHeader } from "@/components/clients/ClientsHeader";
 import { ClientsTable } from "@/components/clients/ClientsTable";
@@ -42,15 +41,7 @@ const Clients = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Clientes</h1>
-          <p className="text-sm text-muted-foreground">
-            Gerencie seus clientes e acompanhe seu histórico
-          </p>
-        </div>
-        <ClientsHeader />
-      </div>
+      <ClientsHeader />
       
       <ResponsiveGrid columns={{ default: 1, sm: 4 }} gap="md" equalHeight>
         <StatsCard

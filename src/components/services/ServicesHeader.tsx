@@ -29,15 +29,13 @@ export function ServicesHeader({ onServiceCreated, onSearch }: ServicesHeaderPro
   };
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0 mb-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Serviços</h2>
-        <p className="text-muted-foreground">
-          Gerencie os serviços oferecidos pelo seu negócio
-        </p>
-      </div>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between">
+      <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Serviços</h1>
+      <p className="text-sm text-muted-foreground">
+        Gerencie os serviços oferecidos pelo seu negócio
+      </p>
       
-      <div className="flex w-full sm:w-auto space-x-2">
+      <div className="flex w-full sm:w-auto space-x-2 mt-4 sm:mt-0">
         <div className="relative w-full sm:w-auto">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input

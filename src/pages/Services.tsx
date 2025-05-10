@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServicesTable } from "@/components/services/ServicesTable";
@@ -142,19 +141,10 @@ const Services = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Serviços</h1>
-          <p className="text-sm text-muted-foreground">
-            Gerencie os serviços oferecidos pelo seu negócio
-          </p>
-        </div>
-        
-        <ServicesHeader 
-          onServiceCreated={canManageServices ? handleServiceCreated : undefined}
-          onSearch={handleSearch} 
-        />
-      </div>
+      <ServicesHeader 
+        onServiceCreated={canManageServices ? handleServiceCreated : undefined}
+        onSearch={handleSearch} 
+      />
       
       <ResponsiveGrid columns={{ default: 1, sm: 4 }} gap="md" equalHeight>
         <StatsCard

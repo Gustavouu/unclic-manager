@@ -29,19 +29,10 @@ const Reports = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Relatórios</h1>
-          <p className="text-sm text-muted-foreground">
-            Visualize estatísticas e métricas do seu negócio
-          </p>
-        </div>
-        
-        <ReportsHeader 
-          dateRange={dateRange} 
-          onDateRangeChange={setDateRange} 
-        />
-      </div>
+      <ReportsHeader 
+        dateRange={dateRange} 
+        onDateRangeChange={setDateRange} 
+      />
       
       {!isLoading && !error && (
         <ResponsiveGrid columns={{ default: 1, sm: 4 }} gap="md" equalHeight>
