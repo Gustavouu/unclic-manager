@@ -84,7 +84,7 @@ export function useUserPermissions() {
       
       // Extrair permissões do resultado e corrigir o tipo
       const userPermissions = permissionsData
-        .map(item => item.permissions as Permission)
+        .map(item => item.permissions as unknown as Permission)
         .filter(Boolean);
       
       setPermissions(userPermissions);
