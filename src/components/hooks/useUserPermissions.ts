@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchWithCache } from '@/integrations/supabase/client';
@@ -81,9 +82,9 @@ export function useUserPermissions() {
         30 // cache por 30 minutos
       );
       
-      // Extrair permissões do resultado
+      // Extrair permissões do resultado e corrigir o tipo
       const userPermissions = permissionsData
-        .map(item => item.permissions)
+        .map(item => item.permissions as Permission)
         .filter(Boolean);
       
       setPermissions(userPermissions);

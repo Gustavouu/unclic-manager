@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Obter variáveis de ambiente
@@ -92,8 +93,17 @@ export async function getCurrentTenant() {
   }
 }
 
+// Interface para representar um tenant
+interface Tenant {
+  id: string;
+  name: string;
+  logo_url: string;
+  slug: string;
+  role: string;
+}
+
 // Função para obter todos os tenants do usuário atual
-export async function getUserTenants() {
+export async function getUserTenants(): Promise<{ data: Tenant[] | null, error: string | null }> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
