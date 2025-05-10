@@ -62,16 +62,31 @@ export function useStockNotifications() {
         // Process stock_items data
         const lowItems = stockItems
           .filter(item => {
-            const product = item.products;
+            // Fix: Properly access the nested product object
+            const product = item.products as unknown as { 
+              id: string; 
+              name: string; 
+              minStock: number; 
+              unit: string;
+            };
             return product && item.quantity < (product?.minStock || 0);
           })
-          .map(item => ({
-            id: item.id,
-            name: item.products?.name || "Produto sem nome",
-            currentQuantity: item.quantity,
-            minQuantity: item.products?.minStock || 0,
-            unit: item.products?.unit || "unidade"
-          }));
+          .map(item => {
+            // Fix: Properly cast the products object to access its properties
+            const product = item.products as unknown as { 
+              id: string; 
+              name: string; 
+              minStock: number; 
+              unit: string;
+            };
+            return {
+              id: item.id,
+              name: product?.name || "Produto sem nome",
+              currentQuantity: item.quantity,
+              minQuantity: product?.minStock || 0,
+              unit: product?.unit || "unidade"
+            };
+          });
           
         setLowStockItems(lowItems);
         if (lowItems.length > 0) {
