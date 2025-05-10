@@ -27,7 +27,7 @@ export function Sidebar() {
   ];
 
   return (
-    <div className="border-r bg-white dark:bg-neutral-950 flex flex-col fixed inset-y-0 w-60 z-20 shadow-sm">
+    <div className="border-r bg-white dark:bg-neutral-950 flex-col fixed inset-y-0 w-60 z-20 shadow-sm hidden md:flex">
       <div className="px-4 py-4 border-b">
         <MainNav className="mx-auto" />
       </div>

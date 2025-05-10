@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useMobile } from "@/hooks/use-mobile";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -24,14 +24,33 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 
-interface HeaderProps {
-  breadcrumb?: { label: string; path?: string }[];
-}
-
-export const Header = ({ breadcrumb = [] }: HeaderProps) => {
+export const Header = () => {
   const isMobile = useMobile();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { pathname } = useLocation();
+  
+  const getBreadcrumb = () => {
+    const path = pathname.split('/').filter(Boolean);
+    
+    const breadcrumbItems = [
+      { label: "Dashboard", path: "/" }
+    ];
+    
+    if (path.length > 0) {
+      path.forEach((segment, index) => {
+        const segmentPath = `/${path.slice(0, index + 1).join('/')}`;
+        breadcrumbItems.push({
+          label: segment.charAt(0).toUpperCase() + segment.slice(1),
+          path: segmentPath
+        });
+      });
+    }
+    
+    return breadcrumbItems;
+  };
+  
+  const breadcrumb = getBreadcrumb();
   
   const handleLogout = () => {
     logout();
@@ -57,7 +76,7 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
                   return (
                     <React.Fragment key={index}>
                       <BreadcrumbItem>
-                        <BreadcrumbLink href={item.path || '#'}>{item.label}</BreadcrumbLink>
+                        <BreadcrumbLink href={item.path}>{item.label}</BreadcrumbLink>
                       </BreadcrumbItem>
                       {index < breadcrumb.length - 1 && <BreadcrumbSeparator />}
                     </React.Fragment>

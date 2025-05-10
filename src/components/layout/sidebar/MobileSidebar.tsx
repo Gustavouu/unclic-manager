@@ -1,40 +1,25 @@
 
-import * as React from "react";
+import React from "react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { PanelLeft } from "lucide-react";
-import { MainNav } from "@/components/main-nav";
-import { SidebarMain } from "./SidebarMain";
-import { MenuSections } from "./MenuSections";
-import { UserDropdown } from "./UserDropdown";
+import { Menu } from "lucide-react";
+import { Sidebar } from "./Sidebar";
 
-export function MobileSidebar({ className }: React.ComponentProps<"div">) {
-  const [open, setOpen] = React.useState(false);
-
+export function MobileSidebar() {
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="md:hidden fixed top-3 left-3 z-40">
-          <PanelLeft className="h-4 w-4" />
-          <span className="sr-only">Menu</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden fixed left-4 top-3 z-40"
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent
-        side="left"
-        className="flex w-full flex-col border-r bg-white dark:bg-neutral-950 sm:max-w-xs"
-      >
-        <SheetHeader className="px-2 py-4 border-b">
-          <MainNav />
-        </SheetHeader>
-        <div className="flex flex-col flex-1 overflow-auto">
-          <SidebarMain>
-            <MenuSections />
-          </SidebarMain>
-
-          <div className="mt-auto">
-            <UserDropdown />
-          </div>
-        </div>
+      <SheetContent side="left" className="p-0 w-72">
+        <Sidebar />
       </SheetContent>
     </Sheet>
   );

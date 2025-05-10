@@ -1,14 +1,19 @@
 
-import { AppLayout } from "@/components/layout/AppLayout";
+import { PageHeader } from "@/components/ui/page-header";
 import { InventoryContent } from "@/components/inventory/InventoryContent";
 
 export default function Inventory() {
   return (
-    <AppLayout breadcrumb={[
-      { label: "Dashboard", path: "/" },
-      { label: "Inventory" }
-    ]}>
+    <>
+      <PageHeader 
+        title="Estoque"
+        description="Visualize e gerencie seu inventário"
+        breadcrumb={[
+          { label: "Dashboard", path: "/" },
+          { label: "Estoque" }
+        ]}
+      />
       <InventoryContent />
-    </AppLayout>
+    </>
   );
 }
