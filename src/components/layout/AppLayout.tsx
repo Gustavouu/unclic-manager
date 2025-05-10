@@ -11,12 +11,12 @@ type AppLayoutProps = {
 
 export const AppLayout = ({ children, breadcrumb }: AppLayoutProps) => {
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-background">
+    <div className="flex h-screen w-full bg-gray-50 dark:bg-background">
       <Sidebar />
       
-      <div className="flex-1 flex flex-col ml-16 md:ml-60 overflow-hidden">
+      <div className="flex-1 flex flex-col ml-16 md:ml-60">
         <Header breadcrumb={breadcrumb} />
-        <main className="flex-1 overflow-auto p-4 sm:p-6">
+        <main className="flex-1 p-4 sm:p-6 overflow-auto">
           <div className="container mx-auto max-w-7xl">
             {children}
           </div>

@@ -6,7 +6,7 @@ interface SidebarMainProps extends React.HTMLAttributes<HTMLElement> {}
 
 export function SidebarMain({ className, children, ...props }: SidebarMainProps) {
   return (
-    <div className={cn("flex-1 overflow-y-auto py-3 px-3", className)} {...props}>
+    <div className={cn("flex-1 overflow-y-auto", className)} {...props}>
       {children}
     </div>
   );

@@ -43,10 +43,10 @@ export function MenuSections() {
   ];
   
   return (
-    <>
+    <div className="py-2">
       {menuItems.map((section) => (
         <SidebarGroup title={section.group} key={section.group}>
-          <div className="space-y-1">
+          <div className="space-y-1 px-2">
             {section.items.map((item) => {
               const isActive = pathname === item.path;
               return (
@@ -69,7 +69,7 @@ export function MenuSections() {
         </SidebarGroup>
       ))}
       
-      <div className="mt-auto px-3 py-3">
+      <div className="mt-auto px-4 py-3">
         <div className="flex items-center justify-between rounded-md p-2 bg-gray-50 dark:bg-neutral-900">
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -78,6 +78,6 @@ export function MenuSections() {
           <ThemeSwitcher />
         </div>
       </div>
-    </>
+    </div>
   );
 }
