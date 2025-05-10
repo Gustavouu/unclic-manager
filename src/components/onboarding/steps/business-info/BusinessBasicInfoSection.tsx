@@ -5,10 +5,19 @@ import { FormField } from "@/components/ui/form-field";
 import { validateEmail, validatePhone, formatPhone } from "@/utils/formUtils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Globe } from "lucide-react";
+import { Globe, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
+import { useSlugCheck } from "@/hooks/useSlugCheck";
 
 export const BusinessBasicInfoSection: React.FC = () => {
   const { businessData, updateBusinessData } = useOnboarding();
+  const { 
+    slug, 
+    isAvailable, 
+    loading, 
+    error, 
+    existingBusiness, 
+    suggestions 
+  } = useSlugCheck(businessData.name || "");
 
   // Gera o URL do site baseado no nome do negócio quando o nome muda
   useEffect(() => {
@@ -37,19 +46,76 @@ export const BusinessBasicInfoSection: React.FC = () => {
     updateBusinessData({ website: value });
   };
 
+  const getSlugStatusIcon = () => {
+    if (loading) return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+    if (error) return <AlertCircle className="h-4 w-4 text-amber-500" />;
+    if (!businessData.name || businessData.name.length < 3) return null;
+    return isAvailable 
+      ? <CheckCircle2 className="h-4 w-4 text-green-500" /> 
+      : <XCircle className="h-4 w-4 text-destructive" />;
+  };
+
+  const getSlugHelperText = () => {
+    if (loading) return "Verificando disponibilidade...";
+    if (error) return error;
+    if (!businessData.name || businessData.name.length < 3) return "Digite pelo menos 3 caracteres";
+    if (isAvailable) return "Nome disponível!";
+    return existingBusiness 
+      ? `Nome já utilizado por "${existingBusiness.name}"`
+      : "Este nome já está em uso. Por favor, escolha outro nome.";
+  };
+
+  const getSuggestionsText = () => {
+    if (!suggestions || suggestions.length === 0) return null;
+    
+    return (
+      <div className="mt-2 text-xs">
+        <p>Sugestões disponíveis:</p>
+        <ul className="list-disc pl-4 mt-1">
+          {suggestions.map((suggestion, index) => (
+            <li key={index}>
+              <button 
+                type="button"
+                className="text-blue-600 hover:underline focus:outline-none"
+                onClick={() => handleChange("name", suggestion.name)}
+              >
+                {suggestion.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Informações Básicas</h3>
       
-      <FormField
-        id="business-name"
-        label="Nome do Estabelecimento"
-        value={businessData.name || ""}
-        onChange={(value) => handleChange("name", value)}
-        error={!businessData.name && "O nome do estabelecimento é obrigatório"}
-        touched={true}
-        required
-      />
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <Label 
+            htmlFor="business-name" 
+            className={!businessData.name ? "text-destructive" : ""}
+          >
+            Nome do Estabelecimento<span className="text-destructive ml-1">*</span>
+          </Label>
+          {getSlugStatusIcon()}
+        </div>
+        
+        <Input
+          id="business-name"
+          value={businessData.name || ""}
+          onChange={(e) => handleChange("name", e.target.value)}
+          className={!isAvailable && businessData.name ? "border-destructive" : ""}
+          placeholder="Nome do seu estabelecimento"
+        />
+        
+        <div className={`text-xs ${!isAvailable ? "text-destructive" : "text-muted-foreground"}`}>
+          {getSlugHelperText()}
+          {!isAvailable && getSuggestionsText()}
+        </div>
+      </div>
       
       <FormField
         id="business-email"

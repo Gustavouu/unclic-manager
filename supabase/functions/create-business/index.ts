@@ -8,6 +8,20 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Function to generate a unique slug based on a name
+const generateUniqueSlug = (name, attempt = 0) => {
+  const baseSlug = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+  
+  // If it's first attempt, return as is, otherwise append a number
+  return attempt === 0 ? baseSlug : `${baseSlug}-${attempt}`;
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -25,7 +39,39 @@ serve(async (req) => {
     
     console.log("Received request to create business:", { businessData, userId });
     
-    // 1. Create the business record (no RLS restrictions with service role)
+    // Generate initial slug from business name
+    let businessSlug = generateUniqueSlug(businessData.name);
+    let attempt = 0;
+    let isSlugUnique = false;
+    
+    // Try to find a unique slug (max 5 attempts)
+    while (!isSlugUnique && attempt < 5) {
+      // Check if slug already exists
+      const { data: existingBusiness, error: slugCheckError } = await supabase
+        .from('negocios')
+        .select('id')
+        .eq('slug', businessSlug)
+        .single();
+      
+      if (slugCheckError && slugCheckError.code === 'PGRST116') {
+        // PGRST116 means no rows returned, so slug is unique
+        isSlugUnique = true;
+      } else if (!slugCheckError && existingBusiness) {
+        // Slug exists, try a new one with a numeric suffix
+        attempt++;
+        businessSlug = generateUniqueSlug(businessData.name, attempt);
+      } else if (slugCheckError) {
+        // Some other error occurred
+        console.error("Error checking slug uniqueness:", slugCheckError);
+        throw new Error(`Error checking slug uniqueness: ${slugCheckError.message}`);
+      }
+    }
+    
+    if (!isSlugUnique) {
+      throw new Error("Não foi possível gerar um slug único para o nome do estabelecimento. Por favor, tente um nome diferente.");
+    }
+    
+    // 1. Create the business record with the unique slug
     const { data: businessRecord, error: businessError } = await supabase
       .from('negocios')
       .insert([
@@ -39,7 +85,7 @@ serve(async (req) => {
           cidade: businessData.city,
           estado: businessData.state,
           cep: businessData.cep,
-          slug: businessData.slug,
+          slug: businessSlug,
           status: 'ativo'
         }
       ])
@@ -48,11 +94,17 @@ serve(async (req) => {
     
     if (businessError) {
       console.error("Error creating business:", businessError);
+      
+      // Check specifically for duplicate slug error
+      if (businessError.code === '23505' && businessError.message.includes('negocios_slug_key')) {
+        throw new Error("O nome do estabelecimento já está em uso. Por favor, escolha um nome diferente.");
+      }
+      
       throw new Error(businessError.message);
     }
     
     if (!businessRecord) {
-      throw new Error("Could not get business ID");
+      throw new Error("Não foi possível obter o ID do estabelecimento criado");
     }
     
     const businessId = businessRecord.id;
@@ -66,7 +118,7 @@ serve(async (req) => {
     
     if (userError) {
       console.error("Error updating user profile:", userError);
-      throw new Error(`Error updating user profile: ${userError.message}`);
+      throw new Error(`Erro ao atualizar perfil do usuário: ${userError.message}`);
     }
     
     // 3. Create access profile (admin)
@@ -89,7 +141,7 @@ serve(async (req) => {
     
     if (profileError) {
       console.error("Error creating access profile:", profileError);
-      throw new Error(`Error creating access profile: ${profileError.message}`);
+      throw new Error(`Erro ao criar perfil de acesso: ${profileError.message}`);
     }
     
     // 4. Create services
@@ -154,7 +206,8 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         businessId, 
-        message: "Business created successfully" 
+        businessSlug,
+        message: "Estabelecimento criado com sucesso!" 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -165,7 +218,10 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in create-business function:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message 
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400 

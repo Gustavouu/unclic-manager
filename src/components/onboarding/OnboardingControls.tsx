@@ -23,8 +23,33 @@ export const OnboardingControls: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
+  const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   
-  const handleNext = () => {
+  // Function to check if a slug is available before proceeding
+  const checkSlugAvailability = async (name: string): Promise<boolean> => {
+    setIsCheckingSlug(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('check-slug-availability', {
+        body: { name },
+      });
+      
+      setIsCheckingSlug(false);
+      
+      if (error) {
+        console.error("Error checking slug availability:", error);
+        return true; // Proceed anyway if there's an error checking
+      }
+      
+      return data.isAvailable;
+    } catch (err) {
+      console.error("Failed to check slug availability:", err);
+      setIsCheckingSlug(false);
+      return true; // Proceed anyway if there's an error
+    }
+  };
+  
+  const handleNext = async () => {
     // Validar dados do estabelecimento antes de avançar
     if (currentStep === 0) {
       if (!businessData.name || !businessData.email || !businessData.phone) {
@@ -33,6 +58,13 @@ export const OnboardingControls: React.FC = () => {
       }
       if (!businessData.cep || !businessData.address || !businessData.number) {
         toast.error("Preencha o endereço completo para continuar");
+        return;
+      }
+      
+      // Check slug availability before proceeding
+      const isAvailable = await checkSlugAvailability(businessData.name);
+      if (!isAvailable) {
+        toast.error("O nome do estabelecimento já está em uso. Por favor, escolha outro nome.");
         return;
       }
     }
@@ -78,6 +110,14 @@ export const OnboardingControls: React.FC = () => {
     setIsSaving(true);
     
     try {
+      // Verificar disponibilidade do slug antes de criar o negócio
+      const isAvailable = await checkSlugAvailability(businessData.name);
+      if (!isAvailable) {
+        toast.error("O nome do estabelecimento já está em uso. Por favor, escolha outro nome.");
+        setIsSaving(false);
+        return;
+      }
+      
       // Mostrar toast de progresso
       const loadingToast = toast.loading("Criando seu negócio...");
       
@@ -121,11 +161,18 @@ export const OnboardingControls: React.FC = () => {
       
       if (!response.ok || !result.success) {
         toast.dismiss(loadingToast);
-        throw new Error(result.error || "Erro ao criar negócio");
+        
+        // Handle specific errors
+        if (result.error && result.error.includes("já está em uso")) {
+          throw new Error("O nome do estabelecimento já está em uso. Por favor, escolha outro nome.");
+        } else {
+          throw new Error(result.error || "Erro ao criar negócio");
+        }
       }
       
       const businessId = result.businessId;
-      console.log("Negócio criado com sucesso via edge function. ID:", businessId);
+      const finalSlug = result.businessSlug || slug;
+      console.log("Negócio criado com sucesso via edge function. ID:", businessId, "Slug:", finalSlug);
       
       toast.dismiss(loadingToast);
       toast.success("Estabelecimento configurado com sucesso!", {
@@ -152,7 +199,7 @@ export const OnboardingControls: React.FC = () => {
       <Button 
         variant="outline" 
         onClick={handlePrevious} 
-        disabled={currentStep === 0 || isSaving}
+        disabled={currentStep === 0 || isSaving || isCheckingSlug}
       >
         <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
       </Button>
@@ -160,7 +207,7 @@ export const OnboardingControls: React.FC = () => {
       <Button
         onClick={currentStep === 4 ? handleFinish : handleNext}
         variant={currentStep === 4 ? "default" : "default"}
-        disabled={isSaving}
+        disabled={isSaving || isCheckingSlug}
       >
         {currentStep === 4 ? (
           <>
@@ -174,7 +221,8 @@ export const OnboardingControls: React.FC = () => {
           </>
         ) : (
           <>
-            Avançar <ArrowRight className="ml-2 h-4 w-4" />
+            {isCheckingSlug ? "Verificando..." : "Avançar"} 
+            {!isCheckingSlug && <ArrowRight className="ml-2 h-4 w-4" />}
           </>
         )}
       </Button>
