@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchWithCache } from '@/integrations/supabase/client';
 
 export function useNeedsOnboarding() {
   const { user } = useAuth();
@@ -19,38 +20,58 @@ export function useNeedsOnboarding() {
 
       try {
         setLoading(true);
+        setError(null);
         
-        // Check if user has a business associated
-        const { data: userData, error: userError } = await supabase
-          .from('usuarios')
-          .select('id_negocio')
-          .eq('id', user.id)
-          .single();
-        
-        if (userError && userError.code !== 'PGRST116') { // Not found error
-          throw userError;
-        }
+        // Use the fetchWithCache utility to reduce API calls
+        const userData = await fetchWithCache(
+          `user-business-${user.id}`,
+          async () => {
+            const { data, error } = await supabase
+              .from('usuarios')
+              .select('id_negocio')
+              .eq('id', user.id)
+              .single();
+              
+            if (error && error.code !== 'PGRST116') { // Not found error
+              throw error;
+            }
+            
+            return data;
+          },
+          1 // 1 minute cache
+        );
         
         // If no business is associated or the user doesn't exist yet, they need onboarding
         if (!userData || !userData.id_negocio) {
+          console.log("User needs onboarding - no business associated");
           setNeedsOnboarding(true);
           setLoading(false);
           return;
         }
         
         // Check if the business has completed setup
-        const { data: businessData, error: businessError } = await supabase
-          .from('negocios')
-          .select('id, status')
-          .eq('id', userData.id_negocio)
-          .single();
-          
-        if (businessError) {
-          throw businessError;
-        }
+        const businessData = await fetchWithCache(
+          `business-${userData.id_negocio}`,
+          async () => {
+            const { data, error } = await supabase
+              .from('negocios')
+              .select('id, status')
+              .eq('id', userData.id_negocio)
+              .single();
+              
+            if (error) {
+              throw error;
+            }
+            
+            return data;
+          },
+          1 // 1 minute cache
+        );
         
         // If business exists but status is 'pendente', they still need onboarding
-        setNeedsOnboarding(!businessData || businessData.status === 'pendente');
+        const needsOnboarding = !businessData || businessData.status === 'pendente';
+        console.log(`User ${needsOnboarding ? 'needs' : 'does not need'} onboarding - business status: ${businessData?.status}`);
+        setNeedsOnboarding(needsOnboarding);
         
       } catch (err: any) {
         console.error('Error checking onboarding status:', err);

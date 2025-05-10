@@ -21,10 +21,11 @@ import { RequireAuth } from "./components/auth/RequireAuth";
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/onboarding" element={
-        <RequireAuth>
+        <RequireAuth skipOnboardingCheck={true}>
           <OnboardingPage />
         </RequireAuth>
       } />
@@ -35,7 +36,7 @@ function App() {
           </RequireAuth>
         }
       >
-        <Route index element={<Dashboard />} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="appointments" element={<Appointments />} />
         <Route path="clients" element={<Clients />} />
         <Route path="services" element={<Services />} />

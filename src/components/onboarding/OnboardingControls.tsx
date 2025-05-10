@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
@@ -77,7 +78,8 @@ export const OnboardingControls: React.FC = () => {
     setIsSaving(true);
     
     try {
-      console.log("Criando novo negócio:", businessData);
+      // Mostrar toast de progresso
+      const loadingToast = toast.loading("Criando seu negócio...");
       
       // Gerar slug do negócio
       const slug = createBusinessSlug(businessData.name);
@@ -97,19 +99,29 @@ export const OnboardingControls: React.FC = () => {
             estado: businessData.state,
             cep: businessData.cep,
             slug: slug,
-            status: 'ativo' // Mudança crucial: marca o negócio como ativo
+            status: 'ativo' // Marca o negócio como ativo
           }
         ])
         .select('id')
         .single();
       
-      if (businessError || !businessRecord) {
+      if (businessError) {
+        toast.dismiss(loadingToast);
         console.error("Erro ao criar negócio:", businessError);
-        throw new Error(businessError?.message || "Erro ao criar negócio");
+        throw new Error(businessError.message || "Erro ao criar negócio");
+      }
+      
+      if (!businessRecord) {
+        toast.dismiss(loadingToast);
+        throw new Error("Não foi possível obter o ID do negócio criado");
       }
       
       const businessId = businessRecord.id;
-      console.log("Negócio criado com ID:", businessId);
+      console.log("Negócio criado com sucesso. ID:", businessId);
+      
+      // Atualizar toast de progresso
+      toast.dismiss(loadingToast);
+      const updateUserToast = toast.loading("Atualizando seu perfil...");
       
       // 2. Atualizar o perfil do usuário com o ID do negócio
       const { error: userError } = await supabase
@@ -118,8 +130,9 @@ export const OnboardingControls: React.FC = () => {
         .eq('id', user.id);
       
       if (userError) {
+        toast.dismiss(updateUserToast);
         console.error("Erro ao atualizar perfil do usuário:", userError);
-        throw new Error(userError.message);
+        throw new Error(userError.message || "Erro ao atualizar perfil do usuário");
       }
       
       // 3. Criar o perfil de acesso do usuário (administrador)
@@ -141,9 +154,13 @@ export const OnboardingControls: React.FC = () => {
         ]);
       
       if (profileError) {
+        toast.dismiss(updateUserToast);
         console.error("Erro ao criar perfil de acesso:", profileError);
-        throw new Error(profileError.message);
+        throw new Error(profileError.message || "Erro ao criar perfil de acesso");
       }
+      
+      toast.dismiss(updateUserToast);
+      const servicesStaffToast = toast.loading("Configurando serviços e equipe...");
       
       // 4. Criar serviços
       if (services.length > 0) {
@@ -162,6 +179,7 @@ export const OnboardingControls: React.FC = () => {
         
         if (servicesError) {
           console.error("Erro ao criar serviços:", servicesError);
+          // Continuar o processo mesmo com erro nos serviços
           toast.error("Alguns serviços podem não ter sido salvos corretamente");
         }
       }
@@ -183,21 +201,44 @@ export const OnboardingControls: React.FC = () => {
         
         if (staffError) {
           console.error("Erro ao criar funcionários:", staffError);
+          // Continuar o processo mesmo com erro nos funcionários
           toast.error("Alguns funcionários podem não ter sido salvos corretamente");
         }
       }
       
-      toast.success("Estabelecimento configurado com sucesso!");
+      // 6. Criar configurações do negócio
+      try {
+        const { error: configError } = await supabase
+          .from('configuracoes_negocio')
+          .insert([{ 
+            id_negocio: businessId
+            // Usar valores padrão para o resto das configurações
+          }]);
+          
+        if (configError) {
+          console.error("Erro ao criar configurações:", configError);
+        }
+      } catch (configErr) {
+        // Ignorar erros de configuração pois serão criadas padrão depois
+        console.warn("Aviso ao criar configurações:", configErr);
+      }
+      
+      toast.dismiss(servicesStaffToast);
+      toast.success("Estabelecimento configurado com sucesso!", {
+        duration: 5000
+      });
+      
+      // Limpar dados salvos no localStorage após configuração bem-sucedida
+      localStorage.removeItem('unclic-manager-onboarding');
       
       // Redirecionar para o dashboard após um breve delay para que o toast seja visível
       setTimeout(() => {
-        navigate("/dashboard");
-      }, 1500);
+        navigate("/dashboard", { replace: true });
+      }, 2000);
       
     } catch (error: any) {
       console.error("Erro ao finalizar configuração:", error);
       toast.error(error.message || "Erro ao finalizar configuração");
-    } finally {
       setIsSaving(false);
     }
   };
