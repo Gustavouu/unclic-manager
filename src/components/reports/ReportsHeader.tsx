@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Download, Printer } from "lucide-react";
+import { Download, Share } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ReportsHeaderProps {
@@ -10,35 +10,37 @@ interface ReportsHeaderProps {
 
 export function ReportsHeader({ dateRange, onDateRangeChange }: ReportsHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Relatórios</h1>
-        <p className="text-muted-foreground">
-          Análise detalhada das operações do seu negócio
+        <p className="text-sm text-muted-foreground">
+          Visualize métricas e análises do seu negócio
         </p>
       </div>
-      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-4 sm:mt-0">
         <Select value={dateRange} onValueChange={onDateRangeChange}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Período" />
+            <SelectValue placeholder="Selecionar período" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="today">Hoje</SelectItem>
+            <SelectItem value="yesterday">Ontem</SelectItem>
             <SelectItem value="last7days">Últimos 7 dias</SelectItem>
             <SelectItem value="last30days">Últimos 30 dias</SelectItem>
-            <SelectItem value="last90days">Últimos 90 dias</SelectItem>
             <SelectItem value="thisMonth">Este mês</SelectItem>
             <SelectItem value="lastMonth">Mês passado</SelectItem>
             <SelectItem value="thisYear">Este ano</SelectItem>
           </SelectContent>
         </Select>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Printer className="h-4 w-4 mr-2" />
-            Imprimir
+        
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="items-center gap-1">
+            <Download size={16} className="mr-1" />
+            <span className="hidden md:inline">Exportar</span>
           </Button>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
+          <Button variant="outline" size="sm" className="items-center gap-1">
+            <Share size={16} className="mr-1" />
+            <span className="hidden md:inline">Compartilhar</span>
           </Button>
         </div>
       </div>

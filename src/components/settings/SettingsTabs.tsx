@@ -44,36 +44,39 @@ export const SettingsTabs = ({ activeTab, onTabChange }: SettingsTabsProps) => {
         <TabsTrigger value="permissions">Permissões</TabsTrigger>
         <TabsTrigger value="other">Outros</TabsTrigger>
       </TabsList>
-      <TabsContent value="business-profile">
-        <BusinessProfileTab />
-      </TabsContent>
-      <TabsContent value="appointments">
-        <AppointmentsTab />
-      </TabsContent>
-      <TabsContent value="hours">
-        <HoursTab />
-      </TabsContent>
-      <TabsContent value="services">
-        <ServicesTab />
-      </TabsContent>
-      <TabsContent value="staff">
-        <StaffTab />
-      </TabsContent>
-      <TabsContent value="financial">
-        <FinancialTab />
-      </TabsContent>
-      <TabsContent value="notifications">
-        <NotificationsTab />
-      </TabsContent>
-      <TabsContent value="integrations">
-        <IntegrationsTab />
-      </TabsContent>
-      <TabsContent value="permissions">
-        <PermissionsTab />
-      </TabsContent>
-      <TabsContent value="other">
-        <OtherTab />
-      </TabsContent>
+      
+      <div className="p-6">
+        <TabsContent value="business-profile">
+          <BusinessProfileTab />
+        </TabsContent>
+        <TabsContent value="appointments">
+          <AppointmentsTab />
+        </TabsContent>
+        <TabsContent value="hours">
+          <HoursTab />
+        </TabsContent>
+        <TabsContent value="services">
+          <ServicesTab />
+        </TabsContent>
+        <TabsContent value="staff">
+          <StaffTab />
+        </TabsContent>
+        <TabsContent value="financial">
+          <FinancialTab />
+        </TabsContent>
+        <TabsContent value="notifications">
+          <NotificationsTab />
+        </TabsContent>
+        <TabsContent value="integrations">
+          <IntegrationsTab />
+        </TabsContent>
+        <TabsContent value="permissions">
+          <PermissionsTab />
+        </TabsContent>
+        <TabsContent value="other">
+          <OtherTab />
+        </TabsContent>
+      </div>
     </Tabs>
   );
 };

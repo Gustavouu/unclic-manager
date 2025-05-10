@@ -1,19 +1,8 @@
 
 import { useState } from "react";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Save, Rocket } from "lucide-react";
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
-import BusinessProfileTab from "@/components/settings/tabs/BusinessProfileTab";
-import { HoursTab } from "@/components/settings/tabs/HoursTab";
-import { ServicesTab } from "@/components/settings/tabs/ServicesTab";
-import { StaffTab } from "@/components/settings/tabs/StaffTab";
-import { AppointmentsTab } from "@/components/settings/tabs/AppointmentsTab";
-import { FinancialTab } from "@/components/settings/tabs/FinancialTab";
-import NotificationsTab from "@/components/settings/tabs/NotificationsTab";
-import { IntegrationsTab } from "@/components/settings/tabs/IntegrationsTab";
-import { PermissionsTab } from "@/components/settings/tabs/PermissionsTab";
-import { OtherTab } from "@/components/settings/tabs/OtherTab";
 import { mockSaveFunction, showSuccessToast, showErrorToast } from "@/utils/formUtils";
 import { Toaster } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -95,51 +84,7 @@ const Settings = () => {
 
         <Card className="border shadow-sm overflow-hidden">
           <CardContent className="p-0">
-            <Tabs defaultValue={activeTab} value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <SettingsTabs activeTab={activeTab} onTabChange={handleTabChange} />
-
-              <div className="p-6">
-                <TabsContent value="business-profile">
-                  <BusinessProfileTab />
-                </TabsContent>
-
-                <TabsContent value="services">
-                  <ServicesTab />
-                </TabsContent>
-
-                <TabsContent value="staff">
-                  <StaffTab />
-                </TabsContent>
-
-                <TabsContent value="hours">
-                  <HoursTab />
-                </TabsContent>
-
-                <TabsContent value="appointments">
-                  <AppointmentsTab />
-                </TabsContent>
-
-                <TabsContent value="financial">
-                  <FinancialTab />
-                </TabsContent>
-
-                <TabsContent value="notifications">
-                  <NotificationsTab />
-                </TabsContent>
-
-                <TabsContent value="integrations">
-                  <IntegrationsTab />
-                </TabsContent>
-
-                <TabsContent value="permissions">
-                  <PermissionsTab />
-                </TabsContent>
-
-                <TabsContent value="other">
-                  <OtherTab />
-                </TabsContent>
-              </div>
-            </Tabs>
+            <SettingsTabs activeTab={activeTab} onTabChange={handleTabChange} />
           </CardContent>
         </Card>
         

@@ -30,7 +30,6 @@ export function ServicesHeader({ onServiceCreated, onSearch }: ServicesHeaderPro
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-      <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Serviços</h1>
       <p className="text-sm text-muted-foreground">
         Gerencie os serviços oferecidos pelo seu negócio
       </p>

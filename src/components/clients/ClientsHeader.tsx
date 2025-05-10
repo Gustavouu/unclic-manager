@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Download, Users } from "lucide-react";
+import { PlusCircle, Download } from "lucide-react";
 import { useState } from "react";
 import { NewClientDialog } from "./NewClientDialog";
 
@@ -9,8 +9,7 @@ export function ClientsHeader() {
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Clientes</h1>
+      <div className="flex-1">
         <p className="text-sm text-muted-foreground">
           Gerencie seus clientes e visualize suas informações.
         </p>
