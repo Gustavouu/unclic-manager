@@ -127,7 +127,7 @@ export const useReportsData = (dateRange: string) => {
         // Fetch data from financial_transactions table first
         let { data: financialData, error: financialError } = await supabase
           .from('financial_transactions')
-          .select('id, amount, type, status, paymentMethod, paymentDate')
+          .select('id, amount, type, status, paymentMethod, paymentDate, createdAt')
           .eq('tenantId', businessId)
           .gte('createdAt', startDate.toISOString());
 
@@ -136,7 +136,7 @@ export const useReportsData = (dateRange: string) => {
           // Try fallback to transacoes table if financial_transactions fails
           const { data: transacoesData, error: transacoesError } = await supabase
             .from('transacoes')
-            .select('id, valor, tipo, status, metodo_pagamento, data_pagamento')
+            .select('id, valor, tipo, status, metodo_pagamento, data_pagamento, criado_em')
             .eq('id_negocio', businessId)
             .gte('criado_em', startDate.toISOString());
 
@@ -149,7 +149,8 @@ export const useReportsData = (dateRange: string) => {
             type: t.tipo === 'receita' ? 'INCOME' : 'EXPENSE',
             status: t.status === 'pago' ? 'PAID' : t.status,
             paymentMethod: t.metodo_pagamento,
-            paymentDate: t.data_pagamento
+            paymentDate: t.data_pagamento,
+            createdAt: t.criado_em
           }));
         }
 
@@ -405,16 +406,24 @@ export const useReportsData = (dateRange: string) => {
         // Calculate retention rate (customers with more than one appointment)
         let retentionRate = 70; // Default fallback
         try {
-          const { data: customerAppointments } = await supabase
+          // Using aggregated query with COUNT
+          const { data: customerAppointments, error: countError } = await supabase
             .from('appointments')
             .select('customerId, count')
             .eq('tenantId', businessId)
             .gte('startTime', new Date(today.setMonth(today.getMonth() - 6)).toISOString())
-            .eq('status', 'COMPLETED')
-            .group('customerId');
+            .eq('status', 'COMPLETED');
             
-          if (customerAppointments && customerAppointments.length > 0) {
-            const repeatCustomers = customerAppointments.filter(ca => ca.count > 1).length;
+          if (!countError && customerAppointments) {
+            // Process the data manually since group operation is not available
+            const customerCounts: Record<string, number> = {};
+            customerAppointments.forEach(appt => {
+              if (appt.customerId) {
+                customerCounts[appt.customerId] = (customerCounts[appt.customerId] || 0) + 1;
+              }
+            });
+            
+            const repeatCustomers = Object.values(customerCounts).filter(count => count > 1).length;
             retentionRate = totalClients > 0 ? (repeatCustomers / totalClients) * 100 : 0;
           }
         } catch (error) {

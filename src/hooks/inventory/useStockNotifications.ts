@@ -63,7 +63,7 @@ export function useStockNotifications() {
         const lowItems = stockItems
           .filter(item => {
             const product = item.products;
-            return product && item.quantity < product.minStock;
+            return product && item.quantity < (product?.minStock || 0);
           })
           .map(item => ({
             id: item.id,
