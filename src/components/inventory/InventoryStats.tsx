@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { StatCard } from '@/components/dashboard/StatCard';
 import { Package, AlertCircle, DollarSign } from 'lucide-react';
 import { Product } from '@/hooks/inventory/types';
 
@@ -21,35 +21,29 @@ export const InventoryStats = ({ products }: InventoryStatsProps) => {
 
   return (
     <>
-      <Card className="shadow-sm">
-        <CardContent className="flex items-center p-3">
-          <Package className="w-7 h-7 text-blue-500 mr-3" />
-          <div>
-            <p className="text-xs text-muted-foreground">Total de Produtos</p>
-            <h3 className="text-xl font-bold">{totalItems}</h3>
-          </div>
-        </CardContent>
-      </Card>
+      <StatCard
+        title="Total de Produtos"
+        value={totalItems}
+        icon={<Package size={18} />}
+        className="h-full"
+        iconClassName="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+      />
       
-      <Card className="shadow-sm">
-        <CardContent className="flex items-center p-3">
-          <AlertCircle className="w-7 h-7 text-orange-500 mr-3" />
-          <div>
-            <p className="text-xs text-muted-foreground">Estoque Baixo</p>
-            <h3 className="text-xl font-bold">{lowStockItems}</h3>
-          </div>
-        </CardContent>
-      </Card>
+      <StatCard
+        title="Estoque Baixo"
+        value={lowStockItems}
+        icon={<AlertCircle size={18} />}
+        className="h-full"
+        iconClassName="bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400"
+      />
       
-      <Card className="shadow-sm">
-        <CardContent className="flex items-center p-3">
-          <DollarSign className="w-7 h-7 text-green-500 mr-3" />
-          <div>
-            <p className="text-xs text-muted-foreground">Valor Total</p>
-            <h3 className="text-xl font-bold">R$ {totalValue.toFixed(2)}</h3>
-          </div>
-        </CardContent>
-      </Card>
+      <StatCard
+        title="Valor Total"
+        value={`R$ ${totalValue.toFixed(2)}`}
+        icon={<DollarSign size={18} />}
+        className="h-full"
+        iconClassName="bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+      />
     </>
   );
 }

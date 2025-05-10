@@ -10,6 +10,7 @@ import { InventoryAnalytics } from './InventoryAnalytics';
 import { InventoryFilters } from './InventoryFilters';
 import { Product } from '@/hooks/inventory/types';
 import { getFormattedDate } from './details/formatters';
+import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
 
 export const InventoryContent = () => {
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
@@ -57,12 +58,12 @@ export const InventoryContent = () => {
   }));
   
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+    <div className="space-y-6">
+      <ResponsiveGrid columns={{ default: 1, sm: 3 }} gap="md" equalHeight>
         <InventoryStats products={products} />
-      </div>
+      </ResponsiveGrid>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <InventoryAnalytics 
           title="Produtos Mais Vendidos"
           icon="trending-up"
@@ -91,8 +92,8 @@ export const InventoryContent = () => {
         />
       </div>
       
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-4 mb-2">
-        <h2 className="text-base font-semibold">Produtos em Estoque</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <h2 className="text-lg font-semibold">Produtos em Estoque</h2>
         <div className="flex items-center gap-2">
           <InventoryFilters />
           <Button onClick={() => setIsNewProductOpen(true)} size="sm" className="gap-1 h-8 text-xs">
