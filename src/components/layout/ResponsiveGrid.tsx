@@ -1,103 +1,127 @@
 
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-type GridColumns = 1 | 2 | 3 | 4 | 5 | 6 | 'auto-fill' | 'auto-fit';
-type GridGap = 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type ColumnConfig = {
+  default: number;
+  xs?: number;
+  sm?: number;
+  md?: number;
+  lg?: number;
+  xl?: number;
+  '2xl'?: number;
+};
+
+type GridGap = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
 interface ResponsiveGridProps {
-  children: React.ReactNode;
-  columns?: {
-    default: GridColumns;
-    sm?: GridColumns;
-    md?: GridColumns;
-    lg?: GridColumns;
-    xl?: GridColumns;
-  };
+  children: ReactNode;
+  columns: ColumnConfig;
   gap?: GridGap;
   className?: string;
-  minChildWidth?: string;
   equalHeight?: boolean;
 }
 
 export function ResponsiveGrid({
   children,
-  columns = { default: 1, sm: 2, lg: 3 },
+  columns,
   gap = 'md',
   className,
-  minChildWidth,
   equalHeight = false,
 }: ResponsiveGridProps) {
+  // Mapping for column classes
+  const colClasses = {
+    1: 'grid-cols-1',
+    2: 'grid-cols-2',
+    3: 'grid-cols-3',
+    4: 'grid-cols-4',
+    5: 'grid-cols-5',
+    6: 'grid-cols-6',
+  };
+
+  // Mapping for responsive breakpoints
+  const bpClasses = {
+    xs: {
+      1: 'xs:grid-cols-1',
+      2: 'xs:grid-cols-2',
+      3: 'xs:grid-cols-3',
+      4: 'xs:grid-cols-4',
+      5: 'xs:grid-cols-5',
+      6: 'xs:grid-cols-6',
+    },
+    sm: {
+      1: 'sm:grid-cols-1',
+      2: 'sm:grid-cols-2',
+      3: 'sm:grid-cols-3',
+      4: 'sm:grid-cols-4',
+      5: 'sm:grid-cols-5',
+      6: 'sm:grid-cols-6',
+    },
+    md: {
+      1: 'md:grid-cols-1',
+      2: 'md:grid-cols-2',
+      3: 'md:grid-cols-3',
+      4: 'md:grid-cols-4',
+      5: 'md:grid-cols-5',
+      6: 'md:grid-cols-6',
+    },
+    lg: {
+      1: 'lg:grid-cols-1',
+      2: 'lg:grid-cols-2',
+      3: 'lg:grid-cols-3',
+      4: 'lg:grid-cols-4',
+      5: 'lg:grid-cols-5',
+      6: 'lg:grid-cols-6',
+    },
+    xl: {
+      1: 'xl:grid-cols-1',
+      2: 'xl:grid-cols-2',
+      3: 'xl:grid-cols-3',
+      4: 'xl:grid-cols-4',
+      5: 'xl:grid-cols-5',
+      6: 'xl:grid-cols-6',
+    },
+    '2xl': {
+      1: '2xl:grid-cols-1',
+      2: '2xl:grid-cols-2',
+      3: '2xl:grid-cols-3',
+      4: '2xl:grid-cols-4',
+      5: '2xl:grid-cols-5',
+      6: '2xl:grid-cols-6',
+    },
+  };
+
+  // Mapping for gap classes
   const gapClasses = {
-    none: 'gap-0',
     xs: 'gap-1',
     sm: 'gap-2',
     md: 'gap-4',
     lg: 'gap-6',
     xl: 'gap-8',
+    '2xl': 'gap-10',
   };
 
-  const getGridColsClass = () => {
-    // Se minChildWidth for fornecido, usamos grid-template-columns com minmax
-    if (minChildWidth) {
-      return `grid-cols-[repeat(auto-fill,minmax(${minChildWidth},1fr))]`;
-    }
-    
-    // Caso contrário, usamos grid-cols-* responsivos baseados no objeto columns
-    const colsDefault = typeof columns.default === 'number' 
-      ? `grid-cols-${columns.default}` 
-      : columns.default === 'auto-fill' 
-        ? 'grid-cols-[repeat(auto-fill,minmax(250px,1fr))]' 
-        : 'grid-cols-[repeat(auto-fit,minmax(250px,1fr))]';
-        
-    const colsSm = columns.sm && typeof columns.sm === 'number' 
-      ? `sm:grid-cols-${columns.sm}` 
-      : columns.sm === 'auto-fill' 
-        ? 'sm:grid-cols-[repeat(auto-fill,minmax(250px,1fr))]' 
-        : columns.sm === 'auto-fit'
-          ? 'sm:grid-cols-[repeat(auto-fit,minmax(250px,1fr))]'
-          : '';
-          
-    const colsMd = columns.md && typeof columns.md === 'number' 
-      ? `md:grid-cols-${columns.md}` 
-      : columns.md === 'auto-fill' 
-        ? 'md:grid-cols-[repeat(auto-fill,minmax(250px,1fr))]' 
-        : columns.md === 'auto-fit'
-          ? 'md:grid-cols-[repeat(auto-fit,minmax(250px,1fr))]'
-          : '';
-          
-    const colsLg = columns.lg && typeof columns.lg === 'number' 
-      ? `lg:grid-cols-${columns.lg}` 
-      : columns.lg === 'auto-fill' 
-        ? 'lg:grid-cols-[repeat(auto-fill,minmax(250px,1fr))]' 
-        : columns.lg === 'auto-fit'
-          ? 'lg:grid-cols-[repeat(auto-fit,minmax(250px,1fr))]'
-          : '';
-          
-    const colsXl = columns.xl && typeof columns.xl === 'number' 
-      ? `xl:grid-cols-${columns.xl}` 
-      : columns.xl === 'auto-fill' 
-        ? 'xl:grid-cols-[repeat(auto-fill,minmax(250px,1fr))]' 
-        : columns.xl === 'auto-fit'
-          ? 'xl:grid-cols-[repeat(auto-fit,minmax(250px,1fr))]'
-          : '';
-
-    return cn(
-      colsDefault,
-      colsSm,
-      colsMd,
-      colsLg,
-      colsXl
-    );
-  };
+  // Construct the column classes
+  const columnClass = colClasses[columns.default as keyof typeof colClasses] || 'grid-cols-1';
+  
+  // Construct the responsive classes
+  const responsiveClasses = Object.entries(columns)
+    .filter(([key]) => key !== 'default')
+    .map(([breakpoint, cols]) => {
+      const bp = breakpoint as keyof typeof bpClasses;
+      const col = cols as keyof typeof bpClasses[keyof typeof bpClasses];
+      return bpClasses[bp]?.[col] || '';
+    })
+    .join(' ');
 
   return (
     <div
       className={cn(
-        'grid w-full',
-        getGridColsClass(),
+        'grid',
+        columnClass,
+        responsiveClasses,
         gapClasses[gap],
-        equalHeight && '[&>*]:h-full',
+        equalHeight && 'h-full',
         className
       )}
     >

@@ -11,6 +11,9 @@ import { ProfessionalDetailsDialog } from "@/components/professionals/Profession
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { ProfessionalsTable } from "@/components/professionals/ProfessionalsTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { Users, Award, Briefcase, Calendar } from "lucide-react";
+import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
 
 const Professionals = () => {
   const [showNewProfessionalDialog, setShowNewProfessionalDialog] = useState(false);
@@ -46,6 +49,11 @@ const Professionals = () => {
     setDeleteOpen(true);
   };
 
+  // Calculate total specialties (unique)
+  const uniqueSpecialties = Array.from(
+    new Set(professionals.flatMap(p => p.specialties || []))
+  ).length;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -65,43 +73,43 @@ const Professionals = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-4 flex flex-col items-center justify-center">
-            <h3 className="text-lg font-medium mb-1">Total</h3>
-            <p className="text-3xl font-bold text-blue-600">{professionals.length}</p>
-            <p className="text-sm text-muted-foreground">Profissionais</p>
-          </CardContent>
-        </Card>
+      <ResponsiveGrid columns={{ default: 1, sm: 4 }} gap="md" equalHeight>
+        <StatCard
+          title="Total"
+          value={professionals.length}
+          subtitle="Profissionais"
+          icon={<Users size={18} />}
+          className="h-full"
+          iconClassName="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+        />
         
-        <Card className="bg-green-50 border-green-200">
-          <CardContent className="p-4 flex flex-col items-center justify-center">
-            <h3 className="text-lg font-medium mb-1">Ativos</h3>
-            <p className="text-3xl font-bold text-green-600">
-              {professionals.filter(p => p.status === 'active').length}
-            </p>
-            <p className="text-sm text-muted-foreground">Profissionais</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Ativos"
+          value={professionals.filter(p => p.status === 'active').length}
+          subtitle="Profissionais"
+          icon={<Users size={18} />}
+          className="h-full"
+          iconClassName="bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+        />
         
-        <Card className="bg-amber-50 border-amber-200">
-          <CardContent className="p-4 flex flex-col items-center justify-center">
-            <h3 className="text-lg font-medium mb-1">Especialidades</h3>
-            <p className="text-3xl font-bold text-amber-600">
-              {Array.from(new Set(professionals.flatMap(p => p.specialties || []))).length}
-            </p>
-            <p className="text-sm text-muted-foreground">Únicas</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Especialidades"
+          value={uniqueSpecialties}
+          subtitle="Únicas"
+          icon={<Award size={18} />}
+          className="h-full"
+          iconClassName="bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
+        />
         
-        <Card className="bg-purple-50 border-purple-200">
-          <CardContent className="p-4 flex flex-col items-center justify-center">
-            <h3 className="text-lg font-medium mb-1">Agendamentos</h3>
-            <p className="text-3xl font-bold text-purple-600">--</p>
-            <p className="text-sm text-muted-foreground">Este mês</p>
-          </CardContent>
-        </Card>
-      </div>
+        <StatCard
+          title="Agendamentos"
+          value="--"
+          subtitle="Este mês"
+          icon={<Calendar size={18} />}
+          className="h-full"
+          iconClassName="bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400"
+        />
+      </ResponsiveGrid>
 
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="pb-3 border-b bg-white">

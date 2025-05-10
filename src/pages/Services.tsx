@@ -9,6 +9,8 @@ import { services as initialServices, ServiceData } from "@/components/services/
 import { useToast } from "@/hooks/use-toast";
 import { useUserPermissions } from "@/components/hooks/useUserPermissions";
 import { LoadingState } from "@/hooks/use-loading-state";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Services = () => {
   const [services, setServices] = useState<ServiceData[]>([]);
@@ -16,6 +18,7 @@ const Services = () => {
   const [loadingState, setLoadingState] = useState<LoadingState>('loading');
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<string>('all');
   const { toast } = useToast();
   const { canAccess } = useUserPermissions();
 
@@ -51,7 +54,7 @@ const Services = () => {
   const handleServiceCreated = (newService: ServiceData) => {
     const updatedServices = [...services, newService];
     setServices(updatedServices);
-    setFilteredServices(applyFilters(updatedServices, searchQuery));
+    setFilteredServices(applyFilters(updatedServices, searchQuery, activeTab));
     
     toast({
       title: "Serviço criado",
@@ -65,7 +68,7 @@ const Services = () => {
     );
     
     setServices(updatedServices);
-    setFilteredServices(applyFilters(updatedServices, searchQuery));
+    setFilteredServices(applyFilters(updatedServices, searchQuery, activeTab));
     
     toast({
       title: "Serviço atualizado",
@@ -78,7 +81,7 @@ const Services = () => {
     const updatedServices = services.filter(service => service.id !== serviceId);
     
     setServices(updatedServices);
-    setFilteredServices(applyFilters(updatedServices, searchQuery));
+    setFilteredServices(applyFilters(updatedServices, searchQuery, activeTab));
     
     toast({
       title: "Serviço removido",
@@ -90,54 +93,109 @@ const Services = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setFilteredServices(applyFilters(services, query));
+    setFilteredServices(applyFilters(services, query, activeTab));
   };
 
-  const applyFilters = (services: ServiceData[], query: string) => {
-    if (!query.trim()) return services;
+  const applyFilters = (services: ServiceData[], query: string, tab: string = 'all') => {
+    let filtered = services;
     
-    const lowercaseQuery = query.toLowerCase();
-    return services.filter(service => 
-      service.name.toLowerCase().includes(lowercaseQuery) ||
-      (service.description && service.description.toLowerCase().includes(lowercaseQuery))
-    );
+    // Apply tab filter
+    if (tab !== 'all') {
+      filtered = filtered.filter(service => service.status === tab);
+    }
+    
+    // Apply search filter
+    if (query.trim()) {
+      const lowercaseQuery = query.toLowerCase();
+      filtered = filtered.filter(service => 
+        service.name.toLowerCase().includes(lowercaseQuery) ||
+        (service.description && service.description.toLowerCase().includes(lowercaseQuery))
+      );
+    }
+    
+    return filtered;
+  };
+  
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setFilteredServices(applyFilters(services, searchQuery, value));
   };
 
   const canManageServices = canAccess(['services.manage']);
 
   return (
-    <div>
-      <PageHeader 
-        title="Serviços"
-        description="Gerencie os serviços oferecidos pelo seu negócio"
-        breadcrumb={[
-          { label: "Dashboard", path: "/dashboard" },
-          { label: "Serviços" }
-        ]}
-        actions={
-          <ServicesHeader 
-            onServiceCreated={canManageServices ? handleServiceCreated : undefined}
-            onSearch={handleSearch} 
-          />
-        }
-      />
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Serviços</h1>
+          <p className="text-sm text-muted-foreground">
+            Gerencie os serviços oferecidos pelo seu negócio
+          </p>
+        </div>
+        
+        <ServicesHeader 
+          onServiceCreated={canManageServices ? handleServiceCreated : undefined}
+          onSearch={handleSearch} 
+        />
+      </div>
       
       <ServiceStats services={services} />
       
-      <CardContainer
-        title="Lista de Serviços"
-        state={loadingState}
-        errorText="Erro ao carregar serviços"
-        error={error || undefined}
-        variant="elevated"
-      >
-        <ServicesTable 
-          services={filteredServices} 
-          onServiceUpdated={canManageServices ? handleServiceUpdated : undefined}
-          onServiceDeleted={canManageServices ? handleServiceDeleted : undefined}
-          readonly={!canManageServices}
-        />
-      </CardContainer>
+      <Card className="border shadow-sm overflow-hidden">
+        <CardHeader className="pb-3 border-b bg-white">
+          <CardTitle className="text-lg">Lista de Serviços</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Tabs defaultValue="all" className="w-full" onValueChange={handleTabChange}>
+            <div className="flex items-center justify-between px-4 py-3 border-b bg-white">
+              <TabsList className="bg-slate-100">
+                <TabsTrigger value="all" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                  Todos
+                </TabsTrigger>
+                <TabsTrigger value="active" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                  Ativos
+                </TabsTrigger>
+                <TabsTrigger value="inactive" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                  Inativos
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            
+            <TabsContent value="all" className="mt-0">
+              <ServicesTable 
+                services={filteredServices} 
+                onServiceUpdated={canManageServices ? handleServiceUpdated : undefined}
+                onServiceDeleted={canManageServices ? handleServiceDeleted : undefined}
+                readonly={!canManageServices}
+                state={loadingState}
+                error={error || undefined}
+              />
+            </TabsContent>
+            
+            <TabsContent value="active" className="mt-0">
+              <ServicesTable 
+                services={filteredServices} 
+                onServiceUpdated={canManageServices ? handleServiceUpdated : undefined}
+                onServiceDeleted={canManageServices ? handleServiceDeleted : undefined}
+                readonly={!canManageServices}
+                state={loadingState}
+                error={error || undefined}
+              />
+            </TabsContent>
+            
+            <TabsContent value="inactive" className="mt-0">
+              <ServicesTable 
+                services={filteredServices} 
+                onServiceUpdated={canManageServices ? handleServiceUpdated : undefined}
+                onServiceDeleted={canManageServices ? handleServiceDeleted : undefined}
+                readonly={!canManageServices}
+                state={loadingState}
+                error={error || undefined}
+              />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

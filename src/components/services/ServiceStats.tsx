@@ -1,57 +1,74 @@
 
-import React from "react";
-import { StatCard } from "@/components/ui/stat-card";
-import { ServiceData } from "./servicesData";
-import { Grid } from "lucide-react";
+import React from 'react';
+import { ServiceData } from './servicesData';
+import { StatCard } from "@/components/dashboard/StatCard";
+import { Scissors, Calendar, BadgeDollarSign, Bookmark } from "lucide-react";
+import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
 
 interface ServiceStatsProps {
   services: ServiceData[];
 }
 
-export function ServiceStats({ services }: ServiceStatsProps) {
-  // Calculate statistics
+export const ServiceStats: React.FC<ServiceStatsProps> = ({ services }) => {
   const totalServices = services.length;
-  const activeServices = services.filter(service => service.isActive !== false).length;
-  const popularServices = services.filter(service => service.isPopular).length;
-  const featuredServices = services.filter(service => service.isFeatured).length;
   
-  // Calculate average price
-  const averagePrice = services.length
-    ? services.reduce((sum, service) => sum + service.price, 0) / services.length
-    : 0;
+  // Calculate total estimated revenue
+  const totalRevenue = services.reduce((sum, service) => {
+    const price = parseFloat(service.price.replace(/[^\d.,]/g, '').replace(',', '.'));
+    return sum + (isNaN(price) ? 0 : price);
+  }, 0);
+  
+  // Calculate average duration
+  const totalDuration = services.reduce((sum, service) => {
+    return sum + (service.duration || 0);
+  }, 0);
+  
+  const averageDuration = services.length ? Math.round(totalDuration / services.length) : 0;
+  
+  // Count active services
+  const activeServices = services.filter(service => service.status === 'active').length;
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+    <ResponsiveGrid columns={{ default: 1, sm: 4 }} gap="md" equalHeight>
       <StatCard
         title="Total de Serviços"
         value={totalServices}
-        colorScheme="blue"
-        icon={<Grid size={18} className="text-blue-600" />}
+        icon={<Scissors size={18} />}
+        className="h-full"
+        iconClassName="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
       />
       
       <StatCard
         title="Serviços Ativos"
         value={activeServices}
-        description={`${Math.round((activeServices / totalServices) * 100)}% do total`}
-        colorScheme="green"
-        trend={{
-          value: Math.round((activeServices / totalServices) * 100),
-          direction: "neutral"
-        }}
+        subtitle={`${Math.round(activeServices / totalServices * 100)}% do total`}
+        icon={<Bookmark size={18} />}
+        className="h-full"
+        iconClassName="bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"
       />
       
       <StatCard
-        title="Preço Médio"
-        value={`R$ ${averagePrice.toFixed(2)}`}
-        colorScheme="amber"
+        title="Duração Média"
+        value={`${averageDuration} min`}
+        icon={<Calendar size={18} />}
+        className="h-full"
+        iconClassName="bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
       />
       
       <StatCard
-        title="Serviços Populares"
-        value={popularServices}
-        description={`${Math.round((popularServices / totalServices) * 100)}% do total`}
-        colorScheme="purple"
+        title="Receita Estimada"
+        value={formatCurrency(totalRevenue)}
+        icon={<BadgeDollarSign size={18} />}
+        className="h-full"
+        iconClassName="bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400"
       />
-    </div>
+    </ResponsiveGrid>
   );
-}
+};

@@ -29,7 +29,15 @@ const Clients = () => {
 
   return (
     <div className="space-y-6">
-      <ClientsHeader />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Clientes</h1>
+          <p className="text-sm text-muted-foreground">
+            Gerencie seus clientes e acompanhe seu histórico
+          </p>
+        </div>
+        <ClientsHeader />
+      </div>
       
       <ClientStats clients={filteredClients} />
       

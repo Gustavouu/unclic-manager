@@ -1,7 +1,8 @@
 
 import { Client } from "@/hooks/useClients";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, CreditCard, Calendar, ArrowUpRight } from "lucide-react";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { Users, CreditCard, Calendar } from "lucide-react";
+import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
 
 interface ClientStatsProps {
   clients: Client[];
@@ -39,58 +40,40 @@ export function ClientStats({ clients }: ClientStatsProps) {
   };
 
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{totalClients}</div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Base total de clientes
-          </p>
-        </CardContent>
-      </Card>
+    <ResponsiveGrid columns={{ default: 1, sm: 4 }} gap="md" equalHeight>
+      <StatCard
+        title="Total de Clientes"
+        value={totalClients}
+        icon={<Users size={18} />}
+        className="h-full"
+        iconClassName="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+      />
       
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{activeClients}</div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Visitaram nos últimos 30 dias
-          </p>
-        </CardContent>
-      </Card>
+      <StatCard
+        title="Clientes Ativos"
+        value={activeClients}
+        subtitle="Visitaram nos últimos 30 dias"
+        icon={<Users size={18} />}
+        className="h-full"
+        iconClassName="bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+      />
       
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Faturamento</CardTitle>
-          <CreditCard className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(totalSpent)}</div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Total gasto pelos clientes
-          </p>
-        </CardContent>
-      </Card>
+      <StatCard
+        title="Faturamento"
+        value={formatCurrency(totalSpent)}
+        icon={<CreditCard size={18} />}
+        className="h-full"
+        iconClassName="bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400"
+      />
       
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Agendamentos Médios</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{avgAppointments}</div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Média de agendamentos por cliente
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+      <StatCard
+        title="Agendamentos Médios"
+        value={avgAppointments}
+        subtitle="Por cliente"
+        icon={<Calendar size={18} />}
+        className="h-full"
+        iconClassName="bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
+      />
+    </ResponsiveGrid>
   );
 }
