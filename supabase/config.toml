@@ -9,3 +9,7 @@ schemas = ["public", "storage"]
 # Allow public access to the webhook endpoint without authentication
 [functions.efipay-webhook]
 verify_jwt = false
+
+# Allow creating businesses with admin privileges
+[functions.create-business]
+verify_jwt = true

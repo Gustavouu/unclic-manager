@@ -84,146 +84,50 @@ export const OnboardingControls: React.FC = () => {
       // Gerar slug do negócio
       const slug = createBusinessSlug(businessData.name);
       
-      // 1. Criar o registro do negócio usando o serviço role (para evitar problemas de RLS)
-      const { data: businessRecord, error: businessError } = await supabase
-        .from('negocios')
-        .insert([
-          {
-            nome: businessData.name,
-            email_admin: businessData.email,
-            telefone: businessData.phone,
-            endereco: businessData.address,
-            numero: businessData.number,
-            bairro: businessData.neighborhood,
-            cidade: businessData.city,
-            estado: businessData.state,
-            cep: businessData.cep,
-            slug: slug,
-            status: 'ativo' // Marca o negócio como ativo
-          }
-        ])
-        .select('id')
-        .single();
+      // Preparar os dados para enviar ao edge function
+      const businessPayload = {
+        businessData: {
+          name: businessData.name,
+          email: businessData.email,
+          phone: businessData.phone,
+          address: businessData.address,
+          number: businessData.number,
+          neighborhood: businessData.neighborhood,
+          city: businessData.city,
+          state: businessData.state,
+          cep: businessData.cep,
+          slug: slug,
+          services: services,
+          staffMembers: staffMembers,
+          hasStaff: hasStaff
+        },
+        userId: user.id
+      };
       
-      if (businessError) {
+      // Chamar o edge function que usará a service role para criar o negócio
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-business`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          },
+          body: JSON.stringify(businessPayload)
+        }
+      );
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
         toast.dismiss(loadingToast);
-        console.error("Erro ao criar negócio:", businessError);
-        throw new Error(businessError.message || "Erro ao criar negócio");
+        throw new Error(result.error || "Erro ao criar negócio");
       }
       
-      if (!businessRecord) {
-        toast.dismiss(loadingToast);
-        throw new Error("Não foi possível obter o ID do negócio criado");
-      }
+      const businessId = result.businessId;
+      console.log("Negócio criado com sucesso via edge function. ID:", businessId);
       
-      const businessId = businessRecord.id;
-      console.log("Negócio criado com sucesso. ID:", businessId);
-      
-      // Atualizar toast de progresso
       toast.dismiss(loadingToast);
-      const updateUserToast = toast.loading("Atualizando seu perfil...");
-      
-      // 2. Atualizar o perfil do usuário com o ID do negócio
-      const { error: userError } = await supabase
-        .from('usuarios')
-        .update({ id_negocio: businessId })
-        .eq('id', user.id);
-      
-      if (userError) {
-        toast.dismiss(updateUserToast);
-        console.error("Erro ao atualizar perfil do usuário:", userError);
-        throw new Error(userError.message || "Erro ao atualizar perfil do usuário");
-      }
-      
-      // 3. Criar o perfil de acesso do usuário (administrador)
-      const { error: profileError } = await supabase
-        .from('perfis_acesso')
-        .insert([
-          {
-            id_usuario: user.id,
-            id_negocio: businessId,
-            e_administrador: true,
-            acesso_configuracoes: true,
-            acesso_agendamentos: true,
-            acesso_clientes: true,
-            acesso_financeiro: true,
-            acesso_estoque: true,
-            acesso_marketing: true,
-            acesso_relatorios: true
-          }
-        ]);
-      
-      if (profileError) {
-        toast.dismiss(updateUserToast);
-        console.error("Erro ao criar perfil de acesso:", profileError);
-        throw new Error(profileError.message || "Erro ao criar perfil de acesso");
-      }
-      
-      toast.dismiss(updateUserToast);
-      const servicesStaffToast = toast.loading("Configurando serviços e equipe...");
-      
-      // 4. Criar serviços
-      if (services.length > 0) {
-        const servicesData = services.map(service => ({
-          id_negocio: businessId,
-          nome: service.name,
-          descricao: service.description || null,
-          preco: service.price,
-          duracao: service.duration,
-          ativo: true
-        }));
-        
-        const { error: servicesError } = await supabase
-          .from('servicos')
-          .insert(servicesData);
-        
-        if (servicesError) {
-          console.error("Erro ao criar serviços:", servicesError);
-          // Continuar o processo mesmo com erro nos serviços
-          toast.error("Alguns serviços podem não ter sido salvos corretamente");
-        }
-      }
-      
-      // 5. Criar funcionários (se aplicável)
-      if (hasStaff && staffMembers.length > 0) {
-        const staffData = staffMembers.map(staff => ({
-          id_negocio: businessId,
-          nome: staff.name,
-          email: staff.email || null,
-          telefone: staff.phone || null,
-          especializacoes: staff.specialties || null,
-          status: 'ativo'
-        }));
-        
-        const { error: staffError } = await supabase
-          .from('funcionarios')
-          .insert(staffData);
-        
-        if (staffError) {
-          console.error("Erro ao criar funcionários:", staffError);
-          // Continuar o processo mesmo com erro nos funcionários
-          toast.error("Alguns funcionários podem não ter sido salvos corretamente");
-        }
-      }
-      
-      // 6. Criar configurações do negócio
-      try {
-        const { error: configError } = await supabase
-          .from('configuracoes_negocio')
-          .insert([{ 
-            id_negocio: businessId
-            // Usar valores padrão para o resto das configurações
-          }]);
-          
-        if (configError) {
-          console.error("Erro ao criar configurações:", configError);
-        }
-      } catch (configErr) {
-        // Ignorar erros de configuração pois serão criadas padrão depois
-        console.warn("Aviso ao criar configurações:", configErr);
-      }
-      
-      toast.dismiss(servicesStaffToast);
       toast.success("Estabelecimento configurado com sucesso!", {
         duration: 5000
       });
