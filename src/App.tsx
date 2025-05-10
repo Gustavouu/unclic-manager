@@ -12,13 +12,22 @@ import Index from "./pages/Index";
 import Inventory from "./pages/Inventory";
 import Professionals from "./pages/Professionals";
 import Services from "./pages/Services";
+import OnboardingPage from "./pages/Onboarding";
+import Login from "./pages/auth/Login";
+import SignUp from "./pages/auth/SignUp";
 import "./services/InitializationService"; // Import initialization service
 import { RequireAuth } from "./components/auth/RequireAuth";
 
 function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Index />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<SignUp />} />
+      <Route path="/onboarding" element={
+        <RequireAuth>
+          <OnboardingPage />
+        </RequireAuth>
+      } />
       <Route 
         element={
           <RequireAuth>

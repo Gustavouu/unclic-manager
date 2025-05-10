@@ -1,10 +1,53 @@
 
-import { Outlet } from "react-router-dom";
+import { useEffect } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
 import { Sidebar } from "./sidebar/Sidebar";
 import { Header } from "./Header";
 import { MobileSidebar } from "./sidebar/MobileSidebar";
+import { useTenant } from "@/contexts/TenantContext";
+import { toast } from "sonner";
 
 const Layout = () => {
+  const { currentBusiness, loading, error } = useTenant();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // If there's no business and we're done loading, redirect to onboarding
+    if (!loading && !currentBusiness) {
+      toast.error("Configure seu negócio antes de continuar");
+      navigate("/onboarding");
+      return;
+    }
+    
+    // If there's a business but it has a pending status, redirect to onboarding
+    if (!loading && currentBusiness && currentBusiness.status === 'pendente') {
+      toast.info("Complete a configuração do seu negócio");
+      navigate("/onboarding");
+      return;
+    }
+  }, [currentBusiness, loading, navigate]);
+  
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+  }
+  
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600">Erro ao carregar dados</h2>
+          <p className="text-gray-700 mt-2">{error}</p>
+          <button 
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            onClick={() => window.location.reload()}
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-background">
       <Sidebar />

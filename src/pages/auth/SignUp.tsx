@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,7 +40,9 @@ const SignUp = () => {
     
     try {
       await signup(email, password, name);
-      navigate("/dashboard");
+      
+      // After signup, navigate to index which will handle the routing
+      navigate("/");
     } catch (error) {
       console.error("Erro no cadastro:", error);
       // O toast já está sendo mostrado no hook useAuth
@@ -50,9 +51,9 @@ const SignUp = () => {
     }
   };
   
-  // Se já estiver autenticado, redirecionar para o dashboard
+  // Se já estiver autenticado, redirecionar para o index que decidirá o fluxo
   if (user && !loading) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
   
   return (

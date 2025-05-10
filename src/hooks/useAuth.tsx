@@ -95,6 +95,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           name: data.user.user_metadata?.name || "",
         });
         
+        // Verificar se o usuário já existe na tabela de usuários
+        const { data: existingUser, error: userCheckError } = await supabase
+          .from('usuarios')
+          .select('*')
+          .eq('id', data.user.id)
+          .maybeSingle();
+        
+        // Se o usuário não existir na tabela de usuários, criar o registro
+        if (!existingUser && !userCheckError) {
+          const { error: createUserError } = await supabase
+            .from('usuarios')
+            .insert([
+              { 
+                id: data.user.id,
+                email: data.user.email || "",
+                nome_completo: data.user.user_metadata?.name || "",
+                status: 'ativo'
+              },
+            ]);
+          
+          if (createUserError) {
+            console.error("Erro ao criar registro de usuário:", createUserError);
+            // Não interromper o fluxo, apenas logar o erro
+          }
+        }
+        
         toast.success("Login realizado com sucesso!");
       }
     } catch (error: any) {

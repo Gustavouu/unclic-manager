@@ -97,7 +97,7 @@ export const OnboardingControls: React.FC = () => {
             estado: businessData.state,
             cep: businessData.cep,
             slug: slug,
-            status: 'ativo'
+            status: 'ativo' // Mudança crucial: marca o negócio como ativo
           }
         ])
         .select('id')
@@ -188,7 +188,11 @@ export const OnboardingControls: React.FC = () => {
       }
       
       toast.success("Estabelecimento configurado com sucesso!");
-      navigate("/dashboard");
+      
+      // Redirecionar para o dashboard após um breve delay para que o toast seja visível
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1500);
       
     } catch (error: any) {
       console.error("Erro ao finalizar configuração:", error);

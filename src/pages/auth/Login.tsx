@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,7 +23,9 @@ const Login = () => {
     
     try {
       await login(email, password);
-      navigate("/dashboard");
+      
+      // Let Index component handle the routing based on onboarding status
+      navigate("/");
     } catch (error: any) {
       console.error("Erro de login:", error);
       setErrorMessage(error.message || "Falha na autenticação. Verifique suas credenciais.");
@@ -33,9 +34,9 @@ const Login = () => {
     }
   };
   
-  // Se já estiver autenticado, redirecionar para o dashboard
+  // Se já estiver autenticado, redirecionar para o index que decidirá o fluxo
   if (user && !loading) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
   
   return (
