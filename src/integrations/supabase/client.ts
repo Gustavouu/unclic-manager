@@ -127,7 +127,7 @@ export async function getUserTenants(): Promise<{ data: Tenant[] | null, error: 
     
     if (error) throw error;
     
-    // Transformar dados para formato mais amigável
+    // Correção aqui: mapear cada item do array individualmente
     const tenants = data.map(item => ({
       id: item.tenant_id,
       name: item.tenants?.name || '',
