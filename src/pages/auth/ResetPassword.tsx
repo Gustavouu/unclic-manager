@@ -73,7 +73,7 @@ const ResetPassword = () => {
                 <LoadingButton 
                   type="submit" 
                   className="w-full" 
-                  isLoading={status === 'loading'}
+                  isLoading={false}
                   icon={<Send className="h-4 w-4" />}
                 >
                   Enviar instruções
