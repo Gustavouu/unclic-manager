@@ -20,7 +20,7 @@ export const ServiceTableRow = ({
   // Format price to handle both string and number
   const formatPrice = (price: string | number) => {
     const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
-    return numericPrice.toFixed(2);
+    return isNaN(numericPrice) ? "0.00" : numericPrice.toFixed(2);
   };
 
   return (

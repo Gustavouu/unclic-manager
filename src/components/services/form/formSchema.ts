@@ -14,6 +14,7 @@ export const serviceFormSchema = z.object({
   isFeatured: z.boolean().default(false),
   description: z.string().optional(),
   template: z.string().default("custom"),
+  category: z.string().optional(),
 });
 
 export type ServiceFormValues = z.infer<typeof serviceFormSchema>;

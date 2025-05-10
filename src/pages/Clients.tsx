@@ -2,12 +2,14 @@
 import { useState } from "react";
 import { ClientsHeader } from "@/components/clients/ClientsHeader";
 import { ClientsTable } from "@/components/clients/ClientsTable";
-import { ClientStats } from "@/components/clients/ClientStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useClients } from "@/hooks/useClients";
 import { ClientsFiltersSheet } from "@/components/clients/ClientsFiltersSheet";
 import { ClientsFilters } from "@/components/clients/ClientsFilters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
+import { Users, TrendingUp, Calendar, Percent } from "lucide-react";
 
 const Clients = () => {
   const { clients, isLoading } = useClients();
@@ -39,7 +41,38 @@ const Clients = () => {
         <ClientsHeader />
       </div>
       
-      <ClientStats clients={filteredClients} />
+      <ResponsiveGrid columns={{ default: 1, sm: 4 }} gap="md" equalHeight>
+        <StatCard
+          title="Total de Clientes"
+          value={clients.length}
+          icon={<Users size={18} />}
+          className="h-full"
+          iconClassName="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+        />
+        <StatCard
+          title="Novos Clientes"
+          value="18"
+          icon={<TrendingUp size={18} />}
+          trend={{ value: 10, isPositive: true }}
+          className="h-full"
+          iconClassName="bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+        />
+        <StatCard
+          title="Visitas no Mês"
+          value="45"
+          icon={<Calendar size={18} />}
+          className="h-full"
+          iconClassName="bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
+        />
+        <StatCard
+          title="Taxa de Retorno"
+          value="65%"
+          icon={<Percent size={18} />}
+          trend={{ value: 5, isPositive: true }}
+          className="h-full"
+          iconClassName="bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400"
+        />
+      </ResponsiveGrid>
       
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="pb-3 border-b bg-white">

@@ -41,7 +41,7 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
   return (
     <header className="sticky top-0 z-30 flex flex-col border-b border-border/50 py-2 px-4 md:px-6 bg-background/80 backdrop-blur-sm transition-all duration-200">
       <div className="flex items-center justify-between h-12">
-        <div className="flex items-center gap-4 overflow-hidden">
+        <div className="flex items-center gap-6 overflow-hidden">
           {breadcrumb.length > 0 && (
             <Breadcrumb className="hidden sm:flex">
               <BreadcrumbList>

@@ -41,9 +41,11 @@ export const useBusinessWebsite = () => {
         name: service.name,
         duration: service.duration,
         price: typeof service.price === 'string' ? parseFloat(service.price) : service.price,
-        description: service.description
+        description: service.description || ''
       }));
-      setAvailableServices(convertedServices as OnboardingServiceData[]);
+      
+      // Type assertion to handle the conversion
+      setAvailableServices(convertedServices as unknown as OnboardingServiceData[]);
     }
   }, [services]);
 

@@ -5,11 +5,13 @@ import { HelpCircle, Plus } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { InventoryStats } from '@/components/inventory/InventoryStats';
 import { InventoryTable } from '@/components/inventory/InventoryTable';
 import { NewProductDialog } from '@/components/inventory/NewProductDialog';
 import { useInventory } from '@/hooks/inventory/useInventory';
 import { Product } from '@/hooks/inventory/types';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
+import { Package, AlertCircle, DollarSign } from 'lucide-react';
 
 export default function Inventory() {
   const [showNewProductDialog, setShowNewProductDialog] = useState(false);
@@ -43,6 +45,17 @@ export default function Inventory() {
       deleteProduct(product.id);
     }
   };
+
+  // Calculate statistics for stat cards
+  const totalItems = products.length;
+  
+  const lowStockItems = products.filter(product => 
+    product.quantity <= product.minQuantity
+  ).length;
+  
+  const totalValue = products.reduce((sum, product) => 
+    sum + (product.price * product.quantity), 0
+  );
 
   return (
     <div className="space-y-6">
@@ -101,7 +114,31 @@ export default function Inventory() {
         </div>
       </div>
       
-      <InventoryStats products={products} />
+      <ResponsiveGrid columns={{ default: 1, sm: 3 }} gap="md" equalHeight>
+        <StatCard
+          title="Total de Produtos"
+          value={totalItems}
+          icon={<Package size={18} />}
+          className="h-full"
+          iconClassName="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+        />
+        
+        <StatCard
+          title="Estoque Baixo"
+          value={lowStockItems}
+          icon={<AlertCircle size={18} />}
+          className="h-full"
+          iconClassName="bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400"
+        />
+        
+        <StatCard
+          title="Valor Total"
+          value={`R$ ${totalValue.toFixed(2)}`}
+          icon={<DollarSign size={18} />}
+          className="h-full"
+          iconClassName="bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+        />
+      </ResponsiveGrid>
 
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="pb-3 border-b bg-white">
