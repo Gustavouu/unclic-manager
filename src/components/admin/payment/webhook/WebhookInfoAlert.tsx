@@ -4,7 +4,7 @@ import { AlertCircle } from "lucide-react";
 
 export function WebhookInfoAlert() {
   return (
-    <Alert variant="info" className="bg-blue-50 text-blue-800 border-blue-200">
+    <Alert variant="default" className="bg-blue-50 text-blue-800 border-blue-200">
       <AlertCircle className="h-4 w-4" />
       <AlertTitle>Informação sobre Webhooks</AlertTitle>
       <AlertDescription>
