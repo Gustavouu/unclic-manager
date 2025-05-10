@@ -39,11 +39,11 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
   };
   
   return (
-    <header className="sticky top-0 z-30 flex flex-col border-b border-border/50 py-2 px-4 md:px-6 bg-white backdrop-blur-sm">
+    <header className="sticky top-0 z-30 flex flex-col border-b border-border/50 py-2 px-4 md:px-6 bg-background/80 backdrop-blur-sm transition-all duration-200">
       <div className="flex items-center justify-between h-12">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 overflow-hidden">
           {breadcrumb.length > 0 && (
-            <Breadcrumb>
+            <Breadcrumb className="hidden sm:flex">
               <BreadcrumbList>
                 {breadcrumb.map((item, index) => {
                   if (index === breadcrumb.length - 1) {
@@ -80,33 +80,48 @@ export const Header = ({ breadcrumb = [] }: HeaderProps) => {
         </div>
         
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="rounded-full">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full relative"
+            aria-label="Notificações"
+          >
             <Bell size={18} className="text-muted-foreground" />
+            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
           </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 ml-2 p-1 pr-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="" />
-                  <AvatarFallback className="bg-blue-100 text-blue-600 font-medium">
-                    {user?.name ? user.name.substring(0, 2).toUpperCase() : 'GH'}
+                  <AvatarImage src="" alt={user?.name || "Usuário"} />
+                  <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                    {user?.name ? user.name.substring(0, 2).toUpperCase() : 'UN'}
                   </AvatarFallback>
                 </Avatar>
                 {!isMobile && (
                   <>
-                    <span className="text-sm font-medium">{user?.name || "Gustavo Henriqueq"}</span>
+                    <span className="text-sm font-medium max-w-[100px] truncate">
+                      {user?.name || "Usuário"}
+                    </span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </>
                 )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{user?.name || "Usuário"}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email || "usuario@exemplo.com"}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/settings")}>Perfil</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/settings/account")}>Perfil</DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/settings")}>Configurações</DropdownMenuItem>
-              <DropdownMenuItem>Assinatura</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/billing")}>Assinatura</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 Sair

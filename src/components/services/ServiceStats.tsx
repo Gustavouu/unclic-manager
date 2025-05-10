@@ -1,62 +1,56 @@
-import { StatsCard } from "@/components/common/StatsCard";
-import { ScissorsSquare, TrendingUp, Clock, Tag } from "lucide-react";
+
+import React from "react";
+import { StatCard } from "@/components/ui/stat-card";
 import { ServiceData } from "./servicesData";
+import { Grid } from "lucide-react";
 
 interface ServiceStatsProps {
   services: ServiceData[];
 }
 
 export function ServiceStats({ services }: ServiceStatsProps) {
+  // Calculate statistics
   const totalServices = services.length;
+  const activeServices = services.filter(service => service.isActive !== false).length;
   const popularServices = services.filter(service => service.isPopular).length;
   const featuredServices = services.filter(service => service.isFeatured).length;
   
-  // Calcular duração média
-  const totalDuration = services.reduce((sum, service) => sum + service.duration, 0);
-  const averageDuration = totalServices > 0 ? Math.round(totalDuration / totalServices) : 0;
-  
-  // Calcular preço médio
-  const totalPrice = services.reduce((sum, service) => sum + service.price, 0);
-  const averagePrice = totalServices > 0 
-    ? (totalPrice / totalServices).toFixed(2) 
-    : "0.00";
+  // Calculate average price
+  const averagePrice = services.length
+    ? services.reduce((sum, service) => sum + service.price, 0) / services.length
+    : 0;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <StatsCard
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+      <StatCard
         title="Total de Serviços"
         value={totalServices}
-        description="Serviços ativos"
-        icon={<ScissorsSquare size={18} />}
-        iconColor="bg-purple-50 text-purple-500"
-        borderColor="border-l-purple-600"
+        colorScheme="blue"
+        icon={<Grid size={18} className="text-blue-600" />}
       />
       
-      <StatsCard
+      <StatCard
+        title="Serviços Ativos"
+        value={activeServices}
+        description={`${Math.round((activeServices / totalServices) * 100)}% do total`}
+        colorScheme="green"
+        trend={{
+          value: Math.round((activeServices / totalServices) * 100),
+          direction: "neutral"
+        }}
+      />
+      
+      <StatCard
+        title="Preço Médio"
+        value={`R$ ${averagePrice.toFixed(2)}`}
+        colorScheme="amber"
+      />
+      
+      <StatCard
         title="Serviços Populares"
         value={popularServices}
-        description={`${Math.round((popularServices / totalServices) * 100) || 0}% do total`}
-        icon={<TrendingUp size={18} />}
-        iconColor="bg-blue-50 text-blue-500"
-        borderColor="border-l-blue-600"
-      />
-      
-      <StatsCard
-        title="Tempo Médio"
-        value={`${averageDuration} min`}
-        description="Duração média dos serviços"
-        icon={<Clock size={18} />}
-        iconColor="bg-amber-50 text-amber-500"
-        borderColor="border-l-amber-600"
-      />
-      
-      <StatsCard
-        title="Preço Médio"
-        value={`R$ ${averagePrice}`}
-        description="Valor médio dos serviços"
-        icon={<Tag size={18} />}
-        iconColor="bg-green-50 text-green-500"
-        borderColor="border-l-green-600"
+        description={`${Math.round((popularServices / totalServices) * 100)}% do total`}
+        colorScheme="purple"
       />
     </div>
   );

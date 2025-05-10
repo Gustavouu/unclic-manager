@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Obter variáveis de ambiente - usando import.meta.env ao invés de process.env para o Vite
@@ -130,9 +129,9 @@ export async function getUserTenants(): Promise<{ data: Tenant[] | null, error: 
     // Transformar dados para formato mais amigável
     const tenants = data.map(item => ({
       id: item.tenant_id,
-      name: item.tenants.name,
-      logo_url: item.tenants.logo_url,
-      slug: item.tenants.slug,
+      name: item.tenants?.name,
+      logo_url: item.tenants?.logo_url,
+      slug: item.tenants?.slug,
       role: item.role
     }));
     
