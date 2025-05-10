@@ -111,6 +111,7 @@ export async function getUserTenants(): Promise<{ data: Tenant[] | null, error: 
       throw new Error('Usuário não autenticado');
     }
     
+    // Verifique se estamos usando as tabelas em português ou inglês
     const { data, error } = await supabase
       .from('tenant_users')
       .select(`
@@ -127,13 +128,15 @@ export async function getUserTenants(): Promise<{ data: Tenant[] | null, error: 
     
     if (error) throw error;
     
+    console.log('Dados obtidos dos tenants:', data);
+    
     // Transformar os dados corretamente acessando as propriedades aninhadas
     const tenants = data.map(item => ({
       id: item.tenant_id,
       name: item.tenants?.name || '',
       logo_url: item.tenants?.logo_url || '',
       slug: item.tenants?.slug || '',
-      role: item.role
+      role: item.role || ''
     }));
     
     return { data: tenants, error: null };
