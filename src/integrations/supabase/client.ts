@@ -102,6 +102,13 @@ interface Tenant {
   role: string;
 }
 
+// Interface para representar os dados retornados pela consulta
+interface TenantQueryResult {
+  tenant_id: string;
+  role: string;
+  tenants?: Record<string, any> | null;
+}
+
 // Função para obter todos os tenants do usuário atual
 export async function getUserTenants(): Promise<{ data: Tenant[] | null, error: string | null }> {
   try {
@@ -137,15 +144,21 @@ export async function getUserTenants(): Promise<{ data: Tenant[] | null, error: 
     }
     
     // Transformar os dados corretamente acessando as propriedades aninhadas
-    const tenants = data.map(item => {
+    const tenants = data.map((item: TenantQueryResult) => {
       // Verificar se temos o objeto tenants ou se precisa acessar de outra forma
       const tenantData = item.tenants || {};
       
+      // Se tenantData é um array, pegue o primeiro elemento
+      const tenant = Array.isArray(tenantData) 
+        ? (tenantData[0] || {}) 
+        : tenantData;
+      
+      // Extrair as propriedades com segurança usando valores padrão
       return {
         id: item.tenant_id,
-        name: tenantData.name || '',
-        logo_url: tenantData.logo_url || '',
-        slug: tenantData.slug || '',
+        name: String(tenant.name || ''),
+        logo_url: String(tenant.logo_url || ''),
+        slug: String(tenant.slug || ''),
         role: item.role || ''
       };
     });

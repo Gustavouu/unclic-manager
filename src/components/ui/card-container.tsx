@@ -2,8 +2,9 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { LoadingState } from '@/hooks/use-loading-state';
-import { AsyncState } from './async-state';
+import { LoadingSpinner, ErrorMessage } from '@/components/ui/async-feedback';
+
+type LoadingState = 'idle' | 'loading' | 'success' | 'error';
 
 interface CardContainerProps {
   title?: React.ReactNode;
@@ -28,8 +29,8 @@ export function CardContainer({
   contentClassName,
   variant = 'default',
   state = 'idle',
-  loadingText,
-  errorText,
+  loadingText = 'Carregando...',
+  errorText = 'Ocorreu um erro',
   error
 }: CardContainerProps) {
   const variantStyles = {
@@ -39,31 +40,33 @@ export function CardContainer({
     glass: 'bg-white/60 dark:bg-background/60 backdrop-blur-md border-white/20 dark:border-white/5'
   };
 
+  const renderContent = () => {
+    switch (state) {
+      case 'loading':
+        return <LoadingSpinner message={loadingText} />;
+      case 'error':
+        return <ErrorMessage message={errorText} description={error} />;
+      default:
+        return children;
+    }
+  };
+
   return (
-    <Card className={cn(variantStyles[variant], className)}>
+    <Card className={cn(variantStyles[variant], 'transition-all duration-200', className)}>
       {(title || description) && (
         <CardHeader>
-          {title && (typeof title === 'string' ? <CardTitle>{title}</CardTitle> : title)}
+          {title && (
+            typeof title === 'string' ? <CardTitle>{title}</CardTitle> : title
+          )}
           {description && (
-            typeof description === 'string' 
-              ? <CardDescription>{description}</CardDescription> 
-              : description
+            typeof description === 'string' ? 
+              <CardDescription>{description}</CardDescription> : 
+              description
           )}
         </CardHeader>
       )}
       <CardContent className={cn('relative', contentClassName)}>
-        {state !== 'idle' ? (
-          <AsyncState 
-            state={state} 
-            loadingText={loadingText} 
-            errorText={errorText} 
-            error={error}
-          >
-            {state === 'loading' ? null : children}
-          </AsyncState>
-        ) : (
-          children
-        )}
+        {renderContent()}
       </CardContent>
       {footer && <CardFooter>{footer}</CardFooter>}
     </Card>
