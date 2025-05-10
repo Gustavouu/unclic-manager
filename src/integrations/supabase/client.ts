@@ -130,14 +130,25 @@ export async function getUserTenants(): Promise<{ data: Tenant[] | null, error: 
     
     console.log('Dados obtidos dos tenants:', data);
     
+    // Verificar se os dados estão em um formato esperado
+    if (!Array.isArray(data)) {
+      console.error('Dados recebidos não são um array:', data);
+      return { data: null, error: 'Formato de dados inesperado' };
+    }
+    
     // Transformar os dados corretamente acessando as propriedades aninhadas
-    const tenants = data.map(item => ({
-      id: item.tenant_id,
-      name: item.tenants?.name || '',
-      logo_url: item.tenants?.logo_url || '',
-      slug: item.tenants?.slug || '',
-      role: item.role || ''
-    }));
+    const tenants = data.map(item => {
+      // Verificar se temos o objeto tenants ou se precisa acessar de outra forma
+      const tenantData = item.tenants || {};
+      
+      return {
+        id: item.tenant_id,
+        name: tenantData.name || '',
+        logo_url: tenantData.logo_url || '',
+        slug: tenantData.slug || '',
+        role: item.role || ''
+      };
+    });
     
     return { data: tenants, error: null };
   } catch (error: any) {
