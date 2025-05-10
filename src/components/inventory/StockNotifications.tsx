@@ -1,93 +1,80 @@
 
-import { Bell } from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import React, { useState } from 'react';
+import { useStockNotifications } from '@/hooks/inventory/useStockNotifications';
+import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { useStockNotifications } from "@/hooks/inventory/useStockNotifications";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/ui/popover';
+import { Bell } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-export function StockNotifications() {
+export const StockNotifications = () => {
+  const { lowStockItems, hasUnreadNotifications, markNotificationsAsRead } = useStockNotifications();
   const [open, setOpen] = useState(false);
-  const { 
-    lowStockItems, 
-    isLoading, 
-    hasUnreadNotifications, 
-    markNotificationsAsRead 
-  } = useStockNotifications();
+  const navigate = useNavigate();
   
-  const handleOpen = (isOpen: boolean) => {
-    setOpen(isOpen);
-    if (isOpen && hasUnreadNotifications) {
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (newOpen && hasUnreadNotifications) {
       markNotificationsAsRead();
     }
   };
   
+  const goToInventory = () => {
+    navigate('/inventory');
+    setOpen(false);
+  };
+  
   return (
-    <Popover open={open} onOpenChange={handleOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button size="icon" variant="ghost" className="relative">
           <Bell className="h-5 w-5" />
           {hasUnreadNotifications && (
-            <Badge 
-              className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-red-500 text-white text-[10px]" 
-              variant="destructive"
-            >
-              {lowStockItems.length > 9 ? '9+' : lowStockItems.length}
-            </Badge>
+            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="flex items-center justify-between border-b px-3 py-2">
-          <h4 className="font-medium">Notificações de Estoque</h4>
-          <Badge variant="outline" className="font-normal">
-            {lowStockItems.length} {lowStockItems.length === 1 ? 'item' : 'itens'}
-          </Badge>
-        </div>
-        <div className="max-h-80 overflow-auto">
-          {isLoading ? (
-            <div className="p-3 space-y-3">
-              {Array(3).fill(0).map((_, i) => (
-                <div key={i} className="flex flex-col gap-2">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
+      <PopoverContent className="w-80" align="end">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium">Notificações de Estoque</h4>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={goToInventory} 
+              className="text-xs"
+            >
+              Ver Estoque
+            </Button>
+          </div>
+          
+          <div className="space-y-2 max-h-[300px] overflow-auto">
+            {lowStockItems.length > 0 ? (
+              lowStockItems.map(item => (
+                <div 
+                  key={item.id} 
+                  className="bg-muted/50 p-2 rounded text-xs space-y-1"
+                >
+                  <div className="flex justify-between">
+                    <span className="font-medium">{item.name}</span>
+                    <span className="text-red-500">
+                      {item.currentQuantity} / {item.minQuantity} {item.unit}
+                    </span>
+                  </div>
+                  <p className="text-muted-foreground">Estoque baixo, necessita reposição</p>
                 </div>
-              ))}
-            </div>
-          ) : lowStockItems.length === 0 ? (
-            <div className="p-6 text-center text-sm text-muted-foreground">
-              Nenhum produto com estoque baixo.
-            </div>
-          ) : (
-            <div className="divide-y">
-              {lowStockItems.map((item) => (
-                <div key={item.id} className="p-3 hover:bg-slate-50">
-                  <h5 className="font-medium">{item.name}</h5>
-                  <p className="text-sm text-red-600">
-                    Estoque: {item.currentQuantity} {item.unit} 
-                    (Mínimo: {item.minQuantity})
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="border-t p-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full"
-            asChild
-          >
-            <a href="/inventory">Gerenciar Estoque</a>
-          </Button>
+              ))
+            ) : (
+              <div className="text-center p-4 text-sm text-muted-foreground">
+                Nenhum produto com estoque baixo
+              </div>
+            )}
+          </div>
         </div>
       </PopoverContent>
     </Popover>
   );
-}
+};

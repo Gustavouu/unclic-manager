@@ -62,7 +62,7 @@ export function useStockNotifications() {
         // Process stock_items data
         const lowItems = stockItems
           .filter(item => {
-            // Fix: Properly access the nested product object
+            // Safely check the product properties
             const product = item.products as unknown as { 
               id: string; 
               name: string; 
@@ -72,7 +72,7 @@ export function useStockNotifications() {
             return product && item.quantity < (product?.minStock || 0);
           })
           .map(item => {
-            // Fix: Properly cast the products object to access its properties
+            // Safely access the product properties
             const product = item.products as unknown as { 
               id: string; 
               name: string; 
