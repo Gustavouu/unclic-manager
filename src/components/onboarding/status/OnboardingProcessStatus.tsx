@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useTenant } from "@/contexts/TenantContext";
+import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 
 export const OnboardingProcessStatus: React.FC = () => {
   const { 
@@ -28,6 +30,8 @@ export const OnboardingProcessStatus: React.FC = () => {
   
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { refreshBusinessData } = useTenant();
+  const { refreshOnboardingStatus } = useNeedsOnboarding();
   
   // Function to handle finishing setup after business creation
   const handleCompleteSetup = async () => {
@@ -72,6 +76,12 @@ export const OnboardingProcessStatus: React.FC = () => {
       // Clear onboarding data from localStorage
       localStorage.removeItem('unclic-manager-onboarding');
       
+      // Refresh both business data and onboarding status
+      await Promise.all([
+        refreshBusinessData(), 
+        refreshOnboardingStatus()
+      ]);
+      
       // Redirect to dashboard after successful setup
       setTimeout(() => {
         navigate("/dashboard", { replace: true });
@@ -105,6 +115,12 @@ export const OnboardingProcessStatus: React.FC = () => {
               // Clear onboarding data
               localStorage.removeItem('unclic-manager-onboarding');
               
+              // Refresh both business data and onboarding status
+              await Promise.all([
+                refreshBusinessData(), 
+                refreshOnboardingStatus()
+              ]);
+              
               // Redirect to dashboard
               navigate("/dashboard", { replace: true });
             } else {
@@ -134,9 +150,19 @@ export const OnboardingProcessStatus: React.FC = () => {
   };
   
   // Function to go to dashboard
-  const handleGoToDashboard = () => {
+  const handleGoToDashboard = async () => {
     // Ensure we clear any onboarding data
     localStorage.removeItem('unclic-manager-onboarding');
+    
+    // Refresh data before redirecting
+    try {
+      await Promise.all([
+        refreshBusinessData(),
+        refreshOnboardingStatus()
+      ]);
+    } catch (error) {
+      console.error("Erro ao atualizar dados:", error);
+    }
     
     // Redirect to dashboard with replace (prevents going back to onboarding)
     navigate("/dashboard", { replace: true });

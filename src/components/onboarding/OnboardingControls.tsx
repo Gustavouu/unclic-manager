@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
@@ -7,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { useTenant } from "@/contexts/TenantContext";
 
 export const OnboardingControls: React.FC = () => {
   const { 
@@ -19,6 +21,7 @@ export const OnboardingControls: React.FC = () => {
     staffMembers,
     businessHours,
     hasStaff,
+    status,
     setStatus,
     setError,
     setProcessingStep,
@@ -28,6 +31,7 @@ export const OnboardingControls: React.FC = () => {
   
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { refreshBusinessData } = useTenant();
   
   const handleNext = async () => {
     // Validar dados do estabelecimento antes de avançar
@@ -189,6 +193,9 @@ export const OnboardingControls: React.FC = () => {
       // Clear onboarding data
       localStorage.removeItem('unclic-manager-onboarding');
       
+      // Refresh business data to update contexts
+      await refreshBusinessData();
+      
       // Redirect to dashboard after a delay
       setTimeout(() => {
         navigate("/dashboard", { replace: true });
@@ -247,6 +254,9 @@ export const OnboardingControls: React.FC = () => {
                   
                   // Clear onboarding data
                   localStorage.removeItem('unclic-manager-onboarding');
+                  
+                  // Refresh business data to update contexts
+                  await refreshBusinessData();
                   
                   // Redirect to dashboard after a delay
                   setTimeout(() => {

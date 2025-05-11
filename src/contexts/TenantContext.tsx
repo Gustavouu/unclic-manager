@@ -21,6 +21,7 @@ type TenantContextType = {
   error: string | null;
   setCurrentBusinessById: (id: string) => Promise<void>;
   refreshBusinessData: () => Promise<void>;
+  updateBusinessStatus: (businessId: string, newStatus: string) => Promise<boolean>;
 };
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -70,11 +71,50 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
         throw businessError;
       }
 
+      // Clear cache after successfully fetching updated data
+      try {
+        localStorage.removeItem(`business-${userData.id_negocio}`);
+        localStorage.removeItem(`user-business-${user.id}`);
+      } catch (cacheError) {
+        console.error("Error clearing cache:", cacheError);
+      }
+
       setCurrentBusiness(businessData as Business);
     } catch (err: any) {
       console.error('Erro ao buscar dados do negócio:', err);
       setError(err.message);
       toast.error('Erro ao carregar dados do negócio.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update business status
+  const updateBusinessStatus = async (businessId: string, newStatus: string) => {
+    if (!user) return false;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Update the business status
+      const { error: updateError } = await supabase
+        .from('negocios')
+        .update({ status: newStatus })
+        .eq('id', businessId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Refresh business data
+      await fetchUserBusiness();
+      return true;
+    } catch (err: any) {
+      console.error('Erro ao atualizar status do negócio:', err);
+      setError(err.message);
+      toast.error('Erro ao atualizar status do negócio.');
+      return false;
     } finally {
       setLoading(false);
     }
@@ -136,7 +176,8 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     loading,
     error,
     setCurrentBusinessById,
-    refreshBusinessData
+    refreshBusinessData,
+    updateBusinessStatus
   };
 
   return (

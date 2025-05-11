@@ -5,9 +5,13 @@ import { AlertCircle } from "lucide-react";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 
 export const OnboardingBanner: React.FC = () => {
-  const { needsOnboarding, loading, error, onboardingViewed, markOnboardingAsViewed } = useNeedsOnboarding();
+  const { needsOnboarding, loading, error, onboardingViewed, markOnboardingAsViewed, refreshOnboardingStatus } = useNeedsOnboarding();
+  const { currentBusiness, refreshBusinessData } = useTenant();
   const navigate = useNavigate();
   
   // Don't show if loading, no onboarding needed, error occurred, or already viewed
@@ -23,23 +27,71 @@ export const OnboardingBanner: React.FC = () => {
     markOnboardingAsViewed();
   };
   
+  const handleFixStatus = async () => {
+    if (!currentBusiness?.id) {
+      toast.error("Não foi possível identificar o negócio.");
+      return;
+    }
+    
+    try {
+      toast.loading("Corrigindo status do negócio...");
+      
+      // Update business status directly
+      const { error: updateError } = await supabase
+        .from("negocios")
+        .update({ status: "ativo" })
+        .eq("id", currentBusiness.id);
+      
+      if (updateError) {
+        throw updateError;
+      }
+      
+      // Refresh both contexts to reflect changes
+      await refreshBusinessData();
+      await refreshOnboardingStatus();
+      
+      toast.success("Status do negócio corrigido com sucesso!");
+      
+      // Mark as viewed to hide the banner
+      markOnboardingAsViewed();
+    } catch (error: any) {
+      console.error("Erro ao corrigir status:", error);
+      toast.error(`Erro ao corrigir status: ${error.message}`);
+    }
+  };
+  
+  // Special message for businesses with "pendente" status that completed onboarding
+  const isPendingStatus = currentBusiness?.status === "pendente";
+  
   return (
     <Alert className="mb-6">
       <AlertCircle className="h-4 w-4 mr-2" />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full">
         <div>
-          <AlertTitle className="text-base">Configuração incompleta</AlertTitle>
+          <AlertTitle className="text-base">
+            {isPendingStatus ? "Status pendente" : "Configuração incompleta"}
+          </AlertTitle>
           <AlertDescription>
-            Complete a configuração do seu negócio para aproveitar todos os recursos disponíveis.
+            {isPendingStatus 
+              ? "Seu negócio tem status pendente. Corrija o status para ter acesso completo a todas as funcionalidades."
+              : "Complete a configuração do seu negócio para aproveitar todos os recursos disponíveis."
+            }
           </AlertDescription>
         </div>
         <div className="flex gap-2 mt-3 sm:mt-0">
           <Button variant="outline" size="sm" onClick={handleDismiss}>
             Mais tarde
           </Button>
-          <Button size="sm" onClick={handleContinueSetup}>
-            Continuar configuração
-          </Button>
+          
+          {isPendingStatus ? (
+            <Button size="sm" variant="destructive" onClick={handleFixStatus}>
+              Corrigir status
+            </Button>
+          ) : (
+            <Button size="sm" onClick={handleContinueSetup}>
+              Continuar configuração
+            </Button>
+          )}
         </div>
       </div>
     </Alert>
