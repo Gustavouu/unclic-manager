@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -172,7 +171,7 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
         
         // Process popular services
         const serviceCountMap = new Map<string, {id: string, name: string, count: number}>();
-        popularServicesData?.forEach(app => {
+        popularServicesData?.forEach((app: any) => {
           if (!app.id_servico || !app.servicos) return;
           
           const serviceId = app.id_servico;

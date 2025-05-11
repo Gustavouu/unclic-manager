@@ -37,23 +37,21 @@ function App() {
           } />
           <Route path="/*" element={
             <RequireAuth>
-              <Layout>
-                <Routes>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/appointments" element={<Appointments />} />
-                  <Route path="/clients" element={<Clients />} />
-                  <Route path="/services" element={<Services />} />
-                  <Route path="/professionals" element={<Professionals />} />
-                  <Route path="/reports" element={<Reports />} />
-                  <Route path="/finance" element={<Finance />} />
-                  <Route path="/inventory" element={<Inventory />} />
-                  <Route path="/payments" element={<Payments />} />
-                  <Route path="/settings/*" element={<Settings />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Layout>
+              <Layout />
             </RequireAuth>
-          } />
+          }>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="appointments" element={<Appointments />} />
+            <Route path="clients" element={<Clients />} />
+            <Route path="services" element={<Services />} />
+            <Route path="professionals" element={<Professionals />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="finance" element={<Finance />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="payments" element={<Payments />} />
+            <Route path="settings/*" element={<Settings />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
         </Routes>
         <Toaster richColors position="top-right" />
       </TenantProvider>
