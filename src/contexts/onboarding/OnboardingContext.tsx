@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, ReactNode, useState, useRef, useEffect } from "react";
-import { OnboardingContextType, BusinessData } from "./types";
+import { OnboardingContextType, BusinessData, OnboardingMethod, OnboardingStatus } from "./types";
 import { useBusinessDataState } from "./hooks/useBusinessDataState";
 import { useServicesState } from "./hooks/useServicesState";
 import { useStaffState } from "./hooks/useStaffState";
@@ -13,7 +13,13 @@ const OnboardingContext = createContext<OnboardingContextType | undefined>(undef
 
 // Provider component
 export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(-1); // Start at -1 for welcome screen
+  const [onboardingMethod, setOnboardingMethod] = useState<OnboardingMethod>(null);
+  const [status, setStatus] = useState<OnboardingStatus>("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [processingStep, setProcessingStep] = useState<string | null>(null);
+  const [businessCreated, setBusinessCreated] = useState<{id?: string; slug?: string} | null>(null);
+  
   const hasLoaded = useRef(false);
   const saveTimeoutRef = useRef<number | null>(null);
   
@@ -54,13 +60,15 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     businessHours,
     hasStaff,
     currentStep,
+    onboardingMethod,
     hasLoaded,
     setBusinessDataState,
     setServices,
     setStaffMembers,
     setBusinessHours,
     setHasStaff,
-    setCurrentStep
+    setCurrentStep,
+    setOnboardingMethod
   );
   
   // Assign the real function to the ref
@@ -70,6 +78,35 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   
   // Completion hook
   const { isComplete } = useCompletion(businessData, services, staffMembers, hasStaff);
+
+  // Function to reset onboarding
+  const resetOnboarding = () => {
+    setCurrentStep(-1);
+    setOnboardingMethod(null);
+    setStatus("idle");
+    setError(null);
+    setProcessingStep(null);
+    setBusinessCreated(null);
+    
+    // Reset all data
+    setBusinessDataState({
+      name: "",
+      email: "",
+      phone: "",
+      cep: "",
+      address: "",
+      number: "",
+      neighborhood: "",
+      city: "",
+      state: ""
+    });
+    setServices([]);
+    setStaffMembers([]);
+    setHasStaff(false);
+    
+    // Clear localStorage
+    localStorage.removeItem('unclic-manager-onboarding');
+  };
 
   // The context value object with all the state and functions
   const contextValue: OnboardingContextType = {
@@ -91,7 +128,18 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     setHasStaff,
     isComplete,
     saveProgress,
-    loadProgress
+    loadProgress,
+    onboardingMethod,
+    setOnboardingMethod,
+    status,
+    setStatus,
+    error,
+    setError,
+    processingStep,
+    setProcessingStep,
+    resetOnboarding,
+    businessCreated,
+    setBusinessCreated
   };
 
   return (

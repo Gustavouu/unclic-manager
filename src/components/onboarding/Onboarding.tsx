@@ -11,9 +11,18 @@ import { HoursStep } from "./steps/HoursStep";
 import { SummaryStep } from "./steps/SummaryStep";
 import { OnboardingHeader } from "./OnboardingHeader";
 import { OnboardingControls } from "./OnboardingControls";
+import { WelcomeScreen } from "./welcome/WelcomeScreen";
+import { OnboardingProcessStatus } from "./status/OnboardingProcessStatus";
 
 export const Onboarding = () => {
-  const { currentStep, loadProgress, saveProgress } = useOnboarding();
+  const { 
+    currentStep, 
+    loadProgress, 
+    saveProgress, 
+    onboardingMethod,
+    status,
+    error
+  } = useOnboarding();
 
   // Load saved data when component mounts
   useEffect(() => {
@@ -32,7 +41,33 @@ export const Onboarding = () => {
     }, 500); // Increased timeout to reduce saving frequency
 
     return () => clearTimeout(timeoutId);
-  }, [currentStep, saveProgress]);
+  }, [currentStep, saveProgress, onboardingMethod]);
+
+  // Show welcome screen if no method is selected
+  if (currentStep === -1 || onboardingMethod === null) {
+    return (
+      <div className="container max-w-5xl mx-auto py-8 px-4">
+        <Card>
+          <CardContent className="p-6">
+            <WelcomeScreen />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show status screen when processing
+  if (status === "processing" || status === "verifying" || status === "saving") {
+    return (
+      <div className="container max-w-5xl mx-auto py-8 px-4">
+        <Card>
+          <CardContent className="p-6">
+            <OnboardingProcessStatus />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-5xl mx-auto py-8 px-4">

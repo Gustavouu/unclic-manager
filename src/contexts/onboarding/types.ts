@@ -1,4 +1,3 @@
-
 // Types for the onboarding context
 
 // Business data types
@@ -58,7 +57,13 @@ export interface BusinessHours {
   };
 }
 
-// Onboarding context interface
+// Onboarding method types
+export type OnboardingMethod = "import" | "upload" | "manual" | null;
+
+// Onboarding status types
+export type OnboardingStatus = "idle" | "loading" | "saving" | "processing" | "verifying" | "error" | "success";
+
+// Extended onboarding context interface
 export interface OnboardingContextType {
   currentStep: number;
   setCurrentStep: (step: number) => void;
@@ -79,4 +84,15 @@ export interface OnboardingContextType {
   isComplete: () => boolean;
   saveProgress: () => void;
   loadProgress: () => void;
+  onboardingMethod: OnboardingMethod;
+  setOnboardingMethod: (method: OnboardingMethod) => void;
+  status: OnboardingStatus;
+  setStatus: (status: OnboardingStatus) => void;
+  error: string | null;
+  setError: (error: string | null) => void;
+  processingStep: string | null;
+  setProcessingStep: (step: string | null) => void;
+  resetOnboarding: () => void;
+  businessCreated: {id?: string; slug?: string} | null;
+  setBusinessCreated: (data: {id?: string; slug?: string} | null) => void;
 }

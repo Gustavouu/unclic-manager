@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 // Function to generate a unique slug based on a name
-const generateUniqueSlug = (name, attempt = 0) => {
+const generateUniqueSlug = (name: string, attempt = 0) => {
   const baseSlug = name
     .toLowerCase()
     .normalize("NFD")
@@ -24,7 +24,6 @@ const generateUniqueSlug = (name, attempt = 0) => {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// SIMPLIFIED FUNCTION - Focus only on creating the business entity
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -82,15 +81,14 @@ serve(async (req) => {
       }
       
       // Create user record
-      const { data: createdUser, error: createUserError } = await supabase
+      const { error: createUserError } = await supabase
         .from('usuarios')
         .insert([{
           id: userId,
           email: userEmail,
           nome_completo: userName,
           status: 'ativo'
-        }])
-        .select();
+        }]);
       
       if (createUserError) {
         console.error("Error creating user:", createUserError);
@@ -100,7 +98,7 @@ serve(async (req) => {
       console.log("User created successfully");
       
       // Wait for database consistency
-      await sleep(2000);
+      await sleep(500);
     }
     
     // Generate and verify unique slug for the business
@@ -128,6 +126,9 @@ serve(async (req) => {
         // Some other error occurred
         console.error("Error checking slug uniqueness:", slugCheckError);
         throw new Error(`Error checking slug uniqueness: ${slugCheckError.message}`);
+      } else {
+        // No error and no business found, which means slug is unique
+        isSlugUnique = true;
       }
     }
     
@@ -137,59 +138,76 @@ serve(async (req) => {
     
     // Create the business record with the unique slug
     console.log("Creating business record with slug:", businessSlug);
-    const { data: businessRecord, error: businessError } = await supabase
-      .from('negocios')
-      .insert([
-        {
-          nome: businessData.name,
-          email_admin: businessData.email,
-          telefone: businessData.phone,
-          endereco: businessData.address,
-          numero: businessData.number,
-          bairro: businessData.neighborhood,
-          cidade: businessData.city,
-          estado: businessData.state,
-          cep: businessData.cep,
-          slug: businessSlug,
-          status: 'ativo'
-        }
-      ])
-      .select('id')
-      .single();
     
-    if (businessError) {
-      console.error("Error creating business:", businessError);
+    // Use backgroundTask for better fault-tolerance
+    let businessId: string | null = null;
+    
+    try {
+      const { data: businessRecord, error: businessError } = await supabase
+        .from('negocios')
+        .insert([
+          {
+            nome: businessData.name,
+            email_admin: businessData.email,
+            telefone: businessData.phone,
+            endereco: businessData.address,
+            numero: businessData.number,
+            bairro: businessData.neighborhood,
+            cidade: businessData.city,
+            estado: businessData.state,
+            cep: businessData.cep,
+            slug: businessSlug,
+            status: 'pendente'
+          }
+        ])
+        .select('id')
+        .single();
       
-      // Check specifically for duplicate slug error
-      if (businessError.code === '23505' && businessError.message.includes('negocios_slug_key')) {
-        throw new Error("O nome do estabelecimento já está em uso. Por favor, escolha um nome diferente.");
+      if (businessError) {
+        console.error("Error creating business:", businessError);
+        
+        // Check specifically for duplicate slug error
+        if (businessError.code === '23505' && businessError.message.includes('negocios_slug_key')) {
+          throw new Error("O nome do estabelecimento já está em uso. Por favor, escolha um nome diferente.");
+        }
+        
+        throw new Error(`Erro ao criar negócio: ${businessError.message}`);
       }
       
-      throw new Error(`Erro ao criar negócio: ${businessError.message}`);
+      if (!businessRecord) {
+        throw new Error("Não foi possível obter o ID do estabelecimento criado");
+      }
+      
+      businessId = businessRecord.id;
+      console.log("Business created successfully. ID:", businessId);
+      
+    } catch (error) {
+      console.error("Error creating business record:", error);
+      throw error;
     }
     
-    if (!businessRecord) {
-      throw new Error("Não foi possível obter o ID do estabelecimento criado");
-    }
-    
-    const businessId = businessRecord.id;
-    console.log("Business created successfully. ID:", businessId);
-    
-    // Update the user profile with the business ID - SIMPLIFIED
+    // Update the user profile with the business ID
     console.log("Updating user record with business ID association");
-    const { error: userError } = await supabase
-      .from('usuarios')
-      .update({ id_negocio: businessId })
-      .eq('id', userId);
     
-    if (userError) {
-      console.error("Error updating user profile:", userError);
+    try {
+      const { error: userError } = await supabase
+        .from('usuarios')
+        .update({ id_negocio: businessId })
+        .eq('id', userId);
+      
+      if (userError) {
+        console.error("Error updating user profile:", userError);
+        // Don't throw, just log the error and continue
+        console.warn("Continuing despite user update error");
+      } else {
+        console.log("User profile updated with business ID");
+      }
+    } catch (error) {
+      console.error("Error updating user profile:", error);
       // Don't throw, just log the error and continue
-      console.warn("Continuing despite user update error");
-    } else {
-      console.log("User profile updated with business ID");
     }
     
+    // Function execution summary
     const executionTime = Date.now() - startTime;
     console.log(`Business creation completed successfully! Execution time: ${executionTime}ms`);
     
@@ -198,7 +216,7 @@ serve(async (req) => {
         success: true, 
         businessId, 
         businessSlug,
-        message: "Estabelecimento criado com sucesso! Clique para completar a configuração.",
+        message: "Estabelecimento criado com sucesso!",
         needsProfileSetup: true,
         executionTime
       }),

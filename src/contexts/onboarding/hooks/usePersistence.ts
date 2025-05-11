@@ -1,6 +1,6 @@
 
 import { MutableRefObject } from 'react';
-import { BusinessData, ServiceData, StaffData, BusinessHours } from '../types';
+import { BusinessData, ServiceData, StaffData, BusinessHours, OnboardingMethod } from '../types';
 
 // Key for storing onboarding data in localStorage
 const STORAGE_KEY = 'unclic-manager-onboarding';
@@ -12,13 +12,15 @@ export const usePersistence = (
   businessHours: BusinessHours,
   hasStaff: boolean,
   currentStep: number,
+  onboardingMethod: OnboardingMethod,
   hasLoaded: MutableRefObject<boolean>,
   setBusinessData: React.Dispatch<React.SetStateAction<BusinessData>>,
   setServices: React.Dispatch<React.SetStateAction<ServiceData[]>>,
   setStaffMembers: React.Dispatch<React.SetStateAction<StaffData[]>>,
   setBusinessHours: React.Dispatch<React.SetStateAction<BusinessHours>>,
   setHasStaff: React.Dispatch<React.SetStateAction<boolean>>,
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>
+  setCurrentStep: React.Dispatch<React.SetStateAction<number>>,
+  setOnboardingMethod: React.Dispatch<React.SetStateAction<OnboardingMethod>>
 ) => {
   // Function to save current progress to localStorage
   const saveProgress = () => {
@@ -29,6 +31,7 @@ export const usePersistence = (
       businessHours,
       hasStaff,
       currentStep,
+      onboardingMethod,
       lastUpdated: new Date().toISOString(),
     };
     
@@ -54,7 +57,8 @@ export const usePersistence = (
         setStaffMembers(parsedData.staffMembers || []);
         setBusinessHours(parsedData.businessHours || businessHours);
         setHasStaff(parsedData.hasStaff !== undefined ? parsedData.hasStaff : false);
-        setCurrentStep(parsedData.currentStep || 0);
+        setCurrentStep(parsedData.currentStep || -1);
+        setOnboardingMethod(parsedData.onboardingMethod || null);
         
         console.log('Onboarding progress loaded:', parsedData);
         hasLoaded.current = true;

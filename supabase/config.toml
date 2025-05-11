@@ -4,22 +4,24 @@ project_id = "jcdymkgmtxpryceziazt"
 [api]
 enabled = true
 port = 54321
-schemas = ["public", "storage"]
+schemas = ["public", "storage", "graphql_public"]
 
-# Allow public access to the webhook endpoint without authentication
-[functions.efipay-webhook]
-verify_jwt = false
+[db]
+port = 54322
 
-# Allow creating businesses with admin privileges
-[functions.create-business]
-verify_jwt = true
-timeout_ms = 60000
+[realtime]
+enabled = true
 
-# Allow checking slug availability
+[studio]
+enabled = true
+port = 54323
+
+[functions]
 [functions.check-slug-availability]
 verify_jwt = true
 
-# Function to complete business setup after initial creation
+[functions.create-business]
+verify_jwt = true
+
 [functions.complete-business-setup]
 verify_jwt = true
-timeout_ms = 30000
