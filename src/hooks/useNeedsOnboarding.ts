@@ -52,6 +52,9 @@ export function useNeedsOnboarding() {
   useEffect(() => {
     if (user) {
       checkStatus();
+    } else {
+      setNeedsOnboarding(null);
+      setLoading(false);
     }
   }, [user, checkStatus]);
 

@@ -14,7 +14,8 @@ export const StatusFixButton: React.FC = () => {
   
   // Always define the hook at the top level, never conditionally
   const handleFixStatus = useDebouncedCallback(async () => {
-    if (isFixing || !currentBusiness?.id) return;
+    if (isFixing) return;
+    if (!currentBusiness?.id) return;
     
     try {
       setIsFixing(true);

@@ -11,7 +11,7 @@ import { useTenant } from "@/contexts/TenantContext";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 
 const Dashboard = () => {
-  const { stats, loading } = useDashboardData();
+  const { stats, loading: statsLoading } = useDashboardData();
   const { currentBusiness } = useTenant();
   const { needsOnboarding, loading: onboardingLoading } = useNeedsOnboarding();
   

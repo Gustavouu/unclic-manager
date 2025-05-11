@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Debounce a value
@@ -33,6 +32,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
       
       timeoutRef.current = window.setTimeout(() => {
         callback(...args);
+        timeoutRef.current = null;
       }, delay);
     },
     [callback, delay]
@@ -56,6 +56,12 @@ export function useThrottledCallback<T extends (...args: any[]) => any>(
 ): (...args: Parameters<T>) => void {
   const lastCall = useRef<number>(0);
   const timeoutRef = useRef<number | null>(null);
+  const callbackRef = useRef<T>(callback);
+  
+  // Keep the callback reference updated
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
   
   const throttledCallback = useCallback(
     (...args: Parameters<T>) => {
@@ -68,16 +74,16 @@ export function useThrottledCallback<T extends (...args: any[]) => any>(
         }
         
         lastCall.current = now;
-        callback(...args);
+        callbackRef.current(...args);
       } else if (timeoutRef.current === null) {
         timeoutRef.current = window.setTimeout(() => {
           lastCall.current = Date.now();
           timeoutRef.current = null;
-          callback(...args);
+          callbackRef.current(...args);
         }, delay - (now - lastCall.current));
       }
     },
-    [callback, delay]
+    [delay] // Only depend on delay, not on callback
   );
   
   // Clean up any pending timeouts when unmounting

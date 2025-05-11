@@ -10,11 +10,11 @@ import { useTenant } from "@/contexts/TenantContext";
 import { useDebouncedCallback } from "@/hooks/useDebounce";
 
 export const OnboardingBanner: React.FC = () => {
-  const { needsOnboarding, loading, error, onboardingViewed, markOnboardingAsViewed } = useNeedsOnboarding();
+  const { needsOnboarding, loading, error, onboardingViewed, markOnboardingAsViewed, refreshOnboardingStatus } = useNeedsOnboarding();
   const { currentBusiness, updateBusinessStatus } = useTenant();
   const navigate = useNavigate();
   
-  // Always define hooks at the top level, never conditionally
+  // Always define hooks at the top level
   const handleFixStatus = useDebouncedCallback(async () => {
     if (!currentBusiness?.id) {
       toast.error("Não foi possível identificar o negócio.");
@@ -31,6 +31,9 @@ export const OnboardingBanner: React.FC = () => {
         throw new Error("Não foi possível atualizar o status do negócio");
       }
       
+      // Refresh onboarding status after success
+      await refreshOnboardingStatus();
+      
       toast.success("Status do negócio corrigido com sucesso!", { id: "fix-status" });
       
       // Mark as viewed to hide the banner
@@ -39,12 +42,7 @@ export const OnboardingBanner: React.FC = () => {
       console.error("Erro ao corrigir status:", error);
       toast.error(`Erro ao corrigir status: ${error.message}`, { id: "fix-status" });
     }
-  }, 1000); // Prevent clicks more often than once per second
-  
-  // Don't show if loading, no onboarding needed, error occurred, or already viewed
-  if (loading || !needsOnboarding || error || onboardingViewed) {
-    return null;
-  }
+  }, 1000);
   
   const handleContinueSetup = () => {
     navigate("/onboarding");
@@ -53,6 +51,11 @@ export const OnboardingBanner: React.FC = () => {
   const handleDismiss = () => {
     markOnboardingAsViewed();
   };
+  
+  // Don't show if loading, no onboarding needed, error occurred, or already viewed
+  if (loading || !needsOnboarding || error || onboardingViewed) {
+    return null;
+  }
   
   // Special message for businesses with "pendente" status that completed onboarding
   const isPendingStatus = currentBusiness?.status === "pendente";

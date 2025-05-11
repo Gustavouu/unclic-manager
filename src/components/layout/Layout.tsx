@@ -6,7 +6,6 @@ import { Header } from "./Header";
 import { MobileSidebar } from "./sidebar/MobileSidebar";
 import { useTenant } from "@/contexts/TenantContext";
 import { toast } from "sonner";
-import { StatusFixButton } from "@/components/dashboard/StatusFixButton";
 
 const Layout = () => {
   const { currentBusiness, loading, error, refreshBusinessData } = useTenant();
@@ -86,7 +85,6 @@ const Layout = () => {
             <Outlet />
           </div>
         </main>
-        <StatusFixButton />
       </div>
     </div>
   );
