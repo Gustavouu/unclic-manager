@@ -14,6 +14,9 @@ import { UpcomingAppointmentsWidget } from "@/components/dashboard/UpcomingAppoi
 import { FinancialCharts } from "@/components/dashboard/FinancialCharts";
 import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
 import { PerformanceMetrics } from "@/components/dashboard/PerformanceMetrics";
+import { ClientsComparisonChart } from "@/components/dashboard/ClientsComparisonChart";
+import { BirthdayClients } from "@/components/dashboard/BirthdayClients";
+import { RetentionRateCard } from "@/components/dashboard/RetentionRateCard";
 import { FilterPeriod } from "@/types/dashboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -79,15 +82,28 @@ const Dashboard = () => {
       {/* Financial Charts */}
       <FinancialCharts data={stats.revenueData || []} />
 
-      {/* Performance and Insights */}
+      {/* Client Comparison and Birthdays */}
       <ResponsiveGrid 
         columns={{ default: 1, md: 2 }}
         gap="md"
         equalHeight={true}
       >
-        <PerformanceMetrics stats={stats} />
-        <DashboardInsights stats={stats} />
+        <ClientsComparisonChart stats={stats} />
+        <BirthdayClients />
       </ResponsiveGrid>
+
+      {/* Retention Rate and Performance Metrics */}
+      <ResponsiveGrid 
+        columns={{ default: 1, md: 2 }}
+        gap="md"
+        equalHeight={true}
+      >
+        <RetentionRateCard stats={stats} />
+        <PerformanceMetrics stats={stats} />
+      </ResponsiveGrid>
+      
+      {/* Insights */}
+      <DashboardInsights stats={stats} />
       
       <DashboardFooter />
       <StatusFixButton />
