@@ -2,12 +2,13 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { ArrowLeft, ArrowRight, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, Loader, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { cn } from "@/lib/utils";
 
 export const OnboardingControls: React.FC = () => {
   const { 
@@ -25,10 +26,13 @@ export const OnboardingControls: React.FC = () => {
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   
   // Function to check if a slug is available before proceeding
   const checkSlugAvailability = async (name: string): Promise<boolean> => {
     setIsCheckingSlug(true);
+    setError(null);
     
     try {
       const { data, error } = await supabase.functions.invoke('check-slug-availability', {
@@ -95,6 +99,12 @@ export const OnboardingControls: React.FC = () => {
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-");
   };
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    setError(null);
+    handleFinish();
+  };
   
   const handleFinish = async () => {
     if (!isComplete()) {
@@ -109,6 +119,7 @@ export const OnboardingControls: React.FC = () => {
     }
     
     setIsSaving(true);
+    setError(null);
     
     try {
       // Verificar disponibilidade do slug antes de criar o negócio
@@ -147,6 +158,37 @@ export const OnboardingControls: React.FC = () => {
       
       console.log("Sending request to create business with payload:", businessPayload);
       
+      // Verificar se o usuário já existe na tabela de usuários antes de prosseguir
+      const { data: existingUser, error: userCheckError } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      // Se o usuário não existir, criá-lo primeiro para evitar problemas com chaves estrangeiras
+      if (!existingUser && !userCheckError) {
+        console.log("User doesn't exist in usuarios table, creating...");
+        const { error: createUserError } = await supabase
+          .from('usuarios')
+          .insert([
+            { 
+              id: user.id,
+              email: user.email || businessData.email,
+              nome_completo: user.name || businessData.name,
+              status: 'ativo'
+            },
+          ]);
+          
+        if (createUserError) {
+          console.error("Error pre-creating user:", createUserError);
+          // Continue anyway, the edge function will try to create the user
+        } else {
+          console.log("User pre-created successfully");
+          // Wait a bit to ensure database consistency
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
       // Chamar o edge function que usará a service role para criar o negócio
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-business`,
@@ -159,6 +201,11 @@ export const OnboardingControls: React.FC = () => {
           body: JSON.stringify(businessPayload)
         }
       );
+      
+      // Verificar timeout
+      if (!response.ok && response.status === 504) {
+        throw new Error("Timeout na criação do negócio. O processo pode ter sido concluído no servidor, tentando redirecionar...");
+      }
       
       const result = await response.json();
       console.log("Create business response:", result);
@@ -195,42 +242,111 @@ export const OnboardingControls: React.FC = () => {
       
     } catch (error: any) {
       console.error("Erro ao finalizar configuração:", error);
+      
+      // Se for um erro de timeout, verifique se o negócio foi criado
+      if (error.message.includes("Timeout")) {
+        setError("Timeout na requisição. Verificando se o negócio foi criado...");
+        
+        try {
+          // Verificar se o usuário agora tem um negócio associado
+          const { data: userData, error: userError } = await supabase
+            .from('usuarios')
+            .select('id_negocio')
+            .eq('id', user.id)
+            .single();
+          
+          if (userData && userData.id_negocio) {
+            // Negócio foi criado! Redirecionar para dashboard
+            toast.success("Estabelecimento configurado com sucesso!");
+            localStorage.removeItem('unclic-manager-onboarding');
+            setTimeout(() => {
+              navigate("/dashboard", { replace: true });
+            }, 2000);
+            return;
+          }
+        } catch (checkErr) {
+          console.error("Erro ao verificar criação do negócio:", checkErr);
+        }
+      }
+      
+      // Decidir se mostra botão de retry
+      const showRetry = error.message.includes("perfis_acesso") || 
+                         error.message.includes("Timeout") || 
+                         retryCount < 3;
+      
+      setError(showRetry ? 
+        `${error.message || "Erro ao finalizar configuração"}. Você pode tentar novamente.` : 
+        `${error.message || "Erro ao finalizar configuração"}. Entre em contato com o suporte.`);
+      
       toast.error(error.message || "Erro ao finalizar configuração. Tente novamente.");
       setIsSaving(false);
     }
   };
   
   return (
-    <div className="flex justify-between mt-8">
-      <Button 
-        variant="outline" 
-        onClick={handlePrevious} 
-        disabled={currentStep === 0 || isSaving || isCheckingSlug}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-      </Button>
-      
-      {currentStep === 4 ? (
-        <LoadingButton 
-          onClick={handleFinish}
-          isLoading={isSaving} 
-          loadingText="Salvando..."
-          icon={<Save className="mr-2 h-4 w-4" />}
-          disabled={isSaving || isCheckingSlug}
-        >
-          Finalizar
-        </LoadingButton>
-      ) : (
-        <LoadingButton
-          onClick={handleNext}
-          isLoading={isCheckingSlug}
-          loadingText="Verificando..."
-          icon={<ArrowRight className="ml-2 h-4 w-4" />}
-          disabled={isSaving || isCheckingSlug}
-        >
-          Avançar
-        </LoadingButton>
+    <div className="space-y-4 mt-8">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0 text-red-500">
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+          {(error.includes("perfis_acesso") || error.includes("Timeout")) && retryCount < 3 && (
+            <div className="mt-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-red-300 text-red-700 hover:bg-red-50"
+                onClick={handleRetry}
+                disabled={isSaving}
+              >
+                <RefreshCw className={cn("mr-2 h-4 w-4", isSaving && "animate-spin")} />
+                Tentar novamente
+              </Button>
+            </div>
+          )}
+        </div>
       )}
+      
+      <div className="flex justify-between">
+        <Button 
+          variant="outline" 
+          onClick={handlePrevious} 
+          disabled={currentStep === 0 || isSaving || isCheckingSlug}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+        </Button>
+        
+        {currentStep === 4 ? (
+          <LoadingButton 
+            onClick={handleFinish}
+            isLoading={isSaving} 
+            loadingText="Salvando..."
+            icon={<Save className="mr-2 h-4 w-4" />}
+            disabled={isSaving || isCheckingSlug}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Finalizar
+          </LoadingButton>
+        ) : (
+          <LoadingButton
+            onClick={handleNext}
+            isLoading={isCheckingSlug}
+            loadingText="Verificando..."
+            icon={<ArrowRight className="ml-2 h-4 w-4" />}
+            disabled={isSaving || isCheckingSlug}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Avançar
+          </LoadingButton>
+        )}
+      </div>
     </div>
   );
 };
