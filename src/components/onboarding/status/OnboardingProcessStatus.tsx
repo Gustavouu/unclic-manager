@@ -1,10 +1,13 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 export const OnboardingProcessStatus: React.FC = () => {
   const { 
@@ -16,19 +19,104 @@ export const OnboardingProcessStatus: React.FC = () => {
     setStatus,
     setCurrentStep,
     setError,
-    setProcessingStep
+    setProcessingStep,
+    services,
+    staffMembers,
+    hasStaff,
+    businessHours
   } = useOnboarding();
+  
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   // Function to handle finishing setup after business creation
   const handleCompleteSetup = async () => {
-    if (!businessCreated?.id) return;
+    if (!businessCreated?.id || !user) {
+      setError("ID do negócio ou usuário não encontrado");
+      return;
+    }
     
     setStatus("processing");
     setError(null);
     setProcessingStep("Finalizando configuração do estabelecimento...");
     
-    // Further implementation will be added in the Edge Functions part
+    try {
+      // Call the Edge Function to complete the business setup
+      const response = await supabase.functions.invoke('complete-business-setup', {
+        body: {
+          userId: user.id,
+          businessId: businessCreated.id,
+          services: services,
+          staffMembers: staffMembers,
+          hasStaff: hasStaff,
+          businessHours: businessHours
+        }
+      });
+      
+      // Check for Edge Function response
+      if (!response || !response.data) {
+        throw new Error("O servidor não respondeu. Verificando status...");
+      }
+      
+      const { success, message, error: setupError } = response.data;
+      
+      if (!success) {
+        throw new Error(setupError || "Erro ao finalizar configuração");
+      }
+      
+      // Update status to success
+      setStatus("success");
+      setProcessingStep("Configuração concluída com sucesso!");
+      toast.success(message || "Configuração concluída com sucesso!");
+      
+      // Clear onboarding data from localStorage
+      localStorage.removeItem('unclic-manager-onboarding');
+      
+    } catch (error: any) {
+      console.error("Erro ao finalizar configuração:", error);
+      
+      // In case of timeout or other errors, try to verify if setup is complete
+      if (error.message && (error.message.includes("não respondeu") || error.message.includes("verificando"))) {
+        setProcessingStep("Verificando status de configuração...");
+        
+        // Delay to allow server processing to complete
+        setTimeout(async () => {
+          try {
+            // Check if the user has access to the business
+            const { data: accessProfile, error: profileError } = await supabase
+              .from('perfis_acesso')
+              .select('id')
+              .eq('id_usuario', user.id)
+              .eq('id_negocio', businessCreated.id)
+              .maybeSingle();
+            
+            if (profileError) throw profileError;
+            
+            if (accessProfile) {
+              // Access profile exists, indicating setup is complete
+              setStatus("success");
+              setProcessingStep("Configuração concluída com sucesso!");
+              toast.success("Configuração concluída com sucesso!");
+              
+              // Clear onboarding data
+              localStorage.removeItem('unclic-manager-onboarding');
+            } else {
+              // Access profile does not exist yet
+              setError("Configuração em andamento. Por favor, tente novamente em alguns instantes.");
+              setStatus("error");
+            }
+          } catch (verificationError) {
+            console.error("Erro ao verificar status de configuração:", verificationError);
+            setError("Não foi possível verificar o status da configuração. Por favor, tente novamente.");
+            setStatus("error");
+          }
+        }, 3000);
+      } else {
+        // Handle regular errors
+        setError(error.message || "Erro ao finalizar configuração");
+        setStatus("error");
+      }
+    }
   };
   
   // Function to retry the onboarding process
@@ -40,7 +128,10 @@ export const OnboardingProcessStatus: React.FC = () => {
   
   // Function to go to dashboard
   const handleGoToDashboard = () => {
+    // Ensure we clear any onboarding data
     localStorage.removeItem('unclic-manager-onboarding');
+    
+    // Redirect to dashboard with replace (prevents going back to onboarding)
     navigate("/dashboard", { replace: true });
   };
 
@@ -60,6 +151,13 @@ export const OnboardingProcessStatus: React.FC = () => {
         return "Processando...";
     }
   };
+
+  // Automatically try to complete setup when this component mounts if we have a business ID
+  useEffect(() => {
+    if (status === "processing" && businessCreated?.id && !processingStep?.includes("Finalizando")) {
+      handleCompleteSetup();
+    }
+  }, [businessCreated, status]);
 
   return (
     <div className="space-y-8 py-12">
