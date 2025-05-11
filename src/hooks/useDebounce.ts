@@ -22,6 +22,14 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
   callback: T,
   delay: number
 ): (...args: Parameters<T>) => void {
+  const callbackRef = useRef<T>(callback);
+  
+  // Keep the callback reference updated
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+  
+  // Use useRef for timeoutId (not useState) to avoid re-renders
   const timeoutRef = useRef<number | null>(null);
   
   const debouncedCallback = useCallback(
@@ -31,13 +39,16 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
       }
       
       timeoutRef.current = window.setTimeout(() => {
-        callback(...args);
+        if (callbackRef.current) {
+          callbackRef.current(...args);
+        }
         timeoutRef.current = null;
       }, delay);
     },
-    [callback, delay]
+    [delay] // Only depend on delay, not on callback
   );
   
+  // Clean up any pending timeouts when unmounting
   useEffect(() => {
     return () => {
       if (timeoutRef.current !== null) {

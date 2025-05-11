@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useTenant } from "@/contexts/TenantContext";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
@@ -12,7 +12,7 @@ export const StatusFixButton: React.FC = () => {
   const { refreshOnboardingStatus } = useNeedsOnboarding();
   const [isFixing, setIsFixing] = useState(false);
   
-  // Always define the hook at the top level, never conditionally
+  // Define hooks at the top level
   const handleFixStatus = useDebouncedCallback(async () => {
     if (isFixing) return;
     if (!currentBusiness?.id) return;

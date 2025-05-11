@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
@@ -14,7 +14,7 @@ export const OnboardingBanner: React.FC = () => {
   const { currentBusiness, updateBusinessStatus } = useTenant();
   const navigate = useNavigate();
   
-  // Always define hooks at the top level
+  // Define hooks at the top level
   const handleFixStatus = useDebouncedCallback(async () => {
     if (!currentBusiness?.id) {
       toast.error("Não foi possível identificar o negócio.");
@@ -44,13 +44,13 @@ export const OnboardingBanner: React.FC = () => {
     }
   }, 1000);
   
-  const handleContinueSetup = () => {
+  const handleContinueSetup = useCallback(() => {
     navigate("/onboarding");
-  };
+  }, [navigate]);
   
-  const handleDismiss = () => {
+  const handleDismiss = useCallback(() => {
     markOnboardingAsViewed();
-  };
+  }, [markOnboardingAsViewed]);
   
   // Don't show if loading, no onboarding needed, error occurred, or already viewed
   if (loading || !needsOnboarding || error || onboardingViewed) {

@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -34,7 +34,7 @@ export const OnboardingProcessStatus: React.FC = () => {
   const { refreshOnboardingStatus } = useNeedsOnboarding();
   
   // Function to handle finishing setup after business creation
-  const handleCompleteSetup = async () => {
+  const handleCompleteSetup = useCallback(async () => {
     if (!businessCreated?.id || !user) {
       setError("ID do negócio ou usuário não encontrado");
       return;
@@ -46,6 +46,14 @@ export const OnboardingProcessStatus: React.FC = () => {
     
     try {
       // Call the Edge Function to complete the business setup
+      console.log("Calling edge function with:", {
+        userId: user.id,
+        businessId: businessCreated.id,
+        servicesCount: services?.length,
+        staffCount: staffMembers?.length,
+        hasStaff
+      });
+      
       const response = await supabase.functions.invoke('complete-business-setup', {
         body: {
           userId: user.id,
@@ -176,17 +184,31 @@ export const OnboardingProcessStatus: React.FC = () => {
         setStatus("error");
       }
     }
-  };
+  }, [
+    businessCreated, 
+    user, 
+    services, 
+    staffMembers, 
+    hasStaff, 
+    businessHours, 
+    setError, 
+    setStatus, 
+    setProcessingStep, 
+    navigate,
+    updateBusinessStatus,
+    refreshBusinessData,
+    refreshOnboardingStatus
+  ]);
   
   // Function to retry the onboarding process
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     setError(null);
     setStatus("idle");
     setCurrentStep(4); // Back to summary
-  };
+  }, [setError, setStatus, setCurrentStep]);
   
   // Function to go to dashboard
-  const handleGoToDashboard = async () => {
+  const handleGoToDashboard = useCallback(async () => {
     // Ensure we clear any onboarding data
     localStorage.removeItem('unclic-manager-onboarding');
     
@@ -211,7 +233,7 @@ export const OnboardingProcessStatus: React.FC = () => {
     
     // Redirect to dashboard with replace (prevents going back to onboarding)
     navigate("/dashboard", { replace: true });
-  };
+  }, [businessCreated, navigate, refreshBusinessData, refreshOnboardingStatus, updateBusinessStatus]);
 
   const getStatusMessage = () => {
     switch (status) {
@@ -233,6 +255,7 @@ export const OnboardingProcessStatus: React.FC = () => {
   // Automatically try to complete setup when this component mounts if we have a business ID
   useEffect(() => {
     if (status === "processing" && businessCreated?.id && !processingStep?.includes("Finalizando")) {
+      console.log("Triggering handleCompleteSetup automatically", businessCreated);
       handleCompleteSetup();
     }
     
@@ -242,7 +265,7 @@ export const OnboardingProcessStatus: React.FC = () => {
         localStorage.removeItem('unclic-manager-onboarding');
       }
     };
-  }, [businessCreated, status, processingStep]);
+  }, [businessCreated, status, processingStep, handleCompleteSetup]);
 
   return (
     <div className="space-y-8 py-12">

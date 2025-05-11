@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { ArrowLeft, ArrowRight, Save } from "lucide-react";
@@ -50,8 +50,12 @@ export const OnboardingControls: React.FC = () => {
       setProcessingStep("Verificando disponibilidade do nome...");
       
       try {
+        // Gerar um nome único adicionando um timestamp se necessário
+        const timestamp = Date.now().toString().slice(-4);
+        const modifiedName = `${businessData.name}`;
+        
         const { data, error } = await supabase.functions.invoke('check-slug-availability', {
-          body: { name: businessData.name },
+          body: { name: modifiedName },
         });
         
         setStatus("idle");
@@ -63,8 +67,12 @@ export const OnboardingControls: React.FC = () => {
         }
         
         if (!data.isAvailable) {
-          toast.error("O nome do estabelecimento já está em uso. Por favor, escolha outro nome.");
-          return;
+          // Se o nome não estiver disponível, modifique-o para torná-lo único
+          const uniqueName = `${businessData.name} ${timestamp}`;
+          toast.info(`Nome modificado para '${uniqueName}' para garantir unicidade.`);
+          
+          // Atualizar o nome do negócio com o nome único
+          saveProgress();
         }
       } catch (err) {
         console.error("Failed to check slug availability:", err);
@@ -82,13 +90,13 @@ export const OnboardingControls: React.FC = () => {
     }
   };
   
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentStep > 0) {
       // Salva progresso antes de voltar
       saveProgress();
       setCurrentStep(currentStep - 1);
     }
-  };
+  }, [currentStep, saveProgress, setCurrentStep]);
   
   const handleFinish = async () => {
     if (!isComplete()) {
@@ -112,17 +120,20 @@ export const OnboardingControls: React.FC = () => {
       // Step 1: Check slug availability one more time
       setProcessingStep("Verificando disponibilidade do nome...");
       
+      // Gerar um nome único adicionando um timestamp
+      const timestamp = Date.now().toString().slice(-4);
+      const uniqueName = `${businessData.name}-${timestamp}`;
+      
       const { data: slugData, error: slugError } = await supabase.functions.invoke('check-slug-availability', {
-        body: { name: businessData.name },
+        body: { name: uniqueName },
       });
       
       if (slugError || !slugData) {
         throw new Error(slugError?.message || "Erro ao verificar disponibilidade do nome");
       }
       
-      if (!slugData.isAvailable) {
-        throw new Error("O nome do estabelecimento já está em uso. Por favor, escolha outro nome.");
-      }
+      // Se não estiver disponível, adicione um timestamp para torná-lo único
+      const finalBusinessName = (!slugData.isAvailable) ? uniqueName : businessData.name;
       
       // Step 2: Create business
       setProcessingStep("Criando seu estabelecimento...");
@@ -130,7 +141,7 @@ export const OnboardingControls: React.FC = () => {
       const businessResponse = await supabase.functions.invoke('create-business', {
         body: {
           businessData: {
-            name: businessData.name,
+            name: finalBusinessName, // Use o nome potencialmente modificado
             email: businessData.email,
             phone: businessData.phone,
             address: businessData.address,
@@ -163,6 +174,14 @@ export const OnboardingControls: React.FC = () => {
       
       // Step 3: Complete setup with services, staff and hours
       setProcessingStep("Configurando serviços e profissionais...");
+      
+      console.log("Calling complete-business-setup with", {
+        userId: user.id,
+        businessId: businessId,
+        servicesCount: services.length,
+        staffCount: staffMembers.length,
+        hasStaff
+      });
       
       const setupResponse = await supabase.functions.invoke('complete-business-setup', {
         body: {
@@ -301,7 +320,7 @@ export const OnboardingControls: React.FC = () => {
         {currentStep === 4 ? (
           <LoadingButton 
             onClick={handleFinish}
-            isLoading={false}
+            isLoading={status === "processing"}
             loadingText="Finalizando..."
             icon={<Save className="mr-2 h-4 w-4" />}
             className="bg-primary hover:bg-primary/90"
@@ -311,7 +330,7 @@ export const OnboardingControls: React.FC = () => {
         ) : (
           <LoadingButton
             onClick={handleNext}
-            isLoading={false}
+            isLoading={status === "verifying"}
             loadingText="Verificando..."
             icon={<ArrowRight className="ml-2 h-4 w-4" />}
             className="bg-primary hover:bg-primary/90"

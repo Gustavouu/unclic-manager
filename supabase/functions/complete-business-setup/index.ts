@@ -19,24 +19,44 @@ serve(async (req) => {
   }
 
   try {
-    // Start execution timer
+    // Start execution timer and detailed logging
     const startTime = Date.now();
     console.log("Starting complete-business-setup function execution");
     
     // Parse request body
-    const { userId, businessId, services, staffMembers, hasStaff, businessHours } = await req.json();
+    const requestData = await req.json();
+    const { userId, businessId, services, staffMembers, hasStaff, businessHours } = requestData;
+    
+    console.log("Request data:", {
+      userId,
+      businessId,
+      servicesCount: services?.length || 0,
+      staffCount: staffMembers?.length || 0,
+      hasStaff,
+      businessHoursProvided: businessHours ? true : false
+    });
     
     // Validate mandatory fields
-    if (!userId || !businessId) {
-      throw new Error("ID de usuário ou ID de negócio ausentes");
+    if (!userId) {
+      throw new Error("ID de usuário ausente");
+    }
+    
+    if (!businessId) {
+      throw new Error("ID de negócio ausente");
     }
     
     // Create Supabase client with service role key (bypasses RLS)
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Configurações do Supabase não encontradas");
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     // Check if user has access profile for this business already
+    console.log("Checking if user has access profile for business");
     const { data: existingProfile, error: profileCheckError } = await supabase
       .from('perfis_acesso')
       .select('id')
@@ -72,7 +92,11 @@ serve(async (req) => {
       if (profileError) {
         console.error("Error creating access profile:", profileError);
         throw new Error(`Erro ao criar perfil de acesso: ${profileError.message}`);
+      } else {
+        console.log("Access profile created successfully");
       }
+    } else {
+      console.log("Access profile already exists, skipping creation");
     }
     
     // Create services
@@ -97,13 +121,15 @@ serve(async (req) => {
       if (servicesError) {
         console.error("Error creating services:", servicesError);
         // Continue anyway, other steps might still succeed
+      } else {
+        console.log("Services created successfully");
       }
     } else {
       console.log("No services to create");
     }
     
     // Wait a moment to prevent race conditions
-    await sleep(1000);
+    await sleep(500);
     
     // Create staff members if hasStaff is true
     if (hasStaff && staffMembers && staffMembers.length > 0) {
@@ -127,6 +153,8 @@ serve(async (req) => {
       if (staffError) {
         console.error("Error creating staff members:", staffError);
         // Continue anyway, other steps might still succeed
+      } else {
+        console.log("Staff members created successfully");
       }
     } else {
       console.log("No staff members to create");
@@ -167,21 +195,38 @@ serve(async (req) => {
       if (hoursError) {
         console.error("Error creating business hours:", hoursError);
         // Continue anyway, other steps might still succeed
+      } else {
+        console.log("Business hours created successfully");
       }
+    } else {
+      console.log("No business hours to create");
     }
     
-    // Update business status to active - FIXED: Removed the updated_at field that was causing errors
-    console.log("Updating business status");
+    // Update business status to active - fixing the status update issue
+    console.log("Updating business status to active");
     
-    const { error: statusError } = await supabase
+    const { data: updateData, error: statusError } = await supabase
       .from('negocios')
       .update({ status: 'ativo' })
-      .eq('id', businessId);
+      .eq('id', businessId)
+      .select('id, status');
     
     if (statusError) {
       console.error("Error updating business status:", statusError);
-      // Don't throw here, let's continue and return success even if this fails
-      // The user can fix the status later using the "Fix Status" button
+      // Try again with a simplified approach
+      console.log("Trying alternative status update approach");
+      const { error: retryError } = await supabase.rpc('set_business_status', {
+        business_id: businessId,
+        new_status: 'ativo'
+      });
+      
+      if (retryError) {
+        console.error("Error in alternative status update:", retryError);
+      } else {
+        console.log("Business status updated via RPC function");
+      }
+    } else {
+      console.log("Business status updated successfully:", updateData);
     }
     
     const executionTime = Date.now() - startTime;
@@ -191,7 +236,8 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: "Configuração concluída com sucesso!",
-        executionTime
+        executionTime,
+        businessId
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
