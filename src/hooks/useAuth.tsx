@@ -1,249 +1,180 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { supabase } from "../integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+import { User, Session } from "@supabase/supabase-js";
 
-type User = {
-  id: string;
-  email: string;
-  name: string;
-};
-
-export type AuthContextType = {
+interface AuthContextProps {
   user: User | null;
+  session: Session | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-};
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, userData: any) => Promise<void>;
+  signOut: () => Promise<void>;
+  updateProfile: (data: any) => Promise<void>;
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextProps>({
+  user: null,
+  session: null,
+  loading: true,
+  signIn: async () => {},
+  signUp: async () => {},
+  signOut: async () => {},
+  updateProfile: async () => {}
+});
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    // Check if user is already logged in
-    const checkUser = async () => {
-      setLoading(true);
-      try {
-        const { data } = await supabase.auth.getUser();
-        
-        if (data?.user) {
-          console.log("Usuário autenticado:", data.user);
-          setUser({
-            id: data.user.id,
-            email: data.user.email || "",
-            name: data.user.user_metadata?.name || "",
-          });
-        }
-      } catch (error) {
-        console.error("Erro ao verificar autenticação:", error);
-        // Limpa o usuário em caso de erro
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    // Configura o listener para mudanças na autenticação
-    const { data: authListener } = supabase.auth.onAuthStateChange(
+  useEffect(() => {
+    // Set up auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log("Evento de autenticação:", event, session);
-        if (event === 'SIGNED_IN' && session?.user) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email || "",
-            name: session.user.user_metadata?.name || "",
-          });
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // If session changes, we need to update user's business ID in localStorage
+        if (session?.user) {
+          // We use setTimeout to avoid supabase auth deadlocks
+          setTimeout(async () => {
+            try {
+              const { data, error } = await supabase
+                .from('usuarios')
+                .select('id_negocio')
+                .eq('id', session.user.id)
+                .maybeSingle();
+                
+              if (data?.id_negocio) {
+                localStorage.setItem('currentBusinessId', data.id_negocio);
+              }
+            } catch (err) {
+              console.error("Error fetching business ID on auth state change:", err);
+            }
+          }, 0);
         }
+        
+        setLoading(false);
       }
     );
 
-    checkUser();
+    // Then check for existing session
+    const initializeAuth = async () => {
+      setLoading(true);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      // If we have a session, fetch business ID
+      if (session?.user) {
+        try {
+          const { data, error } = await supabase
+            .from('usuarios')
+            .select('id_negocio')
+            .eq('id', session.user.id)
+            .maybeSingle();
+            
+          if (data?.id_negocio) {
+            localStorage.setItem('currentBusinessId', data.id_negocio);
+          }
+        } catch (err) {
+          console.error("Error fetching business ID on initialization:", err);
+        }
+      }
+      
+      setLoading(false);
+    };
 
-    // Cleanup do listener
+    initializeAuth();
+
+    // Cleanup subscription on unmount
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setLoading(true);
+  const signIn = async (email: string, password: string) => {
     try {
-      console.log("Tentando login com:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      
+
       if (error) {
-        console.error("Erro de autenticação:", error);
         throw error;
       }
-      
-      if (data.user) {
-        console.log("Login bem-sucedido:", data.user);
-        setUser({
-          id: data.user.id,
-          email: data.user.email || "",
-          name: data.user.user_metadata?.name || "",
-        });
-        
-        // Verificar se o usuário já existe na tabela de usuários
-        const { data: existingUser, error: userCheckError } = await supabase
-          .from('usuarios')
-          .select('*')
-          .eq('id', data.user.id)
-          .maybeSingle();
-        
-        // Se o usuário não existir na tabela de usuários, criar o registro
-        if (!existingUser && !userCheckError) {
-          const { error: createUserError } = await supabase
-            .from('usuarios')
-            .insert([
-              { 
-                id: data.user.id,
-                email: data.user.email || "",
-                nome_completo: data.user.user_metadata?.name || "",
-                status: 'ativo'
-              },
-            ]);
-          
-          if (createUserError) {
-            console.error("Erro ao criar registro de usuário:", createUserError);
-            // Não interromper o fluxo, apenas logar o erro
-          }
-        }
-        
-        toast.success("Login realizado com sucesso!");
-      }
-    } catch (error: any) {
-      console.error("Erro de login:", error);
-      toast.error(error.message || "Erro ao fazer login. Verifique suas credenciais.");
+    } catch (error) {
+      console.error("Error signing in:", error);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
-  const signup = async (email: string, password: string, name: string) => {
-    setLoading(true);
+  const signUp = async (email: string, password: string, userData: any) => {
     try {
-      console.log("Tentando cadastro com:", email, name);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            name,
-          },
+          data: userData, // Store user profile data like name
         },
       });
-      
+
       if (error) {
-        console.error("Erro no cadastro:", error);
         throw error;
       }
-      
-      if (data.user) {
-        console.log("Cadastro bem-sucedido:", data.user);
-        setUser({
-          id: data.user.id,
-          email: data.user.email || "",
-          name: name,
-        });
-        
-        // Criar registro de usuário no banco
-        const { error: userError } = await supabase
-          .from('usuarios')
-          .insert([
-            { 
-              id: data.user.id,
-              email: data.user.email || "",
-              nome_completo: name,
-              status: 'ativo'
-            },
-          ]);
-          
-        if (userError) {
-          console.error("Erro ao criar registro de usuário:", userError);
-          toast.error("Conta criada, mas houve um erro ao configurar o perfil.");
-        } else {
-          toast.success("Conta criada com sucesso!");
-        }
-      }
-    } catch (error: any) {
-      console.error("Erro de cadastro:", error);
-      toast.error(error.message || "Erro ao criar conta. Tente novamente.");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      console.log("Realizando logout");
-      // Logout do Supabase
-      await supabase.auth.signOut();
-      
-      setUser(null);
     } catch (error) {
-      console.error("Erro ao fazer logout:", error);
-      toast.error("Erro ao fazer logout");
+      console.error("Error signing up:", error);
+      throw error;
     }
   };
 
-  const resetPassword = async (email: string) => {
-    setLoading(true);
+  const signOut = async () => {
     try {
-      console.log("Solicitando redefinição de senha para:", email);
+      // Clear business ID from localStorage
+      localStorage.removeItem('currentBusinessId');
       
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error("Error signing out:", error);
+      throw error;
+    }
+  };
+
+  const updateProfile = async (userData: any) => {
+    try {
+      if (!user) throw new Error("No user logged in");
+      
+      const { error } = await supabase.auth.updateUser({
+        data: userData
       });
       
-      if (error) {
-        console.error("Erro ao solicitar redefinição de senha:", error);
-        throw error;
-      }
-      
-    } catch (error: any) {
-      console.error("Erro ao solicitar redefinição de senha:", error);
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error updating profile:", error);
       throw error;
-    } finally {
-      setLoading(false);
     }
-  };
-
-  const value = {
-    user,
-    loading,
-    login,
-    signup,
-    logout,
-    resetPassword,
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+        updateProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  
-  if (context === undefined) {
-    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
-  }
-  
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);

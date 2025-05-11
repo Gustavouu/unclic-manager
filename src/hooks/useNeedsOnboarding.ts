@@ -1,61 +1,86 @@
-
 import { useState, useEffect, useCallback } from 'react';
-import { checkOnboardingStatus, OnboardingStatus } from '@/services/businessService';
-import { useAuth } from './useAuth';
-
-const ONBOARDING_VIEWED_KEY = 'onboarding-viewed';
+import { supabase } from '@/integrations/supabase/client';
+import { useTenant } from '@/contexts/TenantContext';
 
 export const useNeedsOnboarding = () => {
-  const { user } = useAuth();
-  const [needsOnboarding, setNeedsOnboarding] = useState<boolean>(false);
-  const [businessId, setBusinessId] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [onboardingViewed, setOnboardingViewed] = useState<boolean>(
-    localStorage.getItem(ONBOARDING_VIEWED_KEY) === 'true'
-  );
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { businessId, currentBusiness } = useTenant();
 
   const refreshOnboardingStatus = useCallback(async (skipCache = false) => {
-    if (!user) {
+    if (!businessId) {
+      console.log('No business ID available, skipping onboarding check');
       setLoading(false);
       return;
     }
-
+    
     try {
       setLoading(true);
-      const status: OnboardingStatus = await checkOnboardingStatus(user.id, skipCache);
-      setNeedsOnboarding(status.needsOnboarding);
-      setBusinessId(status.businessId);
-    } catch (err: any) {
-      console.error('Error checking onboarding status:', err);
-      setError(err.message || 'Failed to check onboarding status');
+      
+      // Check cache first unless skipCache is true
+      const cacheKey = `business-${businessId}-onboarding`;
+      const cacheTimestampKey = `${cacheKey}-timestamp`;
+      
+      if (!skipCache) {
+        const cachedStatus = localStorage.getItem(cacheKey);
+        const cachedTimestamp = localStorage.getItem(cacheTimestampKey);
+        
+        // Use cache if less than 5 minutes old
+        if (cachedStatus && cachedTimestamp) {
+          const timestamp = parseInt(cachedTimestamp);
+          const now = Date.now();
+          const fiveMinutes = 5 * 60 * 1000;
+          
+          if (now - timestamp < fiveMinutes) {
+            setNeedsOnboarding(cachedStatus === 'true');
+            setLoading(false);
+            return;
+          }
+        }
+      }
+      
+      // If currentBusiness is already loaded, use it
+      if (currentBusiness) {
+        const needsSetup = currentBusiness.status === 'pendente';
+        setNeedsOnboarding(needsSetup);
+        
+        // Update cache
+        localStorage.setItem(cacheKey, String(needsSetup));
+        localStorage.setItem(cacheTimestampKey, String(Date.now()));
+        
+        setLoading(false);
+        return;
+      }
+      
+      // Otherwise fetch from API
+      console.log('Fetching business status for onboarding check:', businessId);
+      const { data, error } = await supabase
+        .from('negocios')
+        .select('status')
+        .eq('id', businessId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      
+      const needsSetup = data?.status === 'pendente';
+      setNeedsOnboarding(needsSetup);
+      
+      // Update cache
+      localStorage.setItem(cacheKey, String(needsSetup));
+      localStorage.setItem(cacheTimestampKey, String(Date.now()));
+      
+    } catch (err) {
+      console.error("Error checking onboarding status:", err);
+      // Default to needing onboarding if there's an error
+      setNeedsOnboarding(true);
     } finally {
       setLoading(false);
     }
-  }, [user]);
-
-  const markOnboardingAsViewed = useCallback(() => {
-    localStorage.setItem(ONBOARDING_VIEWED_KEY, 'true');
-    setOnboardingViewed(true);
-  }, []);
-
-  const resetOnboardingViewed = useCallback(() => {
-    localStorage.removeItem(ONBOARDING_VIEWED_KEY);
-    setOnboardingViewed(false);
-  }, []);
+  }, [businessId, currentBusiness]);
 
   useEffect(() => {
     refreshOnboardingStatus();
   }, [refreshOnboardingStatus]);
 
-  return {
-    needsOnboarding,
-    businessId,
-    loading,
-    error,
-    onboardingViewed,
-    markOnboardingAsViewed,
-    resetOnboardingViewed,
-    refreshOnboardingStatus
-  };
+  return { needsOnboarding, loading, refreshOnboardingStatus };
 };

@@ -1,0 +1,199 @@
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useTenant } from '@/contexts/TenantContext';
+import { toast } from 'sonner';
+
+export interface Service {
+  id: string;
+  name: string;
+  nome: string;
+  descricao?: string;
+  preco: number;
+  duracao: number;
+  categoria_id?: string;
+  ativo: boolean;
+  imagem_url?: string;
+}
+
+export const useServices = () => {
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { businessId } = useTenant();
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      if (!businessId) {
+        console.log('No business ID available, skipping services fetch');
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        console.log('Fetching services for business ID:', businessId);
+        const { data, error } = await supabase
+          .from('servicos')
+          .select('*')
+          .eq('id_negocio', businessId)
+          .eq('ativo', true);
+
+        if (error) {
+          console.error("Erro ao buscar serviços:", error);
+          setError(error.message);
+          toast.error("Não foi possível carregar os serviços.");
+          return;
+        }
+
+        // Map the database columns to our service interface
+        const mappedServices = (data || []).map(service => ({
+          id: service.id,
+          name: service.nome,
+          nome: service.nome,
+          descricao: service.descricao,
+          preco: service.preco,
+          duracao: service.duracao,
+          categoria_id: service.id_categoria,
+          ativo: service.ativo,
+          imagem_url: service.imagem_url
+        }));
+
+        setServices(mappedServices);
+      } catch (err: any) {
+        console.error("Erro inesperado ao buscar serviços:", err);
+        setError(err.message);
+        toast.error("Erro ao carregar serviços.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, [businessId]);
+
+  const createService = async (serviceData: Omit<Service, 'id'>) => {
+    try {
+      if (!businessId) {
+        throw new Error("ID do negócio não disponível");
+      }
+      
+      const { data, error } = await supabase
+        .from('servicos')
+        .insert([{
+          nome: serviceData.nome,
+          descricao: serviceData.descricao,
+          preco: serviceData.preco,
+          duracao: serviceData.duracao,
+          id_categoria: serviceData.categoria_id,
+          ativo: serviceData.ativo ?? true,
+          imagem_url: serviceData.imagem_url,
+          id_negocio: businessId
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newService: Service = {
+        id: data.id,
+        name: data.nome,
+        nome: data.nome,
+        descricao: data.descricao,
+        preco: data.preco,
+        duracao: data.duracao,
+        categoria_id: data.id_categoria,
+        ativo: data.ativo,
+        imagem_url: data.imagem_url
+      };
+      
+      setServices(prev => [...prev, newService]);
+      toast.success("Serviço criado com sucesso!");
+      return newService;
+      
+    } catch (err: any) {
+      console.error("Error creating service:", err);
+      toast.error("Erro ao criar serviço: " + err.message);
+      throw err;
+    }
+  };
+
+  const updateService = async (id: string, serviceData: Partial<Service>) => {
+    try {
+      const updateData: any = {};
+      
+      // Map fields from the Service interface to database columns
+      if (serviceData.nome) updateData.nome = serviceData.nome;
+      if (serviceData.descricao !== undefined) updateData.descricao = serviceData.descricao;
+      if (serviceData.preco !== undefined) updateData.preco = serviceData.preco;
+      if (serviceData.duracao !== undefined) updateData.duracao = serviceData.duracao;
+      if (serviceData.categoria_id !== undefined) updateData.id_categoria = serviceData.categoria_id;
+      if (serviceData.ativo !== undefined) updateData.ativo = serviceData.ativo;
+      if (serviceData.imagem_url !== undefined) updateData.imagem_url = serviceData.imagem_url;
+      
+      const { data, error } = await supabase
+        .from('servicos')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const updatedService: Service = {
+        id: data.id,
+        name: data.nome,
+        nome: data.nome,
+        descricao: data.descricao,
+        preco: data.preco,
+        duracao: data.duracao,
+        categoria_id: data.id_categoria,
+        ativo: data.ativo,
+        imagem_url: data.imagem_url
+      };
+      
+      setServices(prev => prev.map(service => 
+        service.id === id ? updatedService : service
+      ));
+      
+      toast.success("Serviço atualizado com sucesso!");
+      return updatedService;
+      
+    } catch (err: any) {
+      console.error("Error updating service:", err);
+      toast.error("Erro ao atualizar serviço: " + err.message);
+      throw err;
+    }
+  };
+
+  const deleteService = async (id: string) => {
+    try {
+      // Instead of hard deleting, we set ativo = false
+      const { error } = await supabase
+        .from('servicos')
+        .update({ ativo: false })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setServices(prev => prev.filter(service => service.id !== id));
+      
+      toast.success("Serviço removido com sucesso!");
+      return true;
+      
+    } catch (err: any) {
+      console.error("Error deleting service:", err);
+      toast.error("Erro ao remover serviço: " + err.message);
+      throw err;
+    }
+  };
+
+  return {
+    services,
+    isLoading,
+    error,
+    createService,
+    updateService,
+    deleteService
+  };
+};

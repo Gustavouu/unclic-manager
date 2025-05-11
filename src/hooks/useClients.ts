@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from "@/components/ui/use-toast"
-import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
+import { toast } from 'sonner';
+import { useTenant } from '@/contexts/TenantContext';
 
 export interface Client {
   id: string;
@@ -25,25 +25,28 @@ export const useClients = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const { businessId } = useCurrentBusiness();
+  const { businessId } = useTenant();
 
   useEffect(() => {
     const fetchClients = async () => {
+      if (!businessId) {
+        console.log('No business ID available, skipping client fetch');
+        return;
+      }
+
       setIsLoading(true);
       try {
+        console.log('Fetching clients for business ID:', businessId);
         const { data, error } = await supabase
           .from('clientes')
-          .select('*');
+          .select('*')
+          .eq('id_negocio', businessId);
 
         if (error) {
           console.error("Erro ao buscar clientes:", error);
           setError(error.message);
-          toast({
-            variant: "destructive",
-            title: "Uh oh! Something went wrong.",
-            description: "There was a problem with your request.",
-          })
+          toast.error("Não foi possível carregar os clientes.");
+          return;
         }
 
         // Map the database columns to our client interface
@@ -68,25 +71,22 @@ export const useClients = () => {
       } catch (err: any) {
         console.error("Erro inesperado ao buscar clientes:", err);
         setError(err.message);
-        toast({
-          variant: "destructive",
-          title: "Uh oh! Something went wrong.",
-          description: "There was a problem with your request.",
-        })
+        toast.error("Erro ao carregar clientes.");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchClients();
-  }, [toast, businessId]);
+  }, [businessId, toast]);
 
-  // Add methods to create, find, and manage clients
   const createClient = async (clientData: Partial<Client>) => {
     try {
       if (!businessId) {
-        throw new Error("Business ID not available");
+        throw new Error("ID do negócio não disponível");
       }
+      
+      console.log('Creating client for business ID:', businessId, clientData);
       
       const { data, error } = await supabase
         .from('clientes')
@@ -97,7 +97,10 @@ export const useClients = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating client:", error);
+        throw error;
+      }
 
       // Map the database response to our client interface
       const newClient: Client = {
@@ -118,15 +121,12 @@ export const useClients = () => {
       };
       
       setClients(prev => [...prev, newClient]);
+      toast.success("Cliente criado com sucesso!");
       return newClient;
       
     } catch (err: any) {
       console.error("Error creating client:", err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create client: " + err.message,
-      });
+      toast.error("Erro ao criar cliente: " + err.message);
       throw err;
     }
   };
@@ -134,8 +134,10 @@ export const useClients = () => {
   const findClientByEmail = async (email: string) => {
     try {
       if (!businessId) {
-        throw new Error("Business ID not available");
+        throw new Error("ID do negócio não disponível");
       }
+      
+      console.log('Finding client by email for business ID:', businessId, email);
       
       const { data, error } = await supabase
         .from('clientes')
@@ -171,11 +173,54 @@ export const useClients = () => {
     }
   };
 
+  const findClientByPhone = async (phone: string) => {
+    try {
+      if (!businessId) {
+        throw new Error("ID do negócio não disponível");
+      }
+      
+      console.log('Finding client by phone for business ID:', businessId, phone);
+      
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('*')
+        .eq('telefone', phone)
+        .eq('id_negocio', businessId)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      if (!data) return null;
+      
+      // Map database fields to our client interface
+      return {
+        id: data.id,
+        name: data.nome,
+        nome: data.nome,
+        email: data.email,
+        phone: data.telefone,
+        telefone: data.telefone,
+        ultima_visita: data.ultima_visita,
+        valor_total_gasto: data.valor_total_gasto || 0,
+        status: data.status || 'active',
+        criado_em: data.criado_em,
+        cidade: data.cidade,
+        estado: data.estado,
+        notas: data.notas
+      };
+      
+    } catch (err: any) {
+      console.error("Error finding client by phone:", err);
+      return null;
+    }
+  };
+
   return { 
     clients, 
     isLoading, 
     error, 
     createClient, 
-    findClientByEmail 
+    findClientByEmail,
+    findClientByPhone
   };
 };
