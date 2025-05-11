@@ -2,7 +2,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardStats } from "@/hooks/dashboard/useDashboardData";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'recharts';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { Users, UserPlus, UserCheck } from "lucide-react";
 
