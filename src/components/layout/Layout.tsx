@@ -7,7 +7,9 @@ import { Header } from './Header';
 const Layout = () => {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-background">
-      <Sidebar />
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
       
       <div className="flex-1 flex flex-col">
         <Header />
