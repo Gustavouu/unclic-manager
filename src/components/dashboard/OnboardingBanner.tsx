@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useTenant } from "@/contexts/TenantContext";
+import { useThrottledCallback } from "@/hooks/useDebounce";
 
 export const OnboardingBanner: React.FC = () => {
   const { needsOnboarding, loading, error, onboardingViewed, markOnboardingAsViewed } = useNeedsOnboarding();
@@ -26,7 +27,8 @@ export const OnboardingBanner: React.FC = () => {
     markOnboardingAsViewed();
   };
   
-  const handleFixStatus = async () => {
+  // Use throttled callback to prevent multiple rapid clicks
+  const handleFixStatus = useThrottledCallback(async () => {
     if (!currentBusiness?.id) {
       toast.error("Não foi possível identificar o negócio.");
       return;
@@ -46,21 +48,11 @@ export const OnboardingBanner: React.FC = () => {
       
       // Mark as viewed to hide the banner
       markOnboardingAsViewed();
-      
-      // Clear cache and refresh page to reflect changes
-      localStorage.removeItem(`user-business-${currentBusiness.id}`);
-      localStorage.removeItem(`business-${currentBusiness.id}`);
-      localStorage.removeItem("status-notification-shown");
-      
-      // Reload after short delay
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
     } catch (error: any) {
       console.error("Erro ao corrigir status:", error);
       toast.error(`Erro ao corrigir status: ${error.message}`, { id: "fix-status" });
     }
-  };
+  }, 1000); // Prevent clicks more often than once per second
   
   // Special message for businesses with "pendente" status that completed onboarding
   const isPendingStatus = currentBusiness?.status === "pendente";

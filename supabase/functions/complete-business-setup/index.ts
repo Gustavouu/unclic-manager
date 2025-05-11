@@ -170,10 +170,9 @@ serve(async (req) => {
       }
     }
     
-    // Update business status to active
+    // Update business status to active - FIXED: Removed the updated_at field that was causing errors
     console.log("Updating business status");
     
-    // Fixed: Use correct update syntax - removed updated_at field which was causing errors
     const { error: statusError } = await supabase
       .from('negocios')
       .update({ status: 'ativo' })

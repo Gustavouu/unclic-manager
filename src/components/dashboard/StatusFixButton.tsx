@@ -5,9 +5,10 @@ import { useTenant } from "@/contexts/TenantContext";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 import { toast } from "sonner";
 import { Wrench } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export const StatusFixButton: React.FC = () => {
-  const { currentBusiness, refreshBusinessData, updateBusinessStatus } = useTenant();
+  const { currentBusiness, updateBusinessStatus } = useTenant();
   const { refreshOnboardingStatus } = useNeedsOnboarding();
   const [isFixing, setIsFixing] = useState(false);
   
@@ -30,21 +31,10 @@ export const StatusFixButton: React.FC = () => {
         throw new Error("Não foi possível atualizar o status do negócio");
       }
       
-      // Clear onboarding cache
-      localStorage.removeItem(`user-business-${currentBusiness.id}`);
-      localStorage.removeItem(`business-${currentBusiness.id}`);
-      localStorage.removeItem("status-notification-shown");
-      
-      // Sequential refreshes to ensure proper state updates
-      await refreshBusinessData();
+      // Refresh onboarding status after successful status update
       await refreshOnboardingStatus();
       
       toast.success("Status do negócio corrigido com sucesso!", { id: "fix-status" });
-      
-      // Reload page after a short delay to ensure fresh state
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
     } catch (error: any) {
       console.error("Erro ao corrigir status:", error);
       toast.error(`Erro ao corrigir status: ${error.message}`, { id: "fix-status" });
