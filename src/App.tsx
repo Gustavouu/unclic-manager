@@ -36,15 +36,15 @@ function App() {
           </RequireAuth>
         }
       >
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="appointments" element={<Appointments />} />
-        <Route path="clients" element={<Clients />} />
-        <Route path="services" element={<Services />} />
-        <Route path="professionals" element={<Professionals />} />
-        <Route path="reports" element={<Reports />} />
-        <Route path="finance" element={<Finance />} />
-        <Route path="inventory" element={<Inventory />} />
-        <Route path="settings/*" element={<Settings />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/appointments" element={<Appointments />} />
+        <Route path="/clients" element={<Clients />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/professionals" element={<Professionals />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/finance" element={<Finance />} />
+        <Route path="/inventory" element={<Inventory />} />
+        <Route path="/settings/*" element={<Settings />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

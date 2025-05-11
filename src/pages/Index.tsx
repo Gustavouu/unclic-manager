@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
+import { Loader } from "@/components/ui/loader";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -13,7 +14,11 @@ const Index = () => {
   }, []);
   
   if (loading || (user && onboardingLoading)) {
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader size="lg" text="Carregando..." />
+      </div>
+    );
   }
   
   // If not authenticated, redirect to login

@@ -72,6 +72,10 @@ export const OnboardingProcessStatus: React.FC = () => {
       // Clear onboarding data from localStorage
       localStorage.removeItem('unclic-manager-onboarding');
       
+      // Redirect to dashboard after successful setup
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 1500);
     } catch (error: any) {
       console.error("Erro ao finalizar configuração:", error);
       
@@ -100,6 +104,9 @@ export const OnboardingProcessStatus: React.FC = () => {
               
               // Clear onboarding data
               localStorage.removeItem('unclic-manager-onboarding');
+              
+              // Redirect to dashboard
+              navigate("/dashboard", { replace: true });
             } else {
               // Access profile does not exist yet
               setError("Configuração em andamento. Por favor, tente novamente em alguns instantes.");

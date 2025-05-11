@@ -19,7 +19,7 @@ export function Sidebar() {
   const { pathname } = useLocation();
   
   const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: Calendar, label: "Agendamentos", path: "/appointments" },
     { icon: Scissors, label: "Serviços", path: "/services" },
     { icon: Users, label: "Clientes", path: "/clients" },
@@ -39,7 +39,7 @@ export function Sidebar() {
       <div className="flex-1 overflow-y-auto py-4">
         <div className="space-y-1 px-3">
           {menuItems.map((item) => {
-            const isActive = pathname === item.path;
+            const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
             return (
               <Link
                 key={item.path}
