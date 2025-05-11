@@ -7,28 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useTenant } from "@/contexts/TenantContext";
-import { useThrottledCallback } from "@/hooks/useDebounce";
+import { useDebouncedCallback } from "@/hooks/useDebounce";
 
 export const OnboardingBanner: React.FC = () => {
   const { needsOnboarding, loading, error, onboardingViewed, markOnboardingAsViewed } = useNeedsOnboarding();
   const { currentBusiness, updateBusinessStatus } = useTenant();
   const navigate = useNavigate();
   
-  // Don't show if loading, no onboarding needed, error occurred, or already viewed
-  if (loading || !needsOnboarding || error || onboardingViewed) {
-    return null;
-  }
-  
-  const handleContinueSetup = () => {
-    navigate("/onboarding");
-  };
-  
-  const handleDismiss = () => {
-    markOnboardingAsViewed();
-  };
-  
-  // Use throttled callback to prevent multiple rapid clicks
-  const handleFixStatus = useThrottledCallback(async () => {
+  // Always define hooks at the top level, never conditionally
+  const handleFixStatus = useDebouncedCallback(async () => {
     if (!currentBusiness?.id) {
       toast.error("Não foi possível identificar o negócio.");
       return;
@@ -53,6 +40,19 @@ export const OnboardingBanner: React.FC = () => {
       toast.error(`Erro ao corrigir status: ${error.message}`, { id: "fix-status" });
     }
   }, 1000); // Prevent clicks more often than once per second
+  
+  // Don't show if loading, no onboarding needed, error occurred, or already viewed
+  if (loading || !needsOnboarding || error || onboardingViewed) {
+    return null;
+  }
+  
+  const handleContinueSetup = () => {
+    navigate("/onboarding");
+  };
+  
+  const handleDismiss = () => {
+    markOnboardingAsViewed();
+  };
   
   // Special message for businesses with "pendente" status that completed onboarding
   const isPendingStatus = currentBusiness?.status === "pendente";

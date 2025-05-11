@@ -5,20 +5,16 @@ import { useTenant } from "@/contexts/TenantContext";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 import { toast } from "sonner";
 import { Wrench } from "lucide-react";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useDebouncedCallback } from "@/hooks/useDebounce";
 
 export const StatusFixButton: React.FC = () => {
   const { currentBusiness, updateBusinessStatus } = useTenant();
   const { refreshOnboardingStatus } = useNeedsOnboarding();
   const [isFixing, setIsFixing] = useState(false);
   
-  // Only show if business exists and has pending status
-  if (!currentBusiness || currentBusiness.status !== "pendente") {
-    return null;
-  }
-  
-  const handleFixStatus = async () => {
-    if (isFixing) return; // Prevent multiple clicks
+  // Always define the hook at the top level, never conditionally
+  const handleFixStatus = useDebouncedCallback(async () => {
+    if (isFixing || !currentBusiness?.id) return;
     
     try {
       setIsFixing(true);
@@ -41,7 +37,12 @@ export const StatusFixButton: React.FC = () => {
     } finally {
       setIsFixing(false);
     }
-  };
+  }, 1000);
+  
+  // Only show if business exists and has pending status
+  if (!currentBusiness || currentBusiness.status !== "pendente") {
+    return null;
+  }
   
   return (
     <Button 

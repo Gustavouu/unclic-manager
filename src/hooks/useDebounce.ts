@@ -49,22 +49,45 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
   return debouncedCallback;
 }
 
-// Throttle a function
+// Throttle a function - ensuring consistent hook calls
 export function useThrottledCallback<T extends (...args: any[]) => any>(
   callback: T,
   delay: number
 ): (...args: Parameters<T>) => void {
   const lastCall = useRef<number>(0);
+  const timeoutRef = useRef<number | null>(null);
   
-  return useCallback(
+  const throttledCallback = useCallback(
     (...args: Parameters<T>) => {
       const now = Date.now();
       
       if (now - lastCall.current >= delay) {
+        if (timeoutRef.current !== null) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        
         lastCall.current = now;
         callback(...args);
+      } else if (timeoutRef.current === null) {
+        timeoutRef.current = window.setTimeout(() => {
+          lastCall.current = Date.now();
+          timeoutRef.current = null;
+          callback(...args);
+        }, delay - (now - lastCall.current));
       }
     },
     [callback, delay]
   );
+  
+  // Clean up any pending timeouts when unmounting
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+  
+  return throttledCallback;
 }
