@@ -177,14 +177,14 @@ export const checkOnboardingStatus = async (userId: string, skipCache = false): 
   }
 };
 
-// Update business status - improved with better fallbacks and error handling
+// Update business status - improved with better error handling for the update_atualizado_em trigger
 export const updateBusinessStatus = async (businessId: string, newStatus: string): Promise<boolean> => {
   if (!businessId) return false;
   
   try {
     console.log(`Tentando atualizar status do negócio ${businessId} para ${newStatus}`);
     
-    // First attempt: Try using the RPC function (now our primary method since it's fixed)
+    // First attempt: Try using the RPC function (our primary method)
     console.log("Método 1: Usando RPC function");
     const { data: rpcData, error: rpcError } = await supabase.rpc('set_business_status', {
       business_id: businessId,
@@ -205,8 +205,8 @@ export const updateBusinessStatus = async (businessId: string, newStatus: string
     const { error } = await supabase
       .from('negocios')
       .update({ 
-        status: newStatus, 
-        atualizado_em: new Date().toISOString() 
+        status: newStatus
+        // Note: atualizado_em will be updated by the trigger we just created
       })
       .eq('id', businessId);
       
@@ -218,8 +218,8 @@ export const updateBusinessStatus = async (businessId: string, newStatus: string
     
     console.warn('Erro no update direto, tentando método simplificado:', error);
     
-    // Last attempt: Simplified update
-    console.log("Método 3: Usando update simplificado");
+    // Last attempt: Simplified update with current timestamp
+    console.log("Método 3: Usando update explícito com timestamp");
     const { error: simpleError } = await supabase
       .from('negocios')
       .update({ 
@@ -233,7 +233,7 @@ export const updateBusinessStatus = async (businessId: string, newStatus: string
       throw simpleError;
     }
     
-    console.log('Status atualizado com sucesso via update simplificado');
+    console.log('Status atualizado com sucesso via update com timestamp explícito');
     clearBusinessCache();
     return true;
   } catch (error: any) {
