@@ -201,6 +201,11 @@ export const OnboardingControls: React.FC = () => {
       
       toast.dismiss(loadingToast);
       
+      // Check if the response or response.data is null (timeout or connection issue)
+      if (!response || !response.data) {
+        throw new Error("Tempo esgotado ao finalizar configuração. Tente novamente.");
+      }
+      
       if (!response.data.success) {
         throw new Error(response.data.error || "Erro ao finalizar configuração");
       }
@@ -256,59 +261,118 @@ export const OnboardingControls: React.FC = () => {
       // STEP 1: Create the business first
       console.log("Sending request to create business");
       
-      const response = await supabase.functions.invoke('create-business', {
-        body: {
-          businessData: {
-            name: businessData.name,
-            email: businessData.email,
-            phone: businessData.phone,
-            address: businessData.address,
-            number: businessData.number,
-            neighborhood: businessData.neighborhood,
-            city: businessData.city,
-            state: businessData.state,
-            cep: businessData.cep
-          },
-          userId: user.id
+      try {
+        const response = await supabase.functions.invoke('create-business', {
+          body: {
+            businessData: {
+              name: businessData.name,
+              email: businessData.email,
+              phone: businessData.phone,
+              address: businessData.address,
+              number: businessData.number,
+              neighborhood: businessData.neighborhood,
+              city: businessData.city,
+              state: businessData.state,
+              cep: businessData.cep
+            },
+            userId: user.id
+          }
+        });
+        
+        toast.dismiss(loadingToast);
+        
+        // Check if response or response.data is null (timeout or connection issue)
+        if (!response || !response.data) {
+          console.log("Response or response.data is null - likely a timeout");
+          
+          // The function might have timed out but the business could still be created
+          // Wait a moment and check if business was created
+          setError("O servidor está ocupado. Verificando se o estabelecimento foi criado...");
+          
+          setTimeout(async () => {
+            const result = await verifyBusinessCreated();
+            
+            if (result.success) {
+              if (result.complete) {
+                toast.success("Configuração concluída com sucesso!");
+                // Redirect is handled by verifyBusinessCreated
+              } else {
+                setError("Estabelecimento criado com sucesso! Agora precisamos finalizar a configuração do seu perfil de acesso. Clique em 'Finalizar Configuração' para continuar.");
+                toast.success("Estabelecimento criado! Por favor, finalize a configuração.");
+              }
+            } else {
+              setError("Não foi possível verificar se o estabelecimento foi criado. Por favor, tente novamente.");
+              toast.error("Erro ao criar negócio. Verifique sua conexão e tente novamente.");
+            }
+          }, 2000);
+          
+          setIsSaving(false);
+          return;
         }
-      });
-      
-      toast.dismiss(loadingToast);
-      
-      console.log("Create business response:", response.data);
-      
-      if (!response.data.success) {
-        throw new Error(response.data.error || "Erro ao criar negócio");
+        
+        console.log("Create business response:", response.data);
+        
+        if (!response.data.success) {
+          throw new Error(response.data.error || "Erro ao criar negócio");
+        }
+        
+        const businessId = response.data.businessId;
+        const businessSlug = response.data.businessSlug;
+        const needsProfileSetup = response.data.needsProfileSetup;
+        
+        // Store business info for next step
+        setBusinessCreated({
+          id: businessId,
+          slug: businessSlug
+        });
+        
+        console.log("Negócio criado com sucesso. ID:", businessId, "Slug:", businessSlug);
+        
+        if (needsProfileSetup) {
+          // If we need to complete setup separately
+          setError("Estabelecimento criado com sucesso! Agora precisamos finalizar a configuração do seu perfil de acesso. Clique em 'Finalizar Configuração' para continuar.");
+          toast.success("Estabelecimento criado! Por favor, finalize a configuração.");
+          setIsSaving(false);
+          return;
+        }
+        
+        // Proceed to complete setup immediately
+        await handleCompleteSetup();
+        
+      } catch (apiError: any) {
+        // Handle API call error
+        console.error("API error:", apiError);
+        toast.dismiss(loadingToast);
+        
+        // Check if we hit the worker limit error (timeout)
+        if (apiError.message && (apiError.message.includes("compute resources") || apiError.message.includes("WORKER_LIMIT") || apiError.message.includes("timeout"))) {
+          setError("O servidor está ocupado. Verificando se o estabelecimento foi criado...");
+          
+          // Wait a moment and check if business was created
+          setTimeout(async () => {
+            const result = await verifyBusinessCreated();
+            
+            if (result.success) {
+              if (result.complete) {
+                toast.success("Configuração concluída com sucesso!");
+                // Redirect is handled by verifyBusinessCreated
+              } else {
+                setError("Estabelecimento criado com sucesso! Agora precisamos finalizar a configuração do seu perfil de acesso. Clique em 'Finalizar Configuração' para continuar.");
+                toast.success("Estabelecimento criado! Por favor, finalize a configuração.");
+              }
+            } else {
+              setError("Não foi possível verificar se o estabelecimento foi criado. Por favor, tente novamente.");
+            }
+          }, 2000);
+        } else {
+          setError(apiError.message || "Erro desconhecido ao criar estabelecimento");
+        }
       }
-      
-      const businessId = response.data.businessId;
-      const businessSlug = response.data.businessSlug;
-      const needsProfileSetup = response.data.needsProfileSetup;
-      
-      // Store business info for next step
-      setBusinessCreated({
-        id: businessId,
-        slug: businessSlug
-      });
-      
-      console.log("Negócio criado com sucesso. ID:", businessId, "Slug:", businessSlug);
-      
-      if (needsProfileSetup) {
-        // If we need to complete setup separately
-        setError("Estabelecimento criado com sucesso! Agora precisamos finalizar a configuração do seu perfil de acesso. Clique em 'Finalizar Configuração' para continuar.");
-        toast.success("Estabelecimento criado! Por favor, finalize a configuração.");
-        setIsSaving(false);
-        return;
-      }
-      
-      // Proceed to complete setup immediately
-      await handleCompleteSetup();
-      
     } catch (error: any) {
       console.error("Erro ao finalizar configuração:", error);
       
       // Check if we hit the worker limit error (timeout)
-      if (error.message.includes("compute resources") || error.message.includes("WORKER_LIMIT")) {
+      if (error.message && (error.message.includes("compute resources") || error.message.includes("WORKER_LIMIT"))) {
         setError("O servidor está ocupado. O estabelecimento pode ter sido criado, mas ainda precisamos finalizar a configuração.");
         
         // Wait a moment and check if business was created
