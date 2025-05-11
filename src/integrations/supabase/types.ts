@@ -3585,6 +3585,10 @@ export type Database = {
         Args: { business_id: string; new_status: string }
         Returns: boolean
       }
+      usuario_tem_acesso_ao_negocio: {
+        Args: { id_negocio_verificar: string }
+        Returns: boolean
+      }
     }
     Enums: {
       AccountType: "CASH" | "BANK" | "CREDIT_CARD" | "PAYMENT_GATEWAY" | "OTHER"

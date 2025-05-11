@@ -88,6 +88,15 @@ export const useClients = () => {
       
       console.log('Creating client for business ID:', businessId, clientData);
       
+      // Certifique-se de que o usuário esteja autenticado
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.error("Usuário não autenticado");
+        toast.error("Você precisa estar autenticado para criar clientes");
+        throw new Error("Usuário não autenticado");
+      }
+      
       const { data, error } = await supabase
         .from('clientes')
         .insert([{

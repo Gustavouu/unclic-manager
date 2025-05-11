@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useClients } from "@/hooks/useClients";
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import * as z from 'zod';
+import { useAuth } from '@/hooks/useAuth';
+import { useTenant } from '@/contexts/TenantContext';
 
 const clientSchema = z.object({
   nome: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres' }),
@@ -29,6 +31,21 @@ interface NewClientDialogProps {
 export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogProps) => {
   const { createClient } = useClients();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
+  const { businessId } = useTenant();
+  const [authStatus, setAuthStatus] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setAuthStatus(data.session ? 'authenticated' : 'unauthenticated');
+      console.log('Auth status:', data.session ? 'authenticated' : 'unauthenticated');
+      console.log('User:', user);
+      console.log('Business ID:', businessId);
+    };
+    
+    checkAuth();
+  }, [user, businessId]);
   
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(clientSchema),
@@ -45,6 +62,8 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
     try {
       setIsSubmitting(true);
       console.log("Submitting client data:", data);
+      console.log("Auth status:", authStatus);
+      console.log("Business ID:", businessId);
       
       const newClient = await createClient(data);
       
@@ -54,9 +73,9 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
       }
       
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating client:", error);
-      toast.error("Erro ao criar cliente");
+      toast.error(`Erro ao criar cliente: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -68,6 +87,18 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
         <DialogHeader>
           <DialogTitle>Novo Cliente</DialogTitle>
         </DialogHeader>
+        
+        {!businessId && (
+          <div className="bg-yellow-100 p-3 rounded-md mb-4">
+            <p className="text-yellow-800">Aviso: ID do negócio não disponível. Você precisa estar vinculado a um negócio.</p>
+          </div>
+        )}
+        
+        {!user && (
+          <div className="bg-red-100 p-3 rounded-md mb-4">
+            <p className="text-red-800">Aviso: Você precisa estar autenticado para criar clientes.</p>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
           <div className="space-y-4">
@@ -137,7 +168,7 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
           
           <DialogFooter>
             <Button variant="outline" type="button" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || !businessId || !user}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

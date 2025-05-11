@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Obter variáveis de ambiente - usando import.meta.env ao invés de process.env para o Vite
@@ -6,7 +5,13 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Criar cliente Supabase
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
 
 /**
  * Função para buscar dados com cache
