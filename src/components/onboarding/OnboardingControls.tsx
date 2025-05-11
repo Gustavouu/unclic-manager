@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { LoadingButton } from "@/components/ui/loading-button";
 
 export const OnboardingControls: React.FC = () => {
   const { 
@@ -144,6 +145,8 @@ export const OnboardingControls: React.FC = () => {
         userId: user.id
       };
       
+      console.log("Sending request to create business with payload:", businessPayload);
+      
       // Chamar o edge function que usará a service role para criar o negócio
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-business`,
@@ -158,6 +161,7 @@ export const OnboardingControls: React.FC = () => {
       );
       
       const result = await response.json();
+      console.log("Create business response:", result);
       
       if (!response.ok || !result.success) {
         toast.dismiss(loadingToast);
@@ -165,6 +169,8 @@ export const OnboardingControls: React.FC = () => {
         // Handle specific errors
         if (result.error && result.error.includes("já está em uso")) {
           throw new Error("O nome do estabelecimento já está em uso. Por favor, escolha outro nome.");
+        } else if (result.error && result.error.includes("perfis_acesso")) {
+          throw new Error("Erro ao criar perfil de acesso. Por favor, tente novamente ou entre em contato com o suporte.");
         } else {
           throw new Error(result.error || "Erro ao criar negócio");
         }
@@ -189,7 +195,7 @@ export const OnboardingControls: React.FC = () => {
       
     } catch (error: any) {
       console.error("Erro ao finalizar configuração:", error);
-      toast.error(error.message || "Erro ao finalizar configuração");
+      toast.error(error.message || "Erro ao finalizar configuração. Tente novamente.");
       setIsSaving(false);
     }
   };
@@ -204,28 +210,27 @@ export const OnboardingControls: React.FC = () => {
         <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
       </Button>
       
-      <Button
-        onClick={currentStep === 4 ? handleFinish : handleNext}
-        variant={currentStep === 4 ? "default" : "default"}
-        disabled={isSaving || isCheckingSlug}
-      >
-        {currentStep === 4 ? (
-          <>
-            {isSaving ? (
-              "Salvando..."
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" /> Finalizar
-              </>
-            )}
-          </>
-        ) : (
-          <>
-            {isCheckingSlug ? "Verificando..." : "Avançar"} 
-            {!isCheckingSlug && <ArrowRight className="ml-2 h-4 w-4" />}
-          </>
-        )}
-      </Button>
+      {currentStep === 4 ? (
+        <LoadingButton 
+          onClick={handleFinish}
+          isLoading={isSaving} 
+          loadingText="Salvando..."
+          icon={<Save className="mr-2 h-4 w-4" />}
+          disabled={isSaving || isCheckingSlug}
+        >
+          Finalizar
+        </LoadingButton>
+      ) : (
+        <LoadingButton
+          onClick={handleNext}
+          isLoading={isCheckingSlug}
+          loadingText="Verificando..."
+          icon={<ArrowRight className="ml-2 h-4 w-4" />}
+          disabled={isSaving || isCheckingSlug}
+        >
+          Avançar
+        </LoadingButton>
+      )}
     </div>
   );
 };

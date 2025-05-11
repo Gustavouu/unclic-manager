@@ -22,6 +22,8 @@ const generateUniqueSlug = (name, attempt = 0) => {
   return attempt === 0 ? baseSlug : `${baseSlug}-${attempt}`;
 };
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -32,88 +34,154 @@ serve(async (req) => {
     // Parse request body
     const { businessData, userId } = await req.json();
     
+    // Validate userId format and existence
+    if (!userId || typeof userId !== 'string' || !userId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      console.error("Invalid user ID format:", userId);
+      throw new Error("ID de usuário inválido ou ausente");
+    }
+    
     // Create Supabase client with service role key (bypasses RLS)
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    console.log("Received request to create business:", { businessData, userId });
-    console.log("User ID type:", typeof userId, "User ID value:", userId);
+    console.log("Received request to create business with valid user ID:", userId);
     
-    // Step 1: Check if the user exists in the usuarios table with more detailed debugging
+    // STEP 1: Verify if the user exists in auth.users (important validation)
+    console.log("Verifying user exists in auth system...");
+    try {
+      const { data: authUser, error: authUserError } = await supabase.auth.admin.getUserById(userId);
+      
+      if (authUserError || !authUser?.user) {
+        console.error("User verification failed in auth.users:", authUserError || "User not found");
+        throw new Error(`Usuário não encontrado no sistema de autenticação. Por favor, faça login novamente.`);
+      }
+      
+      console.log("Auth user verified successfully:", {
+        id: authUser.user.id,
+        email: authUser.user.email
+      });
+      
+      if (authUser.user.id !== userId) {
+        console.error("User ID mismatch between request and auth system:", {
+          requestId: userId,
+          authId: authUser.user.id
+        });
+        throw new Error("ID de usuário não corresponde ao usuário autenticado");
+      }
+    } catch (authVerificationError) {
+      console.error("Error during auth user verification:", authVerificationError);
+      throw new Error(`Erro ao verificar usuário: ${authVerificationError.message}`);
+    }
+    
+    // STEP 2: Check if user exists in usuarios table with detailed error handling
     console.log("Checking if user exists in usuarios table with ID:", userId);
-    const { data: existingUser, error: userCheckError } = await supabase
-      .from('usuarios')
-      .select('id')
-      .eq('id', userId)
-      .maybeSingle();
+    let userExists = false;
     
-    console.log("User check result:", { existingUser, userCheckError });
-
-    // Step 2: If user doesn't exist in the usuarios table, create them first with enhanced error handling
-    if (!existingUser) {
+    try {
+      const { data: existingUser, error: userCheckError } = await supabase
+        .from('usuarios')
+        .select('id, nome_completo, email')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (userCheckError && userCheckError.code !== 'PGRST116') { // Not found is expected
+        console.error("Database error checking user existence:", userCheckError);
+        throw new Error(`Erro ao verificar existência do usuário: ${userCheckError.message}`);
+      }
+      
+      userExists = !!existingUser;
+      console.log("User existence check result:", { userExists, existingUser });
+    } catch (userCheckException) {
+      console.error("Exception checking user existence:", userCheckException);
+      throw new Error(`Exceção ao verificar existência do usuário: ${userCheckException.message}`);
+    }
+    
+    // STEP 3: If user doesn't exist, create them with proper error handling and retries
+    if (!userExists) {
       console.log("User not found in usuarios table. Creating new user record.");
       
-      // Step 2.1: Fetch user data from auth to get email and name
+      // Fetch user data from auth to get email and name
       console.log("Fetching user data from auth.users with ID:", userId);
       const { data: authUser, error: authUserError } = await supabase.auth.admin.getUserById(userId);
       
-      console.log("Auth user fetch result:", { 
-        authUserExists: !!authUser?.user, 
-        authUserEmail: authUser?.user?.email,
-        authUserName: authUser?.user?.user_metadata?.name,
-        authUserError 
-      });
-      
-      if (authUserError) {
-        console.error("Error fetching auth user:", authUserError);
-        throw new Error(`Não foi possível obter dados do usuário: ${authUserError.message}`);
+      if (authUserError || !authUser?.user) {
+        console.error("Error fetching auth user:", authUserError || "User not found");
+        throw new Error(`Não foi possível obter dados do usuário autenticado`);
       }
       
-      if (!authUser?.user) {
-        console.error("Auth user not found with ID:", userId);
-        throw new Error(`Usuário não encontrado na autenticação com ID: ${userId}`);
+      const userName = authUser.user.user_metadata?.name || businessData.name || "Usuário";
+      const userEmail = authUser.user.email || businessData.email;
+      
+      if (!userEmail) {
+        console.error("No email available for user");
+        throw new Error("Email do usuário não encontrado");
       }
       
-      // Step 2.2: Create user record in usuarios table with detailed logging
       const userToCreate = {
         id: userId,
-        email: authUser.user.email || businessData.email,
-        nome_completo: authUser.user.user_metadata?.name || businessData.name || "Usuário",
+        email: userEmail,
+        nome_completo: userName,
         status: 'ativo'
       };
       
-      console.log("Creating user in usuarios table with data:", userToCreate);
+      console.log("Creating user in usuarios table with data:", JSON.stringify(userToCreate));
       
-      const { data: createdUser, error: createUserError } = await supabase
-        .from('usuarios')
-        .insert([userToCreate])
-        .select();
+      // Create user with retry mechanism for better reliability
+      let userCreated = false;
+      let attempts = 0;
+      let createdUser = null;
       
-      console.log("Create user result:", { createdUser, createUserError });
-      
-      if (createUserError) {
-        console.error("Error creating user record:", createUserError);
-        throw new Error(`Erro ao criar registro de usuário: ${createUserError.message}`);
-      }
-      
-      // Step 2.3: Verify the user was actually created with a separate query
-      const { data: verifyUser, error: verifyError } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('id', userId)
-        .single();
+      while (!userCreated && attempts < 3) {
+        attempts++;
+        console.log(`Attempt ${attempts} to create user`);
         
-      console.log("Verification of user creation:", { verifyUser, verifyError });
-      
-      if (verifyError) {
-        console.error("Failed to verify user creation:", verifyError);
-        throw new Error(`O usuário foi criado mas não pôde ser verificado: ${verifyError.message}`);
+        try {
+          const { data, error } = await supabase
+            .from('usuarios')
+            .insert([userToCreate])
+            .select();
+          
+          if (error) {
+            console.error(`Attempt ${attempts} failed:`, error);
+            if (attempts < 3) {
+              await sleep(500); // Wait before retrying
+              continue;
+            }
+            throw error;
+          }
+          
+          createdUser = data?.[0];
+          userCreated = true;
+          console.log("User created successfully:", createdUser);
+        } catch (createError) {
+          console.error(`Create user attempt ${attempts} exception:`, createError);
+          if (attempts >= 3) {
+            throw new Error(`Falha ao criar registro de usuário após ${attempts} tentativas: ${createError.message}`);
+          }
+          await sleep(500); // Wait before retrying
+        }
       }
       
-      console.log("User record created and verified successfully for ID:", userId);
-    } else {
-      console.log("User already exists in usuarios table:", existingUser);
+      // Double-check user was actually created
+      console.log("Verifying user creation with direct query...");
+      try {
+        const { data: verifyUser, error: verifyError } = await supabase
+          .from('usuarios')
+          .select('id, nome_completo, email')
+          .eq('id', userId)
+          .single();
+        
+        if (verifyError || !verifyUser) {
+          console.error("User verification failed after creation:", verifyError || "User not found");
+          throw new Error("Usuário não foi criado corretamente no banco de dados");
+        }
+        
+        console.log("User verified successfully after creation:", verifyUser);
+      } catch (verifyException) {
+        console.error("Exception during user verification:", verifyException);
+        throw new Error(`Falha ao verificar criação do usuário: ${verifyException.message}`);
+      }
     }
     
     // Generate initial slug from business name
@@ -128,7 +196,7 @@ serve(async (req) => {
         .from('negocios')
         .select('id')
         .eq('slug', businessSlug)
-        .single();
+        .maybeSingle();
       
       if (slugCheckError && slugCheckError.code === 'PGRST116') {
         // PGRST116 means no rows returned, so slug is unique
@@ -149,6 +217,7 @@ serve(async (req) => {
     }
     
     // 1. Create the business record with the unique slug
+    console.log("Creating business record with slug:", businessSlug);
     const { data: businessRecord, error: businessError } = await supabase
       .from('negocios')
       .insert([
@@ -177,7 +246,7 @@ serve(async (req) => {
         throw new Error("O nome do estabelecimento já está em uso. Por favor, escolha um nome diferente.");
       }
       
-      throw new Error(businessError.message);
+      throw new Error(`Erro ao criar negócio: ${businessError.message}`);
     }
     
     if (!businessRecord) {
@@ -188,6 +257,7 @@ serve(async (req) => {
     console.log("Business created successfully. ID:", businessId);
     
     // 2. Update the user profile with the business ID
+    console.log("Updating user record with business ID association");
     const { error: userError } = await supabase
       .from('usuarios')
       .update({ id_negocio: businessId })
@@ -198,104 +268,173 @@ serve(async (req) => {
       throw new Error(`Erro ao atualizar perfil do usuário: ${userError.message}`);
     }
     
-    // 3. Create access profile (admin) with detailed error handling
-    console.log("Creating access profile for user:", userId, "and business:", businessId);
+    console.log("User profile updated with business ID");
     
-    const accessProfileData = {
-      id_usuario: userId,
-      id_negocio: businessId,
-      e_administrador: true,
-      acesso_configuracoes: true,
-      acesso_agendamentos: true,
-      acesso_clientes: true,
-      acesso_financeiro: true,
-      acesso_estoque: true,
-      acesso_marketing: true,
-      acesso_relatorios: true
-    };
+    // 3. Verify user record was updated correctly
+    console.log("Verifying user-business association...");
+    const { data: verifiedUser, error: verifyUserError } = await supabase
+      .from('usuarios')
+      .select('id, id_negocio')
+      .eq('id', userId)
+      .single();
+      
+    if (verifyUserError || !verifiedUser || verifiedUser.id_negocio !== businessId) {
+      console.error("User-business association verification failed:", 
+        verifyUserError || 
+        `Expected business ID ${businessId}, but found ${verifiedUser?.id_negocio}`);
+      throw new Error("Falha na verificação da associação do usuário ao negócio");
+    }
     
-    console.log("Access profile data:", accessProfileData);
+    console.log("User-business association verified:", verifiedUser);
     
+    // 4. Create access profile with additional validation and more explicit error handling
     try {
+      console.log("Creating access profile for user:", userId, "and business:", businessId);
+      
+      // Double-check user exists before creating access profile
+      const { data: userCheck, error: userCheckError } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('id', userId)
+        .single();
+        
+      if (userCheckError || !userCheck) {
+        console.error("Error: User does not exist before creating access profile:", userCheckError || "User not found");
+        throw new Error(`Usuário não encontrado para criar perfil de acesso. Erro: ${userCheckError?.message || "Registro não existe"}`);
+      }
+      
+      const accessProfileData = {
+        id_usuario: userId,
+        id_negocio: businessId,
+        e_administrador: true,
+        acesso_configuracoes: true,
+        acesso_agendamentos: true,
+        acesso_clientes: true,
+        acesso_financeiro: true,
+        acesso_estoque: true,
+        acesso_marketing: true,
+        acesso_relatorios: true
+      };
+      
+      console.log("Access profile data:", JSON.stringify(accessProfileData));
+      
       const { data: profileData, error: profileError } = await supabase
         .from('perfis_acesso')
         .insert([accessProfileData])
         .select();
-      
-      console.log("Access profile creation result:", { profileData, profileError });
       
       if (profileError) {
         console.error("Error creating access profile:", profileError);
         
         // Check specifically for FK constraint violation
         if (profileError.code === '23503' && profileError.message.includes('perfis_acesso_id_usuario_fkey')) {
-          throw new Error(`Erro de referência: O usuário (${userId}) não existe na tabela de usuários. Por favor, contate o suporte.`);
+          console.error("Critical error: FK constraint violation despite previous checks");
+          console.error("Detailed error info:", profileError);
+          
+          // Emergency direct check of usuarios table
+          const { data: emergencyUserCheck } = await supabase
+            .from('usuarios')
+            .select('id, email, nome_completo')
+            .eq('id', userId);
+            
+          console.error("Emergency user check result:", emergencyUserCheck);
+          
+          throw new Error(`Erro crítico: O usuário (${userId}) existe no sistema de autenticação mas não foi encontrado na tabela de usuários mesmo após tentativa de criação. Tente novamente ou entre em contato com o suporte.`);
         }
         
         throw new Error(`Erro ao criar perfil de acesso: ${profileError.message}`);
       }
-    } catch (profileCreationError: any) {
+      
+      console.log("Access profile created successfully:", profileData);
+    } catch (profileCreationError) {
       console.error("Exception during profile creation:", profileCreationError);
       throw new Error(`Exceção ao criar perfil de acesso: ${profileCreationError.message}`);
     }
     
-    // 4. Create services
-    if (businessData.services && businessData.services.length > 0) {
-      const servicesData = businessData.services.map(service => ({
-        id_negocio: businessId,
-        nome: service.name,
-        descricao: service.description || null,
-        preco: service.price,
-        duracao: service.duration,
-        ativo: true
-      }));
-      
-      const { error: servicesError } = await supabase
-        .from('servicos')
-        .insert(servicesData);
-      
-      if (servicesError) {
-        console.error("Error creating services:", servicesError);
-        // Continue despite service errors
-      }
-    }
-    
-    // 5. Create staff members (if applicable)
-    if (businessData.hasStaff && businessData.staffMembers && businessData.staffMembers.length > 0) {
-      const staffData = businessData.staffMembers.map(staff => ({
-        id_negocio: businessId,
-        nome: staff.name,
-        email: staff.email || null,
-        telefone: staff.phone || null,
-        especializacoes: staff.specialties || null,
-        status: 'ativo'
-      }));
-      
-      const { error: staffError } = await supabase
-        .from('funcionarios')
-        .insert(staffData);
-      
-      if (staffError) {
-        console.error("Error creating staff members:", staffError);
-        // Continue despite staff errors
-      }
-    }
-    
-    // 6. Create business settings
+    // 5. Create business settings
+    console.log("Creating business settings...");
     try {
       const { error: configError } = await supabase
         .from('configuracoes_negocio')
         .insert([{ 
           id_negocio: businessId
-          // Use default values for other settings
         }]);
         
       if (configError) {
         console.error("Error creating business settings:", configError);
+        // Non-critical, continue despite error
+        console.warn("Continuing despite business settings error");
+      } else {
+        console.log("Business settings created successfully");
       }
     } catch (configErr) {
       console.warn("Warning when creating business settings:", configErr);
+      // Non-critical, continue despite error
     }
+    
+    // 6. Create services
+    if (businessData.services && businessData.services.length > 0) {
+      console.log("Creating services...");
+      try {
+        const servicesData = businessData.services.map(service => ({
+          id_negocio: businessId,
+          nome: service.name,
+          descricao: service.description || null,
+          preco: service.price,
+          duracao: service.duration,
+          ativo: true
+        }));
+        
+        const { data: createdServices, error: servicesError } = await supabase
+          .from('servicos')
+          .insert(servicesData)
+          .select();
+        
+        if (servicesError) {
+          console.error("Error creating services:", servicesError);
+          // Non-critical, continue despite error
+          console.warn("Continuing despite services error");
+        } else {
+          console.log(`Created ${createdServices.length} services successfully`);
+        }
+      } catch (servicesException) {
+        console.warn("Exception when creating services:", servicesException);
+        // Non-critical, continue despite error
+      }
+    }
+    
+    // 7. Create staff members (if applicable)
+    if (businessData.hasStaff && businessData.staffMembers && businessData.staffMembers.length > 0) {
+      console.log("Creating staff members...");
+      try {
+        const staffData = businessData.staffMembers.map(staff => ({
+          id_negocio: businessId,
+          nome: staff.name,
+          email: staff.email || null,
+          telefone: staff.phone || null,
+          especializacoes: staff.specialties || null,
+          status: 'ativo'
+        }));
+        
+        const { data: createdStaff, error: staffError } = await supabase
+          .from('funcionarios')
+          .insert(staffData)
+          .select();
+        
+        if (staffError) {
+          console.error("Error creating staff members:", staffError);
+          // Non-critical, continue despite error
+          console.warn("Continuing despite staff error");
+        } else {
+          console.log(`Created ${createdStaff.length} staff members successfully`);
+        }
+      } catch (staffException) {
+        console.warn("Exception when creating staff:", staffException);
+        // Non-critical, continue despite error
+      }
+    }
+    
+    console.log("Business setup completed successfully!");
     
     return new Response(
       JSON.stringify({ 
