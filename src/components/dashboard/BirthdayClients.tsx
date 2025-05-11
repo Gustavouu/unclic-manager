@@ -53,38 +53,41 @@ export function BirthdayClients() {
   };
   
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-display flex items-center">
           <Cake className="mr-2 h-5 w-5 text-yellow-500" />
           Aniversariantes do Mês
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {loading ? (
           <div className="flex justify-center items-center h-[200px]">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : birthdayClients.length > 0 ? (
-          <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+          <div className="space-y-1 max-h-[300px] overflow-y-auto pr-2">
             {birthdayClients.map((client) => (
-              <div key={client.id} className="flex items-center justify-between border-b pb-3">
-                <div className="space-y-1">
-                  <p className="font-medium">{client.nome}</p>
+              <div 
+                key={client.id} 
+                className="flex items-center justify-between border-l-2 border-yellow-400 bg-yellow-50/50 p-3 rounded-r-md"
+              >
+                <div className="space-y-1 min-w-0 flex-1">
+                  <p className="font-medium truncate">{client.nome}</p>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5 mr-1" />
                     <span>{formatBirthDate(client.data_nascimento)}</span>
                   </div>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 ml-2">
                   {client.telefone && (
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-yellow-100 text-yellow-600">
                       <PhoneCall className="h-4 w-4" />
                       <span className="sr-only">Ligar</span>
                     </Button>
                   )}
                   {client.email && (
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-yellow-100 text-yellow-600">
                       <Mail className="h-4 w-4" />
                       <span className="sr-only">Email</span>
                     </Button>
@@ -95,8 +98,11 @@ export function BirthdayClients() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
-            <Cake className="h-12 w-12 mb-2" />
-            <p>Nenhum aniversariante este mês</p>
+            <div className="bg-yellow-100 p-3 rounded-full mb-3">
+              <Cake className="h-8 w-8 text-yellow-500" />
+            </div>
+            <p className="font-medium">Nenhum aniversariante este mês</p>
+            <p className="text-xs mt-1">Seus clientes com aniversário neste mês aparecerão aqui</p>
           </div>
         )}
       </CardContent>

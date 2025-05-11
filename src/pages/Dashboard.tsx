@@ -66,10 +66,13 @@ const Dashboard = () => {
         </div>
       </div>
       
-      {/* KPI Cards */}
+      {/* KPI Cards - Mantendo no topo */}
       <KpiCards stats={stats} period={period} />
 
-      {/* Main Dashboard Widgets */}
+      {/* Financial Charts - Agora com largura total para destaque */}
+      <FinancialCharts data={stats.revenueData || []} />
+      
+      {/* Próximos Agendamentos e Serviços Populares lado a lado */}
       <ResponsiveGrid 
         columns={{ default: 1, md: 2 }}
         gap="md"
@@ -79,30 +82,27 @@ const Dashboard = () => {
         <PopularServicesWidget services={stats.popularServices || []} />
       </ResponsiveGrid>
 
-      {/* Financial Charts */}
-      <FinancialCharts data={stats.revenueData || []} />
-
-      {/* Client Comparison and Birthdays */}
+      {/* Novos Clientes vs Recorrentes e Taxa de Retenção lado a lado */}
       <ResponsiveGrid 
         columns={{ default: 1, md: 2 }}
         gap="md"
         equalHeight={true}
       >
         <ClientsComparisonChart stats={stats} />
-        <BirthdayClients />
+        <RetentionRateCard stats={stats} />
       </ResponsiveGrid>
 
-      {/* Retention Rate and Performance Metrics */}
+      {/* Aniversariantes do Mês e Métricas de Desempenho lado a lado */}
       <ResponsiveGrid 
         columns={{ default: 1, md: 2 }}
         gap="md"
         equalHeight={true}
       >
-        <RetentionRateCard stats={stats} />
+        <BirthdayClients />
         <PerformanceMetrics stats={stats} />
       </ResponsiveGrid>
       
-      {/* Insights */}
+      {/* Insights - Largura total no final */}
       <DashboardInsights stats={stats} />
       
       <DashboardFooter />
