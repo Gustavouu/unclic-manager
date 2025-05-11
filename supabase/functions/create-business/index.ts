@@ -39,6 +39,47 @@ serve(async (req) => {
     
     console.log("Received request to create business:", { businessData, userId });
     
+    // Check if the user exists in the usuarios table
+    const { data: existingUser, error: userCheckError } = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
+
+    // If user doesn't exist in the usuarios table, create them first
+    if (!existingUser && userCheckError?.code === 'PGRST116') {
+      console.log("User not found in usuarios table. Creating new user record.");
+      
+      // Fetch user data from auth to get email and name
+      const { data: authUser, error: authUserError } = await supabase.auth.admin.getUserById(userId);
+      
+      if (authUserError) {
+        console.error("Error fetching auth user:", authUserError);
+        throw new Error(`Não foi possível obter dados do usuário: ${authUserError.message}`);
+      }
+      
+      // Create user record in usuarios table
+      const { error: createUserError } = await supabase
+        .from('usuarios')
+        .insert([{
+          id: userId,
+          email: authUser?.user?.email || businessData.email,
+          nome_completo: authUser?.user?.user_metadata?.name || businessData.name || "Usuário",
+          status: 'ativo'
+        }]);
+      
+      if (createUserError) {
+        console.error("Error creating user record:", createUserError);
+        throw new Error(`Erro ao criar registro de usuário: ${createUserError.message}`);
+      }
+      
+      console.log("User record created successfully for ID:", userId);
+    } else if (userCheckError && userCheckError.code !== 'PGRST116') {
+      // If there's any other error checking the user, throw it
+      console.error("Error checking user existence:", userCheckError);
+      throw new Error(`Erro ao verificar usuário: ${userCheckError.message}`);
+    }
+    
     // Generate initial slug from business name
     let businessSlug = generateUniqueSlug(businessData.name);
     let attempt = 0;

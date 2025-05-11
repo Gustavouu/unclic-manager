@@ -17,4 +17,3 @@ verify_jwt = true
 # Allow checking slug availability
 [functions.check-slug-availability]
 verify_jwt = true
-
