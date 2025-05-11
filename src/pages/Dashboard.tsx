@@ -1,17 +1,25 @@
 
-import React, { useEffect } from "react";
-import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
+import React, { useEffect, useState } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { OnboardingBanner } from "@/components/dashboard/OnboardingBanner";
 import { StatusFixButton } from "@/components/dashboard/StatusFixButton";
 import { useDashboardData } from "@/hooks/dashboard/useDashboardData";
 import { useTenant } from "@/contexts/TenantContext";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
+import { KpiCards } from "@/components/dashboard/KpiCards";
+import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
+import { PopularServicesWidget } from "@/components/dashboard/PopularServicesWidget";
+import { UpcomingAppointmentsWidget } from "@/components/dashboard/UpcomingAppointmentsWidget";
+import { FinancialCharts } from "@/components/dashboard/FinancialCharts";
+import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
+import { PerformanceMetrics } from "@/components/dashboard/PerformanceMetrics";
+import { FilterPeriod } from "@/types/dashboard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Dashboard = () => {
-  const { stats, loading: statsLoading } = useDashboardData();
+  const [period, setPeriod] = useState<FilterPeriod>("month");
+  const { stats, loading: statsLoading } = useDashboardData(period);
   const { currentBusiness } = useTenant();
   const { needsOnboarding, loading: onboardingLoading } = useNeedsOnboarding();
   
@@ -19,8 +27,12 @@ const Dashboard = () => {
     document.title = "Dashboard | Unclic Manager";
   }, []);
 
+  const handlePeriodChange = (value: string) => {
+    setPeriod(value as FilterPeriod);
+  };
+
   // Use conditional rendering based on loading states
-  if (onboardingLoading) {
+  if (onboardingLoading || statsLoading) {
     return (
       <div className="space-y-6">
         <p className="text-muted-foreground">Carregando...</p>
@@ -32,8 +44,51 @@ const Dashboard = () => {
     <div className="space-y-6">
       {needsOnboarding && <OnboardingBanner />}
       <DashboardHeader />
-      <DashboardOverview />
-      <DashboardInsights stats={stats} />
+      
+      {/* Period filter */}
+      <div className="flex justify-end">
+        <div className="w-[180px]">
+          <Select value={period} onValueChange={handlePeriodChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Hoje</SelectItem>
+              <SelectItem value="week">Esta Semana</SelectItem>
+              <SelectItem value="month">Este Mês</SelectItem>
+              <SelectItem value="quarter">Este Trimestre</SelectItem>
+              <SelectItem value="year">Este Ano</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      
+      {/* KPI Cards */}
+      <KpiCards stats={stats} period={period} />
+
+      {/* Main Dashboard Widgets */}
+      <ResponsiveGrid 
+        columns={{ default: 1, md: 2 }}
+        gap="md"
+        equalHeight={true}
+      >
+        <UpcomingAppointmentsWidget appointments={stats.nextAppointments || []} />
+        <PopularServicesWidget services={stats.popularServices || []} />
+      </ResponsiveGrid>
+
+      {/* Financial Charts */}
+      <FinancialCharts data={stats.revenueData || []} />
+
+      {/* Performance and Insights */}
+      <ResponsiveGrid 
+        columns={{ default: 1, md: 2 }}
+        gap="md"
+        equalHeight={true}
+      >
+        <PerformanceMetrics stats={stats} />
+        <DashboardInsights stats={stats} />
+      </ResponsiveGrid>
+      
       <DashboardFooter />
       <StatusFixButton />
     </div>
