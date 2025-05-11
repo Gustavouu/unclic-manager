@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
@@ -5,7 +6,16 @@ import { useTenant } from '@/contexts/TenantContext';
 export const useNeedsOnboarding = () => {
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [onboardingViewed, setOnboardingViewed] = useState<boolean>(
+    localStorage.getItem('onboarding-viewed') === 'true'
+  );
   const { businessId, currentBusiness } = useTenant();
+
+  const markOnboardingAsViewed = useCallback(() => {
+    localStorage.setItem('onboarding-viewed', 'true');
+    setOnboardingViewed(true);
+  }, []);
 
   const refreshOnboardingStatus = useCallback(async (skipCache = false) => {
     if (!businessId) {
@@ -16,6 +26,7 @@ export const useNeedsOnboarding = () => {
     
     try {
       setLoading(true);
+      setError(null);
       
       // Check cache first unless skipCache is true
       const cacheKey = `business-${businessId}-onboarding`;
@@ -69,10 +80,11 @@ export const useNeedsOnboarding = () => {
       localStorage.setItem(cacheKey, String(needsSetup));
       localStorage.setItem(cacheTimestampKey, String(Date.now()));
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error checking onboarding status:", err);
       // Default to needing onboarding if there's an error
       setNeedsOnboarding(true);
+      setError(err.message || 'Error checking onboarding status');
     } finally {
       setLoading(false);
     }
@@ -82,5 +94,12 @@ export const useNeedsOnboarding = () => {
     refreshOnboardingStatus();
   }, [refreshOnboardingStatus]);
 
-  return { needsOnboarding, loading, refreshOnboardingStatus };
+  return { 
+    needsOnboarding, 
+    loading, 
+    error, 
+    onboardingViewed, 
+    markOnboardingAsViewed,
+    refreshOnboardingStatus 
+  };
 };
