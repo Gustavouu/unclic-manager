@@ -185,9 +185,13 @@ export const updateBusinessStatus = async (businessId: string, newStatus: string
     console.log(`Tentando atualizar status do negócio ${businessId} para ${newStatus}`);
     
     // First attempt: Update the business status directly
+    // CORREÇÃO: Utilizando o campo 'atualizado_em' em vez de 'updated_at'
     const { error } = await supabase
       .from('negocios')
-      .update({ status: newStatus, atualizado_em: new Date().toISOString() })
+      .update({ 
+        status: newStatus, 
+        atualizado_em: new Date().toISOString() 
+      })
       .eq('id', businessId);
       
     if (error) {

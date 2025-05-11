@@ -205,12 +205,12 @@ serve(async (req) => {
     // Update business status to active - fixing the status update issue
     console.log("Updating business status to active");
     
-    // First attempt: direct update with appropriate column name (atualizado_em instead of updated_at)
+    // CORREÇÃO: Utilizando o campo 'atualizado_em' em vez de 'updated_at'
     const { data: updateData, error: statusError } = await supabase
       .from('negocios')
       .update({ 
         status: 'ativo',
-        atualizado_em: new Date().toISOString()  // Use the correct Portuguese field name
+        atualizado_em: new Date().toISOString()  // Nome correto do campo em português
       })
       .eq('id', businessId)
       .select('id, status');
