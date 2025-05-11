@@ -23,7 +23,7 @@ export function MenuSections() {
     {
       group: "Menu",
       items: [
-        { icon: LayoutDashboard, title: "Dashboard", path: "/" }
+        { icon: LayoutDashboard, title: "Dashboard", path: "/dashboard" }
       ]
     },
     {
@@ -48,7 +48,7 @@ export function MenuSections() {
         <SidebarGroup title={section.group} key={section.group}>
           <div className="space-y-1 px-3">
             {section.items.map((item) => {
-              const isActive = pathname === item.path;
+              const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
               return (
                 <Link
                   key={item.path}
