@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { ArrowLeft, ArrowRight, Save, Loader, RefreshCw } from "lucide-react";
@@ -28,6 +28,7 @@ export const OnboardingControls: React.FC = () => {
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [isVerifyingCreation, setIsVerifyingCreation] = useState(false);
   
   // Function to check if a slug is available before proceeding
   const checkSlugAvailability = async (name: string): Promise<boolean> => {
@@ -105,6 +106,54 @@ export const OnboardingControls: React.FC = () => {
     setError(null);
     handleFinish();
   };
+  
+  // Function to verify if a business was created for the user
+  const verifyBusinessCreated = async () => {
+    if (!user) return { success: false };
+    
+    setIsVerifyingCreation(true);
+    try {
+      // Check if user already has a business
+      console.log("Verifying if business exists for user", user.id);
+      const { data: userData, error: userError } = await supabase
+        .from('usuarios')
+        .select('id_negocio')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (userError) {
+        console.error("Error checking user business:", userError);
+        return { success: false };
+      }
+      
+      if (userData?.id_negocio) {
+        console.log("Found existing business:", userData.id_negocio);
+        // Business exists, redirect to dashboard
+        localStorage.removeItem('unclic-manager-onboarding');
+        
+        toast.success("Estabelecimento já configurado. Redirecionando para o dashboard...");
+        
+        setTimeout(() => {
+          navigate("/dashboard", { replace: true });
+        }, 1000);
+        return { success: true };
+      }
+      
+      return { success: false };
+    } catch (err) {
+      console.error("Error verifying business creation:", err);
+      return { success: false };
+    } finally {
+      setIsVerifyingCreation(false);
+    }
+  };
+  
+  // Check on component mount if the user already has a business
+  useEffect(() => {
+    if (user) {
+      verifyBusinessCreated();
+    }
+  }, [user]);
   
   const handleFinish = async () => {
     if (!isComplete()) {
@@ -204,20 +253,21 @@ export const OnboardingControls: React.FC = () => {
       
       // Verificar timeout
       if (!response.ok && response.status === 504) {
-        throw new Error("Timeout na criação do negócio. O processo pode ter sido concluído no servidor, tentando redirecionar...");
+        toast.dismiss(loadingToast);
+        throw new Error("Timeout na criação do negócio. Verificando se o processo foi concluído...");
       }
       
       const result = await response.json();
       console.log("Create business response:", result);
       
-      if (!response.ok || !result.success) {
+      if (!response.ok && !result.success) {
         toast.dismiss(loadingToast);
         
         // Handle specific errors
         if (result.error && result.error.includes("já está em uso")) {
           throw new Error("O nome do estabelecimento já está em uso. Por favor, escolha outro nome.");
         } else if (result.error && result.error.includes("perfis_acesso")) {
-          throw new Error("Erro ao criar perfil de acesso. Por favor, tente novamente ou entre em contato com o suporte.");
+          throw new Error("Erro ao criar perfil de acesso. Por favor, tente novamente.");
         } else {
           throw new Error(result.error || "Erro ao criar negócio");
         }
@@ -225,12 +275,48 @@ export const OnboardingControls: React.FC = () => {
       
       const businessId = result.businessId;
       const finalSlug = result.businessSlug || slug;
-      console.log("Negócio criado com sucesso via edge function. ID:", businessId, "Slug:", finalSlug);
+      const wasRecovered = result.recovered || false;
+      
+      console.log("Negócio criado com sucesso" + (wasRecovered ? " (recuperado após erro)" : "") + 
+        ". ID:", businessId, "Slug:", finalSlug);
       
       toast.dismiss(loadingToast);
-      toast.success("Estabelecimento configurado com sucesso!", {
+      toast.success(wasRecovered ? 
+        "Estabelecimento recuperado com sucesso!" : 
+        "Estabelecimento configurado com sucesso!", {
         duration: 5000
       });
+      
+      if (result.accessProfileCreated === false) {
+        console.warn("Access profile was not created, but business creation was successful");
+        toast.warning("Perfil de acesso não foi criado completamente, mas o estabelecimento foi configurado. Atualizando...");
+        
+        // Try to create access profile separately
+        try {
+          const { error: profileError } = await supabase
+            .from('perfis_acesso')
+            .insert([{ 
+              id_usuario: user.id,
+              id_negocio: businessId,
+              e_administrador: true,
+              acesso_configuracoes: true,
+              acesso_agendamentos: true,
+              acesso_clientes: true,
+              acesso_financeiro: true,
+              acesso_estoque: true,
+              acesso_marketing: true,
+              acesso_relatorios: true
+            }]);
+            
+          if (profileError) {
+            console.error("Error creating access profile separately:", profileError);
+          } else {
+            console.log("Access profile created separately with success");
+          }
+        } catch (profileError) {
+          console.error("Exception creating access profile separately:", profileError);
+        }
+      }
       
       // Limpar dados salvos no localStorage após configuração bem-sucedida
       localStorage.removeItem('unclic-manager-onboarding');
@@ -249,24 +335,33 @@ export const OnboardingControls: React.FC = () => {
         
         try {
           // Verificar se o usuário agora tem um negócio associado
-          const { data: userData, error: userError } = await supabase
-            .from('usuarios')
-            .select('id_negocio')
-            .eq('id', user.id)
-            .single();
+          const businessVerification = await verifyBusinessCreated();
           
-          if (userData && userData.id_negocio) {
-            // Negócio foi criado! Redirecionar para dashboard
-            toast.success("Estabelecimento configurado com sucesso!");
-            localStorage.removeItem('unclic-manager-onboarding');
-            setTimeout(() => {
-              navigate("/dashboard", { replace: true });
-            }, 2000);
+          if (businessVerification.success) {
+            // O código de redirecionamento já está na função verifyBusinessCreated
             return;
           }
+          
+          // Se chegar aqui, o negócio não foi criado
+          setError("Timeout na requisição e não foi possível verificar se o negócio foi criado. Tente novamente.");
         } catch (checkErr) {
           console.error("Erro ao verificar criação do negócio:", checkErr);
+          setError("Erro ao verificar se o negócio foi criado. Tente novamente.");
         }
+      } else if (error.message.includes("perfis_acesso")) {
+        setError("Erro ao criar perfil de acesso. Verificando se o negócio foi criado...");
+        
+        // Esperar um pouco e verificar se o negócio foi criado mesmo com o erro no perfil
+        setTimeout(async () => {
+          const businessVerification = await verifyBusinessCreated();
+          
+          if (!businessVerification.success) {
+            setError("Erro ao criar negócio. Por favor, tente novamente.");
+          }
+        }, 2000);
+      } else {
+        // Erro normal
+        setError(error.message || "Erro ao finalizar configuração. Tente novamente.");
       }
       
       // Decidir se mostra botão de retry
@@ -274,9 +369,9 @@ export const OnboardingControls: React.FC = () => {
                          error.message.includes("Timeout") || 
                          retryCount < 3;
       
-      setError(showRetry ? 
-        `${error.message || "Erro ao finalizar configuração"}. Você pode tentar novamente.` : 
-        `${error.message || "Erro ao finalizar configuração"}. Entre em contato com o suporte.`);
+      if (!showRetry) {
+        setError(`${error.message || "Erro ao finalizar configuração"}. Entre em contato com o suporte.`);
+      }
       
       toast.error(error.message || "Erro ao finalizar configuração. Tente novamente.");
       setIsSaving(false);
@@ -304,9 +399,9 @@ export const OnboardingControls: React.FC = () => {
                 size="sm" 
                 className="border-red-300 text-red-700 hover:bg-red-50"
                 onClick={handleRetry}
-                disabled={isSaving}
+                disabled={isSaving || isVerifyingCreation}
               >
-                <RefreshCw className={cn("mr-2 h-4 w-4", isSaving && "animate-spin")} />
+                <RefreshCw className={cn("mr-2 h-4 w-4", (isSaving || isVerifyingCreation) && "animate-spin")} />
                 Tentar novamente
               </Button>
             </div>
@@ -318,7 +413,7 @@ export const OnboardingControls: React.FC = () => {
         <Button 
           variant="outline" 
           onClick={handlePrevious} 
-          disabled={currentStep === 0 || isSaving || isCheckingSlug}
+          disabled={currentStep === 0 || isSaving || isCheckingSlug || isVerifyingCreation}
         >
           <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
         </Button>
@@ -326,10 +421,10 @@ export const OnboardingControls: React.FC = () => {
         {currentStep === 4 ? (
           <LoadingButton 
             onClick={handleFinish}
-            isLoading={isSaving} 
-            loadingText="Salvando..."
+            isLoading={isSaving || isVerifyingCreation} 
+            loadingText={isVerifyingCreation ? "Verificando..." : "Salvando..."}
             icon={<Save className="mr-2 h-4 w-4" />}
-            disabled={isSaving || isCheckingSlug}
+            disabled={isSaving || isCheckingSlug || isVerifyingCreation}
             className="bg-primary hover:bg-primary/90"
           >
             Finalizar
@@ -340,7 +435,7 @@ export const OnboardingControls: React.FC = () => {
             isLoading={isCheckingSlug}
             loadingText="Verificando..."
             icon={<ArrowRight className="ml-2 h-4 w-4" />}
-            disabled={isSaving || isCheckingSlug}
+            disabled={isSaving || isCheckingSlug || isVerifyingCreation}
             className="bg-primary hover:bg-primary/90"
           >
             Avançar

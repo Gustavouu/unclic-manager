@@ -27,6 +27,8 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // Helper function for robust user verification
 const verifyUserExists = async (supabase, userId) => {
   try {
+    console.log(`Beginning verification for user ${userId}`);
+    
     // First check auth.users to verify the user exists in the auth system
     const { data: authUser, error: authUserError } = await supabase.auth.admin.getUserById(userId);
     
@@ -34,6 +36,8 @@ const verifyUserExists = async (supabase, userId) => {
       console.error("User verification failed in auth.users:", authUserError || "User not found");
       return { exists: false, error: "Usuário não encontrado no sistema de autenticação" };
     }
+    
+    console.log("Auth user verified:", authUser.user.email);
     
     // Check if user exists in usuarios table with detailed error handling
     const { data: existingUser, error: userCheckError } = await supabase
@@ -47,7 +51,15 @@ const verifyUserExists = async (supabase, userId) => {
       return { exists: !!existingUser, error: userCheckError.message };
     }
     
-    return { exists: !!existingUser, authUser: authUser.user, user: existingUser };
+    console.log("User check complete:", existingUser ? "User exists" : "User does not exist in usuarios table");
+    
+    return { 
+      exists: !!existingUser, 
+      authUser: authUser.user, 
+      user: existingUser,
+      email: authUser.user.email,
+      name: authUser.user.user_metadata?.name
+    };
   } catch (err) {
     console.error("Exception in verifyUserExists:", err);
     return { exists: false, error: err.message };
@@ -65,12 +77,26 @@ const createUserRecord = async (supabase, userId, userEmail, userName, maxRetrie
     console.log(`Attempt ${attempt}/${maxRetries} to create user ${userId}`);
     
     try {
+      // First, check if the user already exists - maybe it was created in a previous attempt
+      const { data: existingUser, error: checkError } = await supabase
+        .from('usuarios')
+        .select('id, nome_completo, email')
+        .eq('id', userId)
+        .maybeSingle();
+        
+      if (!checkError && existingUser) {
+        console.log("User already exists, no need to create:", existingUser);
+        return { success: true, user: existingUser };
+      }
+      
       const userToCreate = {
         id: userId,
         email: userEmail,
-        nome_completo: userName,
+        nome_completo: userName || "Usuário",
         status: 'ativo'
       };
+      
+      console.log("Creating user with data:", userToCreate);
       
       const { data, error: createError } = await supabase
         .from('usuarios')
@@ -81,7 +107,7 @@ const createUserRecord = async (supabase, userId, userEmail, userName, maxRetrie
         console.error(`User creation attempt ${attempt} failed:`, createError);
         error = createError;
         // Wait longer between each retry
-        await sleep(500 * attempt); 
+        await sleep(1000 * attempt); 
         continue;
       }
       
@@ -89,7 +115,7 @@ const createUserRecord = async (supabase, userId, userEmail, userName, maxRetrie
       console.log("User created successfully:", createdUser);
       
       // Important: Wait to ensure database consistency
-      await sleep(1000);
+      await sleep(2000);
       
       // Verify user was actually created with direct query
       const { data: verifyUser, error: verifyError } = await supabase
@@ -101,7 +127,7 @@ const createUserRecord = async (supabase, userId, userEmail, userName, maxRetrie
       if (verifyError || !verifyUser) {
         console.error("User verification failed after creation:", verifyError || "User not found");
         error = verifyError || new Error("User creation verification failed");
-        await sleep(500 * attempt);
+        await sleep(1000 * attempt);
         continue;
       }
       
@@ -110,7 +136,7 @@ const createUserRecord = async (supabase, userId, userEmail, userName, maxRetrie
     } catch (createError) {
       console.error(`Create user attempt ${attempt} exception:`, createError);
       error = createError;
-      await sleep(500 * attempt);
+      await sleep(1000 * attempt);
     }
   }
   
@@ -124,24 +150,70 @@ const createAccessProfile = async (supabase, userId, businessId, maxRetries = 5)
   
   while (attempt < maxRetries) {
     attempt++;
-    console.log(`Attempt ${attempt}/${maxRetries} to create access profile for user ${userId}`);
+    console.log(`Attempt ${attempt}/${maxRetries} to create access profile for user ${userId} and business ${businessId}`);
     
     try {
       // Double-check user exists before creating access profile with a direct query
       // This is critical to prevent foreign key constraint errors
-      const { data: userCheck } = await supabase
+      const { data: userCheck, error: userCheckError } = await supabase
         .from('usuarios')
-        .select('id, email, nome_completo')
+        .select('id, email, nome_completo, id_negocio')
         .eq('id', userId)
         .maybeSingle();
       
-      if (!userCheck) {
-        console.log(`User ${userId} not found in attempt ${attempt}, waiting before retry`);
-        await sleep(1000 * attempt); // Progressive wait
+      if (userCheckError || !userCheck) {
+        console.log(`User ${userId} check failed in attempt ${attempt}:`, userCheckError || "User not found");
+        await sleep(2000 * attempt); // Progressive wait
         continue;
       }
       
-      console.log(`User ${userId} confirmed to exist, proceeding with access profile creation`);
+      // Now verify business ID
+      const { data: businessCheck, error: businessCheckError } = await supabase
+        .from('negocios')
+        .select('id, nome')
+        .eq('id', businessId)
+        .maybeSingle();
+        
+      if (businessCheckError || !businessCheck) {
+        console.log(`Business ${businessId} check failed in attempt ${attempt}:`, businessCheckError || "Business not found");
+        await sleep(2000 * attempt); 
+        continue;
+      }
+      
+      // Update user with business ID if not already set
+      if (!userCheck.id_negocio) {
+        console.log(`Updating user ${userId} with business ID ${businessId}`);
+        const { error: updateError } = await supabase
+          .from('usuarios')
+          .update({ id_negocio: businessId })
+          .eq('id', userId);
+          
+        if (updateError) {
+          console.error(`Failed to update user with business ID in attempt ${attempt}:`, updateError);
+          await sleep(1000 * attempt);
+          continue;
+        }
+        
+        // Wait for update to complete
+        await sleep(1500);
+      } else if (userCheck.id_negocio !== businessId) {
+        console.log(`User already has different business ID: ${userCheck.id_negocio}, expected: ${businessId}`);
+      }
+      
+      // Check if access profile already exists
+      const { data: existingProfile, error: profileCheckError } = await supabase
+        .from('perfis_acesso')
+        .select('id')
+        .eq('id_usuario', userId)
+        .eq('id_negocio', businessId)
+        .maybeSingle();
+        
+      if (!profileCheckError && existingProfile) {
+        console.log("Access profile already exists:", existingProfile);
+        return { success: true, profile: existingProfile };
+      }
+      
+      console.log(`User ${userId} confirmed to exist with business ${businessId}, proceeding with access profile creation`);
       
       const accessProfileData = {
         id_usuario: userId,
@@ -164,7 +236,7 @@ const createAccessProfile = async (supabase, userId, businessId, maxRetries = 5)
       if (profileError) {
         console.error(`Access profile creation attempt ${attempt} failed:`, profileError);
         error = profileError;
-        await sleep(1000 * attempt);
+        await sleep(2000 * attempt);
         continue;
       }
       
@@ -173,11 +245,53 @@ const createAccessProfile = async (supabase, userId, businessId, maxRetries = 5)
     } catch (profileError) {
       console.error(`Access profile attempt ${attempt} exception:`, profileError);
       error = profileError;
-      await sleep(1000 * attempt);
+      await sleep(2000 * attempt);
     }
   }
   
   return { success: false, error };
+};
+
+// This function will attempt to verify if a business was created for a user
+// even if we don't have a direct response from the creation attempt
+const verifyBusinessCreated = async (supabase, userId) => {
+  try {
+    console.log(`Verifying if business was created for user ${userId}`);
+    
+    // Check if user has a business ID
+    const { data: userData, error: userError } = await supabase
+      .from('usuarios')
+      .select('id_negocio')
+      .eq('id', userId)
+      .maybeSingle();
+      
+    if (userError || !userData || !userData.id_negocio) {
+      console.log("No business found for user:", userError || "No business ID");
+      return { success: false };
+    }
+    
+    // Verify the business exists
+    const { data: businessData, error: businessError } = await supabase
+      .from('negocios')
+      .select('id, nome, slug, status')
+      .eq('id', userData.id_negocio)
+      .maybeSingle();
+      
+    if (businessError || !businessData) {
+      console.log("Business verification failed:", businessError || "Business not found");
+      return { success: false };
+    }
+    
+    console.log("Business verified:", businessData);
+    return { 
+      success: true, 
+      businessId: businessData.id, 
+      businessSlug: businessData.slug 
+    };
+  } catch (err) {
+    console.error("Error in verifyBusinessCreated:", err);
+    return { success: false, error: err.message };
+  }
 };
 
 serve(async (req) => {
@@ -187,6 +301,10 @@ serve(async (req) => {
   }
 
   try {
+    // Start execution timer
+    const startTime = Date.now();
+    console.log("Starting create-business function execution");
+    
     // Parse request body
     const { businessData, userId } = await req.json();
     
@@ -221,8 +339,8 @@ serve(async (req) => {
         throw new Error("Dados do usuário não encontrados no sistema de autenticação");
       }
       
-      const userName = userVerification.authUser.user_metadata?.name || businessData.name || "Usuário";
-      const userEmail = userVerification.authUser.email || businessData.email;
+      const userName = userVerification.name || businessData.name || "Usuário";
+      const userEmail = userVerification.email || businessData.email;
       
       if (!userEmail) {
         throw new Error("Email do usuário não encontrado");
@@ -246,7 +364,7 @@ serve(async (req) => {
       console.log("User already exists in the database:", userRecord);
     }
     
-    // Generate initial slug from business name
+    // STEP 3: Generate and verify unique slug for the business
     let businessSlug = generateUniqueSlug(businessData.name);
     let attempt = 0;
     let isSlugUnique = false;
@@ -278,7 +396,7 @@ serve(async (req) => {
       throw new Error("Não foi possível gerar um slug único para o nome do estabelecimento. Por favor, tente um nome diferente.");
     }
     
-    // Create the business record with the unique slug
+    // STEP 4: Create the business record with the unique slug
     console.log("Creating business record with slug:", businessSlug);
     const { data: businessRecord, error: businessError } = await supabase
       .from('negocios')
@@ -318,7 +436,7 @@ serve(async (req) => {
     const businessId = businessRecord.id;
     console.log("Business created successfully. ID:", businessId);
     
-    // Update the user profile with the business ID
+    // STEP 5: Update the user profile with the business ID
     console.log("Updating user record with business ID association");
     const { error: userError } = await supabase
       .from('usuarios')
@@ -331,6 +449,9 @@ serve(async (req) => {
     }
     
     console.log("User profile updated with business ID");
+    
+    // Allow some time for database consistency
+    await sleep(2000);
     
     // Verify user record was updated correctly
     console.log("Verifying user-business association...");
@@ -350,23 +471,16 @@ serve(async (req) => {
       console.log("User-business association verified:", verifiedUser);
     }
     
-    // Create access profile with robust retry mechanism
+    // STEP 6: Create access profile with robust retry mechanism
     console.log("Creating access profile with robust retry mechanism");
     const accessProfileResult = await createAccessProfile(supabase, userId, businessId);
     
+    // Continue even if access profile creation fails
     if (!accessProfileResult.success) {
       console.error("All attempts to create access profile failed:", accessProfileResult.error);
       
-      // Emergency direct check if the user exists in the usuarios table
-      const { data: emergencyUserCheck } = await supabase
-        .from('usuarios')
-        .select('id, email, nome_completo')
-        .eq('id', userId);
-        
-      console.log("Emergency user check result:", emergencyUserCheck);
-      
-      // Despite error, we'll continue since the business and user were created successfully
-      console.warn("Continuing despite access profile creation failure");
+      // Don't throw error here - we will return a warning in the response
+      // The user can still proceed, and we'll try to recover in the UI
     } else {
       console.log("Access profile created successfully:", accessProfileResult.profile);
     }
@@ -448,14 +562,17 @@ serve(async (req) => {
       }
     }
     
-    console.log("Business setup completed successfully!");
+    const executionTime = Date.now() - startTime;
+    console.log(`Business setup completed successfully! Execution time: ${executionTime}ms`);
     
     return new Response(
       JSON.stringify({ 
         success: true, 
         businessId, 
         businessSlug,
-        message: "Estabelecimento criado com sucesso!" 
+        message: "Estabelecimento criado com sucesso!",
+        accessProfileCreated: accessProfileResult?.success || false,
+        executionTime
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -465,6 +582,41 @@ serve(async (req) => {
     
   } catch (error) {
     console.error("Error in create-business function:", error);
+    
+    // Try to verify if a business was created anyway
+    try {
+      if (req.method !== 'OPTIONS') {
+        const { userId } = await req.json();
+        
+        if (userId) {
+          const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+          const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+          const supabase = createClient(supabaseUrl, supabaseServiceKey);
+          
+          const businessVerification = await verifyBusinessCreated(supabase, userId);
+          
+          if (businessVerification.success) {
+            // Business was created despite the error
+            return new Response(
+              JSON.stringify({ 
+                success: true, 
+                recovered: true,
+                businessId: businessVerification.businessId, 
+                businessSlug: businessVerification.businessSlug,
+                message: "Estabelecimento criado com sucesso (recuperado após erro)!" 
+              }),
+              { 
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 200 
+              }
+            );
+          }
+        }
+      }
+    } catch (verifyError) {
+      console.error("Error trying to verify business creation:", verifyError);
+    }
+    
     return new Response(
       JSON.stringify({ 
         success: false, 
