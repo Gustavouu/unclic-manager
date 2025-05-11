@@ -15,7 +15,8 @@ export const OnboardingProcessStatus: React.FC = () => {
     businessCreated,
     setStatus,
     setCurrentStep,
-    setError
+    setError,
+    setProcessingStep
   } = useOnboarding();
   const navigate = useNavigate();
   

@@ -8,7 +8,7 @@ import { Navigate } from "react-router-dom";
 import { Loader } from "@/components/ui/loader";
 
 const OnboardingPage = () => {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
   
   // Define page title
   useEffect(() => {
@@ -16,7 +16,7 @@ const OnboardingPage = () => {
   }, []);
 
   // Show loading state while checking authentication
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <Loader size="lg" text="Carregando..." />
