@@ -17,6 +17,7 @@ import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
 import "./services/InitializationService"; // Import initialization service
 import { RequireAuth } from "./components/auth/RequireAuth";
+import Payments from "./pages/Payments"; // Add import for Payments page
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
         <Route path="/reports" element={<Reports />} />
         <Route path="/finance" element={<Finance />} />
         <Route path="/inventory" element={<Inventory />} />
+        <Route path="/payments" element={<Payments />} />
         <Route path="/settings/*" element={<Settings />} />
         <Route path="*" element={<NotFound />} />
       </Route>
