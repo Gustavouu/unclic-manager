@@ -9,6 +9,7 @@ export function useNeedsOnboarding() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [onboardingViewed, setOnboardingViewed] = useState<boolean>(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState(0);
 
   // Check if the user has viewed onboarding from localStorage only once when component mounts
   useEffect(() => {
@@ -28,17 +29,22 @@ export function useNeedsOnboarding() {
       setLoading(true);
       setError(null);
       
+      console.log(`Verificando status de onboarding para usuário ${user.id}${skipCache ? ' (ignorando cache)' : ''}`);
       const status = await checkOnboardingStatus(user.id, skipCache);
+      
+      console.log('Status de onboarding recebido:', status);
       setNeedsOnboarding(status.needsOnboarding);
+      setLastRefreshTime(Date.now());
       
     } catch (err: any) {
-      console.error('Error checking onboarding status:', err);
+      console.error('Erro ao verificar status de onboarding:', err);
       setError(err.message);
       
       // Try to get from cache if the API call fails
       const cachedStatus = localStorage.getItem(`onboarding-status-${user.id}`);
       
       if (cachedStatus) {
+        console.log('Usando status de onboarding em cache');
         setNeedsOnboarding(cachedStatus === 'true');
       } else {
         setNeedsOnboarding(false); // Default to not needing onboarding on error
@@ -64,10 +70,18 @@ export function useNeedsOnboarding() {
     setOnboardingViewed(true);
   }, []);
 
-  // Function to refresh onboarding status
+  // Function to refresh onboarding status with rate limiting
   const refreshOnboardingStatus = useCallback(async () => {
+    // Prevent refreshing more than once every 2 seconds
+    const now = Date.now();
+    if (now - lastRefreshTime < 2000) {
+      console.log('Ignorando múltiplas chamadas de refresh em sequência rápida');
+      return;
+    }
+    
+    console.log('Atualizando status de onboarding');
     return checkStatus(true); // Skip cache
-  }, [checkStatus]);
+  }, [checkStatus, lastRefreshTime]);
 
   return { 
     needsOnboarding, 
@@ -75,6 +89,7 @@ export function useNeedsOnboarding() {
     error,
     onboardingViewed,
     markOnboardingAsViewed,
-    refreshOnboardingStatus
+    refreshOnboardingStatus,
+    lastRefreshTime
   };
 }

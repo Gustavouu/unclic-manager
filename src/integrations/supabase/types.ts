@@ -3581,6 +3581,10 @@ export type Database = {
           horarios_pico: Json
         }[]
       }
+      set_business_status: {
+        Args: { business_id: string; new_status: string }
+        Returns: boolean
+      }
     }
     Enums: {
       AccountType: "CASH" | "BANK" | "CREDIT_CARD" | "PAYMENT_GATEWAY" | "OTHER"

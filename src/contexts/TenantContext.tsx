@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Business, getBusinessData, updateBusinessStatus as updateStatus, clearBusinessCache } from "@/services/businessService";
+import { Business, getBusinessData, updateBusinessStatus as updateStatus, clearBusinessCache, verifyAndRepairBusinessStatus } from "@/services/businessService";
 
 type TenantContextType = {
   currentBusiness: Business | null;
@@ -12,6 +12,7 @@ type TenantContextType = {
   setCurrentBusinessById: (id: string) => Promise<void>;
   refreshBusinessData: () => Promise<void>;
   updateBusinessStatus: (businessId: string, newStatus: string) => Promise<boolean>;
+  verifyAndRepairStatus: () => Promise<boolean>;
 };
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -44,8 +45,15 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       setError(null);
       
+      console.log("Refreshing business data...");
       const businessData = await getBusinessData(user.id, true); // Skip cache
       setCurrentBusiness(businessData);
+      
+      if (businessData) {
+        console.log(`Business data refreshed: ${businessData.nome}, status: ${businessData.status}`);
+      } else {
+        console.log("No business data found on refresh");
+      }
       
     } catch (err: any) {
       console.error('Error refreshing business data:', err);
@@ -68,8 +76,23 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       setError(null);
       
+      console.log("Fetching initial business data...");
       const businessData = await getBusinessData(user.id);
       setCurrentBusiness(businessData);
+      
+      if (businessData) {
+        console.log(`Initial business data loaded: ${businessData.nome}, status: ${businessData.status}`);
+        
+        // Check if business has pending status and attempt to auto-repair on initial load
+        if (businessData.status === 'pendente') {
+          console.log("Business has pending status, will attempt auto-repair");
+          setTimeout(() => {
+            verifyAndRepairStatus();
+          }, 1000);
+        }
+      } else {
+        console.log("No business data found on initial fetch");
+      }
       
     } catch (err: any) {
       console.error('Error fetching business data:', err);
@@ -88,12 +111,16 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       setError(null);
 
+      console.log(`Updating business status: ${businessId} to ${newStatus}`);
       const success = await updateStatus(businessId, newStatus);
       
       if (success) {
         // Refresh business data immediately after successful status update
         await fetchUserBusiness();
         toast.success('Status do negócio atualizado com sucesso!');
+        console.log("Business status updated successfully");
+      } else {
+        console.log("Failed to update business status");
       }
       
       return success;
@@ -106,6 +133,25 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     }
   }, [user, fetchUserBusiness]);
+
+  // Verify and repair business status
+  const verifyAndRepairStatus = useCallback(async () => {
+    if (!user) return false;
+    
+    try {
+      console.log("Attempting to verify and repair business status");
+      const success = await verifyAndRepairBusinessStatus(user.id);
+      
+      if (success) {
+        await refreshBusinessData();
+        return true;
+      }
+      return false;
+    } catch (err: any) {
+      console.error('Error while repairing business status:', err);
+      return false;
+    }
+  }, [user, refreshBusinessData]);
 
   // Set current business by ID (for users with multiple businesses)
   const setCurrentBusinessById = useCallback(async (businessId: string) => {
@@ -160,13 +206,30 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, fetchUserBusiness]);
 
+  // Set up periodic status check for pending businesses
+  useEffect(() => {
+    if (!user || !currentBusiness || currentBusiness.status !== 'pendente') {
+      return;
+    }
+    
+    console.log("Setting up periodic status check for pending business");
+    
+    // Try to repair status every 30 seconds if business is in pending state
+    const intervalId = setInterval(() => {
+      verifyAndRepairStatus();
+    }, 30000);
+    
+    return () => clearInterval(intervalId);
+  }, [user, currentBusiness, verifyAndRepairStatus]);
+
   const value = {
     currentBusiness,
     loading,
     error,
     setCurrentBusinessById,
     refreshBusinessData,
-    updateBusinessStatus
+    updateBusinessStatus,
+    verifyAndRepairStatus
   };
 
   return (

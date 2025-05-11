@@ -11,15 +11,22 @@ export const StatusFixButton: React.FC = () => {
   const { currentBusiness, updateBusinessStatus } = useTenant();
   const { refreshOnboardingStatus } = useNeedsOnboarding();
   const [isFixing, setIsFixing] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const maxAttempts = 3;
   
   // Define hooks at the top level
   const handleFixStatus = useDebouncedCallback(async () => {
     if (isFixing) return;
-    if (!currentBusiness?.id) return;
+    if (!currentBusiness?.id) {
+      toast.error("Negócio não identificado");
+      return;
+    }
     
     try {
       setIsFixing(true);
       toast.loading("Corrigindo status do negócio...", { id: "fix-status" });
+      
+      console.log(`Tentando atualizar status do negócio ${currentBusiness.id} para 'ativo'. Tentativa ${attempts + 1}/${maxAttempts}`);
       
       // Use the TenantContext function to update status
       const success = await updateBusinessStatus(currentBusiness.id, "ativo");
@@ -32,9 +39,23 @@ export const StatusFixButton: React.FC = () => {
       await refreshOnboardingStatus();
       
       toast.success("Status do negócio corrigido com sucesso!", { id: "fix-status" });
+      setAttempts(0); // Reset attempts on success
     } catch (error: any) {
       console.error("Erro ao corrigir status:", error);
-      toast.error(`Erro ao corrigir status: ${error.message}`, { id: "fix-status" });
+      
+      // Implement retry mechanism
+      if (attempts < maxAttempts - 1) {
+        setAttempts(attempts + 1);
+        toast.error(`Erro ao corrigir status. Tentando novamente... (${attempts + 1}/${maxAttempts})`, { id: "fix-status" });
+        
+        // Wait and try again after a delay
+        setTimeout(() => {
+          handleFixStatus();
+        }, 1000 * (attempts + 1)); // Exponential backoff
+      } else {
+        toast.error(`Erro ao corrigir status após ${maxAttempts} tentativas: ${error.message}`, { id: "fix-status" });
+        setAttempts(0); // Reset attempts after max attempts
+      }
     } finally {
       setIsFixing(false);
     }

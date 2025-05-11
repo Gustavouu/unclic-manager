@@ -205,23 +205,41 @@ serve(async (req) => {
     // Update business status to active - fixing the status update issue
     console.log("Updating business status to active");
     
+    // First attempt: direct update with appropriate column name (atualizado_em instead of updated_at)
     const { data: updateData, error: statusError } = await supabase
       .from('negocios')
-      .update({ status: 'ativo' })
+      .update({ 
+        status: 'ativo',
+        atualizado_em: new Date().toISOString()  // Use the correct Portuguese field name
+      })
       .eq('id', businessId)
       .select('id, status');
     
     if (statusError) {
       console.error("Error updating business status:", statusError);
-      // Try again with a simplified approach
-      console.log("Trying alternative status update approach");
-      const { error: retryError } = await supabase.rpc('set_business_status', {
+      
+      // Try again with the RPC approach
+      console.log("Trying RPC status update approach");
+      const { data: rpcData, error: rpcError } = await supabase.rpc('set_business_status', {
         business_id: businessId,
         new_status: 'ativo'
       });
       
-      if (retryError) {
-        console.error("Error in alternative status update:", retryError);
+      if (rpcError) {
+        console.error("Error in RPC status update:", rpcError);
+        
+        // Last attempt: Try a simplified update without selecting
+        console.log("Trying simplified update as last resort");
+        const { error: finalAttemptError } = await supabase
+          .from('negocios')
+          .update({ status: 'ativo' })
+          .eq('id', businessId);
+        
+        if (finalAttemptError) {
+          console.error("All status update attempts failed:", finalAttemptError);
+        } else {
+          console.log("Business status updated via simplified update");
+        }
       } else {
         console.log("Business status updated via RPC function");
       }

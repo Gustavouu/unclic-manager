@@ -1,5 +1,5 @@
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
@@ -13,16 +13,23 @@ export const OnboardingBanner: React.FC = () => {
   const { needsOnboarding, loading, error, onboardingViewed, markOnboardingAsViewed, refreshOnboardingStatus } = useNeedsOnboarding();
   const { currentBusiness, updateBusinessStatus } = useTenant();
   const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const maxAttempts = 3;
   
   // Define hooks at the top level
   const handleFixStatus = useDebouncedCallback(async () => {
+    if (isProcessing) return;
     if (!currentBusiness?.id) {
-      toast.error("Não foi possível identificar o negócio.");
+      toast.error("Não foi possível identificar o negócio");
       return;
     }
     
     try {
+      setIsProcessing(true);
       toast.loading("Corrigindo status do negócio...", { id: "fix-status" });
+      
+      console.log(`Tentando atualizar status do negócio ${currentBusiness.id} para 'ativo'. Tentativa ${attempts + 1}/${maxAttempts}`);
       
       // Use the TenantContext function to update status
       const success = await updateBusinessStatus(currentBusiness.id, "ativo");
@@ -38,9 +45,25 @@ export const OnboardingBanner: React.FC = () => {
       
       // Mark as viewed to hide the banner
       markOnboardingAsViewed();
+      setAttempts(0); // Reset attempts on success
     } catch (error: any) {
       console.error("Erro ao corrigir status:", error);
-      toast.error(`Erro ao corrigir status: ${error.message}`, { id: "fix-status" });
+      
+      // Implement retry mechanism
+      if (attempts < maxAttempts - 1) {
+        setAttempts(attempts + 1);
+        toast.error(`Erro ao corrigir status. Tentando novamente... (${attempts + 1}/${maxAttempts})`, { id: "fix-status" });
+        
+        // Wait and try again after a delay
+        setTimeout(() => {
+          handleFixStatus();
+        }, 1000 * (attempts + 1)); // Exponential backoff
+      } else {
+        toast.error(`Erro ao corrigir status após ${maxAttempts} tentativas: ${error.message}`, { id: "fix-status" });
+        setAttempts(0); // Reset attempts after max attempts
+      }
+    } finally {
+      setIsProcessing(false);
     }
   }, 1000);
   
@@ -81,8 +104,14 @@ export const OnboardingBanner: React.FC = () => {
           </Button>
           
           {isPendingStatus ? (
-            <Button size="sm" variant="destructive" onClick={handleFixStatus} className="bg-amber-500 hover:bg-amber-600">
-              Corrigir status
+            <Button 
+              size="sm" 
+              variant="destructive" 
+              onClick={handleFixStatus} 
+              className="bg-amber-500 hover:bg-amber-600"
+              disabled={isProcessing}
+            >
+              {isProcessing ? "Processando..." : "Corrigir status"}
             </Button>
           ) : (
             <Button size="sm" onClick={handleContinueSetup}>

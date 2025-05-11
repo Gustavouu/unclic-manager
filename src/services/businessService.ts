@@ -50,10 +50,12 @@ export const getBusinessData = async (userId: string, skipCache = false): Promis
       const cachedTimestamp = localStorage.getItem(timestampKey);
       
       if (cachedBusiness && cachedTimestamp && isCacheValid(cachedTimestamp)) {
-        console.log("Using cached business data");
+        console.log("Usando dados em cache do negócio");
         return JSON.parse(cachedBusiness);
       }
     }
+    
+    console.log(`Buscando dados do negócio para o usuário ${userId}`);
     
     // Get the user's associated business
     const { data: userData, error: userError } = await supabase
@@ -67,8 +69,11 @@ export const getBusinessData = async (userId: string, skipCache = false): Promis
     }
     
     if (!userData?.id_negocio) {
+      console.log('Usuário não tem negócio associado');
       return null;
     }
+    
+    console.log(`ID do negócio encontrado: ${userData.id_negocio}`);
     
     // Fetch the business details
     const { data: businessData, error: businessError } = await supabase
@@ -81,13 +86,17 @@ export const getBusinessData = async (userId: string, skipCache = false): Promis
       throw businessError;
     }
     
+    if (businessData) {
+      console.log(`Dados do negócio recuperados: ${businessData.nome}, status: ${businessData.status}`);
+    }
+    
     // Store in cache
     localStorage.setItem(cacheKey, JSON.stringify(businessData));
     localStorage.setItem(timestampKey, Date.now().toString());
     
     return businessData as Business;
   } catch (error: any) {
-    console.error('Error fetching business data:', error);
+    console.error('Erro ao buscar dados do negócio:', error);
     return null;
   }
 };
@@ -108,10 +117,12 @@ export const checkOnboardingStatus = async (userId: string, skipCache = false): 
       const cachedTimestamp = localStorage.getItem(timestampKey);
       
       if (cachedStatus && cachedTimestamp && isCacheValid(cachedTimestamp)) {
-        console.log("Using cached onboarding status");
+        console.log("Usando status de onboarding em cache");
         return JSON.parse(cachedStatus);
       }
     }
+    
+    console.log(`Verificando status de onboarding para usuário ${userId}`);
     
     // Fetch user data
     const { data: userData, error: userError } = await supabase
@@ -126,11 +137,14 @@ export const checkOnboardingStatus = async (userId: string, skipCache = false): 
     
     // If no business is associated, they need onboarding
     if (!userData || !userData.id_negocio) {
+      console.log('Usuário não tem negócio associado, precisa de onboarding');
       const result = { needsOnboarding: true, businessId: null };
       localStorage.setItem(cacheKey, JSON.stringify(result));
       localStorage.setItem(timestampKey, Date.now().toString());
       return result;
     }
+    
+    console.log(`Verificando status do negócio ${userData.id_negocio}`);
     
     // Check business status
     const { data: businessData, error: businessError } = await supabase
@@ -150,30 +164,48 @@ export const checkOnboardingStatus = async (userId: string, skipCache = false): 
       businessId: businessData?.id || null 
     };
     
+    console.log(`Status de onboarding: ${needsOnboarding ? 'Precisa completar onboarding' : 'Onboarding completo'}, status do negócio: ${businessData?.status || 'N/A'}`);
+    
     // Cache the result
     localStorage.setItem(cacheKey, JSON.stringify(result));
     localStorage.setItem(timestampKey, Date.now().toString());
     
     return result;
   } catch (error: any) {
-    console.error('Error checking onboarding status:', error);
+    console.error('Erro ao verificar status de onboarding:', error);
     return { needsOnboarding: false, businessId: null };
   }
 };
 
-// Update business status
+// Update business status using first the direct update and falling back to the RPC if needed
 export const updateBusinessStatus = async (businessId: string, newStatus: string): Promise<boolean> => {
   if (!businessId) return false;
   
   try {
-    // Update the business status
+    console.log(`Tentando atualizar status do negócio ${businessId} para ${newStatus}`);
+    
+    // First attempt: Update the business status directly
     const { error } = await supabase
       .from('negocios')
-      .update({ status: newStatus })
+      .update({ status: newStatus, atualizado_em: new Date().toISOString() })
       .eq('id', businessId);
       
     if (error) {
-      throw error;
+      console.warn('Erro na primeira tentativa de atualização de status, tentando via RPC:', error);
+      
+      // Second attempt: Try using the RPC function as fallback
+      const { data: rpcData, error: rpcError } = await supabase.rpc('set_business_status', {
+        business_id: businessId,
+        new_status: newStatus
+      });
+      
+      if (rpcError) {
+        throw rpcError;
+      }
+      
+      console.log('Status atualizado com sucesso via RPC');
+    } else {
+      console.log('Status atualizado com sucesso via update direto');
     }
     
     // Clear all related caches to ensure fresh data
@@ -181,20 +213,66 @@ export const updateBusinessStatus = async (businessId: string, newStatus: string
     
     return true;
   } catch (error: any) {
-    console.error('Error updating business status:', error);
+    console.error('Erro ao atualizar status do negócio:', error);
     toast.error('Erro ao atualizar status do negócio.');
+    return false;
+  }
+};
+
+// Function to verify business status and attempt repair if needed
+export const verifyAndRepairBusinessStatus = async (userId: string): Promise<boolean> => {
+  try {
+    console.log(`Verificando e tentando reparar status do negócio para usuário ${userId}`);
+    
+    // Get user's business
+    const { data: userData, error: userError } = await supabase
+      .from('usuarios')
+      .select('id_negocio')
+      .eq('id', userId)
+      .maybeSingle();
+      
+    if (userError || !userData?.id_negocio) {
+      console.log('Usuário não tem negócio associado ou ocorreu um erro');
+      return false;
+    }
+    
+    // Check business status
+    const { data: businessData, error: businessError } = await supabase
+      .from('negocios')
+      .select('id, status')
+      .eq('id', userData.id_negocio)
+      .maybeSingle();
+      
+    if (businessError || !businessData) {
+      console.log('Erro ao verificar status do negócio ou negócio não encontrado');
+      return false;
+    }
+    
+    // If status is "pendente", try to update it
+    if (businessData.status === 'pendente') {
+      console.log('Negócio encontrado com status pendente, tentando corrigir');
+      return await updateBusinessStatus(businessData.id, 'ativo');
+    }
+    
+    console.log(`Negócio já tem status correto: ${businessData.status}`);
+    return true;
+  } catch (error: any) {
+    console.error('Erro ao verificar e reparar status:', error);
     return false;
   }
 };
 
 // Clear business cache
 export const clearBusinessCache = (): void => {
+  console.log('Limpando cache de dados do negócio');
+  
   // Find and remove all business-related cache items
   Object.keys(localStorage).forEach(key => {
     if (key.includes('business-') || 
         key.includes('onboarding-status-') || 
         key.includes('tenant-business-')) {
       localStorage.removeItem(key);
+      console.log(`Cache removido: ${key}`);
     }
   });
 };
