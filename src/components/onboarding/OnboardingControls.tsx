@@ -29,6 +29,7 @@ export const OnboardingControls: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isVerifyingCreation, setIsVerifyingCreation] = useState(false);
+  const [businessCreated, setBusinessCreated] = useState<{id?: string; slug?: string} | null>(null);
   
   // Function to check if a slug is available before proceeding
   const checkSlugAvailability = async (name: string): Promise<boolean> => {
@@ -104,7 +105,97 @@ export const OnboardingControls: React.FC = () => {
   const handleRetry = () => {
     setRetryCount(prev => prev + 1);
     setError(null);
-    handleFinish();
+    
+    if (businessCreated) {
+      // Se o negócio foi criado mas o perfil de acesso falhou, tentamos apenas criar o perfil
+      handleCreateProfile();
+    } else {
+      // Caso contrário, tentamos o processo completo novamente
+      handleFinish();
+    }
+  };
+  
+  // Novo método para tentar criar apenas o perfil de acesso
+  const handleCreateProfile = async () => {
+    if (!user || !businessCreated?.id) {
+      toast.error("Informações incompletas para criar o perfil de acesso");
+      return;
+    }
+    
+    setIsSaving(true);
+    setError(null);
+    
+    try {
+      const loadingToast = toast.loading("Criando seu perfil de acesso...");
+      
+      // Tentar criar manualmente apenas o perfil de acesso
+      const { data: accessProfile, error: accessProfileError } = await supabase
+        .from('perfis_acesso')
+        .insert([{
+          id_usuario: user.id,
+          id_negocio: businessCreated.id,
+          e_administrador: true,
+          acesso_configuracoes: true,
+          acesso_agendamentos: true,
+          acesso_clientes: true,
+          acesso_financeiro: true,
+          acesso_estoque: true,
+          acesso_marketing: true,
+          acesso_relatorios: true
+        }])
+        .select();
+        
+      toast.dismiss(loadingToast);
+      
+      if (accessProfileError) {
+        if (accessProfileError.code === '23503') {
+          // Erro de chave estrangeira, aguardar mais tempo e verificar se o negócio foi associado ao usuário
+          setError("Erro ao criar perfil de acesso. Verificando associação do usuário...");
+          
+          // Verificar se o usuário tem o negócio associado
+          const { data: userCheck } = await supabase
+            .from('usuarios')
+            .select('id_negocio')
+            .eq('id', user.id)
+            .single();
+            
+          if (userCheck && userCheck.id_negocio === businessCreated.id) {
+            // Se o usuário já tem o negócio associado, podemos prosseguir
+            toast.success("Estabelecimento associado com sucesso!");
+            
+            // Limpar dados salvos no localStorage após configuração bem-sucedida
+            localStorage.removeItem('unclic-manager-onboarding');
+            
+            // Redirecionar para o dashboard após um breve delay para que o toast seja visível
+            setTimeout(() => {
+              navigate("/dashboard", { replace: true });
+            }, 2000);
+            return;
+          } else {
+            throw new Error("O usuário não está corretamente associado ao negócio");
+          }
+        }
+        
+        throw new Error(`Erro ao criar perfil de acesso: ${accessProfileError.message}`);
+      }
+      
+      toast.success("Perfil de acesso criado com sucesso!");
+      
+      // Limpar dados salvos no localStorage após configuração bem-sucedida
+      localStorage.removeItem('unclic-manager-onboarding');
+      
+      // Redirecionar para o dashboard
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 2000);
+      
+    } catch (error: any) {
+      console.error("Erro ao criar perfil de acesso:", error);
+      setError(error.message);
+      toast.error(error.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
   
   // Function to verify if a business was created for the user
@@ -128,6 +219,22 @@ export const OnboardingControls: React.FC = () => {
       
       if (userData?.id_negocio) {
         console.log("Found existing business:", userData.id_negocio);
+        
+        // Get business details
+        const { data: businessData, error: businessError } = await supabase
+          .from('negocios')
+          .select('id, slug')
+          .eq('id', userData.id_negocio)
+          .maybeSingle();
+          
+        if (!businessError && businessData) {
+          // Store the business info for potential profile creation
+          setBusinessCreated({
+            id: businessData.id,
+            slug: businessData.slug
+          });
+        }
+        
         // Business exists, redirect to dashboard
         localStorage.removeItem('unclic-manager-onboarding');
         
@@ -169,6 +276,7 @@ export const OnboardingControls: React.FC = () => {
     
     setIsSaving(true);
     setError(null);
+    setBusinessCreated(null);
     
     try {
       // Verificar disponibilidade do slug antes de criar o negócio
@@ -234,7 +342,7 @@ export const OnboardingControls: React.FC = () => {
         } else {
           console.log("User pre-created successfully");
           // Wait a bit to ensure database consistency
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
       
@@ -254,7 +362,19 @@ export const OnboardingControls: React.FC = () => {
       // Verificar timeout
       if (!response.ok && response.status === 504) {
         toast.dismiss(loadingToast);
-        throw new Error("Timeout na criação do negócio. Verificando se o processo foi concluído...");
+        setError("Timeout na criação do negócio. Verificando se o processo foi concluído...");
+        
+        // Aguardar um pouco antes de verificar se o negócio foi criado apesar do timeout
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        const businessVerification = await verifyBusinessCreated();
+        
+        if (businessVerification.success) {
+          // O código de redirecionamento já está na função verifyBusinessCreated
+          return;
+        }
+        
+        throw new Error("Timeout na criação do negócio e não foi possível verificar se o processo foi concluído. Por favor, tente novamente.");
       }
       
       const result = await response.json();
@@ -267,7 +387,14 @@ export const OnboardingControls: React.FC = () => {
         if (result.error && result.error.includes("já está em uso")) {
           throw new Error("O nome do estabelecimento já está em uso. Por favor, escolha outro nome.");
         } else if (result.error && result.error.includes("perfis_acesso")) {
-          throw new Error("Erro ao criar perfil de acesso. Por favor, tente novamente.");
+          // Armazenar que o negócio foi criado, mas o perfil falhou
+          if (result.businessId) {
+            setBusinessCreated({
+              id: result.businessId,
+              slug: result.businessSlug || slug
+            });
+          }
+          throw new Error("Erro ao criar perfil de acesso. O negócio foi criado, mas você precisará finalizar a configuração do seu perfil.");
         } else {
           throw new Error(result.error || "Erro ao criar negócio");
         }
@@ -276,46 +403,48 @@ export const OnboardingControls: React.FC = () => {
       const businessId = result.businessId;
       const finalSlug = result.businessSlug || slug;
       const wasRecovered = result.recovered || false;
+      const partialSuccess = result.partialSuccess || false;
+      
+      // Se o negócio foi criado, armazene as informações
+      setBusinessCreated({
+        id: businessId,
+        slug: finalSlug
+      });
       
       console.log("Negócio criado com sucesso" + (wasRecovered ? " (recuperado após erro)" : "") + 
+        (partialSuccess ? " (parcialmente)" : "") +
         ". ID:", businessId, "Slug:", finalSlug);
       
       toast.dismiss(loadingToast);
-      toast.success(wasRecovered ? 
-        "Estabelecimento recuperado com sucesso!" : 
-        "Estabelecimento configurado com sucesso!", {
-        duration: 5000
-      });
       
-      if (result.accessProfileCreated === false) {
+      // Mensagem diferente baseada no resultado
+      if (wasRecovered) {
+        toast.success("Estabelecimento recuperado com sucesso!", {
+          duration: 5000
+        });
+      } else if (partialSuccess) {
+        toast.success("Estabelecimento criado, mas o perfil de acesso não foi configurado completamente.", {
+          duration: 5000
+        });
+      } else {
+        toast.success("Estabelecimento configurado com sucesso!", {
+          duration: 5000
+        });
+      }
+      
+      if (result.accessProfileCreated === false || partialSuccess) {
         console.warn("Access profile was not created, but business creation was successful");
-        toast.warning("Perfil de acesso não foi criado completamente, mas o estabelecimento foi configurado. Atualizando...");
         
-        // Try to create access profile separately
-        try {
-          const { error: profileError } = await supabase
-            .from('perfis_acesso')
-            .insert([{ 
-              id_usuario: user.id,
-              id_negocio: businessId,
-              e_administrador: true,
-              acesso_configuracoes: true,
-              acesso_agendamentos: true,
-              acesso_clientes: true,
-              acesso_financeiro: true,
-              acesso_estoque: true,
-              acesso_marketing: true,
-              acesso_relatorios: true
-            }]);
-            
-          if (profileError) {
-            console.error("Error creating access profile separately:", profileError);
-          } else {
-            console.log("Access profile created separately with success");
-          }
-        } catch (profileError) {
-          console.error("Exception creating access profile separately:", profileError);
+        if (!partialSuccess) {
+          toast.warning("Perfil de acesso não foi criado completamente, mas o estabelecimento foi configurado. Atualizando...");
         }
+        
+        // Se o perfil não foi criado, oferecemos um botão de retry para esse passo específico
+        setError("O estabelecimento foi criado, mas o perfil de acesso não foi configurado corretamente. Clique em 'Finalizar configuração' para tentar novamente.");
+        
+        // Não redirecionamos automaticamente nesse caso, aguardamos o usuário clicar no botão
+        setIsSaving(false);
+        return;
       }
       
       // Limpar dados salvos no localStorage após configuração bem-sucedida
@@ -349,16 +478,18 @@ export const OnboardingControls: React.FC = () => {
           setError("Erro ao verificar se o negócio foi criado. Tente novamente.");
         }
       } else if (error.message.includes("perfis_acesso")) {
-        setError("Erro ao criar perfil de acesso. Verificando se o negócio foi criado...");
+        setError("O negócio foi criado, mas ocorreu um erro ao configurar seu perfil de acesso. Clique em 'Finalizar configuração' para completar o processo.");
         
-        // Esperar um pouco e verificar se o negócio foi criado mesmo com o erro no perfil
-        setTimeout(async () => {
-          const businessVerification = await verifyBusinessCreated();
-          
-          if (!businessVerification.success) {
-            setError("Erro ao criar negócio. Por favor, tente novamente.");
-          }
-        }, 2000);
+        if (!businessCreated) {
+          // Esperar um pouco e verificar se o negócio foi criado mesmo com o erro no perfil
+          setTimeout(async () => {
+            const businessVerification = await verifyBusinessCreated();
+            
+            if (!businessVerification.success) {
+              setError("Erro ao criar negócio. Por favor, tente novamente.");
+            }
+          }, 2000);
+        }
       } else {
         // Erro normal
         setError(error.message || "Erro ao finalizar configuração. Tente novamente.");
@@ -367,7 +498,8 @@ export const OnboardingControls: React.FC = () => {
       // Decidir se mostra botão de retry
       const showRetry = error.message.includes("perfis_acesso") || 
                          error.message.includes("Timeout") || 
-                         retryCount < 3;
+                         retryCount < 3 || 
+                         !!businessCreated;
       
       if (!showRetry) {
         setError(`${error.message || "Erro ao finalizar configuração"}. Entre em contato com o suporte.`);
@@ -381,28 +513,39 @@ export const OnboardingControls: React.FC = () => {
   return (
     <div className="space-y-4 mt-8">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+        <div className={cn(
+          "bg-red-50 border rounded-lg p-4 mb-4",
+          businessCreated ? "border-amber-200" : "border-red-200"
+        )}>
           <div className="flex items-center">
-            <div className="flex-shrink-0 text-red-500">
+            <div className={cn(
+              "flex-shrink-0",
+              businessCreated ? "text-amber-500" : "text-red-500"
+            )}>
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+              <p className={cn(
+                "text-sm",
+                businessCreated ? "text-amber-700" : "text-red-700"
+              )}>{error}</p>
             </div>
           </div>
-          {(error.includes("perfis_acesso") || error.includes("Timeout")) && retryCount < 3 && (
+          {((error.includes("perfis_acesso") || error.includes("Timeout") || businessCreated) && retryCount < 5) && (
             <div className="mt-3">
               <Button 
-                variant="outline" 
+                variant={businessCreated ? "default" : "outline"} 
                 size="sm" 
-                className="border-red-300 text-red-700 hover:bg-red-50"
+                className={businessCreated 
+                  ? "bg-amber-500 hover:bg-amber-600" 
+                  : "border-red-300 text-red-700 hover:bg-red-50"}
                 onClick={handleRetry}
                 disabled={isSaving || isVerifyingCreation}
               >
                 <RefreshCw className={cn("mr-2 h-4 w-4", (isSaving || isVerifyingCreation) && "animate-spin")} />
-                Tentar novamente
+                {businessCreated ? "Finalizar configuração" : "Tentar novamente"}
               </Button>
             </div>
           )}

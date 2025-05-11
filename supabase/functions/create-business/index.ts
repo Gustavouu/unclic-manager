@@ -106,16 +106,16 @@ const createUserRecord = async (supabase, userId, userEmail, userName, maxRetrie
       if (createError) {
         console.error(`User creation attempt ${attempt} failed:`, createError);
         error = createError;
-        // Wait longer between each retry
-        await sleep(1000 * attempt); 
+        // Wait longer between each retry - exponential backoff
+        await sleep(2000 * attempt); 
         continue;
       }
       
       createdUser = data?.[0];
       console.log("User created successfully:", createdUser);
       
-      // Important: Wait to ensure database consistency
-      await sleep(2000);
+      // Important: Wait longer to ensure database consistency - increased from 2000ms to 4000ms
+      await sleep(4000);
       
       // Verify user was actually created with direct query
       const { data: verifyUser, error: verifyError } = await supabase
@@ -127,7 +127,7 @@ const createUserRecord = async (supabase, userId, userEmail, userName, maxRetrie
       if (verifyError || !verifyUser) {
         console.error("User verification failed after creation:", verifyError || "User not found");
         error = verifyError || new Error("User creation verification failed");
-        await sleep(1000 * attempt);
+        await sleep(2000 * attempt);
         continue;
       }
       
@@ -136,7 +136,7 @@ const createUserRecord = async (supabase, userId, userEmail, userName, maxRetrie
     } catch (createError) {
       console.error(`Create user attempt ${attempt} exception:`, createError);
       error = createError;
-      await sleep(1000 * attempt);
+      await sleep(2000 * attempt);
     }
   }
   
@@ -163,7 +163,8 @@ const createAccessProfile = async (supabase, userId, businessId, maxRetries = 5)
       
       if (userCheckError || !userCheck) {
         console.log(`User ${userId} check failed in attempt ${attempt}:`, userCheckError || "User not found");
-        await sleep(2000 * attempt); // Progressive wait
+        // Progressive wait - exponentially increased
+        await sleep(3000 * attempt); 
         continue;
       }
       
@@ -176,7 +177,7 @@ const createAccessProfile = async (supabase, userId, businessId, maxRetries = 5)
         
       if (businessCheckError || !businessCheck) {
         console.log(`Business ${businessId} check failed in attempt ${attempt}:`, businessCheckError || "Business not found");
-        await sleep(2000 * attempt); 
+        await sleep(3000 * attempt); 
         continue;
       }
       
@@ -190,12 +191,12 @@ const createAccessProfile = async (supabase, userId, businessId, maxRetries = 5)
           
         if (updateError) {
           console.error(`Failed to update user with business ID in attempt ${attempt}:`, updateError);
-          await sleep(1000 * attempt);
+          await sleep(2000 * attempt);
           continue;
         }
         
-        // Wait for update to complete
-        await sleep(1500);
+        // Wait longer for update to complete - increased from 1500ms to 3000ms
+        await sleep(3000);
       } else if (userCheck.id_negocio !== businessId) {
         console.log(`User already has different business ID: ${userCheck.id_negocio}, expected: ${businessId}`);
       }
@@ -215,6 +216,9 @@ const createAccessProfile = async (supabase, userId, businessId, maxRetries = 5)
       
       console.log(`User ${userId} confirmed to exist with business ${businessId}, proceeding with access profile creation`);
       
+      // Added a final sleep before profile creation to ensure DB consistency - NEW
+      await sleep(2000);
+      
       const accessProfileData = {
         id_usuario: userId,
         id_negocio: businessId,
@@ -228,25 +232,60 @@ const createAccessProfile = async (supabase, userId, businessId, maxRetries = 5)
         acesso_relatorios: true
       };
       
-      const { data: profileData, error: profileError } = await supabase
-        .from('perfis_acesso')
-        .insert([accessProfileData])
-        .select();
-      
-      if (profileError) {
-        console.error(`Access profile creation attempt ${attempt} failed:`, profileError);
-        error = profileError;
+      // Try-catch specifically for the profile insertion
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from('perfis_acesso')
+          .insert([accessProfileData])
+          .select();
+        
+        if (profileError) {
+          if (profileError.code === '23503') { // Foreign key violation error
+            console.error(`Foreign key violation in profile creation (attempt ${attempt}):`, profileError);
+            // For FK violations, wait even longer
+            await sleep(4000 * attempt);
+            continue;
+          } else {
+            console.error(`Access profile creation attempt ${attempt} failed:`, profileError);
+            error = profileError;
+            await sleep(2000 * attempt);
+            continue;
+          }
+        }
+        
+        console.log("Access profile created successfully:", profileData);
+        return { success: true, profile: profileData };
+      } catch (insertError) {
+        console.error(`Profile insertion attempt ${attempt} exception:`, insertError);
+        error = insertError;
         await sleep(2000 * attempt);
         continue;
       }
-      
-      console.log("Access profile created successfully:", profileData);
-      return { success: true, profile: profileData };
     } catch (profileError) {
       console.error(`Access profile attempt ${attempt} exception:`, profileError);
       error = profileError;
       await sleep(2000 * attempt);
     }
+  }
+  
+  // If all attempts fail but we have valid user and business, return partial success
+  try {
+    const { data: userBizCheck } = await supabase
+      .from('usuarios')
+      .select('id_negocio')
+      .eq('id', userId)
+      .single();
+      
+    if (userBizCheck && userBizCheck.id_negocio === businessId) {
+      return { 
+        success: false, 
+        error: error,
+        partialSuccess: true, 
+        message: "Negócio criado e associado ao usuário, mas o perfil de acesso não foi criado"
+      };
+    }
+  } catch (e) {
+    console.error("Error in final check:", e);
   }
   
   return { success: false, error };
@@ -450,8 +489,8 @@ serve(async (req) => {
     
     console.log("User profile updated with business ID");
     
-    // Allow some time for database consistency
-    await sleep(2000);
+    // Allow more time for database consistency - increased from 2000ms to 4000ms
+    await sleep(4000);
     
     // Verify user record was updated correctly
     console.log("Verifying user-business association...");
@@ -572,6 +611,7 @@ serve(async (req) => {
         businessSlug,
         message: "Estabelecimento criado com sucesso!",
         accessProfileCreated: accessProfileResult?.success || false,
+        partialSuccess: accessProfileResult?.partialSuccess || false,
         executionTime
       }),
       { 
