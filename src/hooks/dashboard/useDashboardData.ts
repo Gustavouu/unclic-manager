@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -16,6 +15,14 @@ export interface DashboardStats {
   retentionRate: number;
   newClientsCount: number;
   returningClientsCount: number;
+  
+  // Added properties to fix TypeScript errors
+  clientsCount: number;
+  todayAppointments: number;
+  monthlyRevenue: number;
+  monthlyServices: number;
+  occupancyRate: number;
+  nextAppointments: any[];
 }
 
 export const useDashboardData = (period: FilterPeriod = 'month') => {
@@ -29,7 +36,15 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
     revenueData: [],
     retentionRate: 0,
     newClientsCount: 0,
-    returningClientsCount: 0
+    returningClientsCount: 0,
+    
+    // Initialize added properties
+    clientsCount: 0,
+    todayAppointments: 0,
+    monthlyRevenue: 0,
+    monthlyServices: 0,
+    occupancyRate: 0,
+    nextAppointments: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -178,14 +193,20 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           .slice(0, 5);
           
         // Map upcoming appointments
-        const upcomingAppointments = upcomingAppointmentsData?.map(app => ({
-          id: app.id,
-          clientName: app.clientes?.nome || "Cliente não identificado",
-          serviceName: app.servicos?.nome || "Serviço não identificado",
-          professionalName: app.funcionarios?.nome || "Profissional não identificado",
-          date: `${app.data}T${app.hora_inicio}`,
-          status: app.status
-        })) || [];
+        const upcomingAppointments = upcomingAppointmentsData?.map(app => {
+          const clientName = app.clientes?.nome || app.clientes?.name || "Cliente não identificado";
+          const serviceName = app.servicos?.nome || app.servicos?.name || "Serviço não identificado";
+          const professionalName = app.funcionarios?.nome || app.funcionarios?.name || "Profissional não identificado";
+          
+          return {
+            id: app.id,
+            clientName,
+            serviceName,
+            professionalName,
+            date: `${app.data}T${app.hora_inicio}`,
+            status: app.status
+          };
+        }) || [];
         
         // Calculate retention metrics
         const retentionRate = completedAppointments > 0 ? 
@@ -198,7 +219,7 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           totalAppointments - newClientsCount
         );
         
-        // Update stats state
+        // Update stats state with all required fields
         setStats({
           totalAppointments,
           completedAppointments,
@@ -209,7 +230,15 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           revenueData,
           retentionRate,
           newClientsCount,
-          returningClientsCount
+          returningClientsCount,
+          
+          // Add values for the new properties
+          clientsCount: newClientsCount + returningClientsCount,
+          todayAppointments: upcomingAppointments.length,
+          monthlyRevenue: totalRevenue,
+          monthlyServices: completedAppointments,
+          occupancyRate: retentionRate, // Using retention rate as an approximation
+          nextAppointments: upcomingAppointments
         });
         
       } catch (err: any) {

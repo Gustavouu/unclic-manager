@@ -24,7 +24,7 @@ import { TenantProvider } from './contexts/TenantContext';
 
 function App() {
   return (
-    <ThemeProvider>
+    <ThemeProvider defaultTheme="light" storageKey="ui-theme">
       <TenantProvider>
         <Routes>
           <Route path="/" element={<Index />} />
