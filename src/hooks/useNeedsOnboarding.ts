@@ -98,6 +98,10 @@ export function useNeedsOnboarding() {
     } catch (err: any) {
       console.error('Error checking onboarding status:', err);
       setError(err.message);
+      
+      // Initialize these variables before using them
+      const cachedStatus = localStorage.getItem(`onboarding-status-${user?.id}`);
+      
       // Don't default to needing onboarding on error - continue with cached value or null
       if (cachedStatus) {
         setNeedsOnboarding(cachedStatus === 'true');
