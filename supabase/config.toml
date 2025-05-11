@@ -18,3 +18,8 @@ timeout_ms = 60000
 # Allow checking slug availability
 [functions.check-slug-availability]
 verify_jwt = true
+
+# Function to complete business setup after initial creation
+[functions.complete-business-setup]
+verify_jwt = true
+timeout_ms = 30000
