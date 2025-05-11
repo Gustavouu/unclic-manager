@@ -528,6 +528,7 @@ export type Database = {
           notas: string | null
           preferencias: Json | null
           telefone: string | null
+          tenant_id: string | null
           ultima_visita: string | null
           valor_total_gasto: number | null
         }
@@ -548,6 +549,7 @@ export type Database = {
           notas?: string | null
           preferencias?: Json | null
           telefone?: string | null
+          tenant_id?: string | null
           ultima_visita?: string | null
           valor_total_gasto?: number | null
         }
@@ -568,6 +570,7 @@ export type Database = {
           notas?: string | null
           preferencias?: Json | null
           telefone?: string | null
+          tenant_id?: string | null
           ultima_visita?: string | null
           valor_total_gasto?: number | null
         }

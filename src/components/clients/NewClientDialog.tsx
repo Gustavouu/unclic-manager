@@ -66,7 +66,13 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
       console.log("Auth status:", authStatus);
       console.log("Business ID:", businessId);
       
-      const newClient = await createClient(data);
+      // Pass both tenant_id and id_negocio for compatibility
+      const clientData = {
+        ...data,
+        tenant_id: businessId, // Add tenant_id (new standard field)
+      };
+      
+      const newClient = await createClient(clientData);
       
       if (newClient && onClientCreated) {
         onClientCreated(newClient);

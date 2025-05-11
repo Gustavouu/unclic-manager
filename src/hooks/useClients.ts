@@ -19,6 +19,8 @@ export interface Client {
   cidade?: string;
   estado?: string;
   notas?: string;
+  tenant_id?: string; // Added standard field
+  id_negocio?: string; // Original field
 }
 
 export const useClients = () => {
@@ -37,10 +39,12 @@ export const useClients = () => {
       setIsLoading(true);
       try {
         console.log('Fetching clients for business ID:', businessId);
+        
+        // Query using both field names to ensure compatibility
         const { data, error } = await supabase
           .from('clientes')
           .select('*')
-          .eq('id_negocio', businessId);
+          .or(`id_negocio.eq.${businessId},tenant_id.eq.${businessId}`);
 
         if (error) {
           console.error("Erro ao buscar clientes:", error);
@@ -64,7 +68,9 @@ export const useClients = () => {
           criado_em: client.criado_em,
           cidade: client.cidade,
           estado: client.estado,
-          notas: client.notas
+          notas: client.notas,
+          tenant_id: client.tenant_id,
+          id_negocio: client.id_negocio
         }));
 
         setClients(mappedClients);
@@ -97,12 +103,16 @@ export const useClients = () => {
         throw new Error("Usuário não autenticado");
       }
       
+      // Include both tenant_id and id_negocio for compatibility
+      const dataToInsert = {
+        ...clientData,
+        id_negocio: businessId,
+        tenant_id: businessId // Adding standard field
+      };
+
       const { data, error } = await supabase
         .from('clientes')
-        .insert([{
-          ...clientData,
-          id_negocio: businessId
-        }])
+        .insert([dataToInsert])
         .select()
         .single();
 
@@ -126,7 +136,9 @@ export const useClients = () => {
         criado_em: data.criado_em,
         cidade: data.cidade,
         estado: data.estado,
-        notas: data.notas
+        notas: data.notas,
+        tenant_id: data.tenant_id,
+        id_negocio: data.id_negocio
       };
       
       setClients(prev => [...prev, newClient]);
@@ -152,7 +164,7 @@ export const useClients = () => {
         .from('clientes')
         .select('*')
         .eq('email', email)
-        .eq('id_negocio', businessId)
+        .or(`id_negocio.eq.${businessId},tenant_id.eq.${businessId}`)
         .maybeSingle();
 
       if (error) throw error;
@@ -173,7 +185,9 @@ export const useClients = () => {
         criado_em: data.criado_em,
         cidade: data.cidade,
         estado: data.estado,
-        notas: data.notas
+        notas: data.notas,
+        tenant_id: data.tenant_id,
+        id_negocio: data.id_negocio
       };
       
     } catch (err: any) {
@@ -194,7 +208,7 @@ export const useClients = () => {
         .from('clientes')
         .select('*')
         .eq('telefone', phone)
-        .eq('id_negocio', businessId)
+        .or(`id_negocio.eq.${businessId},tenant_id.eq.${businessId}`)
         .maybeSingle();
 
       if (error) throw error;
@@ -215,7 +229,9 @@ export const useClients = () => {
         criado_em: data.criado_em,
         cidade: data.cidade,
         estado: data.estado,
-        notas: data.notas
+        notas: data.notas,
+        tenant_id: data.tenant_id, 
+        id_negocio: data.id_negocio
       };
       
     } catch (err: any) {
