@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { PageHeader } from "@/components/ui/page-header";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { OnboardingBanner } from "@/components/dashboard/OnboardingBanner";
 import { StatusFixButton } from "@/components/dashboard/StatusFixButton";
@@ -34,6 +34,24 @@ const Dashboard = () => {
     setPeriod(value as FilterPeriod);
   };
 
+  // Componente do filtro de período para ser passado como actions para o PageHeader
+  const PeriodFilter = (
+    <div className="w-[180px]">
+      <Select value={period} onValueChange={handlePeriodChange}>
+        <SelectTrigger>
+          <SelectValue placeholder="Período" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="today">Hoje</SelectItem>
+          <SelectItem value="week">Esta Semana</SelectItem>
+          <SelectItem value="month">Este Mês</SelectItem>
+          <SelectItem value="quarter">Este Trimestre</SelectItem>
+          <SelectItem value="year">Este Ano</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
   // Use conditional rendering based on loading states
   if (onboardingLoading || statsLoading) {
     return (
@@ -46,25 +64,13 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       {needsOnboarding && <OnboardingBanner />}
-      <DashboardHeader />
       
-      {/* Period filter */}
-      <div className="flex justify-end">
-        <div className="w-[180px]">
-          <Select value={period} onValueChange={handlePeriodChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Período" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Hoje</SelectItem>
-              <SelectItem value="week">Esta Semana</SelectItem>
-              <SelectItem value="month">Este Mês</SelectItem>
-              <SelectItem value="quarter">Este Trimestre</SelectItem>
-              <SelectItem value="year">Este Ano</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {/* Usando PageHeader com o filtro na mesma linha */}
+      <PageHeader
+        title="Painel de Controle"
+        description="Bem-vindo ao seu dashboard. Aqui você encontra os dados mais importantes do seu negócio."
+        actions={PeriodFilter}
+      />
       
       {/* KPI Cards - Mantendo no topo */}
       <KpiCards stats={stats} period={period} />
