@@ -38,28 +38,38 @@ export const OnboardingBanner: React.FC = () => {
         throw new Error("Não foi possível atualizar o status do negócio");
       }
       
-      // Refresh onboarding status after success
-      await refreshOnboardingStatus();
+      // Force clear local storage caches
+      localStorage.removeItem(`business-${currentBusiness.id}-timestamp`);
+      localStorage.removeItem(`business-${currentBusiness.id}`);
+      
+      // Refresh onboarding status after success with forced skip cache
+      await refreshOnboardingStatus(true);
       
       toast.success("Status do negócio corrigido com sucesso!", { id: "fix-status" });
       
       // Mark as viewed to hide the banner
       markOnboardingAsViewed();
       setAttempts(0); // Reset attempts on success
+      
+      // Reload page to ensure all components update properly
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (error: any) {
       console.error("Erro ao corrigir status:", error);
       
-      // Implement retry mechanism
+      // Implement retry mechanism with exponential backoff
       if (attempts < maxAttempts - 1) {
         setAttempts(attempts + 1);
         toast.error(`Erro ao corrigir status. Tentando novamente... (${attempts + 1}/${maxAttempts})`, { id: "fix-status" });
         
-        // Wait and try again after a delay
+        // Wait and try again after a delay with exponential backoff
+        const backoffTime = 1000 * Math.pow(2, attempts);
         setTimeout(() => {
           handleFixStatus();
-        }, 1000 * (attempts + 1)); // Exponential backoff
+        }, backoffTime);
       } else {
-        toast.error(`Erro ao corrigir status após ${maxAttempts} tentativas: ${error.message}`, { id: "fix-status" });
+        toast.error(`Erro ao corrigir status após ${maxAttempts} tentativas: ${error.message || 'Erro desconhecido'}`, { id: "fix-status" });
         setAttempts(0); // Reset attempts after max attempts
       }
     } finally {

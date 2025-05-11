@@ -177,15 +177,31 @@ export const checkOnboardingStatus = async (userId: string, skipCache = false): 
   }
 };
 
-// Update business status using first the direct update and falling back to the RPC if needed
+// Update business status - improved with better fallbacks and error handling
 export const updateBusinessStatus = async (businessId: string, newStatus: string): Promise<boolean> => {
   if (!businessId) return false;
   
   try {
     console.log(`Tentando atualizar status do negócio ${businessId} para ${newStatus}`);
     
-    // First attempt: Update the business status directly
-    // CORREÇÃO: Utilizando o campo 'atualizado_em' em vez de 'updated_at'
+    // First attempt: Try using the RPC function (now our primary method since it's fixed)
+    console.log("Método 1: Usando RPC function");
+    const { data: rpcData, error: rpcError } = await supabase.rpc('set_business_status', {
+      business_id: businessId,
+      new_status: newStatus
+    });
+    
+    if (!rpcError) {
+      console.log('Status atualizado com sucesso via RPC');
+      // Clear all related caches to ensure fresh data
+      clearBusinessCache();
+      return true;
+    }
+    
+    console.warn('Erro ao usar RPC, tentando update direto:', rpcError);
+    
+    // Second attempt: Update the business status directly with atualizado_em
+    console.log("Método 2: Usando update direto com atualizado_em");
     const { error } = await supabase
       .from('negocios')
       .update({ 
@@ -194,32 +210,35 @@ export const updateBusinessStatus = async (businessId: string, newStatus: string
       })
       .eq('id', businessId);
       
-    if (error) {
-      console.warn('Erro na primeira tentativa de atualização de status, tentando via RPC:', error);
-      
-      // Second attempt: Try using the RPC function as fallback
-      const { data: rpcData, error: rpcError } = await supabase.rpc('set_business_status', {
-        business_id: businessId,
-        new_status: newStatus
-      });
-      
-      if (rpcError) {
-        throw rpcError;
-      }
-      
-      console.log('Status atualizado com sucesso via RPC');
-    } else {
+    if (!error) {
       console.log('Status atualizado com sucesso via update direto');
+      clearBusinessCache();
+      return true;
     }
     
-    // Clear all related caches to ensure fresh data
-    clearBusinessCache();
+    console.warn('Erro no update direto, tentando método simplificado:', error);
     
+    // Last attempt: Simplified update
+    console.log("Método 3: Usando update simplificado");
+    const { error: simpleError } = await supabase
+      .from('negocios')
+      .update({ 
+        status: newStatus,
+        atualizado_em: new Date().toISOString() 
+      })
+      .eq('id', businessId);
+    
+    if (simpleError) {
+      console.error('Todos os métodos de atualização falharam:', simpleError);
+      throw simpleError;
+    }
+    
+    console.log('Status atualizado com sucesso via update simplificado');
+    clearBusinessCache();
     return true;
   } catch (error: any) {
     console.error('Erro ao atualizar status do negócio:', error);
-    toast.error('Erro ao atualizar status do negócio.');
-    return false;
+    throw new Error(`Erro ao atualizar status do negócio: ${error.message || 'Erro desconhecido'}`);
   }
 };
 

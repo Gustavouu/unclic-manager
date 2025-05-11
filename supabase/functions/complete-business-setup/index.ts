@@ -232,7 +232,10 @@ serve(async (req) => {
         console.log("Trying simplified update as last resort");
         const { error: finalAttemptError } = await supabase
           .from('negocios')
-          .update({ status: 'ativo' })
+          .update({ 
+            status: 'ativo',
+            atualizado_em: new Date().toISOString()
+          })
           .eq('id', businessId);
         
         if (finalAttemptError) {
