@@ -194,7 +194,7 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           .slice(0, 5);
           
         // Map upcoming appointments
-        const upcomingAppointments = upcomingAppointmentsData?.map(app => {
+        const upcomingAppointments = upcomingAppointmentsData?.map((app: any) => {
           const clientName = app.clientes && typeof app.clientes === 'object' ? 
             app.clientes.nome || "Cliente não identificado" : "Cliente não identificado";
           
