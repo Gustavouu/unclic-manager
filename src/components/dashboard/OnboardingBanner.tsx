@@ -6,12 +6,11 @@ import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 
 export const OnboardingBanner: React.FC = () => {
-  const { needsOnboarding, loading, error, onboardingViewed, markOnboardingAsViewed, refreshOnboardingStatus } = useNeedsOnboarding();
-  const { currentBusiness, refreshBusinessData, updateBusinessStatus } = useTenant();
+  const { needsOnboarding, loading, error, onboardingViewed, markOnboardingAsViewed } = useNeedsOnboarding();
+  const { currentBusiness, updateBusinessStatus } = useTenant();
   const navigate = useNavigate();
   
   // Don't show if loading, no onboarding needed, error occurred, or already viewed
@@ -43,14 +42,20 @@ export const OnboardingBanner: React.FC = () => {
         throw new Error("Não foi possível atualizar o status do negócio");
       }
       
-      // Refresh both contexts to reflect changes
-      await refreshBusinessData();
-      await refreshOnboardingStatus();
-      
       toast.success("Status do negócio corrigido com sucesso!", { id: "fix-status" });
       
       // Mark as viewed to hide the banner
       markOnboardingAsViewed();
+      
+      // Clear cache and refresh page to reflect changes
+      localStorage.removeItem(`user-business-${currentBusiness.id}`);
+      localStorage.removeItem(`business-${currentBusiness.id}`);
+      localStorage.removeItem("status-notification-shown");
+      
+      // Reload after short delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (error: any) {
       console.error("Erro ao corrigir status:", error);
       toast.error(`Erro ao corrigir status: ${error.message}`, { id: "fix-status" });

@@ -12,51 +12,36 @@ import { toast } from "sonner";
 
 const Dashboard = () => {
   const { stats, loading } = useDashboardData();
-  const { currentBusiness, refreshBusinessData } = useTenant();
-  const { refreshOnboardingStatus } = useNeedsOnboarding();
+  const { currentBusiness } = useTenant();
+  const { needsOnboarding } = useNeedsOnboarding();
   
   useEffect(() => {
     document.title = "Dashboard | Unclic Manager";
     
-    // Refresh business status when dashboard loads
-    const refreshData = async () => {
-      try {
-        const results = await Promise.all([
-          refreshBusinessData(),
-          refreshOnboardingStatus()
-        ]);
-        
-        // Check if business status is pendente and show a toast notification
-        if (currentBusiness?.status === "pendente") {
-          toast.info("Seu negócio está com status pendente. Clique em 'Corrigir status' para resolver.", {
-            duration: 8000,
-            id: "business-status-pendente"
-          });
+    // Only show the toast notification once when the component mounts
+    if (currentBusiness?.status === "pendente") {
+      toast.info("Seu negócio está com status pendente. Clique em 'Corrigir status' para resolver.", {
+        duration: 8000,
+        id: "business-status-pendente", // Using ID prevents duplicate toasts
+        onDismiss: () => {
+          // Store in localStorage that the user has seen this notification
+          localStorage.setItem("status-notification-shown", "true");
         }
-      } catch (error) {
-        console.error("Erro ao atualizar dados:", error);
-      }
-    };
+      });
+    }
     
-    refreshData();
-    
-    // Set up a periodic refresh to check status updates
-    const intervalId = setInterval(() => {
-      refreshData();
-    }, 60000); // Check every minute
-    
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [refreshBusinessData, refreshOnboardingStatus, currentBusiness?.status]);
+    // No intervals or periodic refreshes here - removed to prevent reloading loops
+  }, [currentBusiness?.status]);
 
   return (
     <div className="space-y-6">
-      <OnboardingBanner />
+      {needsOnboarding && <OnboardingBanner />}
       <DashboardHeader />
       <DashboardOverview />
       <DashboardInsights stats={stats} />
       <DashboardFooter />
+      
+      {/* StatusFixButton will only show if business status is pendente */}
     </div>
   );
 };

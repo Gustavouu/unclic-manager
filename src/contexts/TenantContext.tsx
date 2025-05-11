@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -31,9 +31,24 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
   const [currentBusiness, setCurrentBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshCount, setRefreshCount] = useState(0);
+  const isInitialMount = useRef(true);
+  const lastRefreshTime = useRef(0);
+  
+  // Rate limit refreshes to prevent loops
+  const refreshBusinessData = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastRefreshTime.current < 5000) { // Don't refresh more than once every 5 seconds
+      console.log("Refresh rate limited, skipping");
+      return;
+    }
+    
+    lastRefreshTime.current = now;
+    setRefreshCount(prev => prev + 1);
+  }, []);
 
-  // Fetch user's business
-  const fetchUserBusiness = async () => {
+  // Fetch user's business with debounce
+  const fetchUserBusiness = useCallback(async () => {
     if (!user) {
       setCurrentBusiness(null);
       setLoading(false);
@@ -44,12 +59,29 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       setError(null);
 
+      // Try to get from cache first
+      const cachedBusiness = localStorage.getItem(`tenant-business-${user.id}`);
+      const cachedTimestamp = localStorage.getItem(`tenant-business-timestamp-${user.id}`);
+      
+      if (cachedBusiness && cachedTimestamp) {
+        const timestamp = parseInt(cachedTimestamp);
+        const now = Date.now();
+        const fiveMinutes = 5 * 60 * 1000;
+        
+        if (now - timestamp < fiveMinutes) {
+          setCurrentBusiness(JSON.parse(cachedBusiness));
+          setLoading(false);
+          console.log("Using cached business data");
+          return;
+        }
+      }
+
       // Get the user's associated business
       const { data: userData, error: userError } = await supabase
         .from('usuarios')
         .select('id_negocio')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (userError) {
         throw userError;
@@ -57,6 +89,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
 
       if (!userData?.id_negocio) {
         setCurrentBusiness(null);
+        setLoading(false);
         return;
       }
 
@@ -65,20 +98,16 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
         .from('negocios')
         .select('*')
         .eq('id', userData.id_negocio)
-        .single();
+        .maybeSingle();
 
       if (businessError) {
         throw businessError;
       }
 
-      // Clear cache after successfully fetching updated data
-      try {
-        localStorage.removeItem(`business-${userData.id_negocio}`);
-        localStorage.removeItem(`user-business-${user.id}`);
-      } catch (cacheError) {
-        console.error("Error clearing cache:", cacheError);
-      }
-
+      // Store in cache
+      localStorage.setItem(`tenant-business-${user.id}`, JSON.stringify(businessData));
+      localStorage.setItem(`tenant-business-timestamp-${user.id}`, Date.now().toString());
+      
       setCurrentBusiness(businessData as Business);
     } catch (err: any) {
       console.error('Erro ao buscar dados do negócio:', err);
@@ -87,10 +116,10 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  // Update business status
-  const updateBusinessStatus = async (businessId: string, newStatus: string) => {
+  // Update business status with improved reliability
+  const updateBusinessStatus = useCallback(async (businessId: string, newStatus: string) => {
     if (!user) return false;
 
     try {
@@ -107,8 +136,19 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
         throw updateError;
       }
 
-      // Refresh business data
+      // Clear all caches to ensure fresh data
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('tenant-business-') || 
+            key.startsWith('onboarding-status-') || 
+            key.startsWith('user-business-') || 
+            key.startsWith('business-')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      // Refresh business data immediately
       await fetchUserBusiness();
+      
       return true;
     } catch (err: any) {
       console.error('Erro ao atualizar status do negócio:', err);
@@ -118,10 +158,10 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, fetchUserBusiness]);
 
   // Set current business by ID (for users with multiple businesses)
-  const setCurrentBusinessById = async (businessId: string) => {
+  const setCurrentBusinessById = useCallback(async (businessId: string) => {
     if (!user) return;
 
     try {
@@ -150,7 +190,10 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
         throw updateError;
       }
 
-      // Fetch updated business data
+      // Clear cache and fetch updated business data
+      localStorage.removeItem(`tenant-business-${user.id}`);
+      localStorage.removeItem(`tenant-business-timestamp-${user.id}`);
+      
       await fetchUserBusiness();
     } catch (err: any) {
       console.error('Erro ao definir negócio atual:', err);
@@ -159,17 +202,30 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, fetchUserBusiness]);
 
-  // Refresh business data
-  const refreshBusinessData = async () => {
-    await fetchUserBusiness();
-  };
-
-  // Initial fetch and setup listener for auth changes
+  // Initial fetch when user changes
   useEffect(() => {
-    fetchUserBusiness();
-  }, [user]);
+    if (user) {
+      fetchUserBusiness();
+    } else {
+      setCurrentBusiness(null);
+      setLoading(false);
+    }
+  }, [user, fetchUserBusiness]);
+
+  // Handle refresh requests
+  useEffect(() => {
+    // Skip the initial render
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    if (refreshCount > 0) {
+      fetchUserBusiness();
+    }
+  }, [refreshCount, fetchUserBusiness]);
 
   const value = {
     currentBusiness,

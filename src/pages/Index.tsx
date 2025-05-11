@@ -4,32 +4,16 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 import { Loader } from "@/components/ui/loader";
-import { useTenant } from "@/contexts/TenantContext";
 
 const Index = () => {
   const { user, loading } = useAuth();
-  const { needsOnboarding, loading: onboardingLoading, refreshOnboardingStatus } = useNeedsOnboarding();
-  const { refreshBusinessData } = useTenant();
+  const { loading: onboardingLoading } = useNeedsOnboarding();
   
   useEffect(() => {
     document.title = "Unclic Manager";
     
-    // If user is logged in, refresh business data
-    if (user) {
-      const refresh = async () => {
-        try {
-          await Promise.all([
-            refreshBusinessData(),
-            refreshOnboardingStatus()
-          ]);
-        } catch (error) {
-          console.error("Erro ao carregar dados:", error);
-        }
-      };
-      
-      refresh();
-    }
-  }, [user, refreshBusinessData, refreshOnboardingStatus]);
+    // No redundant refreshes here - data fetching is now centralized in TenantContext
+  }, []);
   
   if (loading || (user && onboardingLoading)) {
     return (

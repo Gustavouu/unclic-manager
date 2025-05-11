@@ -11,12 +11,13 @@ export function useNeedsOnboarding() {
   const [error, setError] = useState<string | null>(null);
   const [onboardingViewed, setOnboardingViewed] = useState<boolean>(false);
 
+  // Check if the user has viewed onboarding from localStorage only once when component mounts
   useEffect(() => {
-    // Check if the user has viewed the onboarding
     const hasViewedOnboarding = localStorage.getItem('onboarding_viewed') === 'true';
     setOnboardingViewed(hasViewedOnboarding);
   }, []);
 
+  // Function to check onboarding status
   const checkOnboardingStatus = useCallback(async (skipCache = false) => {
     if (!user) {
       setNeedsOnboarding(null);
@@ -28,108 +29,103 @@ export function useNeedsOnboarding() {
       setLoading(true);
       setError(null);
       
-      // Use the fetchWithCache utility to reduce API calls, with skipCache option
-      const fetchFn = async () => {
-        const { data, error } = await supabase
-          .from('usuarios')
-          .select('id_negocio')
-          .eq('id', user.id)
-          .single();
-            
-        if (error && error.code !== 'PGRST116') { // Not found error
-          throw error;
-        }
-          
-        return data;
-      };
+      // Use local cache first to reduce API calls
+      const cachedStatus = localStorage.getItem(`onboarding-status-${user.id}`);
+      const cachedTimestamp = localStorage.getItem(`onboarding-status-timestamp-${user.id}`);
       
-      const userData = skipCache 
-        ? await fetchFn()
-        : await fetchWithCache(
-            `user-business-${user.id}`,
-            fetchFn,
-            1 // 1 minute cache
-          );
-      
-      // Clear cache to ensure fresh data
-      if (skipCache) {
-        try {
-          localStorage.removeItem(`user-business-${user.id}`);
-        } catch (e) {
-          console.warn("Failed to clear user business cache", e);
+      // Use cache if it exists and is less than 5 minutes old, unless skipCache is true
+      if (!skipCache && cachedStatus && cachedTimestamp) {
+        const timestamp = parseInt(cachedTimestamp);
+        const now = Date.now();
+        const fiveMinutes = 5 * 60 * 1000;
+        
+        if (now - timestamp < fiveMinutes) {
+          setNeedsOnboarding(cachedStatus === 'true');
+          setLoading(false);
+          console.log("Using cached onboarding status:", cachedStatus);
+          return;
         }
       }
       
-      // If no business is associated or the user doesn't exist yet, they need onboarding
+      // Fetch user data with a simple query
+      const { data: userData, error: userError } = await supabase
+        .from('usuarios')
+        .select('id_negocio')
+        .eq('id', user.id)
+        .maybeSingle();
+            
+      if (userError) {
+        // Don't throw on not found - just means no business
+        if (userError.code !== 'PGRST116') {
+          throw userError;
+        }
+      }
+      
+      // If no business is associated, they need onboarding
       if (!userData || !userData.id_negocio) {
         console.log("User needs onboarding - no business associated");
         setNeedsOnboarding(true);
+        
+        // Cache the result
+        localStorage.setItem(`onboarding-status-${user.id}`, 'true');
+        localStorage.setItem(`onboarding-status-timestamp-${user.id}`, Date.now().toString());
+        
         setLoading(false);
         return;
       }
       
-      // Check if the business has completed setup
-      const businessFetchFn = async () => {
-        const { data, error } = await supabase
-          .from('negocios')
-          .select('id, status')
-          .eq('id', userData.id_negocio)
-          .single();
-            
-        if (error) {
-          throw error;
-        }
-          
-        return data;
-      };
+      // Check business status directly without using fetchWithCache
+      const { data: businessData, error: businessError } = await supabase
+        .from('negocios')
+        .select('id, status')
+        .eq('id', userData.id_negocio)
+        .maybeSingle();
       
-      const businessData = skipCache
-        ? await businessFetchFn()
-        : await fetchWithCache(
-            `business-${userData.id_negocio}`,
-            businessFetchFn,
-            1 // 1 minute cache
-          );
-      
-      // Clear business cache if skipping cache
-      if (skipCache) {
-        try {
-          localStorage.removeItem(`business-${userData.id_negocio}`);
-        } catch (e) {
-          console.warn("Failed to clear business cache", e);
-        }
+      if (businessError) {
+        throw businessError;
       }
       
       // If business exists but status is 'pendente', they still need onboarding
       const needsOnboarding = !businessData || businessData.status === 'pendente';
       console.log(`User ${needsOnboarding ? 'needs' : 'does not need'} onboarding - business status: ${businessData?.status}`);
+      
       setNeedsOnboarding(needsOnboarding);
+      
+      // Cache the result
+      localStorage.setItem(`onboarding-status-${user.id}`, needsOnboarding.toString());
+      localStorage.setItem(`onboarding-status-timestamp-${user.id}`, Date.now().toString());
       
     } catch (err: any) {
       console.error('Error checking onboarding status:', err);
       setError(err.message);
-      // Important change: Don't default to needing onboarding on error
-      // Instead, allow access to the app even if we can't determine onboarding status
-      setNeedsOnboarding(false);
+      // Don't default to needing onboarding on error - continue with cached value or null
+      if (cachedStatus) {
+        setNeedsOnboarding(cachedStatus === 'true');
+      } else {
+        setNeedsOnboarding(false); // Default to not needing onboarding on error
+      }
     } finally {
       setLoading(false);
     }
   }, [user]);
 
+  // Only check onboarding status once when user changes
   useEffect(() => {
-    checkOnboardingStatus();
-  }, [checkOnboardingStatus]);
+    if (user) {
+      checkOnboardingStatus();
+    }
+  }, [user, checkOnboardingStatus]);
 
   // Function to mark onboarding as viewed
-  const markOnboardingAsViewed = () => {
+  const markOnboardingAsViewed = useCallback(() => {
     localStorage.setItem('onboarding_viewed', 'true');
     setOnboardingViewed(true);
-  };
+  }, []);
 
-  // Function to refresh onboarding status (skipping cache)
-  const refreshOnboardingStatus = async () => {
+  // Function to refresh onboarding status
+  const refreshOnboardingStatus = useCallback(async () => {
     return checkOnboardingStatus(true); // Skip cache
-  };
+  }, [checkOnboardingStatus]);
 
   return { 
     needsOnboarding, 

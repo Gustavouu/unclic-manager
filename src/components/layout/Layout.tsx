@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Sidebar } from "./sidebar/Sidebar";
 import { Header } from "./Header";
@@ -11,22 +11,31 @@ import { StatusFixButton } from "@/components/dashboard/StatusFixButton";
 const Layout = () => {
   const { currentBusiness, loading, error, refreshBusinessData } = useTenant();
   const navigate = useNavigate();
+  const [dataRefreshed, setDataRefreshed] = useState(false);
   
   useEffect(() => {
-    // Refresh business data when layout mounts
-    refreshBusinessData();
-    
-    // Show non-blocking notifications instead of forced redirects
-    if (!loading) {
+    // Only refresh data once when the component mounts to prevent infinite loops
+    if (!dataRefreshed) {
+      refreshBusinessData().then(() => {
+        setDataRefreshed(true);
+      });
+    }
+  }, [refreshBusinessData, dataRefreshed]);
+  
+  useEffect(() => {
+    // Show notifications only once based on the business status
+    // The status-notification-shown check prevents showing repeated notifications
+    if (!loading && !localStorage.getItem("status-notification-shown")) {
       if (!currentBusiness) {
         toast.info("Complete a configuração do seu negócio para acessar todos os recursos", {
           action: {
             label: "Configurar",
             onClick: () => navigate("/onboarding")
           },
-          duration: 10000, // 10 seconds
-          id: "incomplete-onboarding" // Prevent duplicates
+          duration: 10000,
+          id: "incomplete-onboarding"
         });
+        localStorage.setItem("status-notification-shown", "true");
       } else if (currentBusiness.status === 'pendente') {
         toast.info("Finalize a configuração do seu negócio para acessar todos os recursos", {
           action: {
@@ -36,9 +45,10 @@ const Layout = () => {
           duration: 10000,
           id: "pending-onboarding"
         });
+        localStorage.setItem("status-notification-shown", "true");
       }
     }
-  }, [currentBusiness, loading, navigate, refreshBusinessData]);
+  }, [currentBusiness, loading, navigate]);
   
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Carregando...</div>;
@@ -52,7 +62,10 @@ const Layout = () => {
           <p className="text-gray-700 mt-2">{error}</p>
           <button 
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              localStorage.removeItem("status-notification-shown");
+              window.location.reload();
+            }}
           >
             Tentar novamente
           </button>
