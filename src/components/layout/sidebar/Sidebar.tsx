@@ -2,10 +2,10 @@
 import * as React from "react";
 import { useMobile } from "@/hooks/use-mobile";
 import { MainNav } from "@/components/main-nav";
-import { SidebarMain } from "./sidebar/SidebarMain";
-import { MenuSections } from "./sidebar/MenuSections";
-import { UserDropdown } from "./sidebar/UserDropdown";
-import { MobileSidebar } from "./sidebar/MobileSidebar";
+import { SidebarMain } from "@/components/layout/sidebar/SidebarMain";
+import { MenuSections } from "@/components/layout/sidebar/MenuSections";
+import { UserDropdown } from "@/components/layout/sidebar/UserDropdown";
+import { MobileSidebar } from "@/components/layout/sidebar/MobileSidebar";
 
 interface SidebarProps extends React.ComponentProps<"div"> {}
 
@@ -33,4 +33,4 @@ export function Sidebar({ className }: SidebarProps) {
   );
 }
 
-export { MobileSidebar } from "./sidebar/MobileSidebar";
+export { MobileSidebar } from "@/components/layout/sidebar/MobileSidebar";
