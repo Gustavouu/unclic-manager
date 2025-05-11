@@ -30,7 +30,7 @@ export const OnboardingProcessStatus: React.FC = () => {
   
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { refreshBusinessData } = useTenant();
+  const { refreshBusinessData, updateBusinessStatus } = useTenant();
   const { refreshOnboardingStatus } = useNeedsOnboarding();
   
   // Function to handle finishing setup after business creation
@@ -68,6 +68,9 @@ export const OnboardingProcessStatus: React.FC = () => {
         throw new Error(setupError || "Erro ao finalizar configuração");
       }
       
+      // Manually update the business status just to be extra safe
+      await updateBusinessStatus(businessCreated.id, "ativo");
+      
       // Update status to success
       setStatus("success");
       setProcessingStep("Configuração concluída com sucesso!");
@@ -93,6 +96,34 @@ export const OnboardingProcessStatus: React.FC = () => {
       if (error.message && (error.message.includes("não respondeu") || error.message.includes("verificando"))) {
         setProcessingStep("Verificando status de configuração...");
         
+        // Try to manually update the business status directly
+        try {
+          const updated = await updateBusinessStatus(businessCreated.id, "ativo");
+          
+          if (updated) {
+            setStatus("success");
+            setProcessingStep("Configuração concluída com sucesso!");
+            toast.success("Status do negócio atualizado manualmente com sucesso!");
+            
+            // Clear onboarding data
+            localStorage.removeItem('unclic-manager-onboarding');
+            
+            // Refresh both business data and onboarding status
+            await Promise.all([
+              refreshBusinessData(),
+              refreshOnboardingStatus()
+            ]);
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+              navigate("/dashboard", { replace: true });
+            }, 1500);
+            return;
+          }
+        } catch (updateError) {
+          console.error("Erro ao atualizar status manualmente:", updateError);
+        }
+        
         // Delay to allow server processing to complete
         setTimeout(async () => {
           try {
@@ -108,6 +139,9 @@ export const OnboardingProcessStatus: React.FC = () => {
             
             if (accessProfile) {
               // Access profile exists, indicating setup is complete
+              // Try to manually update the business status
+              await updateBusinessStatus(businessCreated.id, "ativo");
+              
               setStatus("success");
               setProcessingStep("Configuração concluída com sucesso!");
               toast.success("Configuração concluída com sucesso!");
@@ -122,7 +156,9 @@ export const OnboardingProcessStatus: React.FC = () => {
               ]);
               
               // Redirect to dashboard
-              navigate("/dashboard", { replace: true });
+              setTimeout(() => {
+                navigate("/dashboard", { replace: true });
+              }, 1500);
             } else {
               // Access profile does not exist yet
               setError("Configuração em andamento. Por favor, tente novamente em alguns instantes.");
@@ -153,6 +189,15 @@ export const OnboardingProcessStatus: React.FC = () => {
   const handleGoToDashboard = async () => {
     // Ensure we clear any onboarding data
     localStorage.removeItem('unclic-manager-onboarding');
+    
+    // Try to fix business status before redirecting
+    if (businessCreated?.id) {
+      try {
+        await updateBusinessStatus(businessCreated.id, "ativo");
+      } catch (error) {
+        console.error("Erro ao atualizar status:", error);
+      }
+    }
     
     // Refresh data before redirecting
     try {
@@ -190,7 +235,14 @@ export const OnboardingProcessStatus: React.FC = () => {
     if (status === "processing" && businessCreated?.id && !processingStep?.includes("Finalizando")) {
       handleCompleteSetup();
     }
-  }, [businessCreated, status]);
+    
+    // Clean up local storage when component unmounts if successful
+    return () => {
+      if (status === "success") {
+        localStorage.removeItem('unclic-manager-onboarding');
+      }
+    };
+  }, [businessCreated, status, processingStep]);
 
   return (
     <div className="space-y-8 py-12">

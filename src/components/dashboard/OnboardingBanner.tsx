@@ -11,7 +11,7 @@ import { useTenant } from "@/contexts/TenantContext";
 
 export const OnboardingBanner: React.FC = () => {
   const { needsOnboarding, loading, error, onboardingViewed, markOnboardingAsViewed, refreshOnboardingStatus } = useNeedsOnboarding();
-  const { currentBusiness, refreshBusinessData } = useTenant();
+  const { currentBusiness, refreshBusinessData, updateBusinessStatus } = useTenant();
   const navigate = useNavigate();
   
   // Don't show if loading, no onboarding needed, error occurred, or already viewed
@@ -34,29 +34,26 @@ export const OnboardingBanner: React.FC = () => {
     }
     
     try {
-      toast.loading("Corrigindo status do negócio...");
+      toast.loading("Corrigindo status do negócio...", { id: "fix-status" });
       
-      // Update business status directly
-      const { error: updateError } = await supabase
-        .from("negocios")
-        .update({ status: "ativo" })
-        .eq("id", currentBusiness.id);
+      // Use the TenantContext function to update status
+      const success = await updateBusinessStatus(currentBusiness.id, "ativo");
       
-      if (updateError) {
-        throw updateError;
+      if (!success) {
+        throw new Error("Não foi possível atualizar o status do negócio");
       }
       
       // Refresh both contexts to reflect changes
       await refreshBusinessData();
       await refreshOnboardingStatus();
       
-      toast.success("Status do negócio corrigido com sucesso!");
+      toast.success("Status do negócio corrigido com sucesso!", { id: "fix-status" });
       
       // Mark as viewed to hide the banner
       markOnboardingAsViewed();
     } catch (error: any) {
       console.error("Erro ao corrigir status:", error);
-      toast.error(`Erro ao corrigir status: ${error.message}`);
+      toast.error(`Erro ao corrigir status: ${error.message}`, { id: "fix-status" });
     }
   };
   
@@ -64,11 +61,11 @@ export const OnboardingBanner: React.FC = () => {
   const isPendingStatus = currentBusiness?.status === "pendente";
   
   return (
-    <Alert className="mb-6">
-      <AlertCircle className="h-4 w-4 mr-2" />
+    <Alert className="mb-6 border-amber-500">
+      <AlertCircle className="h-4 w-4 mr-2 text-amber-500" />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full">
         <div>
-          <AlertTitle className="text-base">
+          <AlertTitle className="text-base font-bold">
             {isPendingStatus ? "Status pendente" : "Configuração incompleta"}
           </AlertTitle>
           <AlertDescription>
@@ -84,7 +81,7 @@ export const OnboardingBanner: React.FC = () => {
           </Button>
           
           {isPendingStatus ? (
-            <Button size="sm" variant="destructive" onClick={handleFixStatus}>
+            <Button size="sm" variant="destructive" onClick={handleFixStatus} className="bg-amber-500 hover:bg-amber-600">
               Corrigir status
             </Button>
           ) : (

@@ -8,6 +8,7 @@ import { OnboardingBanner } from "@/components/dashboard/OnboardingBanner";
 import { useDashboardData } from "@/hooks/dashboard/useDashboardData";
 import { useTenant } from "@/contexts/TenantContext";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const { stats, loading } = useDashboardData();
@@ -20,17 +21,34 @@ const Dashboard = () => {
     // Refresh business status when dashboard loads
     const refreshData = async () => {
       try {
-        await Promise.all([
+        const results = await Promise.all([
           refreshBusinessData(),
           refreshOnboardingStatus()
         ]);
+        
+        // Check if business status is pendente and show a toast notification
+        if (currentBusiness?.status === "pendente") {
+          toast.info("Seu negócio está com status pendente. Clique em 'Corrigir status' para resolver.", {
+            duration: 8000,
+            id: "business-status-pendente"
+          });
+        }
       } catch (error) {
         console.error("Erro ao atualizar dados:", error);
       }
     };
     
     refreshData();
-  }, [refreshBusinessData, refreshOnboardingStatus]);
+    
+    // Set up a periodic refresh to check status updates
+    const intervalId = setInterval(() => {
+      refreshData();
+    }, 60000); // Check every minute
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [refreshBusinessData, refreshOnboardingStatus, currentBusiness?.status]);
 
   return (
     <div className="space-y-6">

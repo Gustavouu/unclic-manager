@@ -6,12 +6,16 @@ import { Header } from "./Header";
 import { MobileSidebar } from "./sidebar/MobileSidebar";
 import { useTenant } from "@/contexts/TenantContext";
 import { toast } from "sonner";
+import { StatusFixButton } from "@/components/dashboard/StatusFixButton";
 
 const Layout = () => {
-  const { currentBusiness, loading, error } = useTenant();
+  const { currentBusiness, loading, error, refreshBusinessData } = useTenant();
   const navigate = useNavigate();
   
   useEffect(() => {
+    // Refresh business data when layout mounts
+    refreshBusinessData();
+    
     // Show non-blocking notifications instead of forced redirects
     if (!loading) {
       if (!currentBusiness) {
@@ -34,7 +38,7 @@ const Layout = () => {
         });
       }
     }
-  }, [currentBusiness, loading, navigate]);
+  }, [currentBusiness, loading, navigate, refreshBusinessData]);
   
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Carregando...</div>;
@@ -69,6 +73,7 @@ const Layout = () => {
             <Outlet />
           </div>
         </main>
+        <StatusFixButton />
       </div>
     </div>
   );

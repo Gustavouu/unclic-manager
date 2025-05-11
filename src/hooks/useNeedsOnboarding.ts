@@ -51,6 +51,15 @@ export function useNeedsOnboarding() {
             1 // 1 minute cache
           );
       
+      // Clear cache to ensure fresh data
+      if (skipCache) {
+        try {
+          localStorage.removeItem(`user-business-${user.id}`);
+        } catch (e) {
+          console.warn("Failed to clear user business cache", e);
+        }
+      }
+      
       // If no business is associated or the user doesn't exist yet, they need onboarding
       if (!userData || !userData.id_negocio) {
         console.log("User needs onboarding - no business associated");
@@ -81,6 +90,15 @@ export function useNeedsOnboarding() {
             businessFetchFn,
             1 // 1 minute cache
           );
+      
+      // Clear business cache if skipping cache
+      if (skipCache) {
+        try {
+          localStorage.removeItem(`business-${userData.id_negocio}`);
+        } catch (e) {
+          console.warn("Failed to clear business cache", e);
+        }
+      }
       
       // If business exists but status is 'pendente', they still need onboarding
       const needsOnboarding = !businessData || businessData.status === 'pendente';
