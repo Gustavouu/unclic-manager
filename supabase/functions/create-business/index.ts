@@ -38,46 +38,82 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     console.log("Received request to create business:", { businessData, userId });
+    console.log("User ID type:", typeof userId, "User ID value:", userId);
     
-    // Check if the user exists in the usuarios table
+    // Step 1: Check if the user exists in the usuarios table with more detailed debugging
+    console.log("Checking if user exists in usuarios table with ID:", userId);
     const { data: existingUser, error: userCheckError } = await supabase
       .from('usuarios')
       .select('id')
       .eq('id', userId)
       .maybeSingle();
+    
+    console.log("User check result:", { existingUser, userCheckError });
 
-    // If user doesn't exist in the usuarios table, create them first
-    if (!existingUser && userCheckError?.code === 'PGRST116') {
+    // Step 2: If user doesn't exist in the usuarios table, create them first with enhanced error handling
+    if (!existingUser) {
       console.log("User not found in usuarios table. Creating new user record.");
       
-      // Fetch user data from auth to get email and name
+      // Step 2.1: Fetch user data from auth to get email and name
+      console.log("Fetching user data from auth.users with ID:", userId);
       const { data: authUser, error: authUserError } = await supabase.auth.admin.getUserById(userId);
+      
+      console.log("Auth user fetch result:", { 
+        authUserExists: !!authUser?.user, 
+        authUserEmail: authUser?.user?.email,
+        authUserName: authUser?.user?.user_metadata?.name,
+        authUserError 
+      });
       
       if (authUserError) {
         console.error("Error fetching auth user:", authUserError);
         throw new Error(`Não foi possível obter dados do usuário: ${authUserError.message}`);
       }
       
-      // Create user record in usuarios table
-      const { error: createUserError } = await supabase
+      if (!authUser?.user) {
+        console.error("Auth user not found with ID:", userId);
+        throw new Error(`Usuário não encontrado na autenticação com ID: ${userId}`);
+      }
+      
+      // Step 2.2: Create user record in usuarios table with detailed logging
+      const userToCreate = {
+        id: userId,
+        email: authUser.user.email || businessData.email,
+        nome_completo: authUser.user.user_metadata?.name || businessData.name || "Usuário",
+        status: 'ativo'
+      };
+      
+      console.log("Creating user in usuarios table with data:", userToCreate);
+      
+      const { data: createdUser, error: createUserError } = await supabase
         .from('usuarios')
-        .insert([{
-          id: userId,
-          email: authUser?.user?.email || businessData.email,
-          nome_completo: authUser?.user?.user_metadata?.name || businessData.name || "Usuário",
-          status: 'ativo'
-        }]);
+        .insert([userToCreate])
+        .select();
+      
+      console.log("Create user result:", { createdUser, createUserError });
       
       if (createUserError) {
         console.error("Error creating user record:", createUserError);
         throw new Error(`Erro ao criar registro de usuário: ${createUserError.message}`);
       }
       
-      console.log("User record created successfully for ID:", userId);
-    } else if (userCheckError && userCheckError.code !== 'PGRST116') {
-      // If there's any other error checking the user, throw it
-      console.error("Error checking user existence:", userCheckError);
-      throw new Error(`Erro ao verificar usuário: ${userCheckError.message}`);
+      // Step 2.3: Verify the user was actually created with a separate query
+      const { data: verifyUser, error: verifyError } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('id', userId)
+        .single();
+        
+      console.log("Verification of user creation:", { verifyUser, verifyError });
+      
+      if (verifyError) {
+        console.error("Failed to verify user creation:", verifyError);
+        throw new Error(`O usuário foi criado mas não pôde ser verificado: ${verifyError.message}`);
+      }
+      
+      console.log("User record created and verified successfully for ID:", userId);
+    } else {
+      console.log("User already exists in usuarios table:", existingUser);
     }
     
     // Generate initial slug from business name
@@ -162,27 +198,45 @@ serve(async (req) => {
       throw new Error(`Erro ao atualizar perfil do usuário: ${userError.message}`);
     }
     
-    // 3. Create access profile (admin)
-    const { error: profileError } = await supabase
-      .from('perfis_acesso')
-      .insert([
-        {
-          id_usuario: userId,
-          id_negocio: businessId,
-          e_administrador: true,
-          acesso_configuracoes: true,
-          acesso_agendamentos: true,
-          acesso_clientes: true,
-          acesso_financeiro: true,
-          acesso_estoque: true,
-          acesso_marketing: true,
-          acesso_relatorios: true
-        }
-      ]);
+    // 3. Create access profile (admin) with detailed error handling
+    console.log("Creating access profile for user:", userId, "and business:", businessId);
     
-    if (profileError) {
-      console.error("Error creating access profile:", profileError);
-      throw new Error(`Erro ao criar perfil de acesso: ${profileError.message}`);
+    const accessProfileData = {
+      id_usuario: userId,
+      id_negocio: businessId,
+      e_administrador: true,
+      acesso_configuracoes: true,
+      acesso_agendamentos: true,
+      acesso_clientes: true,
+      acesso_financeiro: true,
+      acesso_estoque: true,
+      acesso_marketing: true,
+      acesso_relatorios: true
+    };
+    
+    console.log("Access profile data:", accessProfileData);
+    
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from('perfis_acesso')
+        .insert([accessProfileData])
+        .select();
+      
+      console.log("Access profile creation result:", { profileData, profileError });
+      
+      if (profileError) {
+        console.error("Error creating access profile:", profileError);
+        
+        // Check specifically for FK constraint violation
+        if (profileError.code === '23503' && profileError.message.includes('perfis_acesso_id_usuario_fkey')) {
+          throw new Error(`Erro de referência: O usuário (${userId}) não existe na tabela de usuários. Por favor, contate o suporte.`);
+        }
+        
+        throw new Error(`Erro ao criar perfil de acesso: ${profileError.message}`);
+      }
+    } catch (profileCreationError: any) {
+      console.error("Exception during profile creation:", profileCreationError);
+      throw new Error(`Exceção ao criar perfil de acesso: ${profileCreationError.message}`);
     }
     
     // 4. Create services
