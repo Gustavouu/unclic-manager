@@ -12,18 +12,27 @@ const Layout = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    // If there's no business and we're done loading, redirect to onboarding
-    if (!loading && !currentBusiness) {
-      toast.error("Configure seu negócio antes de continuar");
-      navigate("/onboarding");
-      return;
-    }
-    
-    // If there's a business but it has a pending status, redirect to onboarding
-    if (!loading && currentBusiness && currentBusiness.status === 'pendente') {
-      toast.info("Complete a configuração do seu negócio");
-      navigate("/onboarding");
-      return;
+    // Show non-blocking notifications instead of forced redirects
+    if (!loading) {
+      if (!currentBusiness) {
+        toast.info("Complete a configuração do seu negócio para acessar todos os recursos", {
+          action: {
+            label: "Configurar",
+            onClick: () => navigate("/onboarding")
+          },
+          duration: 10000, // 10 seconds
+          id: "incomplete-onboarding" // Prevent duplicates
+        });
+      } else if (currentBusiness.status === 'pendente') {
+        toast.info("Finalize a configuração do seu negócio para acessar todos os recursos", {
+          action: {
+            label: "Finalizar",
+            onClick: () => navigate("/onboarding")
+          },
+          duration: 10000,
+          id: "pending-onboarding"
+        });
+      }
     }
   }, [currentBusiness, loading, navigate]);
   

@@ -26,7 +26,7 @@ export const RequireAuth = ({ children, skipOnboardingCheck = false }: RequireAu
     return <>{children}</>;
   }
 
-  // Check if user needs onboarding and redirect accordingly
+  // Use the non-blocking onboarding notification approach
   return <OnboardingRedirect>{children}</OnboardingRedirect>;
 };
 

@@ -26,12 +26,7 @@ const Index = () => {
     return <Navigate to="/login" replace />;
   }
   
-  // If authenticated and needs onboarding, redirect to onboarding
-  if (needsOnboarding) {
-    return <Navigate to="/onboarding" replace />;
-  }
-  
-  // If authenticated and doesn't need onboarding, redirect to dashboard
+  // Even if onboarding is needed, send to dashboard instead of forcing onboarding
   return <Navigate to="/dashboard" replace />;
 };
 

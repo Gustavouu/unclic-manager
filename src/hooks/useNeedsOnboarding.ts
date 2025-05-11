@@ -9,6 +9,13 @@ export function useNeedsOnboarding() {
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [onboardingViewed, setOnboardingViewed] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Check if the user has viewed the onboarding
+    const hasViewedOnboarding = localStorage.getItem('onboarding_viewed') === 'true';
+    setOnboardingViewed(hasViewedOnboarding);
+  }, []);
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
@@ -76,8 +83,9 @@ export function useNeedsOnboarding() {
       } catch (err: any) {
         console.error('Error checking onboarding status:', err);
         setError(err.message);
-        // Default to needing onboarding if there's an error
-        setNeedsOnboarding(true);
+        // Important change: Don't default to needing onboarding on error
+        // Instead, allow access to the app even if we can't determine onboarding status
+        setNeedsOnboarding(false);
       } finally {
         setLoading(false);
       }
@@ -86,5 +94,17 @@ export function useNeedsOnboarding() {
     checkOnboardingStatus();
   }, [user]);
 
-  return { needsOnboarding, loading, error };
+  // Function to mark onboarding as viewed
+  const markOnboardingAsViewed = () => {
+    localStorage.setItem('onboarding_viewed', 'true');
+    setOnboardingViewed(true);
+  };
+
+  return { 
+    needsOnboarding, 
+    loading, 
+    error,
+    onboardingViewed,
+    markOnboardingAsViewed
+  };
 }

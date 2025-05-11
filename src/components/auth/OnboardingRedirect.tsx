@@ -1,7 +1,9 @@
 
-import { Navigate } from "react-router-dom";
 import { ReactNode } from "react";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 interface OnboardingRedirectProps {
   children: ReactNode;
@@ -9,6 +11,21 @@ interface OnboardingRedirectProps {
 
 export const OnboardingRedirect = ({ children }: OnboardingRedirectProps) => {
   const { needsOnboarding, loading, error } = useNeedsOnboarding();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Show a notification instead of forced redirect
+    if (!loading && needsOnboarding && !error) {
+      toast.info("Algumas configurações do seu negócio estão pendentes", {
+        action: {
+          label: "Configurar agora",
+          onClick: () => navigate("/onboarding")
+        },
+        duration: 8000,
+        id: "onboarding-redirect-notification"
+      });
+    }
+  }, [needsOnboarding, loading, error, navigate]);
   
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Carregando...</div>;
@@ -18,11 +35,6 @@ export const OnboardingRedirect = ({ children }: OnboardingRedirectProps) => {
     console.error("Erro ao verificar status de onboarding:", error);
   }
   
-  // Redirecionar para onboarding se necessário
-  if (needsOnboarding) {
-    return <Navigate to="/onboarding" replace />;
-  }
-  
-  // Caso contrário, continuar para a rota solicitada
+  // Always continue to the requested route, no redirects
   return <>{children}</>;
 };
