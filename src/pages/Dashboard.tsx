@@ -9,13 +9,14 @@ import { UpcomingAppointmentsWidget } from "@/components/dashboard/UpcomingAppoi
 import { RetentionRateCard } from "@/components/dashboard/RetentionRateCard";
 import { FinancialCharts } from "@/components/dashboard/FinancialCharts";
 import { FilterPeriod } from "@/types/dashboard";
-import { Calendar } from "@/components/dashboard/Calendar";
+import { AppointmentCalendar } from "@/components/dashboard/Calendar";
 import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { useDashboardData } from "@/hooks/dashboard/useDashboardData";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 import { OnboardingBanner } from "@/components/dashboard/OnboardingBanner";
 import { toast } from "sonner";
+import { useTenant } from "@/contexts/TenantContext";
 
 // Define the PopularService type to match what's expected in PopularServicesWidget
 interface PopularService {
@@ -29,6 +30,7 @@ const Dashboard = () => {
   const [period, setPeriod] = useState<FilterPeriod>("month");
   const { stats, loading, error } = useDashboardData(period);
   const { needsOnboarding, onboardingViewed, markOnboardingAsViewed, refreshOnboardingStatus } = useNeedsOnboarding();
+  const { businessId } = useTenant();
 
   const handleFilterChange = (newPeriod: FilterPeriod) => {
     setPeriod(newPeriod);
@@ -86,7 +88,7 @@ const Dashboard = () => {
             <FinancialCharts data={stats.revenueData} />
 
             {/* Calendar */}
-            <Calendar />
+            <AppointmentCalendar businessId={businessId} />
           </div>
 
           {/* Right Column */}

@@ -43,7 +43,7 @@ export type AppointmentType = {
   serviceType: string;
 };
 
-interface AppointmentCalendarProps {
+export interface AppointmentCalendarProps {
   businessId: string | null;
 }
 

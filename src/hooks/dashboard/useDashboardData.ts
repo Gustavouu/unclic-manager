@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -194,9 +195,14 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           
         // Map upcoming appointments
         const upcomingAppointments = upcomingAppointmentsData?.map(app => {
-          const clientName = app.clientes?.nome || app.clientes?.name || "Cliente não identificado";
-          const serviceName = app.servicos?.nome || app.servicos?.name || "Serviço não identificado";
-          const professionalName = app.funcionarios?.nome || app.funcionarios?.name || "Profissional não identificado";
+          const clientName = app.clientes && typeof app.clientes === 'object' ? 
+            app.clientes.nome || "Cliente não identificado" : "Cliente não identificado";
+          
+          const serviceName = app.servicos && typeof app.servicos === 'object' ? 
+            app.servicos.nome || "Serviço não identificado" : "Serviço não identificado";
+          
+          const professionalName = app.funcionarios && typeof app.funcionarios === 'object' ? 
+            app.funcionarios.nome || "Profissional não identificado" : "Profissional não identificado";
           
           return {
             id: app.id,
