@@ -15,7 +15,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* LoadingProvider moved to the top of the hierarchy */}
-      <LoadingProvider timeout={60000}>
+      <LoadingProvider timeout={30000}>
         <AuthProvider>
           <TenantProvider>
             <AppInitProvider>

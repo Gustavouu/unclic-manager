@@ -104,37 +104,6 @@ export function clearAllCaches() {
 }
 
 /**
- * Safely execute an RPC function, with graceful fallback if it fails
- */
-export async function safeExecuteRpc<T>(
-  rpcFn: () => Promise<{ data: T | null, error: Error | null }>,
-  timeoutMs: number = 3000
-): Promise<{ success: boolean, data: T | null, error: Error | null }> {
-  try {
-    // Create a timeout promise
-    const timeoutPromise = new Promise<{ data: null, error: Error }>((_, reject) => 
-      setTimeout(() => reject(new Error(`RPC timeout after ${timeoutMs}ms`)), timeoutMs)
-    );
-    
-    // Race the RPC call against the timeout
-    const { data, error } = await Promise.race([rpcFn(), timeoutPromise]);
-    
-    if (error) {
-      return { success: false, data: null, error };
-    }
-    
-    return { success: true, data, error: null };
-  } catch (err: any) {
-    console.warn('RPC execution failed:', err.message);
-    return { 
-      success: false, 
-      data: null, 
-      error: err instanceof Error ? err : new Error(err?.message || 'Unknown RPC error') 
-    };
-  }
-}
-
-/**
  * Run multiple promises with individual timeouts and continue even if some fail
  */
 export async function executeParallel<T>(
@@ -162,4 +131,3 @@ export async function executeParallel<T>(
   
   return results;
 }
-

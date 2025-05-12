@@ -5,7 +5,7 @@ import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import { useLoading } from './LoadingContext';
 import { handleError } from '@/utils/errorHandler';
 import { supabase } from '@/integrations/supabase/client';
-import { safeExecuteRpc, executeParallel, fetchWithCache } from '@/utils/cacheUtils';
+import { executeParallel, fetchWithCache } from '@/utils/cacheUtils';
 
 interface InitStep {
   id: string;
@@ -72,12 +72,13 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
       return await fetchWithCache(
         cacheKey,
         async () => {
-          // Fix: Call .then() on PostgrestFilterBuilder to convert to Promise
-          const { data, error } = await supabase
+          // Properly handle the Supabase query and await the response
+          const response = await supabase
             .from('negocios')
             .select('id')
             .limit(1);
             
+          const { data, error } = response;
           return !error && Array.isArray(data);
         },
         5 // Cache for 5 minutes
@@ -95,12 +96,13 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
       return await fetchWithCache(
         cacheKey,
         async () => {
-          const { data, error } = await supabase
+          const response = await supabase
             .from('usuarios')
             .select('*')
             .eq('id', userId)
             .maybeSingle();
           
+          const { data, error } = response;
           if (error) throw error;
           return data;
         },
@@ -117,10 +119,11 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
     if (!id) return false;
     
     try {
-      // Fix: Call .then() on PostgrestFilterBuilder to convert to Promise
-      const { data, error } = await supabase
+      // Properly await the Supabase RPC call
+      const response = await supabase
         .rpc('set_tenant_context', { tenant_id: id });
       
+      const { error } = response;
       return !error;
     } catch (error) {
       console.warn("Failed to set tenant context:", error);

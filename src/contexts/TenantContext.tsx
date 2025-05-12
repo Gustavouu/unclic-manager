@@ -3,7 +3,7 @@ import { createContext, useContext, ReactNode, useState, useEffect, useCallback 
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 import { handleError } from "@/utils/errorHandler";
 import { supabase } from '@/integrations/supabase/client';
-import { fetchWithCache, safeExecuteRpc } from '@/utils/cacheUtils';
+import { fetchWithCache } from '@/utils/cacheUtils';
 import { useLoading } from "./LoadingContext";
 import { toast } from "sonner";
 
@@ -62,9 +62,9 @@ export function TenantProvider({ children }: TenantProviderProps) {
     try {
       setStage('config');
       
-      // Fix: Call supabase.rpc properly and await the response
-      const { data, error } = await supabase
-        .rpc('set_tenant_context', { tenant_id: id });
+      // Correctly call supabase.rpc and properly await the response
+      const response = await supabase.rpc('set_tenant_context', { tenant_id: id });
+      const { error } = response;
       
       if (error) {
         console.warn("Failed to set tenant context, but continuing anyway:", error.message);
