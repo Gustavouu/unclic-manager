@@ -1,36 +1,41 @@
 
 import React from 'react';
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
+import { ChevronRight, Info } from 'lucide-react';
 
 interface OnboardingBannerProps {
   onDismiss: () => void;
 }
 
-export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss }) => {
+export function OnboardingBanner({ onDismiss }: OnboardingBannerProps) {
   return (
-    <div className="bg-primary/10 border-l-4 border-primary p-4 mb-6 relative">
-      <button 
-        onClick={onDismiss} 
-        className="absolute top-2 right-2 p-1 rounded-full hover:bg-primary/10"
-      >
-        <X className="h-4 w-4" />
-      </button>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-medium">Complete seu perfil</h3>
-          <p className="text-sm text-muted-foreground">
-            Configure seu negócio e comece a receber agendamentos!
-          </p>
+    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-md">
+      <div className="flex items-start">
+        <div className="flex-shrink-0 mt-0.5">
+          <Info className="h-5 w-5 text-blue-500" />
         </div>
-        <Button 
-          size="sm" 
-          className="md:w-auto w-full"
-          onClick={() => window.location.href = '/onboarding'}
-        >
-          Completar configuração
-        </Button>
+        <div className="ml-3 flex-1 md:flex md:justify-between md:items-center">
+          <p className="text-sm text-blue-700">
+            Bem-vindo ao Unclic! Complete a configuração inicial do seu negócio para aproveitar todos os recursos.
+          </p>
+          <div className="mt-3 text-sm md:mt-0 md:ml-6">
+            <Button 
+              variant="outline" 
+              className="text-blue-600 border-blue-600 hover:bg-blue-50"
+              onClick={onDismiss}
+            >
+              Entendi
+            </Button>
+            <Button 
+              variant="default"
+              className="ml-2 bg-blue-600 hover:bg-blue-700"
+              onClick={() => window.location.href = '/settings'}
+            >
+              Configurar <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
-};
+}

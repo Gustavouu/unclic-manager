@@ -1,105 +1,62 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
+import { supabase } from '@/integrations/supabase/client';
 
-export const useNeedsOnboarding = () => {
-  const [needsOnboarding, setNeedsOnboarding] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [onboardingViewed, setOnboardingViewed] = useState<boolean>(
-    localStorage.getItem('onboarding-viewed') === 'true'
-  );
+export function useNeedsOnboarding() {
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean>(false);
+  const [onboardingViewed, setOnboardingViewed] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const { businessId, currentBusiness } = useTenant();
 
-  const markOnboardingAsViewed = useCallback(() => {
-    localStorage.setItem('onboarding-viewed', 'true');
-    setOnboardingViewed(true);
-  }, []);
-
-  const refreshOnboardingStatus = useCallback(async (skipCache = false) => {
-    if (!businessId) {
-      console.log('No business ID available, skipping onboarding check');
-      setLoading(false);
-      return;
+  // Check if business needs onboarding
+  const checkOnboardingStatus = () => {
+    if (currentBusiness) {
+      // Check if the business has completed onboarding
+      const completed = currentBusiness.status === 'active';
+      setNeedsOnboarding(!completed);
+      
+      // Check if the onboarding banner has been viewed/dismissed
+      const viewedFlag = localStorage.getItem(`onboarding_viewed_${businessId}`);
+      setOnboardingViewed(!!viewedFlag);
     }
     
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Check cache first unless skipCache is true
-      const cacheKey = `business-${businessId}-onboarding`;
-      const cacheTimestampKey = `${cacheKey}-timestamp`;
-      
-      if (!skipCache) {
-        const cachedStatus = localStorage.getItem(cacheKey);
-        const cachedTimestamp = localStorage.getItem(cacheTimestampKey);
-        
-        // Use cache if less than 5 minutes old
-        if (cachedStatus && cachedTimestamp) {
-          const timestamp = parseInt(cachedTimestamp);
-          const now = Date.now();
-          const fiveMinutes = 5 * 60 * 1000;
-          
-          if (now - timestamp < fiveMinutes) {
-            setNeedsOnboarding(cachedStatus === 'true');
-            setLoading(false);
-            return;
-          }
-        }
-      }
-      
-      // If currentBusiness is already loaded, use it
-      if (currentBusiness) {
-        const needsSetup = currentBusiness.status === 'pendente';
-        setNeedsOnboarding(needsSetup);
-        
-        // Update cache
-        localStorage.setItem(cacheKey, String(needsSetup));
-        localStorage.setItem(cacheTimestampKey, String(Date.now()));
-        
-        setLoading(false);
-        return;
-      }
-      
-      // Otherwise fetch from API
-      console.log('Fetching business status for onboarding check:', businessId);
-      const { data, error } = await supabase
-        .from('negocios')
-        .select('status')
-        .eq('id', businessId)
-        .maybeSingle();
-      
-      if (error) throw error;
-      
-      const needsSetup = data?.status === 'pendente';
-      setNeedsOnboarding(needsSetup);
-      
-      // Update cache
-      localStorage.setItem(cacheKey, String(needsSetup));
-      localStorage.setItem(cacheTimestampKey, String(Date.now()));
-      
-    } catch (err: any) {
-      console.error("Error checking onboarding status:", err);
-      // Default to needing onboarding if there's an error
-      setNeedsOnboarding(true);
-      setError(err.message || 'Error checking onboarding status');
-    } finally {
-      setLoading(false);
+    setLoading(false);
+  };
+
+  // Mark onboarding banner as viewed
+  const markOnboardingAsViewed = () => {
+    if (businessId) {
+      localStorage.setItem(`onboarding_viewed_${businessId}`, 'true');
+      setOnboardingViewed(true);
+    }
+  };
+
+  // Refresh onboarding status
+  const refreshOnboardingStatus = async (markAsViewed = false) => {
+    setLoading(true);
+    
+    if (markAsViewed) {
+      markOnboardingAsViewed();
+    }
+    
+    // In a real app, you might want to fetch fresh data from the server
+    setTimeout(() => {
+      checkOnboardingStatus();
+    }, 500);
+  };
+
+  useEffect(() => {
+    if (businessId) {
+      checkOnboardingStatus();
     }
   }, [businessId, currentBusiness]);
 
-  useEffect(() => {
-    refreshOnboardingStatus();
-  }, [refreshOnboardingStatus]);
-
-  return { 
-    needsOnboarding, 
-    loading, 
-    error, 
-    onboardingViewed, 
+  return {
+    needsOnboarding,
+    onboardingViewed,
+    loading,
     markOnboardingAsViewed,
-    refreshOnboardingStatus 
+    refreshOnboardingStatus,
   };
-};
+}

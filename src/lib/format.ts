@@ -1,24 +1,25 @@
 
 /**
- * Função para formatar valores monetários no formato brasileiro (R$)
+ * Formats a number as currency in BRL (Brazilian Real)
  */
-export const formatCurrency = (value: number): string => {
+export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'BRL'
+    currency: 'BRL',
   }).format(value);
-};
+}
 
 /**
- * Função para formatar percentuais com o símbolo %
+ * Formats a date to a localized string
  */
-export const formatPercentage = (value: number): string => {
+export function formatDate(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toLocaleDateString('pt-BR');
+}
+
+/**
+ * Formats a percentage value with % symbol
+ */
+export function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`;
-};
-
-/**
- * Função para formatar números com separadores de milhares
- */
-export const formatNumber = (value: number): string => {
-  return new Intl.NumberFormat('pt-BR').format(value);
-};
+}

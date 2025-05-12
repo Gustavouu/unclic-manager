@@ -1,9 +1,10 @@
 
-// Definição dos tipos utilizados no Dashboard
-export type FilterPeriod = "today" | "week" | "month" | "quarter" | "year";
+export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';
 
-export interface DashboardWidgetProps {
-  title: string;
-  children: React.ReactNode;
-  className?: string;
+export interface DashboardFilter {
+  period: FilterPeriod;
+  dateRange?: {
+    start: Date;
+    end: Date;
+  };
 }

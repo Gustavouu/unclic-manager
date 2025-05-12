@@ -17,14 +17,7 @@ import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 import { OnboardingBanner } from "@/components/dashboard/OnboardingBanner";
 import { toast } from "sonner";
 import { useTenant } from "@/contexts/TenantContext";
-
-// Define the PopularService type to match what's expected in PopularServicesWidget
-interface PopularService {
-  id: string;
-  name: string;
-  count: number;
-  percentage: number; // Required by PopularServicesWidget
-}
+import { PageContainer } from "@/components/layout/PageContainer";
 
 const Dashboard = () => {
   const [period, setPeriod] = useState<FilterPeriod>("month");
@@ -43,23 +36,16 @@ const Dashboard = () => {
   };
 
   // Process popular services to add percentage
-  const processPopularServices = (): PopularService[] => {
+  const processPopularServices = () => {
     if (!stats.popularServices || stats.popularServices.length === 0) {
       return [];
     }
     
-    // Calculate total count
-    const totalCount = stats.popularServices.reduce((sum, service) => sum + service.count, 0);
-    
-    // Add percentage to each service
-    return stats.popularServices.map(service => ({
-      ...service,
-      percentage: Math.round((service.count / totalCount) * 100)
-    }));
+    return stats.popularServices;
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <PageContainer title="Dashboard" description="Visão geral do seu negócio">
       <DashboardHeader />
 
       {/* Onboarding Banner */}
@@ -68,7 +54,7 @@ const Dashboard = () => {
       )}
 
       {/* Dashboard Content */}
-      <div className="flex-1 space-y-6 p-4 md:p-5 pb-8">
+      <div className="space-y-6">
         {/* KPI Cards */}
         <KpiCards stats={stats} period={period} />
 
@@ -120,7 +106,7 @@ const Dashboard = () => {
         {/* Dashboard Footer */}
         <DashboardFooter />
       </div>
-    </div>
+    </PageContainer>
   );
 };
 
