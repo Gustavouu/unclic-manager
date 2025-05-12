@@ -3559,6 +3559,14 @@ export type Database = {
         Args: { tenant_id: string }
         Returns: boolean
       }
+      clear_tenant_context: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      get_current_tenant_context: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_tenant_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -3587,6 +3595,10 @@ export type Database = {
       set_business_status: {
         Args: { business_id: string; new_status: string }
         Returns: boolean
+      }
+      set_tenant_context: {
+        Args: { tenant_id: string }
+        Returns: undefined
       }
       usuario_tem_acesso_ao_negocio: {
         Args: { id_negocio_verificar: string }

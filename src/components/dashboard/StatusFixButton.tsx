@@ -1,60 +1,82 @@
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useTenant } from "@/contexts/TenantContext";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 import { toast } from "sonner";
-import { Wrench } from "lucide-react";
+import { Wrench, RefreshCcw } from "lucide-react";
 
 export const StatusFixButton: React.FC = () => {
-  const { currentBusiness, updateBusinessStatus } = useTenant();
+  const { currentBusiness, updateBusinessStatus, refreshBusinessData } = useTenant();
   const { refreshOnboardingStatus } = useNeedsOnboarding();
   const [isFixing, setIsFixing] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const maxAttempts = 3;
+
+  // Show after a delay or if there's an error in localStorage
+  useEffect(() => {
+    // Check if there were previous errors
+    const hasErrors = localStorage.getItem('app_init_errors');
+    
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, hasErrors ? 1000 : 10000);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Define function to handle fixing status
   const handleFixStatus = useCallback(async () => {
     if (isFixing) return;
-    if (!currentBusiness?.id) {
-      toast.error("Negócio não identificado");
-      return;
-    }
     
     try {
       setIsFixing(true);
-      toast.loading("Corrigindo status do negócio...", { id: "fix-status" });
+      toast.loading("Corrigindo status do sistema...", { id: "fix-status" });
       
-      console.log(`Tentando atualizar status do negócio ${currentBusiness.id} para 'ativo'. Tentativa ${attempts + 1}/${maxAttempts}`);
+      // Perform a series of fixes
       
-      // Use the TenantContext function to update status
-      const success = await updateBusinessStatus(currentBusiness.id, "ativo");
+      // 1. Clear relevant caches
+      const cachesToClear = [
+        'currentBusinessId',
+        'app_init_errors',
+        'tenant_id',
+        'user_data',
+        'business_data'
+      ];
       
-      if (!success) {
-        throw new Error("Não foi possível atualizar o status do negócio");
+      cachesToClear.forEach(key => localStorage.removeItem(key));
+      
+      // 2. If we have a business, update its status
+      if (currentBusiness?.id) {
+        console.log(`Atualizando status do negócio ${currentBusiness.id}`);
+        await updateBusinessStatus(currentBusiness.id, "ativo");
+        
+        // Force clear business-specific caches
+        localStorage.removeItem(`business-${currentBusiness.id}-timestamp`);
+        localStorage.removeItem(`business-${currentBusiness.id}`);
       }
       
-      // Force clear local storage caches
-      localStorage.removeItem(`business-${currentBusiness.id}-timestamp`);
-      localStorage.removeItem(`business-${currentBusiness.id}`);
+      // 3. Refresh business data
+      await refreshBusinessData();
       
-      // Refresh onboarding status after successful status update with forced skip cache
+      // 4. Refresh onboarding status
       await refreshOnboardingStatus(true);
       
-      toast.success("Status do negócio corrigido com sucesso!", { id: "fix-status" });
-      setAttempts(0); // Reset attempts on success
+      toast.success("Sistema corrigido com sucesso! Recarregando...", { id: "fix-status" });
       
-      // Reload page to ensure all components update properly
+      // 5. Reload page after a short delay
       setTimeout(() => {
         window.location.reload();
       }, 1500);
+      
     } catch (error: any) {
-      console.error("Erro ao corrigir status:", error);
+      console.error("Erro ao corrigir sistema:", error);
       
       // Implement retry mechanism with exponential backoff
       if (attempts < maxAttempts - 1) {
         setAttempts(attempts + 1);
-        toast.error(`Erro ao corrigir status. Tentando novamente... (${attempts + 1}/${maxAttempts})`, { id: "fix-status" });
+        toast.error(`Erro ao corrigir. Tentando novamente... (${attempts + 1}/${maxAttempts})`, { id: "fix-status" });
         
         // Wait and try again after a delay with exponential backoff
         const backoffTime = 1000 * Math.pow(2, attempts);
@@ -62,29 +84,61 @@ export const StatusFixButton: React.FC = () => {
           handleFixStatus();
         }, backoffTime);
       } else {
-        toast.error(`Erro ao corrigir status após ${maxAttempts} tentativas: ${error.message || 'Erro desconhecido'}`, { id: "fix-status" });
-        setAttempts(0); // Reset attempts after max attempts
+        toast.error(`Erro após ${maxAttempts} tentativas. Tentando recuperação de emergência...`, { id: "fix-status" });
+        
+        // Last resort - clear all localStorage and reload
+        localStorage.clear();
+        setTimeout(() => {
+          window.location.href = "/";  // Direct to root for complete restart
+        }, 1500);
       }
     } finally {
       setIsFixing(false);
     }
-  }, [currentBusiness, updateBusinessStatus, attempts, refreshOnboardingStatus, isFixing]);
+  }, [currentBusiness, updateBusinessStatus, attempts, refreshOnboardingStatus, refreshBusinessData, isFixing]);
   
-  // Only show if business exists 
-  if (!currentBusiness) {
+  // Add a general reset button for when things go wrong
+  const handleFullReset = useCallback(() => {
+    if (confirm("Isso irá limpar todos os dados locais do navegador e reiniciar o aplicativo. Continuar?")) {
+      toast.loading("Reiniciando aplicativo...");
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Force reload from server, not cache
+      setTimeout(() => {
+        window.location.href = "/?reset=" + Date.now();
+      }, 1000);
+    }
+  }, []);
+  
+  if (!isVisible) {
     return null;
   }
   
   return (
-    <Button 
-      size="sm" 
-      variant="outline"
-      disabled={isFixing}
-      onClick={handleFixStatus}
-      className="fixed bottom-4 right-4 z-50 bg-amber-500 hover:bg-amber-600 text-white"
-    >
-      <Wrench className="h-4 w-4 mr-2" />
-      {isFixing ? "Processando..." : "Corrigir Status"}
-    </Button>
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+      <Button 
+        size="sm" 
+        variant="outline"
+        disabled={isFixing}
+        onClick={handleFixStatus}
+        className="bg-amber-500 hover:bg-amber-600 text-white"
+        title="Corrigir status e resolver problemas comuns"
+      >
+        <Wrench className="h-4 w-4 mr-2" />
+        {isFixing ? "Processando..." : "Corrigir Sistema"}
+      </Button>
+      
+      <Button
+        size="sm"
+        variant="outline" 
+        onClick={handleFullReset}
+        className="bg-red-500 hover:bg-red-600 text-white"
+        title="Limpar todos os dados locais e reiniciar o aplicativo"
+      >
+        <RefreshCcw className="h-4 w-4 mr-2" />
+        Reiniciar Aplicativo
+      </Button>
+    </div>
   );
 };

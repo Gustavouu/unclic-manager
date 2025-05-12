@@ -1,4 +1,3 @@
-
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -14,6 +13,7 @@ interface ErrorScreenProps {
 
 export function ErrorScreen({ error, onRetry }: ErrorScreenProps) {
   const [isRetrying, setIsRetrying] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   // Handle retry with loading state
   const handleRetry = () => {
@@ -31,6 +31,34 @@ export function ErrorScreen({ error, onRetry }: ErrorScreenProps) {
       }, 2000);
     }, 500);
   };
+  
+  // Handle emergency continue with cache reset
+  const handleEmergencyContinue = () => {
+    // Clear problematic localStorage items but keep login session
+    const keysToKeep = ['supabase.auth.token'];
+    const keysToRemove: string[] = [];
+    
+    // Identify keys to remove
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && !keysToKeep.includes(key)) {
+        keysToRemove.push(key);
+      }
+    }
+    
+    // Remove the problematic keys
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
+    // Force page reload with clean slate
+    window.location.href = "/dashboard?emergency=true";
+  };
+  
+  // Clear all local storage and force restart
+  const handleCompleteReset = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = "/?reset=" + Date.now();
+  };
 
   // Map error codes to friendly messages
   const errorMessages: Record<string, string> = {
@@ -38,13 +66,14 @@ export function ErrorScreen({ error, onRetry }: ErrorScreenProps) {
     'CONNECTIVITY_ERROR': 'Não foi possível conectar ao servidor.',
     'AUTH_ERROR': 'Ocorreu um problema com a autenticação.',
     'DATABASE_ERROR': 'Não foi possível acessar o banco de dados.',
+    'TENANT_CONTEXT_ERROR': 'Não foi possível definir o contexto do tenant.',
     'default': 'Ocorreu um erro inesperado.'
   };
 
   const displayMessage = errorMessages[error.code || ''] || error.message || errorMessages.default;
 
-  // Allow emergency continue if it's just a timeout
-  const isTimeoutError = error.code === 'TIMEOUT_ERROR';
+  // Allow emergency continue for non-critical errors
+  const isNonCriticalError = error.code === 'TIMEOUT_ERROR' || error.code === 'TENANT_CONTEXT_ERROR';
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-background z-50">
@@ -74,15 +103,21 @@ export function ErrorScreen({ error, onRetry }: ErrorScreenProps) {
             </Button>
           )}
 
-          {isTimeoutError && (
-            <Button 
-              variant="outline"
-              onClick={() => window.location.href = "/dashboard"}
-              className="w-full"
-            >
-              Continuar mesmo assim
-            </Button>
-          )}
+          <Button 
+            variant="outline"
+            onClick={handleEmergencyContinue}
+            className="w-full"
+          >
+            Continuar em modo emergência
+          </Button>
+          
+          <Button 
+            variant="outline"
+            onClick={handleCompleteReset}
+            className="w-full text-destructive border-destructive hover:bg-destructive/10"
+          >
+            Reiniciar aplicação
+          </Button>
         
           <a 
             href="mailto:suporte@unclic.com"
@@ -92,14 +127,22 @@ export function ErrorScreen({ error, onRetry }: ErrorScreenProps) {
           </a>
         </div>
       
-        {error.details && (
-          <details className="text-xs text-muted-foreground">
-            <summary>Detalhes técnicos</summary>
-            <pre className="mt-2 p-2 bg-muted rounded overflow-auto">
+        <div className="mt-4">
+          <Button 
+            variant="link" 
+            size="sm" 
+            className="w-full"
+            onClick={() => setShowDetails(!showDetails)}
+          >
+            {showDetails ? 'Ocultar detalhes técnicos' : 'Mostrar detalhes técnicos'}
+          </Button>
+          
+          {showDetails && error.details && (
+            <pre className="mt-2 p-2 bg-muted rounded overflow-auto text-xs">
               {JSON.stringify(error.details, null, 2)}
             </pre>
-          </details>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

@@ -24,7 +24,7 @@ interface LoadingProviderProps {
   timeout?: number;
 }
 
-export function LoadingProvider({ children, timeout = 15000 }: LoadingProviderProps) {
+export function LoadingProvider({ children, timeout = 30000 }: LoadingProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [currentStage, setCurrentStage] = useState<LoadingStage>('initializing');
   const [progress, setProgress] = useState(0);
@@ -58,7 +58,7 @@ export function LoadingProvider({ children, timeout = 15000 }: LoadingProviderPr
     }
   }, [isLoading, currentStage, timeout]);
 
-  // Add an additional safety net to force finish loading after 20 seconds
+  // Add an additional safety net to force finish loading after 45 seconds
   useEffect(() => {
     const emergencyTimeout = setTimeout(() => {
       if (isLoading) {
@@ -70,7 +70,7 @@ export function LoadingProvider({ children, timeout = 15000 }: LoadingProviderPr
           console.error("App initialized with errors:", error);
         }
       }
-    }, 20000); // 20 seconds emergency timeout
+    }, 45000); // 45 seconds emergency timeout
     
     return () => clearTimeout(emergencyTimeout);
   }, []);

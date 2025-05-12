@@ -1,5 +1,5 @@
 
-import { createContext, useContext, ReactNode, useState, useEffect } from "react";
+import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react";
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 import { handleError } from "@/utils/errorHandler";
 import { supabase } from '@/integrations/supabase/client';
@@ -45,16 +45,26 @@ export function TenantProvider({ children }: TenantProviderProps) {
     }
   }, [businessId]);
 
-  // Set tenant context in Supabase RLS
-  const setTenantContext = async (id: string): Promise<boolean> => {
+  // Set tenant context in Supabase RLS with better error handling
+  const setTenantContext = useCallback(async (id: string): Promise<boolean> => {
+    if (!id) {
+      console.warn("setTenantContext called with empty ID, skipping");
+      return true; // Return success to avoid breaking app flow
+    }
+    
     try {
-      // First check if the RPC function exists by checking the response
-      const { error } = await supabase.rpc('set_tenant_context', { tenant_id: id });
+      // Try to call the RPC function with a timeout to prevent hanging
+      const timeoutPromise = new Promise<{data: null, error: Error}>((_, reject) => 
+        setTimeout(() => reject(new Error("RPC timeout")), 3000)
+      );
+      
+      const rpcPromise = supabase.rpc('set_tenant_context', { tenant_id: id });
+      
+      const { error } = await Promise.race([rpcPromise, timeoutPromise]);
       
       if (error) {
-        // If there's an error, it might be that the function doesn't exist
-        console.warn("Failed to set tenant context, might not exist:", error);
-        // Return true anyway to not block the app
+        console.warn("Failed to set tenant context:", error.message);
+        // Don't throw - return true to continue app initialization
         return true;
       }
       
@@ -67,9 +77,9 @@ export function TenantProvider({ children }: TenantProviderProps) {
       // Return true anyway to not block the app
       return true;
     }
-  };
+  }, []);
   
-  // Refresh business data
+  // Refresh business data with error handling
   const refreshBusinessData = async (): Promise<void> => {
     try {
       await fetchBusinessData();

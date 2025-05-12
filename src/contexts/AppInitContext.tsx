@@ -38,6 +38,7 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
   const [errors, setErrors] = useState<Record<string, any>>({});
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
+  const [initAttempt, setInitAttempt] = useState(0);
   
   const { user, loading: authLoading } = useAuth();
   const { businessId: currentBusinessId, loading: businessLoading } = useCurrentBusiness();
@@ -45,6 +46,7 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
   
   // Main initialization function
   useEffect(() => {
+    // Function to handle initialization process with timeouts and retries
     async function initialize() {
       try {
         // Step 1: Check authentication
@@ -64,9 +66,14 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
         
         // Step 2: Load configurations
         setStage('config');
-        const dbConnectionOk = await checkDatabaseConnection();
-        if (!dbConnectionOk) {
-          console.warn("Database connection check failed, but continuing anyway");
+        try {
+          const dbConnectionOk = await checkDatabaseConnection();
+          if (!dbConnectionOk) {
+            console.warn("Database connection check failed, but continuing anyway");
+            // Continue anyway, as this might not be critical
+          }
+        } catch (error) {
+          console.warn("Database connection check error:", error);
           // Continue anyway, as this might not be critical
         }
         
@@ -94,21 +101,33 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
           setBusinessId(currentBusinessId);
           setTenantId(currentBusinessId); // Assume tenant_id = business_id
           
-          // Set tenant context in Supabase
+          // Set tenant context in Supabase with better error handling and timeout
           try {
-            // Try to set tenant context but don't fail if it doesn't work
-            // Fixed: Properly handle the Promise with async/await instead of using .then().catch()
-            try {
-              const { error } = await supabase.rpc('set_tenant_context', { tenant_id: currentBusinessId });
-              if (error) {
-                throw error;
-              }
-            } catch (error) {
-              console.warn("Failed to set tenant context:", error);
-              // Continue anyway as this might not be critical
-            }
+            await Promise.race([
+              // Actual RPC call
+              (async () => {
+                try {
+                  console.log("Setting tenant context for business ID:", currentBusinessId);
+                  const { error } = await supabase.rpc('set_tenant_context', { 
+                    tenant_id: currentBusinessId 
+                  });
+                  
+                  if (error) {
+                    console.warn("Failed to set tenant context:", error);
+                  }
+                } catch (error) {
+                  console.warn("Exception in set_tenant_context:", error);
+                }
+              })(),
+              
+              // Timeout
+              new Promise(resolve => setTimeout(() => {
+                console.warn("set_tenant_context timed out, continuing anyway");
+                resolve(null);
+              }, 3000))
+            ]);
           } catch (error) {
-            console.warn("Failed to set tenant context:", error);
+            console.warn("Failed to set tenant context with error:", error);
             // Continue anyway as this might not be critical
           }
         }
@@ -116,6 +135,9 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
         // All done
         finishLoading();
         setInitialized(true);
+        
+        // Reset init attempt counter after successful initialization
+        setInitAttempt(0);
       } catch (error) {
         const appError = handleError('AppInit', error);
         
@@ -126,10 +148,23 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
         
         setError(appError);
         
-        // Even with errors, we'll still try to initialize
-        // to prevent the app from being completely blocked
-        finishLoading();
-        setInitialized(true);
+        // If we haven't tried too many times already, try again
+        if (initAttempt < 3) {
+          console.log(`Initialization attempt ${initAttempt + 1}/3 failed, retrying...`);
+          setInitAttempt(prev => prev + 1);
+          // Wait before retrying with exponential backoff
+          setTimeout(() => {
+            if (!initialized && !Object.keys(errors).length) {
+              initialize();
+            }
+          }, Math.pow(2, initAttempt) * 1000);
+        } else {
+          console.warn("Max initialization attempts reached, forcing completion");
+          // Even with errors, we'll still try to initialize
+          // to prevent the app from being completely blocked
+          finishLoading();
+          setInitialized(true);
+        }
       }
     }
 
@@ -141,17 +176,25 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
     authLoading, 
     businessLoading, 
     currentBusinessId, 
-    initialized
+    initialized,
+    initAttempt
   ]);
 
-  // Helper function to check database connection
+  // Helper function to check database connection with timeout
   const checkDatabaseConnection = async (): Promise<boolean> => {
     try {
-      // Use a simple query on a table we know exists (negocios) instead of health_check
-      const { error } = await supabase
+      // Set a timeout for the database check
+      const timeoutPromise = new Promise<{data: null, error: Error}>(
+        (_, reject) => setTimeout(() => reject(new Error("Database check timeout")), 5000)
+      );
+      
+      const queryPromise = supabase
         .from('negocios')
         .select('id')
         .limit(1);
+      
+      // Use Promise.race to implement timeout
+      const { error } = await Promise.race([queryPromise, timeoutPromise]);
       
       if (error) {
         console.error("Database connection check failed:", error);
@@ -166,21 +209,30 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
     }
   };
 
-  // Helper function to load user data
+  // Helper function to load user data with timeout
   const loadUserData = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      // Set a timeout for the user data retrieval
+      const timeoutPromise = new Promise<{data: null, error: Error}>(
+        (_, reject) => setTimeout(() => reject(new Error("User data load timeout")), 5000)
+      );
+      
+      const queryPromise = supabase
         .from('usuarios')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
+      
+      // Use Promise.race to implement timeout
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
       
       if (error) throw error;
       
       return data;
     } catch (error) {
       console.error("Failed to load user data:", error);
-      throw error;
+      // Instead of throwing, we'll return null and let the caller decide what to do
+      return null;
     }
   };
 
