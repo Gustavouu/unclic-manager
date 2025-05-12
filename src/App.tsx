@@ -7,6 +7,7 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import { LoadingProvider } from "@/contexts/LoadingContext";
 import { AppInitProvider } from "@/contexts/AppInitContext";
 import { AppRoutes } from "./routes/LazyRoutes";
+import { StatusFixButton } from "@/components/dashboard/StatusFixButton";
 
 import "@/styles/globals.css";
 
@@ -19,6 +20,7 @@ function App() {
             <AppInitProvider>
               <Toaster position="top-right" richColors />
               <AppRoutes />
+              <StatusFixButton />
             </AppInitProvider>
           </TenantProvider>
         </LoadingProvider>

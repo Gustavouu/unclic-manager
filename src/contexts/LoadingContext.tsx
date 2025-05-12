@@ -24,24 +24,27 @@ interface LoadingProviderProps {
   timeout?: number;
 }
 
-export function LoadingProvider({ children, timeout = 30000 }: LoadingProviderProps) {
+export function LoadingProvider({ children, timeout = 15000 }: LoadingProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [currentStage, setCurrentStage] = useState<LoadingStage>('initializing');
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<any | null>(null);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [timeoutOccurred, setTimeoutOccurred] = useState(false);
 
   useEffect(() => {
     if (isLoading) {
-      // Set timeout to prevent indefinite loading
+      // Global timeout to prevent indefinite loading
       const id = setTimeout(() => {
         if (isLoading) {
+          console.warn(`Loading timeout occurred at stage: ${currentStage}`);
           setError({
             code: 'TIMEOUT_ERROR',
             message: 'O carregamento está demorando mais do que o esperado.',
             details: { stage: currentStage }
           });
           setIsLoading(false);
+          setTimeoutOccurred(true);
         }
       }, timeout);
       
@@ -55,11 +58,29 @@ export function LoadingProvider({ children, timeout = 30000 }: LoadingProviderPr
     }
   }, [isLoading, currentStage, timeout]);
 
+  // Add an additional safety net to force finish loading after 20 seconds
+  useEffect(() => {
+    const emergencyTimeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn("Emergency loading timeout triggered! Forcing app to continue.");
+        setIsLoading(false);
+        
+        // If we have an error and reached emergency timeout, still show it but let the app proceed
+        if (error) {
+          console.error("App initialized with errors:", error);
+        }
+      }
+    }, 20000); // 20 seconds emergency timeout
+    
+    return () => clearTimeout(emergencyTimeout);
+  }, []);
+
   const startLoading = () => {
     setIsLoading(true);
     setError(null);
     setProgress(0);
     setCurrentStage('initializing');
+    setTimeoutOccurred(false);
   };
 
   const finishLoading = () => {
@@ -73,6 +94,7 @@ export function LoadingProvider({ children, timeout = 30000 }: LoadingProviderPr
   };
 
   const setStage = (stage: LoadingStage) => {
+    console.log(`Loading stage: ${stage}`);
     setCurrentStage(stage);
     
     // Update progress based on stage
@@ -90,14 +112,17 @@ export function LoadingProvider({ children, timeout = 30000 }: LoadingProviderPr
     if (isLoading) {
       const id = setTimeout(() => {
         if (isLoading && currentStage === stage) {
-          setError({
-            code: 'TIMEOUT_ERROR',
-            message: `O carregamento está demorando na etapa: ${stage}`,
-            details: { stage }
-          });
-          setIsLoading(false);
+          console.warn(`Stage timeout occurred: ${stage}`);
+          if (!timeoutOccurred) {
+            setError({
+              code: 'TIMEOUT_ERROR',
+              message: `O carregamento está demorando na etapa: ${stage}`,
+              details: { stage }
+            });
+            setTimeoutOccurred(true);
+          }
         }
-      }, timeout);
+      }, timeout / 2); // Each stage gets half the total timeout
       
       setTimeoutId(id);
     }

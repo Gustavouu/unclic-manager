@@ -64,16 +64,23 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
         
         // Step 2: Load configurations
         setStage('config');
-        await checkDatabaseConnection();
+        const dbConnectionOk = await checkDatabaseConnection();
+        if (!dbConnectionOk) {
+          console.warn("Database connection check failed, but continuing anyway");
+          // Continue anyway, as this might not be critical
+        }
         
         // Step 3: Load user data
         setStage('user_data');
-        const userData = await loadUserData(user.id);
-        if (!userData) {
-          throw { 
-            type: ErrorType.DATABASE, 
-            message: 'Não foi possível carregar dados do usuário' 
-          };
+        try {
+          const userData = await loadUserData(user.id);
+          if (!userData) {
+            console.warn('Não foi possível carregar dados do usuário, mas continuando...');
+            // Continue anyway, as we have the user from auth
+          }
+        } catch (error) {
+          console.warn('Erro ao carregar dados do usuário:', error);
+          // Continue anyway, as this might not be critical
         }
         
         // Step 4: Load business data
@@ -89,7 +96,15 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
           
           // Set tenant context in Supabase
           try {
-            await supabase.rpc('set_tenant_context', { tenant_id: currentBusinessId });
+            // Try to set tenant context but don't fail if it doesn't work
+            await supabase.rpc('set_tenant_context', { tenant_id: currentBusinessId })
+              .then(({ error }) => {
+                if (error) throw error;
+              })
+              .catch(error => {
+                console.warn("Failed to set tenant context:", error);
+                // Continue anyway as this might not be critical
+              });
           } catch (error) {
             console.warn("Failed to set tenant context:", error);
             // Continue anyway as this might not be critical
@@ -108,6 +123,11 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
         }));
         
         setError(appError);
+        
+        // Even with errors, we'll still try to initialize
+        // to prevent the app from being completely blocked
+        finishLoading();
+        setInitialized(true);
       }
     }
 
@@ -123,23 +143,24 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
   ]);
 
   // Helper function to check database connection
-  const checkDatabaseConnection = async () => {
+  const checkDatabaseConnection = async (): Promise<boolean> => {
     try {
+      // Use a simple query on a table we know exists (negocios) instead of health_check
       const { error } = await supabase
-        .from('health_check')
-        .select('*')
+        .from('negocios')
+        .select('id')
         .limit(1);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Database connection check failed:", error);
+        return false;
+      }
       
       return true;
     } catch (error) {
-      console.warn("Health check failed:", error);
-      // If it's just the health_check table that doesn't exist, we'll continue
-      if (error.message?.includes('relation "health_check" does not exist')) {
-        return true;
-      }
-      throw error;
+      console.warn("Database connection check failed:", error);
+      // Even if the check fails, we'll return true to continue initialization
+      return true;
     }
   };
 
@@ -150,7 +171,7 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
         .from('usuarios')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       

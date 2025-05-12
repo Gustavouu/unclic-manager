@@ -5,7 +5,6 @@ import { useTenant } from "@/contexts/TenantContext";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 import { toast } from "sonner";
 import { Wrench } from "lucide-react";
-import { useDebouncedCallback } from "@/hooks/useDebounce";
 
 export const StatusFixButton: React.FC = () => {
   const { currentBusiness, updateBusinessStatus } = useTenant();
@@ -14,8 +13,8 @@ export const StatusFixButton: React.FC = () => {
   const [attempts, setAttempts] = useState(0);
   const maxAttempts = 3;
   
-  // Define hooks at the top level
-  const handleFixStatus = useDebouncedCallback(async () => {
+  // Define function to handle fixing status
+  const handleFixStatus = useCallback(async () => {
     if (isFixing) return;
     if (!currentBusiness?.id) {
       toast.error("Negócio não identificado");
@@ -69,10 +68,10 @@ export const StatusFixButton: React.FC = () => {
     } finally {
       setIsFixing(false);
     }
-  }, 1000);
+  }, [currentBusiness, updateBusinessStatus, attempts, refreshOnboardingStatus, isFixing]);
   
-  // Only show if business exists and has pending status
-  if (!currentBusiness || currentBusiness.status !== "pendente") {
+  // Only show if business exists 
+  if (!currentBusiness) {
     return null;
   }
   
