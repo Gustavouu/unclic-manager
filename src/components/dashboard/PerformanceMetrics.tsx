@@ -1,6 +1,7 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { DashboardStats } from "@/hooks/dashboard/useDashboardData";
 
 interface PerformanceMetricsProps {
@@ -8,45 +9,45 @@ interface PerformanceMetricsProps {
 }
 
 export function PerformanceMetrics({ stats }: PerformanceMetricsProps) {
+  // Métricas simuladas para demonstração
+  const metrics = [
+    {
+      name: "Taxa de Ocupação",
+      value: stats.occupancyRate || 75,
+      target: 90,
+      color: "bg-blue-500"
+    },
+    {
+      name: "Taxa de Retenção de Clientes",
+      value: stats.retentionRate || 82,
+      target: 95,
+      color: "bg-green-500"
+    },
+    {
+      name: "Utilização dos Profissionais",
+      value: 68,
+      target: 80,
+      color: "bg-amber-500"
+    }
+  ];
+
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-display">Performance</CardTitle>
+        <CardTitle className="text-lg font-display">Métricas de Desempenho</CardTitle>
+        <CardDescription>Progresso em relação às metas</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Clientes atendidos</span>
-            <span className="font-medium">{stats.monthlyServices}</span>
-          </div>
-          <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full bg-blue-500 rounded-full"
-              style={{ width: `${Math.min(stats.monthlyServices / 2, 100)}%` }}
-            />
-          </div>
-          
-          <div className="flex justify-between items-center mt-4">
-            <span className="text-sm text-muted-foreground">Taxa de ocupação</span>
-            <span className="font-medium">65%</span>
-          </div>
-          <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full bg-green-500 rounded-full"
-              style={{ width: "65%" }}
-            />
-          </div>
-          
-          <div className="flex justify-between items-center mt-4">
-            <span className="text-sm text-muted-foreground">Clientes novos</span>
-            <span className="font-medium">{stats.newClientsCount}</span>
-          </div>
-          <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full bg-amber-500 rounded-full"
-              style={{ width: `${Math.min(stats.newClientsCount * 2, 100)}%` }}
-            />
-          </div>
+        <div className="space-y-6">
+          {metrics.map((metric) => (
+            <div key={metric.name} className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium">{metric.name}</span>
+                <span className="text-muted-foreground">{metric.value}% de {metric.target}%</span>
+              </div>
+              <Progress value={(metric.value / metric.target) * 100} className={metric.color} />
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>

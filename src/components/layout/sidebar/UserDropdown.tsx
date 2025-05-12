@@ -32,17 +32,6 @@ export function UserDropdown() {
     }
   };
 
-  // Helper function to get user name from user object
-  const getUserName = () => {
-    if (!user) return "Usuário";
-    // Check user.user_metadata first, then raw_user_metadata, then fall back to email
-    return user.user_metadata?.name || 
-           user.user_metadata?.full_name || 
-           (user as any).name ||
-           user.email?.split('@')[0] || 
-           "Usuário";
-  };
-  
   const getInitials = (name?: string) => {
     if (!name) return "UN";
     return name
@@ -60,11 +49,11 @@ export function UserDropdown() {
           <button className="flex h-14 w-full items-center p-3 text-left transition-colors hover:bg-accent/50 focus:outline-none">
             <Avatar className="mr-2 h-8 w-8">
               <AvatarImage src="/images/barber-avatar.png" alt="Avatar" />
-              <AvatarFallback>{getInitials(getUserName())}</AvatarFallback>
+              <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
             </Avatar>
             <span className="flex-1 overflow-hidden">
               <span className="block truncate font-medium">
-                {getUserName()}
+                {user?.name || "Usuário"}
               </span>
               <span className="block truncate text-xs text-muted-foreground">
                 {user?.email || ""}

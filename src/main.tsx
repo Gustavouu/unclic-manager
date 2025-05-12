@@ -19,8 +19,12 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <BrowserRouter>
       <ThemeProvider defaultTheme="light" storageKey="unclic-theme">
         <QueryClientProvider client={queryClient}>
-          <App />
-          <Toaster position="top-right" richColors />
+          <AuthProvider>
+            <TenantProvider>
+              <App />
+              <Toaster position="top-right" richColors />
+            </TenantProvider>
+          </AuthProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </BrowserRouter>

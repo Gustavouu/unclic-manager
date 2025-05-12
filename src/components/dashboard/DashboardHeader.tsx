@@ -3,10 +3,10 @@ import React from "react";
 
 export function DashboardHeader() {
   return (
-    <div className="mb-6">
-      <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+    <div className="flex flex-col gap-2">
+      <h1 className="text-2xl font-display font-bold">Painel de Controle</h1>
       <p className="text-muted-foreground">
-        Bem-vindo ao seu painel de controle. Aqui você encontra todas as informações importantes do seu negócio.
+        Bem-vindo ao seu dashboard. Aqui você encontra os dados mais importantes do seu negócio.
       </p>
     </div>
   );

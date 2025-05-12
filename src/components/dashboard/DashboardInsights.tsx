@@ -9,7 +9,7 @@ interface DashboardInsightsProps {
 }
 
 export function DashboardInsights({ stats }: DashboardInsightsProps) {
-  // Determining some insights based on the data
+  // Determinando alguns insights baseados nos dados
   const isRevenuePositive = stats.monthlyRevenue > 5000;
   const isClientGrowthPositive = stats.clientsCount > 20;
   

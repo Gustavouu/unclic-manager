@@ -4,26 +4,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FilterPeriod } from "@/types/dashboard";
 
 interface DashboardFiltersProps {
-  period: FilterPeriod;
-  onFilterChange: (period: FilterPeriod) => void;
+  currentPeriod: FilterPeriod;
+  onPeriodChange: (period: FilterPeriod) => void;
 }
 
-export function DashboardFilters({ period, onFilterChange }: DashboardFiltersProps) {
+export function DashboardFilters({ currentPeriod, onPeriodChange }: DashboardFiltersProps) {
+  const periods = [
+    { value: "today", label: "Hoje" },
+    { value: "week", label: "Esta Semana" },
+    { value: "month", label: "Este Mês" },
+    { value: "quarter", label: "Este Trimestre" },
+    { value: "year", label: "Este Ano" }
+  ];
+
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap gap-3">
       <Select
-        value={period}
-        onValueChange={(value) => onFilterChange(value as FilterPeriod)}
+        value={currentPeriod}
+        onValueChange={(value) => onPeriodChange(value as FilterPeriod)}
       >
         <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Selecionar período" />
+          <SelectValue placeholder="Selecione o período" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="today">Hoje</SelectItem>
-          <SelectItem value="week">Esta semana</SelectItem>
-          <SelectItem value="month">Este mês</SelectItem>
-          <SelectItem value="quarter">Este trimestre</SelectItem>
-          <SelectItem value="year">Este ano</SelectItem>
+          {periods.map((period) => (
+            <SelectItem key={period.value} value={period.value}>
+              {period.label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

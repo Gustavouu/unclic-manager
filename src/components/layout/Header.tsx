@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Bell, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,23 +31,6 @@ export const Header = ({ breadcrumb }: HeaderProps = {}) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
-  
-  // Helper function to get user name from user object
-  const getUserName = () => {
-    if (!user) return "Usuário";
-    // Check user.user_metadata first, then raw_user_metadata, then fall back to email
-    return user.user_metadata?.name || 
-           user.user_metadata?.full_name || 
-           (user as any).name ||
-           user.email?.split('@')[0] || 
-           "Usuário";
-  };
-  
-  // Get user initials for avatar
-  const getUserInitials = () => {
-    const name = getUserName();
-    return name.substring(0, 2).toUpperCase();
-  };
   
   const getBreadcrumb = () => {
     // If breadcrumb prop is provided, use it
@@ -143,15 +125,15 @@ export const Header = ({ breadcrumb }: HeaderProps = {}) => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 ml-2 p-1 pr-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="" alt={getUserName()} />
+                  <AvatarImage src="" alt={user?.name || "Usuário"} />
                   <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                    {getUserInitials()}
+                    {user?.name ? user.name.substring(0, 2).toUpperCase() : 'UN'}
                   </AvatarFallback>
                 </Avatar>
                 {!isMobile && (
                   <>
                     <span className="text-sm font-medium max-w-[100px] truncate">
-                      {getUserName()}
+                      {user?.name || "Usuário"}
                     </span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </>
@@ -161,7 +143,7 @@ export const Header = ({ breadcrumb }: HeaderProps = {}) => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{getUserName()}</p>
+                  <p className="text-sm font-medium leading-none">{user?.name || "Usuário"}</p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user?.email || "usuario@exemplo.com"}
                   </p>

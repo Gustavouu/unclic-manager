@@ -1,62 +1,69 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { DashboardStats } from "@/hooks/dashboard/useDashboardData";
+import { UserCheck } from "lucide-react";
 
 interface RetentionRateCardProps {
-  retentionRate: number;
-  newClients: number;
-  returningClients: number;
+  stats: DashboardStats;
 }
 
-export function RetentionRateCard({
-  retentionRate,
-  newClients,
-  returningClients,
-}: RetentionRateCardProps) {
+export function RetentionRateCard({ stats }: RetentionRateCardProps) {
+  const retentionRate = stats.retentionRate || 0;
+  
+  // Determine color based on retention rate
+  const getColorClass = () => {
+    if (retentionRate >= 80) return "bg-green-500";
+    if (retentionRate >= 60) return "bg-blue-500";
+    if (retentionRate >= 40) return "bg-amber-500";
+    return "bg-red-500";
+  };
+
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-display">Taxa de Retenção</CardTitle>
+        <CardTitle className="text-lg font-display flex items-center">
+          <UserCheck className="mr-2 h-5 w-5 text-blue-500" />
+          Taxa de Retenção de Clientes
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-center my-2">
-          <div className="relative w-32 h-32">
-            <svg className="w-full h-full" viewBox="0 0 100 100">
-              <circle
-                className="text-muted stroke-current"
-                strokeWidth="10"
-                cx="50"
-                cy="50"
-                r="40"
-                fill="transparent"
-              />
-              <circle
-                className="text-primary stroke-current"
-                strokeWidth="10"
-                strokeLinecap="round"
-                cx="50"
-                cy="50"
-                r="40"
-                fill="transparent"
-                strokeDasharray={`${retentionRate * 2.51} ${251 - retentionRate * 2.51}`}
-                strokeDashoffset="0"
-                transform="rotate(-90 50 50)"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-bold">{retentionRate}%</span>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-5xl font-bold">{retentionRate}%</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                dos clientes retornam
+              </p>
+            </div>
+            <div className="flex items-center justify-center bg-primary/10 rounded-full p-3 h-16 w-16">
+              <UserCheck className="h-8 w-8 text-primary" />
             </div>
           </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mt-4">
-          <div className="text-center">
-            <p className="text-xs text-muted-foreground">Novos Clientes</p>
-            <p className="text-xl font-bold">{newClients}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xs text-muted-foreground">Clientes Recorrentes</p>
-            <p className="text-xl font-bold">{returningClients}</p>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm mb-1">
+              <span>0%</span>
+              <span className="font-medium">Meta: 80%</span>
+              <span>100%</span>
+            </div>
+            <Progress 
+              value={retentionRate} 
+              className={`h-3 ${getColorClass()}`}
+            />
+            
+            <p className="text-sm text-muted-foreground mt-3">
+              {retentionRate >= 80 ? (
+                <span className="text-green-600 font-medium">Excelente taxa de retenção!</span>
+              ) : retentionRate >= 60 ? (
+                <span className="text-blue-600 font-medium">Boa taxa de retenção</span>
+              ) : retentionRate >= 40 ? (
+                <span className="text-amber-600 font-medium">Taxa de retenção moderada</span>
+              ) : (
+                <span className="text-red-600 font-medium">Precisa melhorar a retenção de clientes</span>
+              )}
+            </p>
           </div>
         </div>
       </CardContent>

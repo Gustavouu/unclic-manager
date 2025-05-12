@@ -11,12 +11,6 @@ interface AuthContextProps {
   signUp: (email: string, password: string, userData: any) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
-  
-  // Add these methods to fix the auth-related errors
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, userData: any) => Promise<void>;
-  logout: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps>({
@@ -26,13 +20,7 @@ const AuthContext = createContext<AuthContextProps>({
   signIn: async () => {},
   signUp: async () => {},
   signOut: async () => {},
-  updateProfile: async () => {},
-  
-  // Add these methods to the default context value
-  login: async () => {},
-  signup: async () => {},
-  logout: async () => {},
-  resetPassword: async () => {}
+  updateProfile: async () => {}
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -172,16 +160,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const resetPassword = async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      throw error;
-    }
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -192,11 +170,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signUp,
         signOut,
         updateProfile,
-        // Alias the functions to maintain backward compatibility
-        login: signIn,
-        signup: signUp,
-        logout: signOut,
-        resetPassword
       }}
     >
       {children}

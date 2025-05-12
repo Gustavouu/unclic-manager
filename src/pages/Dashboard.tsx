@@ -1,112 +1,119 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { PageHeader } from "@/components/ui/page-header";
+import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
+import { OnboardingBanner } from "@/components/dashboard/OnboardingBanner";
+import { StatusFixButton } from "@/components/dashboard/StatusFixButton";
+import { useDashboardData } from "@/hooks/dashboard/useDashboardData";
+import { useTenant } from "@/contexts/TenantContext";
+import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 import { KpiCards } from "@/components/dashboard/KpiCards";
-import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
-import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
-import { PerformanceMetrics } from "@/components/dashboard/PerformanceMetrics";
+import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
 import { PopularServicesWidget } from "@/components/dashboard/PopularServicesWidget";
 import { UpcomingAppointmentsWidget } from "@/components/dashboard/UpcomingAppointmentsWidget";
-import { RetentionRateCard } from "@/components/dashboard/RetentionRateCard";
 import { FinancialCharts } from "@/components/dashboard/FinancialCharts";
+import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
+import { PerformanceMetrics } from "@/components/dashboard/PerformanceMetrics";
+import { ClientsComparisonChart } from "@/components/dashboard/ClientsComparisonChart";
+import { BirthdayClients } from "@/components/dashboard/BirthdayClients";
+import { RetentionRateCard } from "@/components/dashboard/RetentionRateCard";
 import { FilterPeriod } from "@/types/dashboard";
-import { AppointmentCalendar } from "@/components/dashboard/Calendar";
-import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { useDashboardData } from "@/hooks/dashboard/useDashboardData";
-import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
-import { OnboardingBanner } from "@/components/dashboard/OnboardingBanner";
-import { toast } from "sonner";
-import { useTenant } from "@/contexts/TenantContext";
-import { PageContainer } from "@/components/layout/PageContainer";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Dashboard = () => {
   const [period, setPeriod] = useState<FilterPeriod>("month");
-  const { stats, loading, error } = useDashboardData(period);
-  const { needsOnboarding, onboardingViewed, markOnboardingAsViewed, refreshOnboardingStatus } = useNeedsOnboarding();
-  const { businessId } = useTenant();
-
-  const handleFilterChange = (newPeriod: FilterPeriod) => {
-    setPeriod(newPeriod);
-  };
+  const { stats, loading: statsLoading } = useDashboardData(period);
+  const { currentBusiness } = useTenant();
+  const { needsOnboarding, loading: onboardingLoading } = useNeedsOnboarding();
   
-  const handleDismissOnboarding = () => {
-    markOnboardingAsViewed();
-    toast.success("Status atualizado com sucesso!");
-    refreshOnboardingStatus(true);
+  useEffect(() => {
+    document.title = "Dashboard | Unclic Manager";
+  }, []);
+
+  const handlePeriodChange = (value: string) => {
+    setPeriod(value as FilterPeriod);
   };
 
-  // Process popular services to add percentage
-  const processPopularServices = () => {
-    if (!stats.popularServices || stats.popularServices.length === 0) {
-      return [];
-    }
-    
-    return stats.popularServices;
-  };
+  // Componente do filtro de período para ser passado como actions para o PageHeader
+  const PeriodFilter = (
+    <div className="w-[180px]">
+      <Select value={period} onValueChange={handlePeriodChange}>
+        <SelectTrigger>
+          <SelectValue placeholder="Período" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="today">Hoje</SelectItem>
+          <SelectItem value="week">Esta Semana</SelectItem>
+          <SelectItem value="month">Este Mês</SelectItem>
+          <SelectItem value="quarter">Este Trimestre</SelectItem>
+          <SelectItem value="year">Este Ano</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  // Use conditional rendering based on loading states
+  if (onboardingLoading || statsLoading) {
+    return (
+      <div className="space-y-6">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
 
   return (
-    <PageContainer title="Dashboard" description="Visão geral do seu negócio">
-      <DashboardHeader />
+    <div className="space-y-6">
+      {needsOnboarding && <OnboardingBanner />}
+      
+      {/* Usando PageHeader com o filtro na mesma linha */}
+      <PageHeader
+        title="Painel de Controle"
+        description="Bem-vindo ao seu dashboard. Aqui você encontra os dados mais importantes do seu negócio."
+        actions={PeriodFilter}
+      />
+      
+      {/* KPI Cards - Mantendo no topo */}
+      <KpiCards stats={stats} period={period} />
 
-      {/* Onboarding Banner */}
-      {needsOnboarding && !onboardingViewed && (
-        <OnboardingBanner onDismiss={handleDismissOnboarding} />
-      )}
+      {/* Financial Charts - Agora com largura total para destaque */}
+      <FinancialCharts data={stats.revenueData || []} />
+      
+      {/* Próximos Agendamentos e Serviços Populares lado a lado */}
+      <ResponsiveGrid 
+        columns={{ default: 1, md: 2 }}
+        gap="md"
+        equalHeight={true}
+      >
+        <UpcomingAppointmentsWidget appointments={stats.nextAppointments || []} />
+        <PopularServicesWidget services={stats.popularServices || []} />
+      </ResponsiveGrid>
 
-      {/* Dashboard Content */}
-      <div className="space-y-6">
-        {/* KPI Cards */}
-        <KpiCards stats={stats} period={period} />
+      {/* Novos Clientes vs Recorrentes e Taxa de Retenção lado a lado */}
+      <ResponsiveGrid 
+        columns={{ default: 1, md: 2 }}
+        gap="md"
+        equalHeight={true}
+      >
+        <ClientsComparisonChart stats={stats} />
+        <RetentionRateCard stats={stats} />
+      </ResponsiveGrid>
 
-        {/* Dashboard Filters */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-            Dashboard
-          </h2>
-          <DashboardFilters period={period} onFilterChange={handleFilterChange} />
-        </div>
-
-        {/* Main Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Financial Charts */}
-            <FinancialCharts data={stats.revenueData} />
-
-            {/* Calendar */}
-            <AppointmentCalendar businessId={businessId} />
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-6">
-            {/* Insights Card */}
-            <DashboardInsights stats={stats} />
-
-            {/* Performance Metrics */}
-            <PerformanceMetrics stats={stats} />
-
-            {/* Retention Rate */}
-            <RetentionRateCard 
-              retentionRate={stats.retentionRate}
-              newClients={stats.newClientsCount}
-              returningClients={stats.returningClientsCount}
-            />
-          </div>
-        </div>
-
-        {/* Additional Widgets */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          {/* Upcoming Appointments */}
-          <UpcomingAppointmentsWidget appointments={stats.upcomingAppointments || []} />
-
-          {/* Popular Services */}
-          <PopularServicesWidget services={processPopularServices()} />
-        </div>
-
-        {/* Dashboard Footer */}
-        <DashboardFooter />
-      </div>
-    </PageContainer>
+      {/* Aniversariantes do Mês e Métricas de Desempenho lado a lado */}
+      <ResponsiveGrid 
+        columns={{ default: 1, md: 2 }}
+        gap="md"
+        equalHeight={true}
+      >
+        <BirthdayClients />
+        <PerformanceMetrics stats={stats} />
+      </ResponsiveGrid>
+      
+      {/* Insights - Largura total no final */}
+      <DashboardInsights stats={stats} />
+      
+      <DashboardFooter />
+      <StatusFixButton />
+    </div>
   );
 };
 

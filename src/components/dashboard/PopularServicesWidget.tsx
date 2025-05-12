@@ -1,7 +1,13 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PopularService } from "@/hooks/dashboard/useDashboardData";
+import { Button } from "@/components/ui/button";
+
+interface PopularService {
+  name: string;
+  count: number;
+  percentage: number;
+}
 
 interface PopularServicesWidgetProps {
   services: PopularService[];
@@ -12,12 +18,28 @@ export function PopularServicesWidget({ services }: PopularServicesWidgetProps) 
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Serviços Populares</CardTitle>
+          <CardTitle className="text-lg font-display">Serviços Populares</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-40 text-muted-foreground">
-            Nenhum dado disponível
+        <CardContent className="flex flex-col items-center justify-center h-40 text-center p-4">
+          <div className="h-8 w-8 text-muted-foreground mb-2 opacity-50">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path>
+              <line x1="16" y1="8" x2="2" y2="22"></line>
+              <line x1="17.5" y1="15" x2="9" y2="15"></line>
+            </svg>
           </div>
+          <h3 className="font-medium">Sem dados de serviços</h3>
+          <p className="text-sm text-muted-foreground">
+            Nenhum serviço com dados de popularidade disponível
+          </p>
         </CardContent>
       </Card>
     );
@@ -25,22 +47,27 @@ export function PopularServicesWidget({ services }: PopularServicesWidgetProps) 
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Serviços Populares</CardTitle>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-display">Serviços Populares</CardTitle>
+          <Button variant="ghost" size="sm" className="text-xs">
+            Ver todos
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {services.map((service) => (
-            <div key={service.id} className="flex items-center">
-              <div className="mr-4 h-2 w-2 rounded-full bg-primary" />
-              <div className="flex-1 min-w-0">
-                <p className="truncate font-medium">{service.name}</p>
+            <div key={service.name} className="space-y-1">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">{service.name}</span>
+                <span className="text-sm text-muted-foreground">{service.count} agendamentos</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span>{service.count} agend.</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
-                  {service.percentage}%
-                </span>
+              <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full"
+                  style={{ width: `${service.percentage}%` }}
+                />
               </div>
             </div>
           ))}

@@ -1,26 +1,24 @@
 
-import React, { useState } from 'react';
-import { Menu } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Sidebar } from './Sidebar';
+import React from "react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
+import { Sidebar } from "./Sidebar";
 
 export function MobileSidebar() {
-  const [open, setOpen] = useState(false);
-
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet>
       <SheetTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
-          className="md:hidden absolute left-4 top-3 z-10"
+          className="md:hidden fixed left-4 top-3 z-40"
         >
           <Menu className="h-5 w-5" />
-          <span className="sr-only">Abrir menu</span>
+          <span className="sr-only">Toggle menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="p-0 w-60">
+      <SheetContent side="left" className="p-0 w-72">
         <Sidebar />
       </SheetContent>
     </Sheet>
