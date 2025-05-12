@@ -75,10 +75,15 @@ export function useCachedAppointments(
   
   // Map database response to our Appointment interface
   const appointments = (appointmentsQuery.data?.data || []).map(app => {
-    // Get related data safely
+    // Get related data safely, handling possible null values
     const cliente = app.clientes || {};
     const servico = app.servicos || {};
     const funcionario = app.funcionarios || {};
+    
+    // Get names with proper type checking
+    const clienteName = typeof cliente === 'object' && cliente !== null && 'nome' in cliente ? cliente.nome : "Cliente não identificado";
+    const servicoName = typeof servico === 'object' && servico !== null && 'nome' in servico ? servico.nome : "Serviço não identificado";
+    const funcionarioName = typeof funcionario === 'object' && funcionario !== null && 'nome' in funcionario ? funcionario.nome : "Profissional não identificado";
     
     // Parse date and time
     const dateObj = new Date(`${app.data}T${app.hora_inicio}`);
@@ -87,12 +92,12 @@ export function useCachedAppointments(
     return {
       id: app.id,
       clientId: app.id_cliente,
-      clientName: cliente.nome || "Cliente não identificado",
+      clientName: clienteName,
       serviceId: app.id_servico,
-      serviceName: servico.nome || "Serviço não identificado",
+      serviceName: servicoName,
       serviceType: app.serviceType || "service", // Use a default type if not present
       professionalId: app.id_funcionario,
-      professionalName: funcionario.nome || "Profissional não identificado",
+      professionalName: funcionarioName,
       date: dateObj,
       duration: app.duracao || 30,
       price: app.valor || 0,
