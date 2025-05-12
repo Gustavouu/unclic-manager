@@ -111,7 +111,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   };
 
   // Function to load existing business data from the database
-  const loadExistingBusinessData = async (businessId: string) => {
+  const loadExistingBusinessData = async (businessId: string): Promise<boolean> => {
     try {
       setStatus("loading");
       const success = await loadBusinessData(businessId);
@@ -122,14 +122,17 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         setCurrentStep(0);
         setOnboardingMethod("manual");
         setStatus("idle");
+        return true;
       } else {
         setError("Não foi possível carregar os dados do negócio");
         setStatus("idle");
+        return false;
       }
     } catch (err: any) {
       console.error("Error loading existing business:", err);
       setError(err.message || "Erro ao carregar dados do negócio");
       setStatus("idle");
+      return false;
     }
   };
 

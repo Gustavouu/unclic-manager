@@ -95,7 +95,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ hasExistingBusiness = fa
       <Card>
         {isEditMode && (
           <div className="px-6 pt-6">
-            <Alert variant="info" className="mb-4 bg-blue-50 border-blue-200">
+            <Alert className="mb-4 bg-blue-50 border-blue-200">
               <Info className="h-4 w-4 text-blue-500" />
               <AlertTitle>Modo de Edição</AlertTitle>
               <AlertDescription>
