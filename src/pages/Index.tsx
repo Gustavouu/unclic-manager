@@ -3,24 +3,34 @@ import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
-import { Loader } from "@/components/ui/loader";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import { useLoading } from "@/contexts/LoadingContext";
+import { useInitialization } from "@/hooks/useInitialization";
 
 const Index = () => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { loading: onboardingLoading } = useNeedsOnboarding();
+  const { isLoading, setStage, setProgress } = useLoading();
+  
+  // Initialize the application
+  useInitialization();
   
   useEffect(() => {
     document.title = "Unclic Manager";
     
-    // No redundant refreshes here - data fetching is now centralized in TenantContext
-  }, []);
+    // Update loading stage based on auth status
+    if (authLoading) {
+      setStage("auth");
+      setProgress(20);
+    } else if (user && onboardingLoading) {
+      setStage("user_data");
+      setProgress(50);
+    }
+  }, [authLoading, user, onboardingLoading, setStage, setProgress]);
   
-  if (loading || (user && onboardingLoading)) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader size="lg" text="Carregando..." />
-      </div>
-    );
+  // Show loading screen while initializing or checking auth/onboarding
+  if (isLoading || authLoading || (user && onboardingLoading)) {
+    return <LoadingScreen />;
   }
   
   // If not authenticated, redirect to login

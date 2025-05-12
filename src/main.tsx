@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 import App from "./App";
 import { AuthProvider } from "./hooks/useAuth";
 import { TenantProvider } from "./contexts/TenantContext";
+import { LoadingProvider } from "./contexts/LoadingContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import "./index.css";
@@ -19,12 +20,14 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <BrowserRouter>
       <ThemeProvider defaultTheme="light" storageKey="unclic-theme">
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <TenantProvider>
-              <App />
-              <Toaster position="top-right" richColors />
-            </TenantProvider>
-          </AuthProvider>
+          <LoadingProvider>
+            <AuthProvider>
+              <TenantProvider>
+                <App />
+                <Toaster position="top-right" richColors />
+              </TenantProvider>
+            </AuthProvider>
+          </LoadingProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </BrowserRouter>

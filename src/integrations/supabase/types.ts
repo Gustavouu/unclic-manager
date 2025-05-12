@@ -528,6 +528,7 @@ export type Database = {
           notas: string | null
           preferencias: Json | null
           telefone: string | null
+          tenant_id: string | null
           ultima_visita: string | null
           valor_total_gasto: number | null
         }
@@ -548,6 +549,7 @@ export type Database = {
           notas?: string | null
           preferencias?: Json | null
           telefone?: string | null
+          tenant_id?: string | null
           ultima_visita?: string | null
           valor_total_gasto?: number | null
         }
@@ -568,6 +570,7 @@ export type Database = {
           notas?: string | null
           preferencias?: Json | null
           telefone?: string | null
+          tenant_id?: string | null
           ultima_visita?: string | null
           valor_total_gasto?: number | null
         }
@@ -3556,6 +3559,14 @@ export type Database = {
         Args: { tenant_id: string }
         Returns: boolean
       }
+      clear_tenant_context: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      get_current_tenant_context: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_tenant_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -3583,6 +3594,14 @@ export type Database = {
       }
       set_business_status: {
         Args: { business_id: string; new_status: string }
+        Returns: boolean
+      }
+      set_tenant_context: {
+        Args: { tenant_id: string }
+        Returns: undefined
+      }
+      usuario_tem_acesso_ao_negocio: {
+        Args: { id_negocio_verificar: string }
         Returns: boolean
       }
     }

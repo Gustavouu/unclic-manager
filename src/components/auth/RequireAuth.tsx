@@ -3,6 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ReactNode } from "react";
 import { OnboardingRedirect } from "./OnboardingRedirect";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 
 interface RequireAuthProps {
   children: ReactNode;
@@ -14,7 +15,7 @@ export const RequireAuth = ({ children, skipOnboardingCheck = false }: RequireAu
   const location = useLocation();
   
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+    return <LoadingScreen />;
   }
 
   if (!user) {
