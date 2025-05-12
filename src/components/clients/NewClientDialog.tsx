@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useClients } from "@/hooks/useClients";
@@ -13,6 +12,7 @@ import * as z from 'zod';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/integrations/supabase/client';
+import { ClientFormData } from '@/types/client';
 
 const clientSchema = z.object({
   nome: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres' }),
@@ -21,8 +21,6 @@ const clientSchema = z.object({
   cidade: z.string().optional().or(z.literal('')),
   estado: z.string().optional().or(z.literal('')),
 });
-
-type FormData = z.infer<typeof clientSchema>;
 
 interface NewClientDialogProps {
   onClose: () => void;
@@ -48,7 +46,7 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
     checkAuth();
   }, [user, businessId]);
   
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       nome: '',
@@ -59,20 +57,14 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
     }
   });
   
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: ClientFormData) => {
     try {
       setIsSubmitting(true);
       console.log("Submitting client data:", data);
       console.log("Auth status:", authStatus);
       console.log("Business ID:", businessId);
       
-      // Pass both tenant_id and id_negocio for compatibility
-      const clientData = {
-        ...data,
-        tenant_id: businessId, // Add tenant_id (new standard field)
-      };
-      
-      const newClient = await createClient(clientData);
+      const newClient = await createClient(data);
       
       if (newClient && onClientCreated) {
         onClientCreated(newClient);
