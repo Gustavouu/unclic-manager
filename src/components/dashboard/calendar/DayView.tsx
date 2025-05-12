@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { format, addHours, setHours, setMinutes, isWithinInterval } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
-import { AppointmentType } from "../Calendar";
+import { AppointmentType } from "@/components/appointments/types";
 import { cn } from "@/lib/utils";
 
 type DayViewProps = {

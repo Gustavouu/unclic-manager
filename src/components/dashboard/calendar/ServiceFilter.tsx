@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ServiceType } from "../Calendar";
+import { ServiceType } from "@/components/appointments/types";
 import { Filter } from "lucide-react";
 
 type ServiceFilterProps = {

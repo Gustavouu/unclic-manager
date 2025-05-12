@@ -16,7 +16,7 @@ export interface Appointment {
   notes?: string;
   paymentMethod?: string;
   serviceId?: string;
-  clientId: string; // Changed from optional to required
+  clientId: string;
   professionalId?: string;
   businessId?: string;
   service?: {
@@ -25,7 +25,7 @@ export interface Appointment {
   additionalServices?: Array<{
     price: number;
   }>;
-  notifications?: { // Added notifications field
+  notifications?: {
     sendConfirmation: boolean;
     sendReminder: boolean;
   };

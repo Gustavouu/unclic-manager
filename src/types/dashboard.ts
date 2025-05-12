@@ -8,3 +8,10 @@ export interface DashboardFilter {
     end: Date;
   };
 }
+
+// Add the DashboardWidgetProps interface
+export interface DashboardWidgetProps {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}

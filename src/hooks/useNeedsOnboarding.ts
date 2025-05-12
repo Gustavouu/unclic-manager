@@ -7,21 +7,29 @@ export function useNeedsOnboarding() {
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean>(false);
   const [onboardingViewed, setOnboardingViewed] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const { businessId, currentBusiness } = useTenant();
 
   // Check if business needs onboarding
   const checkOnboardingStatus = () => {
-    if (currentBusiness) {
-      // Check if the business has completed onboarding
-      const completed = currentBusiness.status === 'active';
-      setNeedsOnboarding(!completed);
+    try {
+      if (currentBusiness) {
+        // Check if the business has completed onboarding
+        const completed = currentBusiness.status === 'active';
+        setNeedsOnboarding(!completed);
+        
+        // Check if the onboarding banner has been viewed/dismissed
+        const viewedFlag = localStorage.getItem(`onboarding_viewed_${businessId}`);
+        setOnboardingViewed(!!viewedFlag);
+      }
       
-      // Check if the onboarding banner has been viewed/dismissed
-      const viewedFlag = localStorage.getItem(`onboarding_viewed_${businessId}`);
-      setOnboardingViewed(!!viewedFlag);
+      setLoading(false);
+      setError(null);
+    } catch (err: any) {
+      console.error("Error checking onboarding status:", err);
+      setError(err.message || "Failed to check onboarding status");
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   // Mark onboarding banner as viewed
@@ -56,6 +64,7 @@ export function useNeedsOnboarding() {
     needsOnboarding,
     onboardingViewed,
     loading,
+    error,
     markOnboardingAsViewed,
     refreshOnboardingStatus,
   };
