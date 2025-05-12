@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -181,9 +182,12 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           if (existing) {
             existing.count += 1;
           } else {
+            // Fix here: Access 'nome' from the 'servicos' object, not from an array
+            const serviceName = app.servicos.nome || "Serviço desconhecido";
+            
             serviceCountMap.set(serviceId, {
               id: serviceId,
-              name: app.servicos.nome || "Serviço desconhecido", // Use 'nome' from 'servicos'
+              name: serviceName,
               count: 1
             });
           }
