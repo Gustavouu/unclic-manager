@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Sidebar } from "./sidebar/Sidebar";
 import { Header } from "./Header";
@@ -7,7 +7,7 @@ import { MobileSidebar } from "./sidebar/MobileSidebar";
 import { useTenant } from "@/contexts/TenantContext";
 import { toast } from "sonner";
 
-const Layout = () => {
+const Layout = ({ children }: { children?: ReactNode }) => {
   const { currentBusiness, loading, error, refreshBusinessData } = useTenant();
   const navigate = useNavigate();
   const [dataRefreshed, setDataRefreshed] = useState(false);
