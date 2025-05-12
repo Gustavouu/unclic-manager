@@ -25,14 +25,15 @@ export const OnboardingProcessStatus: React.FC = () => {
     services,
     staffMembers,
     hasStaff,
-    businessHours
+    businessHours,
+    isEditMode
   } = useOnboarding();
   
   const navigate = useNavigate();
   const { user } = useAuth();
   const { refreshBusinessData, updateBusinessStatus } = useTenant();
   const { refreshOnboardingStatus } = useNeedsOnboarding();
-  
+
   // Function to handle finishing setup after business creation
   const handleCompleteSetup = useCallback(async () => {
     if (!businessCreated?.id || !user) {
@@ -86,11 +87,12 @@ export const OnboardingProcessStatus: React.FC = () => {
       
       // Clear onboarding data from localStorage
       localStorage.removeItem('unclic-manager-onboarding');
+      localStorage.removeItem('force-edit-mode');
       
       // Refresh both business data and onboarding status
       await Promise.all([
         refreshBusinessData(), 
-        refreshOnboardingStatus()
+        refreshOnboardingStatus(true)
       ]);
       
       // Redirect to dashboard after successful setup
@@ -115,11 +117,12 @@ export const OnboardingProcessStatus: React.FC = () => {
             
             // Clear onboarding data
             localStorage.removeItem('unclic-manager-onboarding');
+            localStorage.removeItem('force-edit-mode');
             
             // Refresh both business data and onboarding status
             await Promise.all([
               refreshBusinessData(),
-              refreshOnboardingStatus()
+              refreshOnboardingStatus(true)
             ]);
             
             // Redirect to dashboard
@@ -156,11 +159,12 @@ export const OnboardingProcessStatus: React.FC = () => {
               
               // Clear onboarding data
               localStorage.removeItem('unclic-manager-onboarding');
+              localStorage.removeItem('force-edit-mode');
               
               // Refresh both business data and onboarding status
               await Promise.all([
                 refreshBusinessData(), 
-                refreshOnboardingStatus()
+                refreshOnboardingStatus(true)
               ]);
               
               // Redirect to dashboard
@@ -199,18 +203,19 @@ export const OnboardingProcessStatus: React.FC = () => {
     refreshBusinessData,
     refreshOnboardingStatus
   ]);
-  
+
   // Function to retry the onboarding process
   const handleRetry = useCallback(() => {
     setError(null);
     setStatus("idle");
     setCurrentStep(4); // Back to summary
   }, [setError, setStatus, setCurrentStep]);
-  
+
   // Function to go to dashboard
   const handleGoToDashboard = useCallback(async () => {
     // Ensure we clear any onboarding data
     localStorage.removeItem('unclic-manager-onboarding');
+    localStorage.removeItem('force-edit-mode');
     
     // Try to fix business status before redirecting
     if (businessCreated?.id) {
@@ -225,7 +230,7 @@ export const OnboardingProcessStatus: React.FC = () => {
     try {
       await Promise.all([
         refreshBusinessData(),
-        refreshOnboardingStatus()
+        refreshOnboardingStatus(true)
       ]);
     } catch (error) {
       console.error("Erro ao atualizar dados:", error);
@@ -246,7 +251,7 @@ export const OnboardingProcessStatus: React.FC = () => {
       case "error":
         return "Ocorreu um erro";
       case "success":
-        return "Configuração concluída com sucesso!";
+        return isEditMode ? "Alterações salvas com sucesso!" : "Configuração concluída com sucesso!";
       default:
         return "Processando...";
     }
@@ -263,6 +268,7 @@ export const OnboardingProcessStatus: React.FC = () => {
     return () => {
       if (status === "success") {
         localStorage.removeItem('unclic-manager-onboarding');
+        localStorage.removeItem('force-edit-mode');
       }
     };
   }, [businessCreated, status, processingStep, handleCompleteSetup]);
@@ -270,9 +276,13 @@ export const OnboardingProcessStatus: React.FC = () => {
   return (
     <div className="space-y-8 py-12">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-4">Configurando seu Estabelecimento</h2>
+        <h2 className="text-2xl font-bold mb-4">
+          {isEditMode ? "Salvando Alterações" : "Configurando seu Estabelecimento"}
+        </h2>
         <p className="text-muted-foreground mb-8">
-          Estamos configurando seu estabelecimento. Isso pode levar alguns instantes.
+          {isEditMode 
+            ? "Estamos salvando as alterações do seu estabelecimento. Isso pode levar alguns instantes."
+            : "Estamos configurando seu estabelecimento. Isso pode levar alguns instantes."}
         </p>
         
         {/* Status indicator */}
@@ -313,7 +323,11 @@ export const OnboardingProcessStatus: React.FC = () => {
               <CheckCircle className="h-5 w-5" />
             </div>
             <div className="ml-3">
-              <p className="text-sm text-green-700">Seu estabelecimento foi configurado com sucesso!</p>
+              <p className="text-sm text-green-700">
+                {isEditMode 
+                  ? "As alterações do seu estabelecimento foram salvas com sucesso!"
+                  : "Seu estabelecimento foi configurado com sucesso!"}
+              </p>
             </div>
           </div>
         </div>

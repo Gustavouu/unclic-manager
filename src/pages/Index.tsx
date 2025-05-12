@@ -21,7 +21,7 @@ const Index = () => {
     return <Navigate to="/login" replace />;
   }
   
-  // Always redirect to dashboard when authenticated
+  // Always redirect authenticated users to dashboard
   return <Navigate to="/dashboard" replace />;
 };
 

@@ -13,25 +13,46 @@ import { OnboardingHeader } from "./OnboardingHeader";
 import { OnboardingControls } from "./OnboardingControls";
 import { WelcomeScreen } from "./welcome/WelcomeScreen";
 import { OnboardingProcessStatus } from "./status/OnboardingProcessStatus";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
-export const Onboarding = () => {
+interface OnboardingProps {
+  hasExistingBusiness?: boolean;
+  businessId?: string | null;
+}
+
+export const Onboarding: React.FC<OnboardingProps> = ({ hasExistingBusiness = false, businessId = null }) => {
   const { 
     currentStep, 
     loadProgress, 
     saveProgress, 
     onboardingMethod,
     status,
-    error
+    error,
+    isEditMode,
+    loadExistingBusinessData,
+    setIsEditMode
   } = useOnboarding();
 
-  // Load saved data when component mounts
+  // Load data - either from localStorage or from database for existing business
   useEffect(() => {
+    const initData = async () => {
+      // Check if we're editing an existing business
+      if (hasExistingBusiness && businessId) {
+        // Try to load data from the database first
+        await loadExistingBusinessData(businessId);
+      } else {
+        // Try to load from localStorage for new business creation
+        loadProgress();
+      }
+    };
+    
     const timer = setTimeout(() => {
-      loadProgress();
+      initData();
     }, 100);
+    
     return () => clearTimeout(timer);
-    // This effect should run only once when component mounts
-  }, [loadProgress]);
+  }, [hasExistingBusiness, businessId, loadProgress, loadExistingBusinessData]);
 
   // Auto-save data when steps change
   useEffect(() => {
@@ -49,7 +70,7 @@ export const Onboarding = () => {
       <div className="container max-w-5xl mx-auto py-8 px-4">
         <Card>
           <CardContent className="p-6">
-            <WelcomeScreen />
+            <WelcomeScreen isEditMode={hasExistingBusiness} />
           </CardContent>
         </Card>
       </div>
@@ -72,7 +93,18 @@ export const Onboarding = () => {
   return (
     <div className="container max-w-5xl mx-auto py-8 px-4">
       <Card>
-        <OnboardingHeader />
+        {isEditMode && (
+          <div className="px-6 pt-6">
+            <Alert variant="info" className="mb-4 bg-blue-50 border-blue-200">
+              <Info className="h-4 w-4 text-blue-500" />
+              <AlertTitle>Modo de Edição</AlertTitle>
+              <AlertDescription>
+                Você está editando as informações do seu negócio existente. As alterações serão salvas automaticamente.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        <OnboardingHeader isEditMode={isEditMode} />
         <CardContent className="p-6">
           <OnboardingSteps />
           
@@ -95,12 +127,12 @@ export const Onboarding = () => {
               </TabsContent>
               
               <TabsContent value="4" className="mt-0">
-                <SummaryStep />
+                <SummaryStep isEditMode={isEditMode} />
               </TabsContent>
             </Tabs>
           </div>
           
-          <OnboardingControls />
+          <OnboardingControls isEditMode={isEditMode} />
         </CardContent>
       </Card>
     </div>

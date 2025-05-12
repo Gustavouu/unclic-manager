@@ -1,7 +1,7 @@
 
 import React, { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Settings } from "lucide-react";
 import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -81,6 +81,12 @@ export const OnboardingBanner: React.FC = () => {
     navigate("/onboarding");
   }, [navigate]);
   
+  const handleEditConfig = useCallback(() => {
+    // Set flag to force edit mode
+    localStorage.setItem('force-edit-mode', 'true');
+    navigate("/onboarding");
+  }, [navigate]);
+  
   const handleDismiss = useCallback(() => {
     markOnboardingAsViewed();
   }, [markOnboardingAsViewed]);
@@ -131,5 +137,27 @@ export const OnboardingBanner: React.FC = () => {
         </div>
       </div>
     </Alert>
+  );
+};
+
+// Add a new component for editing business settings
+export const EditConfigurationButton: React.FC = () => {
+  const navigate = useNavigate();
+  
+  const handleEditConfig = () => {
+    // Set flag to force edit mode
+    localStorage.setItem('force-edit-mode', 'true');
+    navigate("/onboarding");
+  };
+  
+  return (
+    <Button 
+      onClick={handleEditConfig} 
+      variant="outline" 
+      className="flex items-center gap-2"
+    >
+      <Settings className="h-4 w-4" />
+      Editar Configurações
+    </Button>
   );
 };
