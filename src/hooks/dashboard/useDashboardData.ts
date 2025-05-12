@@ -4,12 +4,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FilterPeriod } from '@/types/dashboard';
 import { useTenant } from '@/contexts/TenantContext';
-import { DashboardStats } from './models/dashboardTypes';
 import { getDateRange, formatDateForQuery } from './utils/dateRangeUtils';
 import { processPopularServices } from './utils/serviceUtils';
 import { formatUpcomingAppointments, calculateRevenueByDay } from './utils/appointmentUtils';
 
-export { DashboardStats } from './models/dashboardTypes';
+export type { DashboardStats } from './models/dashboardTypes';
+import { 
+  DashboardStats, 
+  AppointmentData, 
+  ServiceData, 
+  UpcomingAppointmentData 
+} from './models/dashboardTypes';
 
 const initialStats: DashboardStats = {
   totalAppointments: 0,
@@ -116,10 +121,10 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
         const revenueData = calculateRevenueByDay(appointmentsData);
         
         // Process popular services
-        const popularServices = processPopularServices(popularServicesData);
+        const popularServices = processPopularServices(popularServicesData as ServiceData[]);
         
         // Format upcoming appointments
-        const upcomingAppointments = formatUpcomingAppointments(upcomingAppointmentsData);
+        const upcomingAppointments = formatUpcomingAppointments(upcomingAppointmentsData as UpcomingAppointmentData[]);
         
         // Calculate retention metrics
         const retentionRate = completedAppointments > 0 ? 

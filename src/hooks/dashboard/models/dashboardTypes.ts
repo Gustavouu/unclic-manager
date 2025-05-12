@@ -35,9 +35,9 @@ export interface ClientData {
 
 export interface ServiceData {
   id_servico: string;
-  servicos: {
-    id: string;
-    nome: string;
+  servicos?: {
+    id?: string;
+    nome?: string;
   } | null;
 }
 

@@ -1,8 +1,7 @@
-
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 
 // Define loading stages
-export type LoadingStage = "initializing" | "auth" | "config" | "user_data" | "business_data" | "complete";
+export type LoadingStage = "initializing" | "auth" | "config" | "user_data" | "business_data" | "dashboard" | "complete";
 
 // Define error types
 export type LoadingError = {

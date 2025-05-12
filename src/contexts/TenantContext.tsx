@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../integrations/supabase/client';
 
 interface TenantContextProps {
@@ -14,7 +13,7 @@ interface TenantContextProps {
 }
 
 interface TenantProviderProps {
-  children: React.ReactNode;  // Explicitly define children prop
+  children: ReactNode;  // Changed from Element to ReactNode
 }
 
 const TenantContext = createContext<TenantContextProps>({

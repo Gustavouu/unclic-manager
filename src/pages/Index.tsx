@@ -21,7 +21,8 @@ const Index = () => {
       setStage("auth");
       setProgress(20);
     } else if (user) {
-      setStage("dashboard");
+      // Using a valid LoadingStage value
+      setStage("business_data");
       setProgress(90);
     }
   }, [authLoading, user, setStage, setProgress]);

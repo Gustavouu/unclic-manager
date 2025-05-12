@@ -21,7 +21,7 @@ export const processPopularServices = (popularServicesData: ServiceData[] | null
       existing.count += 1;
     } else {
       // Extract service name safely
-      const serviceName = typeof app.servicos === 'object' && app.servicos !== null
+      const serviceName = app.servicos && typeof app.servicos === 'object' 
         ? app.servicos.nome || "Serviço desconhecido"
         : "Serviço desconhecido";
       
