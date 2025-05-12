@@ -97,14 +97,16 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
           // Set tenant context in Supabase
           try {
             // Try to set tenant context but don't fail if it doesn't work
-            await supabase.rpc('set_tenant_context', { tenant_id: currentBusinessId })
-              .then(({ error }) => {
-                if (error) throw error;
-              })
-              .catch(error => {
-                console.warn("Failed to set tenant context:", error);
-                // Continue anyway as this might not be critical
-              });
+            // Fixed: Properly handle the Promise with async/await instead of using .then().catch()
+            try {
+              const { error } = await supabase.rpc('set_tenant_context', { tenant_id: currentBusinessId });
+              if (error) {
+                throw error;
+              }
+            } catch (error) {
+              console.warn("Failed to set tenant context:", error);
+              // Continue anyway as this might not be critical
+            }
           } catch (error) {
             console.warn("Failed to set tenant context:", error);
             // Continue anyway as this might not be critical
