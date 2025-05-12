@@ -1,42 +1,29 @@
 
-import React from 'react';
-import { cn } from '@/lib/utils';
+import React, { ReactNode } from 'react';
 
-interface PageContainerProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-  maxWidth?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "full";
-  centered?: boolean;
-  className?: string;
+interface PageContainerProps {
+  title: string;
+  description?: string;
+  children: ReactNode;
+  actions?: ReactNode;
 }
 
-export function PageContainer({ 
-  children, 
-  maxWidth = "xl",
-  centered = true,
-  className,
-  ...props
-}: PageContainerProps) {
-  const maxWidthClasses = {
-    xs: 'max-w-xs',
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
-    '2xl': 'max-w-2xl',
-    full: 'max-w-full'
-  };
-
+export const PageContainer: React.FC<PageContainerProps> = ({
+  title,
+  description,
+  children,
+  actions
+}) => {
   return (
-    <div 
-      className={cn(
-        'w-full px-4 sm:px-6 py-6',
-        centered && 'mx-auto',
-        maxWidthClasses[maxWidth],
-        className
-      )}
-      {...props}
-    >
-      {children}
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          {description && <p className="text-muted-foreground">{description}</p>}
+        </div>
+        {actions && <div className="flex items-center gap-2">{actions}</div>}
+      </div>
+      <div>{children}</div>
     </div>
   );
-}
+};

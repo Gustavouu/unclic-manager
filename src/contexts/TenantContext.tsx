@@ -10,6 +10,9 @@ interface TenantContextProps {
   loading: boolean;
   error: string | null;
   setTenantContext: (id: string) => Promise<boolean>;
+  currentBusiness: any | null;  // Added this property
+  refreshBusinessData: () => Promise<void>;  // Added this method
+  updateBusinessStatus: (id: string, status: string) => Promise<boolean>;  // Added this method
 }
 
 const TenantContext = createContext<TenantContextProps | undefined>(undefined);
@@ -19,7 +22,15 @@ interface TenantProviderProps {
 }
 
 export function TenantProvider({ children }: TenantProviderProps) {
-  const { businessId, loading: businessLoading, error: businessError } = useCurrentBusiness();
+  const { 
+    businessId, 
+    businessData: currentBusiness, 
+    loading: businessLoading, 
+    error: businessError,
+    fetchBusinessData,
+    updateBusinessStatus
+  } = useCurrentBusiness();
+  
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,10 +49,20 @@ export function TenantProvider({ children }: TenantProviderProps) {
     try {
       await supabase.rpc('set_tenant_context', { tenant_id: id });
       return true;
-    } catch (err) {
+    } catch (err: any) {
       handleError('setTenantContext', err);
       setError(err.message || 'Erro ao definir contexto do tenant');
       return false;
+    }
+  };
+  
+  // Refresh business data
+  const refreshBusinessData = async (): Promise<void> => {
+    try {
+      await fetchBusinessData();
+    } catch (err: any) {
+      handleError('refreshBusinessData', err);
+      setError(err.message || 'Erro ao atualizar dados do negócio');
     }
   };
 
@@ -52,7 +73,10 @@ export function TenantProvider({ children }: TenantProviderProps) {
         tenantId,
         loading: businessLoading,
         error: error || businessError,
-        setTenantContext
+        setTenantContext,
+        currentBusiness,
+        refreshBusinessData,
+        updateBusinessStatus
       }}
     >
       {children}
