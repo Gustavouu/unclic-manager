@@ -1,34 +1,44 @@
 
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { ReactNode } from "react";
-import { OnboardingRedirect } from "./OnboardingRedirect";
-import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import React, { ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useTenant } from '@/contexts/TenantContext';
+import { useLoading } from '@/contexts/LoadingContext';
 
 interface RequireAuthProps {
   children: ReactNode;
   skipOnboardingCheck?: boolean;
 }
 
-export const RequireAuth = ({ children, skipOnboardingCheck = false }: RequireAuthProps) => {
-  const { user, loading } = useAuth();
-  const location = useLocation();
+export const RequireAuth: React.FC<RequireAuthProps> = ({ 
+  children, 
+  skipOnboardingCheck = false 
+}) => {
+  const { user } = useAuth();
+  const { currentBusiness } = useTenant();
+  const { completeLoading } = useLoading();
   
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
+  // Ensure loading is complete
+  completeLoading();
+  
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    // Not authenticated, redirect to login
+    return <Navigate to="/login" replace />;
   }
-
-  // If we should skip the onboarding check (for the onboarding page itself)
+  
+  // If skipOnboardingCheck is true, don't check business status
   if (skipOnboardingCheck) {
     return <>{children}</>;
   }
-
-  // Use the non-blocking onboarding notification approach
-  return <OnboardingRedirect>{children}</OnboardingRedirect>;
+  
+  // Check if onboarding is needed
+  const needsOnboarding = !currentBusiness || currentBusiness.status === 'pendente';
+  
+  if (needsOnboarding) {
+    // Needs to complete onboarding, redirect
+    return <Navigate to="/onboarding" replace />;
+  }
+  
+  // Authenticated and onboarding complete, show children
+  return <>{children}</>;
 };
-
-export default RequireAuth;
