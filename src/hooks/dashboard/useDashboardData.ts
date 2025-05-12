@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -202,12 +201,17 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
             percentage: totalServiceCount > 0 ? (service.count / totalServiceCount) * 100 : 0
           }));
           
-        // Map upcoming appointments - Fix for nome property access
+        // Map upcoming appointments - Fix for property access
         const upcomingAppointments = upcomingAppointmentsData?.map(app => {
-          // Safely access properties with optional chaining
-          const clientName = app.clientes?.nome || "Cliente não identificado";
-          const serviceName = app.servicos?.nome || "Serviço não identificado";
-          const professionalName = app.funcionarios?.nome || "Profissional não identificado";
+          // Safely access properties with appropriate type handling
+          const clientesData = app.clientes as { nome?: string } | null;
+          const servicosData = app.servicos as { nome?: string } | null;
+          const funcionariosData = app.funcionarios as { nome?: string } | null;
+          
+          // Extract names with fallbacks
+          const clientName = clientesData?.nome || "Cliente não identificado";
+          const serviceName = servicosData?.nome || "Serviço não identificado";
+          const professionalName = funcionariosData?.nome || "Profissional não identificado";
           
           return {
             id: app.id,
