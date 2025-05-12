@@ -202,15 +202,22 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
             percentage: totalServiceCount > 0 ? (service.count / totalServiceCount) * 100 : 0
           }));
           
-        // Map upcoming appointments
-        const upcomingAppointments = upcomingAppointmentsData?.map(app => ({
-          id: app.id,
-          clientName: app.clientes?.nome || "Cliente não identificado",
-          serviceName: app.servicos?.nome || "Serviço não identificado",
-          professionalName: app.funcionarios?.nome || "Profissional não identificado",
-          date: `${app.data}T${app.hora_inicio}`,
-          status: app.status
-        })) || [];
+        // Map upcoming appointments - Fix for nome property access
+        const upcomingAppointments = upcomingAppointmentsData?.map(app => {
+          // Safely access properties with optional chaining
+          const clientName = app.clientes?.nome || "Cliente não identificado";
+          const serviceName = app.servicos?.nome || "Serviço não identificado";
+          const professionalName = app.funcionarios?.nome || "Profissional não identificado";
+          
+          return {
+            id: app.id,
+            clientName,
+            serviceName,
+            professionalName,
+            date: `${app.data}T${app.hora_inicio}`,
+            status: app.status
+          };
+        }) || [];
         
         // Calculate retention metrics
         const retentionRate = completedAppointments > 0 ? 

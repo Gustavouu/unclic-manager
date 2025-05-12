@@ -7,7 +7,7 @@ export interface PopularService {
   id?: string;
   name: string;
   count: number;
-  percentage: number; // Changed from optional to required to match usage
+  percentage: number; // Required, not optional
 }
 
 interface PopularServicesWidgetProps {
