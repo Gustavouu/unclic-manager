@@ -1,72 +1,71 @@
 
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
-import { useTenant } from '@/contexts/TenantContext';
-import { Client } from '@/types/client';
-import { 
-  fetchClients as fetchClientsService,
-  createClient as createClientService,
-  findClientByEmail as findClientByEmailService,
-  findClientByPhone as findClientByPhoneService
-} from '@/services/clientService';
+/**
+ * Main hook for client management (aggregates all client hooks)
+ */
+import { useClientsList } from './clients/useClientsList';
+import { useClientOperations } from './clients/useClientOperations';
+import { useClientSearch } from './clients/useClientSearch';
+import { Client, ClientFormData } from '@/types/client';
 
 export type { Client } from '@/types/client';
 
-export const useClients = () => {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { businessId } = useTenant();
-
-  useEffect(() => {
-    const loadClients = async () => {
-      setIsLoading(true);
-      try {
-        const clientsData = await fetchClientsService(businessId || '');
-        setClients(clientsData);
-      } catch (err: any) {
-        setError(err.message);
-        toast.error("Erro ao carregar clientes.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadClients();
-  }, [businessId]);
-
-  const createClient = async (clientData: Partial<Client>) => {
-    try {
-      if (!businessId) {
-        throw new Error("ID do negócio não disponível");
-      }
-      
-      const newClient = await createClientService(clientData, businessId);
-      setClients(prev => [...prev, newClient]);
-      toast.success("Cliente criado com sucesso!");
-      return newClient;
-    } catch (err: any) {
-      toast.error("Erro ao criar cliente: " + err.message);
-      throw err;
-    }
-  };
-
-  const findClientByEmail = async (email: string) => {
-    if (!businessId) return null;
-    return findClientByEmailService(email, businessId);
-  };
-
-  const findClientByPhone = async (phone: string) => {
-    if (!businessId) return null;
-    return findClientByPhoneService(phone, businessId);
-  };
-
-  return { 
-    clients, 
-    isLoading, 
-    error, 
+export const useClients = (onClientCreated?: (client: Client) => void) => {
+  const { clients, isLoading, error: fetchError, filterClients } = useClientsList();
+  
+  const { 
     createClient, 
+    updateClient,
+    deleteClient,
     findClientByEmail,
-    findClientByPhone
+    findClientByPhone,
+    isSubmitting, 
+    error: operationError 
+  } = useClientOperations(onClientCreated);
+
+  const {
+    searchClientByEmail,
+    searchClientByPhone,
+    clearSearch,
+    searchResult,
+    searchError,
+    isSearching
+  } = useClientSearch();
+
+  // Aggregated error state
+  const error = fetchError || operationError || searchError;
+
+  return {
+    // Client list operations
+    clients,
+    isLoading,
+    filterClients,
+    
+    // CRUD operations
+    createClient,
+    updateClient,
+    deleteClient,
+    isSubmitting,
+    
+    // Search operations
+    findClientByEmail,
+    findClientByPhone,
+    searchClientByEmail,
+    searchClientByPhone,
+    clearSearch,
+    searchResult,
+    isSearching,
+    
+    // Error handling
+    error
   };
 };
+
+// For backward compatibility, export the operations directly
+export { 
+  fetchClients,
+  createClient, 
+  findClientByEmail,
+  findClientByPhone,
+  updateClient,
+  deleteClient
+} from '@/services/client/clientOperations';
