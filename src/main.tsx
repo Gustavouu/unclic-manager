@@ -11,6 +11,15 @@ import { LoadingProvider } from "./contexts/LoadingContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import "./index.css";
+import { initializeEnv } from "./lib/env";
+
+// Initialize environment validation
+try {
+  initializeEnv();
+} catch (error) {
+  console.error("Failed to initialize environment:", error);
+  // We could show an error screen here, but for now we'll just log the error
+}
 
 // Create a client
 const queryClient = new QueryClient();

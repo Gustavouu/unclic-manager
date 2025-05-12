@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,14 +14,14 @@ import { LogOut, Settings, User } from "lucide-react";
 
 export function UserDropdown() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
       // Use the logout function from auth context
-      await logout();
+      await signOut();
       // Navigate to login
       navigate("/login");
     } catch (error) {
@@ -32,15 +31,20 @@ export function UserDropdown() {
     }
   };
 
-  const getInitials = (name?: string) => {
-    if (!name) return "UN";
-    return name
-      .split(" ")
-      .map(n => n[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase();
+  // Get user name from user metadata
+  const getUserName = () => {
+    // Check if user has name in user_metadata
+    if (user?.user_metadata?.name) {
+      return user.user_metadata.name;
+    }
+    // Otherwise use email without domain
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return "UN";
   };
+
+  const userName = getUserName();
 
   return (
     <div className="mt-auto border-t">
@@ -49,11 +53,11 @@ export function UserDropdown() {
           <button className="flex h-14 w-full items-center p-3 text-left transition-colors hover:bg-accent/50 focus:outline-none">
             <Avatar className="mr-2 h-8 w-8">
               <AvatarImage src="/images/barber-avatar.png" alt="Avatar" />
-              <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
+              <AvatarFallback>{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <span className="flex-1 overflow-hidden">
               <span className="block truncate font-medium">
-                {user?.name || "Usuário"}
+                {userName}
               </span>
               <span className="block truncate text-xs text-muted-foreground">
                 {user?.email || ""}

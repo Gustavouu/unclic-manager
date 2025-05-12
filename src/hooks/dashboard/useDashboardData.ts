@@ -10,12 +10,20 @@ export interface DashboardStats {
   completedAppointments: number;
   totalRevenue: number;
   newClients: number;
-  popularServices: Array<{id: string, name: string, count: number}>;
+  popularServices: Array<{id: string, name: string, count: number, percentage?: number}>;
   upcomingAppointments: any[];
   revenueData: Array<{date: string, value: number}>;
   retentionRate: number;
   newClientsCount: number;
   returningClientsCount: number;
+  
+  // Added properties to match component usage
+  clientsCount: number;
+  todayAppointments: number;
+  monthlyRevenue: number;
+  monthlyServices: number;
+  occupancyRate: number;
+  nextAppointments: any[];
 }
 
 export const useDashboardData = (period: FilterPeriod = 'month') => {
@@ -29,7 +37,15 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
     revenueData: [],
     retentionRate: 0,
     newClientsCount: 0,
-    returningClientsCount: 0
+    returningClientsCount: 0,
+    
+    // Added properties with default values
+    clientsCount: 0,
+    todayAppointments: 0,
+    monthlyRevenue: 0,
+    monthlyServices: 0,
+    occupancyRate: 0,
+    nextAppointments: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -173,9 +189,17 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           }
         });
         
+        // Calculate total service count for percentage calculation
+        const totalServiceCount = Array.from(serviceCountMap.values()).reduce((sum, service) => sum + service.count, 0);
+        
+        // Add percentage to popular services
         const popularServices = Array.from(serviceCountMap.values())
           .sort((a, b) => b.count - a.count)
-          .slice(0, 5);
+          .slice(0, 5)
+          .map(service => ({
+            ...service,
+            percentage: totalServiceCount > 0 ? (service.count / totalServiceCount) * 100 : 0
+          }));
           
         // Map upcoming appointments
         const upcomingAppointments = upcomingAppointmentsData?.map(app => ({
@@ -190,6 +214,25 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
         // Calculate retention metrics
         const retentionRate = completedAppointments > 0 ? 
           Math.round((completedAppointments / totalAppointments) * 100) : 0;
+        
+        // Get total clients count
+        const { count: clientsCount, error: clientsCountError } = await supabase
+          .from('clientes')
+          .select('*', { count: 'exact', head: true })
+          .eq('id_negocio', businessId);
+        
+        if (clientsCountError) throw clientsCountError;
+        
+        // Get today's appointments
+        const { data: todayAppointmentsData, error: todayAppointmentsError } = await supabase
+          .from('agendamentos')
+          .select('id')
+          .eq('id_negocio', businessId)
+          .eq('data', new Date().toISOString().split('T')[0]);
+          
+        if (todayAppointmentsError) throw todayAppointmentsError;
+        
+        const todayAppointments = todayAppointmentsData?.length || 0;
         
         // Simplified calculation for new vs returning clients
         const newClientsCount = newClientsData?.length || 0;
@@ -209,7 +252,15 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           revenueData,
           retentionRate,
           newClientsCount,
-          returningClientsCount
+          returningClientsCount,
+          
+          // Add values for the additional properties
+          clientsCount: clientsCount || 0,
+          todayAppointments,
+          monthlyRevenue: totalRevenue,
+          monthlyServices: totalAppointments,
+          occupancyRate: retentionRate, // Using retention rate as placeholder for occupancy rate
+          nextAppointments: upcomingAppointments
         });
         
       } catch (err: any) {

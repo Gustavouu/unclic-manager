@@ -11,6 +11,7 @@ interface AuthContextProps {
   signUp: (email: string, password: string, userData: any) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>; // Added resetPassword
 }
 
 const AuthContext = createContext<AuthContextProps>({
@@ -20,7 +21,8 @@ const AuthContext = createContext<AuthContextProps>({
   signIn: async () => {},
   signUp: async () => {},
   signOut: async () => {},
-  updateProfile: async () => {}
+  updateProfile: async () => {},
+  resetPassword: async () => {} // Added resetPassword
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -160,6 +162,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Add resetPassword method
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password-confirmation',
+      });
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -170,6 +186,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signUp,
         signOut,
         updateProfile,
+        resetPassword,
       }}
     >
       {children}
