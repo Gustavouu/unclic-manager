@@ -61,13 +61,13 @@ export function TenantProvider({ children }: TenantProviderProps) {
     
     try {
       setStage('config');
-      // Try to call the RPC function with timeout
-      const { success } = await safeExecuteRpc(() => 
-        supabase.rpc('set_tenant_context', { tenant_id: id })
-      );
       
-      if (!success) {
-        console.warn("Failed to set tenant context, but continuing anyway");
+      // Fix: Call supabase.rpc properly and await the response
+      const { data, error } = await supabase
+        .rpc('set_tenant_context', { tenant_id: id });
+      
+      if (error) {
+        console.warn("Failed to set tenant context, but continuing anyway:", error.message);
         // Don't throw - continue app initialization
         return true;
       }

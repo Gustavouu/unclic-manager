@@ -72,10 +72,13 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
       return await fetchWithCache(
         cacheKey,
         async () => {
-          const { success } = await safeExecuteRpc(() => 
-            supabase.from('negocios').select('id').limit(1)
-          );
-          return success;
+          // Fix: Call .then() on PostgrestFilterBuilder to convert to Promise
+          const { data, error } = await supabase
+            .from('negocios')
+            .select('id')
+            .limit(1);
+            
+          return !error && Array.isArray(data);
         },
         5 // Cache for 5 minutes
       );
@@ -114,11 +117,11 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
     if (!id) return false;
     
     try {
-      const { success } = await safeExecuteRpc(() => 
-        supabase.rpc('set_tenant_context', { tenant_id: id })
-      );
+      // Fix: Call .then() on PostgrestFilterBuilder to convert to Promise
+      const { data, error } = await supabase
+        .rpc('set_tenant_context', { tenant_id: id });
       
-      return success;
+      return !error;
     } catch (error) {
       console.warn("Failed to set tenant context:", error);
       return false;
