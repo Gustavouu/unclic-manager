@@ -90,7 +90,7 @@ export function useCachedAppointments(
       clientName: cliente.nome || "Cliente não identificado",
       serviceId: app.id_servico,
       serviceName: servico.nome || "Serviço não identificado",
-      serviceType: app.serviceType || "service", // Default type
+      serviceType: app.serviceType || "service", // Use a default type if not present
       professionalId: app.id_funcionario,
       professionalName: funcionario.nome || "Profissional não identificado",
       date: dateObj,

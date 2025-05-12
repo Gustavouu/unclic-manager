@@ -13,18 +13,19 @@ export interface RawAppointmentData {
   status: string;
   forma_pagamento?: string;
   observacoes?: string;
+  serviceType?: string; // Adding serviceType field that was missing
   clientes?: {
     id: string;
     nome: string;
     email?: string;
-  };
+  } | null; // Make null possible
   servicos?: {
     id: string;
     nome: string;
     preco?: number;
-  };
+  } | null; // Make null possible
   funcionarios?: {
     id: string;
     nome: string;
-  };
+  } | null; // Make null possible
 }
