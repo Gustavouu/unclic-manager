@@ -10,10 +10,10 @@ interface RequireAuthProps {
   skipOnboardingCheck?: boolean;
 }
 
-export const RequireAuth: React.FC<RequireAuthProps> = ({ 
+export const RequireAuth = ({ 
   children, 
   skipOnboardingCheck = false 
-}) => {
+}: RequireAuthProps) => {
   const { user } = useAuth();
   const { currentBusiness } = useTenant();
   const { completeLoading } = useLoading();
