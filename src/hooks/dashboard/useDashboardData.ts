@@ -4,13 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FilterPeriod } from '@/types/dashboard';
 import { useTenant } from '@/contexts/TenantContext';
+import { PopularService } from '@/components/dashboard/PopularServicesWidget';
 
 export interface DashboardStats {
   totalAppointments: number;
   completedAppointments: number;
   totalRevenue: number;
   newClients: number;
-  popularServices: Array<{id: string, name: string, count: number, percentage?: number}>;
+  popularServices: PopularService[];
   upcomingAppointments: any[];
   revenueData: Array<{date: string, value: number}>;
   retentionRate: number;
@@ -183,7 +184,7 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           } else {
             serviceCountMap.set(serviceId, {
               id: serviceId,
-              name: app.servicos.nome || "Serviço desconhecido",
+              name: app.servicos.nome || "Serviço desconhecido", // Use 'nome' from 'servicos'
               count: 1
             });
           }
@@ -192,7 +193,7 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
         // Calculate total service count for percentage calculation
         const totalServiceCount = Array.from(serviceCountMap.values()).reduce((sum, service) => sum + service.count, 0);
         
-        // Add percentage to popular services
+        // Add percentage to popular services (now making percentage non-optional)
         const popularServices = Array.from(serviceCountMap.values())
           .sort((a, b) => b.count - a.count)
           .slice(0, 5)

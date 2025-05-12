@@ -3,10 +3,11 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-interface PopularService {
+export interface PopularService {
+  id?: string;
   name: string;
   count: number;
-  percentage: number;
+  percentage: number; // Changed from optional to required to match usage
 }
 
 interface PopularServicesWidgetProps {
