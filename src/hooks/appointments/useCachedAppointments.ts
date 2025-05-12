@@ -1,6 +1,7 @@
 
 import { useSupabaseQuery, queryClient } from "@/lib/react-query-utils";
 import { AppointmentStatus, Appointment } from "../appointments/types";
+import { RawAppointmentData } from "./types/rawAppointmentTypes";
 import { useTenant } from "@/contexts/TenantContext";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,8 +58,8 @@ export function useCachedAppointments(
     formattedFilters.data.lte = filters.date.end.toISOString().split('T')[0];
   }
   
-  // Use our custom query hook
-  const appointmentsQuery = useSupabaseQuery<Appointment>('agendamentos', {
+  // Use our custom query hook with the RawAppointmentData type
+  const appointmentsQuery = useSupabaseQuery<RawAppointmentData>('agendamentos', {
     page: pagination.page,
     pageSize: pagination.pageSize,
     select: `
