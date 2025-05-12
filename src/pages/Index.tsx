@@ -1,34 +1,18 @@
 
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
-import { useLoading } from "@/contexts/LoadingContext";
-import { useInitialization } from "@/hooks/useInitialization";
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
-  const { isLoading, setStage, setProgress } = useLoading();
-  
-  // Initialize the application
-  useInitialization();
   
   useEffect(() => {
     document.title = "Unclic Manager";
-    
-    // Update loading stage based on auth status
-    if (authLoading) {
-      setStage("auth");
-      setProgress(20);
-    } else if (user) {
-      // Using a valid LoadingStage value
-      setStage("business_data");
-      setProgress(90);
-    }
-  }, [authLoading, user, setStage, setProgress]);
+  }, []);
   
-  // Show loading screen while initializing or checking auth
-  if (isLoading || authLoading) {
+  // Show loading screen while checking auth
+  if (authLoading) {
     return <LoadingScreen />;
   }
   
