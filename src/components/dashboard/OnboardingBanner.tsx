@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useTenant } from "@/contexts/TenantContext";
-import { useDebouncedCallback } from "@/hooks/useDebounce";
 
 export const OnboardingBanner: React.FC = () => {
   const { needsOnboarding, loading, error, onboardingViewed, markOnboardingAsViewed, refreshOnboardingStatus } = useNeedsOnboarding();
@@ -17,8 +16,7 @@ export const OnboardingBanner: React.FC = () => {
   const [attempts, setAttempts] = useState(0);
   const maxAttempts = 3;
   
-  // Define hooks at the top level
-  const handleFixStatus = useDebouncedCallback(async () => {
+  const handleFixStatus = useCallback(async () => {
     if (isProcessing) return;
     if (!currentBusiness?.id) {
       toast.error("Não foi possível identificar o negócio");
@@ -75,7 +73,7 @@ export const OnboardingBanner: React.FC = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, 1000);
+  }, [attempts, currentBusiness, markOnboardingAsViewed, refreshOnboardingStatus, updateBusinessStatus]);
   
   const handleContinueSetup = useCallback(() => {
     navigate("/onboarding");
