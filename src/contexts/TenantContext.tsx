@@ -14,7 +14,7 @@ interface TenantContextProps {
 }
 
 interface TenantProviderProps {
-  children: React.ReactNode;
+  children: React.ReactNode;  // Explicitly define children prop
 }
 
 const TenantContext = createContext<TenantContextProps>({
