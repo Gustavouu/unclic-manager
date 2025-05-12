@@ -14,8 +14,9 @@ import "@/styles/globals.css";
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <LoadingProvider>
+      {/* LoadingProvider moved to the top of the hierarchy */}
+      <LoadingProvider timeout={60000}>
+        <AuthProvider>
           <TenantProvider>
             <AppInitProvider>
               <Toaster position="top-right" richColors />
@@ -23,8 +24,8 @@ function App() {
               <StatusFixButton />
             </AppInitProvider>
           </TenantProvider>
-        </LoadingProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </LoadingProvider>
     </QueryClientProvider>
   );
 }

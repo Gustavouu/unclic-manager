@@ -15,6 +15,8 @@ interface LoadingContextType {
   setError: (error: any) => void;
   startLoading: () => void;
   finishLoading: () => void;
+  allowContinueDespiteErrors: boolean;
+  setAllowContinueDespiteErrors: (allow: boolean) => void;
 }
 
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
@@ -24,73 +26,61 @@ interface LoadingProviderProps {
   timeout?: number;
 }
 
-export function LoadingProvider({ children, timeout = 30000 }: LoadingProviderProps) {
+export function LoadingProvider({ children, timeout = 60000 }: LoadingProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [currentStage, setCurrentStage] = useState<LoadingStage>('initializing');
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<any | null>(null);
-  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
-  const [timeoutOccurred, setTimeoutOccurred] = useState(false);
+  const [allowContinueDespiteErrors, setAllowContinueDespiteErrors] = useState(false);
+  
+  // Check for emergency continue flag in localStorage
+  useEffect(() => {
+    const hasEmergencyFlag = localStorage.getItem('app_emergency_continue') === 'true';
+    if (hasEmergencyFlag) {
+      console.log("Emergency continue flag detected, will attempt to load app despite errors");
+      setAllowContinueDespiteErrors(true);
+      // Clear the flag after reading it
+      localStorage.removeItem('app_emergency_continue');
+    }
+  }, []);
 
+  // Global timeout for loading
   useEffect(() => {
     if (isLoading) {
-      // Global timeout to prevent indefinite loading
+      // Set a generous timeout to prevent indefinite loading
       const id = setTimeout(() => {
         if (isLoading) {
-          console.warn(`Loading timeout occurred at stage: ${currentStage}`);
-          setError({
-            code: 'TIMEOUT_ERROR',
-            message: 'O carregamento está demorando mais do que o esperado.',
-            details: { stage: currentStage }
-          });
-          setIsLoading(false);
-          setTimeoutOccurred(true);
+          console.warn(`Global loading timeout reached after ${timeout/1000} seconds`);
+          // Don't show error immediately if emergency continue is enabled
+          if (!allowContinueDespiteErrors) {
+            setError({
+              code: 'TIMEOUT_ERROR',
+              message: 'O carregamento está demorando mais do que o esperado.',
+              details: { stage: currentStage, timeout: timeout/1000 }
+            });
+            setIsLoading(false);
+          } else {
+            console.log("Emergency continue enabled, finishing loading despite timeout");
+            finishLoading();
+          }
         }
       }, timeout);
       
-      setTimeoutId(id);
-      
-      return () => {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-      };
+      return () => clearTimeout(id);
     }
-  }, [isLoading, currentStage, timeout]);
-
-  // Add an additional safety net to force finish loading after 45 seconds
-  useEffect(() => {
-    const emergencyTimeout = setTimeout(() => {
-      if (isLoading) {
-        console.warn("Emergency loading timeout triggered! Forcing app to continue.");
-        setIsLoading(false);
-        
-        // If we have an error and reached emergency timeout, still show it but let the app proceed
-        if (error) {
-          console.error("App initialized with errors:", error);
-        }
-      }
-    }, 45000); // 45 seconds emergency timeout
-    
-    return () => clearTimeout(emergencyTimeout);
-  }, []);
+  }, [isLoading, currentStage, timeout, allowContinueDespiteErrors]);
 
   const startLoading = () => {
     setIsLoading(true);
     setError(null);
     setProgress(0);
     setCurrentStage('initializing');
-    setTimeoutOccurred(false);
   };
 
   const finishLoading = () => {
     setIsLoading(false);
     setProgress(100);
     setCurrentStage('complete');
-    
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
   };
 
   const setStage = (stage: LoadingStage) => {
@@ -103,35 +93,15 @@ export function LoadingProvider({ children, timeout = 30000 }: LoadingProviderPr
     if (currentIndex >= 0) {
       setProgress(Math.round(((currentIndex + 1) / stages.length) * 100));
     }
-    
-    // Reset timeout when stage changes
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    
-    if (isLoading) {
-      const id = setTimeout(() => {
-        if (isLoading && currentStage === stage) {
-          console.warn(`Stage timeout occurred: ${stage}`);
-          if (!timeoutOccurred) {
-            setError({
-              code: 'TIMEOUT_ERROR',
-              message: `O carregamento está demorando na etapa: ${stage}`,
-              details: { stage }
-            });
-            setTimeoutOccurred(true);
-          }
-        }
-      }, timeout / 2); // Each stage gets half the total timeout
-      
-      setTimeoutId(id);
-    }
   };
 
   const handleRetry = () => {
     startLoading();
     window.location.reload();
   };
+
+  // If we have an error but emergency continue is enabled, show children anyway
+  const shouldShowChildren = !isLoading && (!error || allowContinueDespiteErrors);
 
   return (
     <LoadingContext.Provider value={{
@@ -143,11 +113,13 @@ export function LoadingProvider({ children, timeout = 30000 }: LoadingProviderPr
       setProgress,
       setError,
       startLoading,
-      finishLoading
+      finishLoading,
+      allowContinueDespiteErrors,
+      setAllowContinueDespiteErrors
     }}>
       {isLoading ? (
         <LoadingScreen stage={currentStage} progress={progress} />
-      ) : error ? (
+      ) : error && !allowContinueDespiteErrors ? (
         <ErrorScreen error={error} onRetry={handleRetry} />
       ) : (
         children

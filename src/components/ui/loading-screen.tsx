@@ -18,6 +18,7 @@ export function LoadingScreen({
   const [dots, setDots] = useState("");
   const [showHelp, setShowHelp] = useState(false);
   const [loadingTime, setLoadingTime] = useState(0);
+  const [hasAttemptedQuickFix, setHasAttemptedQuickFix] = useState(false);
 
   // Animation for the loading dots
   useEffect(() => {
@@ -34,10 +35,14 @@ export function LoadingScreen({
   // Track loading time to show help button after delay
   useEffect(() => {
     const interval = setInterval(() => {
-      setLoadingTime(prev => prev + 1);
-      if (loadingTime >= 15 && !showHelp) {
-        setShowHelp(true);
-      }
+      setLoadingTime(prev => {
+        const newTime = prev + 1;
+        // Show help after 10 seconds
+        if (newTime >= 10 && !showHelp) {
+          setShowHelp(true);
+        }
+        return newTime;
+      });
     }, 1000);
     
     return () => clearInterval(interval);
@@ -56,9 +61,36 @@ export function LoadingScreen({
   const baseMessage = message || stageMessages[stage] || stageMessages.default;
   const displayMessage = `${baseMessage}${dots}`;
   
+  const handleQuickFix = () => {
+    // Set flag that we tried a quick fix
+    setHasAttemptedQuickFix(true);
+    
+    // Clear problematic caches
+    try {
+      localStorage.removeItem('currentBusinessId');
+      localStorage.removeItem('current_tenant_id');
+      
+      // Remove any timestamp keys that might be causing cache issues
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('timestamp') || key.includes('cache_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Set flag to reload without errors
+      localStorage.setItem('bypass_health_check', 'true');
+      
+      // Reload the page
+      window.location.reload();
+    } catch (error) {
+      console.error("Error during quick fix:", error);
+    }
+  };
+  
   const handleEmergencyContinue = () => {
     // Store error flag in localStorage
     localStorage.setItem('app_init_errors', 'true');
+    localStorage.setItem('app_emergency_continue', 'true');
     
     // Force navigate to dashboard
     window.location.href = "/dashboard";
@@ -67,6 +99,7 @@ export function LoadingScreen({
   const handleResetAndReload = () => {
     // Clear localStorage
     localStorage.clear();
+    sessionStorage.clear();
     
     // Reload with cache cleared
     window.location.reload();
@@ -100,23 +133,36 @@ export function LoadingScreen({
               Está demorando mais do que o esperado?
             </p>
             
-            <div className="flex justify-center space-x-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleResetAndReload}
-              >
-                Limpar Cache e Recarregar
-              </Button>
+            <div className="flex flex-col gap-2">
+              {!hasAttemptedQuickFix && (
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={handleQuickFix}
+                  className="w-full"
+                >
+                  Correção Rápida
+                </Button>
+              )}
               
-              <Button 
-                variant="outline"
-                size="sm"
-                onClick={handleEmergencyContinue}
-                className="text-amber-600 border-amber-600 hover:bg-amber-50"
-              >
-                Continuar Assim Mesmo
-              </Button>
+              <div className="flex justify-center space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleResetAndReload}
+                >
+                  Limpar Cache e Recarregar
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEmergencyContinue}
+                  className="text-amber-600 border-amber-600 hover:bg-amber-50"
+                >
+                  Continuar Assim Mesmo
+                </Button>
+              </div>
             </div>
             
             <p className="text-xs text-muted-foreground text-center mt-2">
