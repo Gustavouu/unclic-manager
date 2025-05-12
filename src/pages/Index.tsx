@@ -2,14 +2,12 @@
 import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { useLoading } from "@/contexts/LoadingContext";
 import { useInitialization } from "@/hooks/useInitialization";
 
 const Index = () => {
   const { user, loading: authLoading } = useAuth();
-  const { loading: onboardingLoading } = useNeedsOnboarding();
   const { isLoading, setStage, setProgress } = useLoading();
   
   // Initialize the application
@@ -22,14 +20,14 @@ const Index = () => {
     if (authLoading) {
       setStage("auth");
       setProgress(20);
-    } else if (user && onboardingLoading) {
-      setStage("user_data");
-      setProgress(50);
+    } else if (user) {
+      setStage("dashboard");
+      setProgress(90);
     }
-  }, [authLoading, user, onboardingLoading, setStage, setProgress]);
+  }, [authLoading, user, setStage, setProgress]);
   
-  // Show loading screen while initializing or checking auth/onboarding
-  if (isLoading || authLoading || (user && onboardingLoading)) {
+  // Show loading screen while initializing or checking auth
+  if (isLoading || authLoading) {
     return <LoadingScreen />;
   }
   
@@ -38,7 +36,7 @@ const Index = () => {
     return <Navigate to="/login" replace />;
   }
   
-  // Even if onboarding is needed, send to dashboard instead of forcing onboarding
+  // Always redirect to dashboard when authenticated
   return <Navigate to="/dashboard" replace />;
 };
 
