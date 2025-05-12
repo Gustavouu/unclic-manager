@@ -96,6 +96,14 @@ export function LoadingScreen({
     window.location.href = "/dashboard";
   };
   
+  const handleBypassConnectivityCheck = () => {
+    // Store bypass flag in localStorage
+    localStorage.setItem('bypass_connectivity_check', 'true');
+    
+    // Reload the page
+    window.location.reload();
+  };
+  
   const handleResetAndReload = () => {
     // Clear localStorage
     localStorage.clear();
@@ -144,6 +152,15 @@ export function LoadingScreen({
                   Correção Rápida
                 </Button>
               )}
+              
+              <Button
+                variant="outline" 
+                size="sm"
+                onClick={handleBypassConnectivityCheck}
+                className="w-full text-blue-600 border-blue-600 hover:bg-blue-50"
+              >
+                Pular Verificação de Conectividade
+              </Button>
               
               <div className="flex justify-center space-x-2">
                 <Button 

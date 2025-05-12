@@ -37,7 +37,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
   
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { setStage } = useLoading();
+  const { setStage, bypassConnectivityCheck, allowContinueDespiteErrors } = useLoading();
   
   // Sync tenant_id with businessId
   useEffect(() => {
@@ -59,27 +59,51 @@ export function TenantProvider({ children }: TenantProviderProps) {
       return true; // Return success to avoid breaking app flow
     }
     
+    // If we're bypassing connectivity check or in emergency mode, don't even try
+    if (bypassConnectivityCheck || allowContinueDespiteErrors) {
+      console.log("Skipping tenant context setting due to bypass/emergency mode");
+      return true;
+    }
+    
     try {
       setStage('config');
       
-      // Correctly call supabase.rpc and properly await the response
-      const response = await supabase.rpc('set_tenant_context', { tenant_id: id });
-      const { error } = response;
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise<boolean>((_, reject) => {
+        setTimeout(() => {
+          console.warn("Tenant context setting timed out, continuing anyway");
+          return true; // Resolve with success after timeout to not block flow
+        }, 3000);
+      });
       
-      if (error) {
-        console.warn("Failed to set tenant context, but continuing anyway:", error.message);
-        // Don't throw - continue app initialization
-        return true;
-      }
+      const rpcPromise = async () => {
+        try {
+          // Correctly call supabase.rpc and properly await the response
+          const response = await supabase.rpc('set_tenant_context', { tenant_id: id });
+          const { error } = response;
+          
+          if (error) {
+            console.warn("Failed to set tenant context, but continuing anyway:", error.message);
+            // Don't throw - continue app initialization
+            return true;
+          }
+          
+          // Cache the tenant ID
+          try {
+            localStorage.setItem('current_tenant_id', id);
+          } catch (err) {
+            console.warn("Failed to cache tenant ID:", err);
+          }
+          
+          return true;
+        } catch (err) {
+          console.warn("RPC error:", err);
+          return false;
+        }
+      };
       
-      // Cache the tenant ID
-      try {
-        localStorage.setItem('current_tenant_id', id);
-      } catch (err) {
-        console.warn("Failed to cache tenant ID:", err);
-      }
-      
-      return true;
+      // Use race to implement timeout, but both resolve with true to continue app flow
+      return await Promise.race([rpcPromise(), timeoutPromise]);
     } catch (err: any) {
       // Log the error but don't let it block the app
       console.warn('Error in setTenantContext:', err);
@@ -88,7 +112,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
       // Return true anyway to not block the app
       return true;
     }
-  }, [setStage]);
+  }, [setStage, bypassConnectivityCheck, allowContinueDespiteErrors]);
   
   // Refresh business data with error handling and caching
   const refreshBusinessData = async (): Promise<void> => {

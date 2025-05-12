@@ -54,7 +54,14 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
   
   const { user, loading: authLoading } = useAuth();
   const { businessId: currentBusinessId, loading: businessLoading } = useCurrentBusiness();
-  const { setStage, finishLoading, setError, allowContinueDespiteErrors, setAllowContinueDespiteErrors } = useLoading();
+  const { 
+    setStage, 
+    finishLoading, 
+    setError, 
+    allowContinueDespiteErrors, 
+    setAllowContinueDespiteErrors,
+    bypassConnectivityCheck
+  } = useLoading();
   
   // Check for emergency continue flags
   useEffect(() => {
@@ -65,27 +72,50 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
     }
   }, [setAllowContinueDespiteErrors]);
   
-  // Check database connection with timeout
+  // Check database connection with timeout and bypass option
   const checkDatabaseConnection = async (): Promise<boolean> => {
+    // If bypass is enabled, return true without checking
+    if (bypassConnectivityCheck) {
+      console.log("Bypassing database connection check due to flag");
+      return true;
+    }
+    
     try {
       const cacheKey = 'health_check_db';
       return await fetchWithCache(
         cacheKey,
         async () => {
-          // Properly handle the Supabase query and await the response
-          const response = await supabase
-            .from('negocios')
-            .select('id')
-            .limit(1);
+          try {
+            // Add timeout to the database check
+            const timeoutPromise = new Promise<boolean>((_, reject) => {
+              setTimeout(() => reject(new Error("Database connection timeout")), 5000);
+            });
             
-          const { data, error } = response;
-          return !error && Array.isArray(data);
+            // Properly handle the Supabase query with timeout
+            const queryPromise = async () => {
+              const response = await supabase
+                .from('negocios')
+                .select('id')
+                .limit(1);
+                
+              const { data, error } = response;
+              return !error && Array.isArray(data);
+            };
+            
+            // Race between timeout and actual query
+            return await Promise.race([queryPromise(), timeoutPromise]);
+          } catch (err) {
+            console.warn("Database check failed with timeout or error:", err);
+            return false;
+          }
         },
-        5 // Cache for 5 minutes
+        5, // Cache for 5 minutes
+        bypassConnectivityCheck // Force refresh if bypass is enabled
       );
     } catch (error) {
       console.warn("Database connection check failed:", error);
-      return false;
+      // If we have bypass enabled or allow continue despite errors, don't fail
+      return bypassConnectivityCheck || allowContinueDespiteErrors;
     }
   };
 
@@ -114,26 +144,41 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
     }
   };
   
-  // Simplified tenant context setting
+  // Simplified tenant context setting with better error handling
   const trySetTenantContext = async (id: string): Promise<boolean> => {
     if (!id) return false;
     
     try {
-      // Properly await the Supabase RPC call
-      const response = await supabase
-        .rpc('set_tenant_context', { tenant_id: id });
+      // Add timeout to RPC call to prevent hanging
+      const timeoutPromise = new Promise<boolean>((_, reject) => {
+        setTimeout(() => reject(new Error("set_tenant_context timeout")), 3000);
+      });
       
-      const { error } = response;
-      return !error;
+      const rpcPromise = async () => {
+        try {
+          // Properly await the Supabase RPC call
+          const response = await supabase
+            .rpc('set_tenant_context', { tenant_id: id });
+          
+          return !response.error;
+        } catch (e) {
+          console.warn("RPC call failed:", e);
+          return false;
+        }
+      };
+      
+      // Use race to implement timeout
+      return await Promise.race([rpcPromise(), timeoutPromise]);
     } catch (error) {
       console.warn("Failed to set tenant context:", error);
-      return false;
+      // Not critical, so return true if we're in emergency mode
+      return allowContinueDespiteErrors || bypassConnectivityCheck;
     }
   };
   
-  // Main initialization function
+  // Main initialization function with improved error handling
   useEffect(() => {
-    // Function to handle initialization process with timeouts and retries
+    // Improved initialization process with retries and fallbacks
     async function initialize() {
       try {
         // Skip initialization if already completed
@@ -157,25 +202,33 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
           return;
         }
         
-        // Step 2: Run health checks in parallel
+        // Step 2: Run health checks in parallel if not bypassed
         setStage('config');
-        const healthChecks = await executeParallel([
-          { 
-            key: 'database', 
-            promise: () => checkDatabaseConnection()
+        
+        // Only run database check if not bypassed
+        if (!bypassConnectivityCheck) {
+          const healthChecks = await executeParallel([
+            { 
+              key: 'database', 
+              promise: () => checkDatabaseConnection(),
+              timeoutMs: 5000
+            }
+          ]);
+          
+          setHealthStatus(prev => ({
+            ...prev,
+            database: Boolean(healthChecks.database.data)
+          }));
+          
+          if (!healthChecks.database.data && !allowContinueDespiteErrors && !bypassConnectivityCheck) {
+            throw new Error("Database connection check failed");
           }
-        ]);
-        
-        setHealthStatus(prev => ({
-          ...prev,
-          database: Boolean(healthChecks.database.data)
-        }));
-        
-        if (!healthChecks.database.data && !allowContinueDespiteErrors) {
-          throw new Error("Database connection check failed");
+        } else {
+          // If bypassed, just set database health to true
+          setHealthStatus(prev => ({ ...prev, database: true }));
         }
         
-        // Step 3: Load user data
+        // Step 3: Load user data with fallback
         setStage('user_data');
         const userData = await loadUserData(user.id);
         if (userData) {
@@ -185,7 +238,7 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
           // Continue anyway, as we have the user from auth
         }
         
-        // Step 4: Load business data
+        // Step 4: Load business data with fallback
         setStage('business_data');
         if (businessLoading) {
           // Wait for business data to load
@@ -202,16 +255,28 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
           // Try to set tenant context but don't fail if it doesn't work
           const tenantSuccess = await trySetTenantContext(currentBusinessId);
           setHealthStatus(prev => ({ ...prev, tenant: tenantSuccess }));
+        } else if (allowContinueDespiteErrors || bypassConnectivityCheck) {
+          // In emergency mode, try to get business ID from cache
+          const cachedBusinessId = localStorage.getItem('currentBusinessId');
+          if (cachedBusinessId) {
+            console.log("Using cached business ID in emergency mode:", cachedBusinessId);
+            setBusinessId(cachedBusinessId);
+            setTenantId(cachedBusinessId);
+            setHealthStatus(prev => ({ ...prev, business: true }));
+            
+            // Try to set tenant context but don't fail
+            await trySetTenantContext(cachedBusinessId);
+          }
         }
         
-        // All done
+        // All done - even if some parts failed, we want to complete in emergency mode
         finishLoading();
         setInitialized(true);
       } catch (error: any) {
         console.error("Initialization error:", error);
         
         // Only show error if we're not in emergency mode
-        if (!allowContinueDespiteErrors) {
+        if (!allowContinueDespiteErrors && !bypassConnectivityCheck) {
           const appError = handleError('AppInit', error, false);
           
           setErrors(prev => ({ 
@@ -239,6 +304,7 @@ export function AppInitProvider({ children }: AppInitProviderProps) {
     currentBusinessId, 
     initialized,
     allowContinueDespiteErrors,
+    bypassConnectivityCheck,
     errors,
     setStage,
     finishLoading,

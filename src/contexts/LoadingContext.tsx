@@ -17,6 +17,8 @@ interface LoadingContextType {
   finishLoading: () => void;
   allowContinueDespiteErrors: boolean;
   setAllowContinueDespiteErrors: (allow: boolean) => void;
+  bypassConnectivityCheck: boolean;
+  setBypassConnectivityCheck: (bypass: boolean) => void;
 }
 
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
@@ -32,15 +34,24 @@ export function LoadingProvider({ children, timeout = 60000 }: LoadingProviderPr
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<any | null>(null);
   const [allowContinueDespiteErrors, setAllowContinueDespiteErrors] = useState(false);
+  const [bypassConnectivityCheck, setBypassConnectivityCheck] = useState(false);
   
   // Check for emergency continue flag in localStorage
   useEffect(() => {
     const hasEmergencyFlag = localStorage.getItem('app_emergency_continue') === 'true';
+    const hasConnectivityBypassFlag = localStorage.getItem('bypass_connectivity_check') === 'true';
+    
     if (hasEmergencyFlag) {
       console.log("Emergency continue flag detected, will attempt to load app despite errors");
       setAllowContinueDespiteErrors(true);
       // Clear the flag after reading it
       localStorage.removeItem('app_emergency_continue');
+    }
+    
+    if (hasConnectivityBypassFlag) {
+      console.log("Connectivity check bypass flag detected, will skip DB connection check");
+      setBypassConnectivityCheck(true);
+      localStorage.removeItem('bypass_connectivity_check');
     }
   }, []);
 
@@ -115,7 +126,9 @@ export function LoadingProvider({ children, timeout = 60000 }: LoadingProviderPr
       startLoading,
       finishLoading,
       allowContinueDespiteErrors,
-      setAllowContinueDespiteErrors
+      setAllowContinueDespiteErrors,
+      bypassConnectivityCheck,
+      setBypassConnectivityCheck
     }}>
       {isLoading ? (
         <LoadingScreen stage={currentStage} progress={progress} />
