@@ -2,6 +2,7 @@
 import { vi, afterAll, afterEach, beforeAll } from 'vitest';
 import { setupServer } from 'msw/node';
 import { handlers } from './mocks/handlers';
+import '@testing-library/jest-dom/vitest'; // Configurar matchers jest-dom para Vitest
 
 // Setup MSW server
 export const server = setupServer(...handlers);
