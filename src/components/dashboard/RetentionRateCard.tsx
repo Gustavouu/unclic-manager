@@ -2,8 +2,8 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { UserCheck, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { formatPercentage } from "@/lib/format";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface RetentionRateCardProps {
   retentionRate: number;
@@ -11,85 +11,74 @@ interface RetentionRateCardProps {
 }
 
 export function RetentionRateCard({ retentionRate, loading = false }: RetentionRateCardProps) {
-  const safeRate = loading ? 0 : (retentionRate || 0);
-  
-  // Determine color based on retention rate
-  const getColor = (rate: number) => {
-    if (rate >= 75) return "text-green-500";
-    if (rate >= 50) return "text-amber-500";
-    return "text-red-500";
-  };
-  
-  // Determine progress color based on retention rate
-  const getProgressColor = (rate: number) => {
-    if (rate >= 75) return "bg-green-500";
-    if (rate >= 50) return "bg-amber-500";
+  const getColorClass = (rate: number) => {
+    if (rate >= 80) return "bg-green-500";
+    if (rate >= 60) return "bg-yellow-500";
     return "bg-red-500";
+  };
+
+  const getMessage = (rate: number) => {
+    if (rate >= 80) return "Excelente! Continue com o bom trabalho.";
+    if (rate >= 60) return "Bom, mas há espaço para melhorias.";
+    return "Atenção! É importante melhorar a retenção.";
   };
 
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-display">Taxa de Retenção de Clientes</CardTitle>
+        <CardTitle className="text-lg font-display">Taxa de Retenção</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col justify-between h-[calc(100%-60px)]">
+      <CardContent className="pt-4">
         {loading ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <div className="h-4 w-32 bg-gray-200 animate-pulse rounded mb-4"></div>
-            <div className="h-24 w-24 bg-gray-200 animate-pulse rounded-full"></div>
+          <div className="space-y-4">
+            <Skeleton className="h-16 w-16 rounded-full mx-auto" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24 mx-auto" />
+              <Skeleton className="h-2 w-full" />
+              <Skeleton className="h-4 w-48 mx-auto" />
+            </div>
           </div>
         ) : (
           <>
             <div className="flex flex-col items-center">
-              <div className="relative h-40 w-40 flex items-center justify-center mb-4">
-                <svg className="w-full h-full" viewBox="0 0 100 100">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="45"
+              <div className="relative w-24 h-24 mb-4">
+                <svg viewBox="0 0 36 36" className="w-24 h-24 transform -rotate-90">
+                  <path
+                    className="stroke-current text-muted stroke-2"
                     fill="none"
-                    stroke="#e2e8f0"
-                    strokeWidth="10"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="45"
+                  <path
+                    className={`stroke-current ${getColorClass(retentionRate)} stroke-2`}
                     fill="none"
-                    stroke={safeRate >= 75 ? "#10b981" : safeRate >= 50 ? "#f59e0b" : "#ef4444"}
-                    strokeWidth="10"
-                    strokeDasharray={`${(safeRate * 2.83)}px 283px`}
-                    strokeLinecap="round"
-                    transform="rotate(-90 50 50)"
+                    strokeDasharray={`${retentionRate}, 100`}
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   />
                 </svg>
-                <div className="absolute flex flex-col items-center justify-center">
-                  <span className={cn("text-3xl font-bold", getColor(safeRate))}>
-                    {safeRate}%
-                  </span>
-                  <span className="text-xs text-muted-foreground">Taxa de Retenção</span>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                  <span className="text-3xl font-bold">{retentionRate}%</span>
                 </div>
               </div>
               
-              <div className="w-full space-y-2 mt-4">
-                <div className="flex justify-between text-sm">
-                  <span>Meta</span>
-                  <span>70%</span>
-                </div>
-                <Progress className="h-2" value={safeRate} />
-              </div>
+              <p className="text-sm text-center mb-6">{getMessage(retentionRate)}</p>
             </div>
-            
-            <div className="mt-6 border-t pt-4">
-              <div className="flex items-center text-sm text-muted-foreground">
-                <UserCheck className="w-4 h-4 mr-2" />
-                <span>
-                  {safeRate >= 70 
-                    ? "Excelente taxa de retenção!"
-                    : safeRate >= 50
-                    ? "Taxa de retenção aceitável"
-                    : "Melhore sua taxa de retenção"}
-                </span>
+
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span>Meta mensal</span>
+                  <span>90%</span>
+                </div>
+                <Progress value={(retentionRate / 90) * 100} className="h-1" />
+              </div>
+              
+              <div className="text-xs text-muted-foreground">
+                <p className="mb-1">Como melhorar:</p>
+                <ul className="list-disc list-inside space-y-1 pl-1">
+                  <li>Enviar follow-ups após atendimentos</li>
+                  <li>Oferecer descontos para clientes recorrentes</li>
+                  <li>Criar programa de fidelidade</li>
+                </ul>
               </div>
             </div>
           </>

@@ -16,6 +16,7 @@ import { DashboardFilters } from '@/components/dashboard/DashboardFilters';
 import { FilterPeriod } from '@/types/dashboard';
 import { useDashboardRealtime } from '@/hooks/dashboard/useDashboardRealtime';
 import { useAppointments } from '@/hooks/appointments/useAppointments';
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const [period, setPeriod] = useState<FilterPeriod>('month');
@@ -35,6 +36,12 @@ const Dashboard = () => {
       );
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  // Handle refresh action
+  const handleRefresh = () => {
+    refresh();
+    toast.success("Atualizando dados do dashboard...");
+  };
 
   // Adjust popularServices to include percentage
   const popularServicesWithPercentage = stats?.popularServices?.map(service => ({
@@ -110,7 +117,10 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <StatusFixButton onClick={refresh} />
+      <StatusFixButton 
+        onClick={handleRefresh} 
+        isLoading={loading}
+      />
       <DashboardFooter />
     </div>
   );

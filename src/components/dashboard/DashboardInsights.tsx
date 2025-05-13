@@ -3,12 +3,36 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUp, ArrowDown, TrendingUp, AlertCircle, Award, Users } from "lucide-react";
 import { DashboardStats } from "@/types/dashboard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface DashboardInsightsProps {
-  stats: DashboardStats;
+  stats: DashboardStats | null;
 }
 
 export function DashboardInsights({ stats }: DashboardInsightsProps) {
+  if (!stats) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-display">Insights</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="divide-y divide-border">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-3 p-3">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // Determining some insights based on the data
   const isRevenuePositive = (stats?.monthlyRevenue || 0) > 5000;
   const isClientGrowthPositive = (stats?.clientsCount || 0) > 20;
@@ -35,7 +59,7 @@ export function DashboardInsights({ stats }: DashboardInsightsProps) {
     {
       title: isClientGrowthPositive ? "Base de clientes crescendo" : "Base de clientes estável",
       description: isClientGrowthPositive 
-        ? `Aumento de ${stats?.newClientsCount || 5} novos clientes este mês` 
+        ? `Aumento de ${stats?.newClientsCount || 5} novos clientes neste período` 
         : "Considere estratégias para atrair novos clientes",
       icon: Users,
       color: "text-blue-500",
@@ -52,7 +76,7 @@ export function DashboardInsights({ stats }: DashboardInsightsProps) {
         <div className="divide-y divide-border">
           {insights.map((insight, index) => (
             <div key={index} className="flex gap-3 p-3 hover:bg-accent/5 transition-colors">
-              <div className={`${insight.bgColor} ${insight.color} p-2 rounded-full h-8 w-8 flex items-center justify-center`}>
+              <div className={`${insight.bgColor} ${insight.color} p-2 rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0`}>
                 <insight.icon size={16} />
               </div>
               <div>
