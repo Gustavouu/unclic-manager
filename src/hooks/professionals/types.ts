@@ -10,6 +10,10 @@ export interface Professional {
   phone?: string;
   bio?: string;
   avatar?: string;
+  photoUrl?: string; // Added field to match usage in components
+  role?: string; // Added field to match usage in components
+  specialties?: string[]; // Added field to match usage in components
+  commissionPercentage?: number; // Added field to match usage in components
   status?: ProfessionalStatus;
   establishmentId?: string;
   tenantId?: string;
@@ -20,7 +24,6 @@ export interface Professional {
   updatedAt?: string;
   appointmentsCount?: number;
   revenueGenerated?: number;
-  // Add the missing properties that are used in the codebase
   hireDate?: string;
   userId?: string;
 }
@@ -42,9 +45,14 @@ export interface UseProfessionalsReturn {
   professionals: Professional[];
   loading: boolean;
   error: Error | null;
+  specialties?: string[]; // Added field to match usage in components
+  isLoading?: boolean; // Added field to match usage in components
   refetch: () => Promise<void>;
   createProfessional: (data: ProfessionalCreateForm) => Promise<Professional | null>;
   updateProfessional: (id: string, data: Partial<Professional>) => Promise<boolean>;
   deleteProfessional: (id: string) => Promise<boolean>;
   getProfessionalById: (id: string) => Professional | undefined;
+  // Adding these aliases to match usage in components
+  addProfessional: (data: ProfessionalCreateForm) => Promise<Professional | null>;
+  removeProfessional: (id: string) => Promise<boolean>;
 }

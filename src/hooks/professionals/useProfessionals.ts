@@ -9,6 +9,7 @@ import {
 } from './types';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import { toast } from 'sonner';
+import { initialProfessionals } from './mockData';
 
 export function useProfessionals(options: UseProfessionalsOptions = {}): UseProfessionalsReturn {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
@@ -19,9 +20,15 @@ export function useProfessionals(options: UseProfessionalsOptions = {}): UseProf
   // Use the tenant ID from options if provided, otherwise use current business ID
   const effectiveTenantId = options.tenantIdOverride || businessId;
 
+  // Extract unique specialties from professionals
+  const specialties = Array.from(
+    new Set(professionals.flatMap(p => p.specialties || []))
+  );
+
   const fetchProfessionals = useCallback(async () => {
     if (!effectiveTenantId) {
-      console.log('No business ID available, skipping professionals fetch');
+      console.log('No business ID available, using mock data');
+      setProfessionals(initialProfessionals);
       setLoading(false);
       return;
     }
@@ -46,28 +53,41 @@ export function useProfessionals(options: UseProfessionalsOptions = {}): UseProf
       
       console.log('Professionals fetched:', data);
       
-      const formattedProfessionals = data?.map(item => ({
-        id: item.id,
-        name: item.name,
-        email: item.email,
-        phone: item.phone,
-        bio: item.bio,
-        avatar: item.avatar,
-        status: item.status || 'active',
-        establishmentId: item.establishmentId,
-        tenantId: item.tenantId,
-        services: item.professional_services?.map((ps: any) => ps.serviceId) || [],
-        workingHours: item.workingHours,
-        isActive: item.isActive,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        userId: item.userId,
-      })) || [];
-      
-      setProfessionals(formattedProfessionals);
+      if (data && data.length > 0) {
+        const formattedProfessionals = data.map(item => ({
+          id: item.id,
+          name: item.name,
+          email: item.email,
+          phone: item.phone,
+          bio: item.bio,
+          avatar: item.avatar,
+          photoUrl: item.avatar, // Map avatar to photoUrl for backward compatibility
+          role: item.role || '',
+          specialties: item.specialties || [],
+          commissionPercentage: item.commissionPercentage || 0,
+          status: item.status || 'active',
+          establishmentId: item.establishmentId,
+          tenantId: item.tenantId,
+          services: item.professional_services?.map((ps: any) => ps.serviceId) || [],
+          workingHours: item.workingHours,
+          isActive: item.isActive,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          userId: item.userId,
+          hireDate: item.hireDate || ''
+        }));
+        
+        setProfessionals(formattedProfessionals);
+      } else {
+        // If no data from API, use mock data
+        setProfessionals(initialProfessionals);
+      }
     } catch (err: any) {
       console.error('Error fetching professionals:', err);
       setError(err);
+      
+      // If error, fallback to mock data
+      setProfessionals(initialProfessionals);
       
       // Only show toast if this is a user-facing operation
       if (!options.secureMode) {
@@ -168,10 +188,15 @@ export function useProfessionals(options: UseProfessionalsOptions = {}): UseProf
     professionals,
     loading,
     error,
+    specialties,
+    isLoading: loading, // Alias for loading
     refetch: fetchProfessionals,
     createProfessional,
     updateProfessional,
     deleteProfessional,
-    getProfessionalById
+    getProfessionalById,
+    // Aliases for existing methods to maintain compatibility
+    addProfessional: createProfessional,
+    removeProfessional: deleteProfessional
   };
 }
