@@ -9,9 +9,7 @@ interface ProfessionalStatusBadgeProps {
 
 export const ProfessionalStatusBadge = ({ status, showLabel = true }: ProfessionalStatusBadgeProps) => {
   // Map legacy status to new format if needed
-  const normalizedStatus = (status in STATUS_MAPPING) 
-    ? STATUS_MAPPING[status as keyof typeof STATUS_MAPPING] as ProfessionalStatus
-    : status as ProfessionalStatus;
+  const normalizedStatus = status as ProfessionalStatus;
 
   const getStatusColor = () => {
     switch (normalizedStatus) {

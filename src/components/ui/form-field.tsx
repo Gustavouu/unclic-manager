@@ -2,23 +2,19 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 
 export interface FormFieldProps {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
-  error?: string | boolean | null;
-  touched?: boolean;
-  required?: boolean;
-  disabled?: boolean;
   placeholder?: string;
-  type?: React.HTMLInputTypeAttribute;
-  className?: string;
-  maxLength?: number;
-  description?: string;
-  helper?: React.ReactNode;
+  startIcon?: string;
+  required?: boolean;
+  error?: string;
+  type?: string;
+  onBlur?: () => void;
+  onFocus?: () => void;
 }
 
 export const FormField: React.FC<FormFieldProps> = ({
@@ -26,55 +22,44 @@ export const FormField: React.FC<FormFieldProps> = ({
   label,
   value,
   onChange,
-  error,
-  touched = false,
+  placeholder,
+  startIcon,
   required = false,
-  disabled = false,
-  placeholder = "",
+  error,
   type = "text",
-  className = "",
-  maxLength,
-  description,
-  helper
+  onBlur,
+  onFocus,
 }) => {
-  const showError = error && touched;
-  const errorMessage = typeof error === 'string' ? error : '';
-  
   return (
-    <div className={cn("space-y-2", className)}>
-      <div className="flex justify-between">
-        <Label 
-          htmlFor={id}
-          className={cn(showError ? "text-destructive" : "")}
-        >
-          {label}
-          {required && <span className="text-destructive ml-1">*</span>}
-        </Label>
-        {description && (
-          <span className="text-xs text-muted-foreground">{description}</span>
+    <div className="space-y-1.5">
+      <Label htmlFor={id} className="text-sm font-medium">
+        {label} {required && <span className="text-red-500">*</span>}
+      </Label>
+      
+      <div className="relative">
+        {startIcon && (
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            {/* Render icon based on name */}
+            <span className="text-gray-500">{startIcon}</span>
+          </div>
         )}
+        
+        <Input
+          id={id}
+          className={`${startIcon ? "pl-10" : ""} ${
+            error ? "border-red-300 focus-visible:ring-red-500" : ""
+          }`}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          required={required}
+          type={type}
+          onBlur={onBlur}
+          onFocus={onFocus}
+        />
       </div>
       
-      <Input
-        id={id}
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={cn(showError ? "border-destructive" : "")}
-        maxLength={maxLength}
-      />
-      
-      {showError && errorMessage && (
-        <p className="text-xs text-destructive">{errorMessage}</p>
-      )}
-      
-      {helper && (
-        <div className="text-xs text-muted-foreground">
-          {helper}
-        </div>
-      )}
+      {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );
 };

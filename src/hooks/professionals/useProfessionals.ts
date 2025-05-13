@@ -1,123 +1,130 @@
 
-import { useState, useEffect } from 'react';
-import { Professional, ProfessionalCreateForm } from './types';
+import { useState, useEffect, useCallback } from 'react';
+import { Professional, ProfessionalCreateForm, ProfessionalStatus } from './types';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useProfessionals = () => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
-  const [specialties, setSpecialties] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Fetch professionals from API or mock data
-  const fetchProfessionals = async () => {
+  const fetchProfessionals = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      // Simulate API call with timeout
+      // For now, simulate loading from an API
       setTimeout(() => {
-        setProfessionals([
+        const mockProfessionals: Professional[] = [
           {
             id: '1',
-            name: 'John Doe',
-            email: 'john@example.com',
-            phone: '(11) 99999-9999',
+            name: 'Carlos Santos',
+            email: 'carlos@example.com',
+            phone: '(11) 98765-4321',
             photoUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
-            bio: 'Profissional experiente com mais de 10 anos de experiência.',
+            bio: 'Especialista em cortes masculinos com mais de 10 anos de experiência.',
             specialties: ['Corte Masculino', 'Barba'],
-            status: 'ACTIVE',
-            commissionPercentage: 30
+            status: ProfessionalStatus.ACTIVE,
+            commissionPercentage: 50,
+            role: 'Barbeiro'
           },
           {
             id: '2',
-            name: 'Jane Smith',
-            email: 'jane@example.com',
-            phone: '(11) 88888-8888',
+            name: 'Ana Oliveira',
+            email: 'ana@example.com',
+            phone: '(11) 98765-4322',
             photoUrl: 'https://randomuser.me/api/portraits/women/1.jpg',
-            bio: 'Especialista em coloração e tratamentos capilares.',
+            bio: 'Especializada em coloração e tratamentos capilares.',
             specialties: ['Coloração', 'Tratamentos'],
-            status: 'ACTIVE',
-            commissionPercentage: 35
+            status: ProfessionalStatus.ACTIVE,
+            commissionPercentage: 45,
+            role: 'Cabeleireira'
+          },
+          {
+            id: '3',
+            name: 'Pedro Mendes',
+            email: 'pedro@example.com',
+            phone: '(11) 98765-4323',
+            photoUrl: 'https://randomuser.me/api/portraits/men/2.jpg',
+            bio: 'Especialista em cortes modernos e penteados para eventos.',
+            specialties: ['Corte Masculino', 'Penteados'],
+            status: ProfessionalStatus.INACTIVE,
+            commissionPercentage: 40,
+            role: 'Barbeiro'
           }
-        ]);
-        setSpecialties(['Corte Masculino', 'Barba', 'Coloração', 'Tratamentos', 'Manicure', 'Pedicure']);
+        ];
+        setProfessionals(mockProfessionals);
         setLoading(false);
-      }, 500);
+      }, 1000);
     } catch (err) {
       setError('Erro ao carregar profissionais');
       setLoading(false);
-      console.error(err);
     }
-  };
+  }, []);
 
-  // Add professional to the list
-  const addProfessional = async (professional: ProfessionalCreateForm): Promise<void> => {
+  // Add a new professional
+  const addProfessional = async (professional: ProfessionalCreateForm) => {
     try {
-      // Simulate API call
-      setTimeout(() => {
-        const newProfessional: Professional = {
-          id: Date.now().toString(),
-          ...professional,
-          status: 'ACTIVE'
-        };
-        setProfessionals([...professionals, newProfessional]);
-      }, 500);
+      // In a real app, this would be an API call
+      const newProfessional: Professional = {
+        ...professional,
+        id: uuidv4(),
+        status: ProfessionalStatus.ACTIVE
+      };
+      
+      setProfessionals(prev => [...prev, newProfessional]);
+      return newProfessional;
     } catch (err) {
       setError('Erro ao adicionar profissional');
-      console.error(err);
       throw err;
     }
   };
 
-  // Update existing professional
-  const updateProfessional = async (id: string, data: ProfessionalCreateForm): Promise<void> => {
+  // Update a professional
+  const updateProfessional = async (id: string, data: ProfessionalCreateForm) => {
     try {
-      // Simulate API call
-      setTimeout(() => {
-        setProfessionals(
-          professionals.map(p => 
-            p.id === id ? { ...p, ...data } : p
-          )
-        );
-      }, 500);
+      // In a real app, this would be an API call
+      const updatedProfessionals = professionals.map(p => 
+        p.id === id ? { ...p, ...data, id } : p
+      );
+      
+      setProfessionals(updatedProfessionals);
+      return updatedProfessionals.find(p => p.id === id);
     } catch (err) {
       setError('Erro ao atualizar profissional');
-      console.error(err);
       throw err;
     }
   };
 
-  // Remove professional from the list
-  const removeProfessional = async (id: string): Promise<void> => {
+  // Remove a professional
+  const removeProfessional = async (id: string) => {
     try {
-      // Simulate API call
-      setTimeout(() => {
-        setProfessionals(professionals.filter(p => p.id !== id));
-      }, 500);
+      // In a real app, this would be an API call
+      const updatedProfessionals = professionals.filter(p => p.id !== id);
+      setProfessionals(updatedProfessionals);
+      return true;
     } catch (err) {
       setError('Erro ao remover profissional');
-      console.error(err);
       throw err;
     }
   };
 
-  // Get professional by ID
-  const getProfessionalById = (id: string): Professional | undefined => {
+  // Get professional by id
+  const getProfessionalById = (id: string) => {
     return professionals.find(p => p.id === id);
   };
 
-  // Load professionals on component mount
   useEffect(() => {
     fetchProfessionals();
-  }, []);
+  }, [fetchProfessionals]);
 
-  return {
-    professionals,
-    loading,
-    error,
+  return { 
+    professionals, 
+    loading, 
+    isLoading: loading,
+    error, 
     fetchProfessionals,
     addProfessional,
     updateProfessional,
     removeProfessional,
-    getProfessionalById,
-    specialties
+    getProfessionalById
   };
 };
