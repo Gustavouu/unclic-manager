@@ -6,8 +6,8 @@ import { toast } from 'sonner';
 
 export interface Service {
   id: string;
-  name: string;
-  nome: string;
+  name: string;  // Required by both interface and implementation
+  nome: string;  // The Portuguese equivalent used in the database
   descricao?: string;
   preco: number;
   duracao: number;
@@ -48,7 +48,7 @@ export const useServices = () => {
         // Map the database columns to our service interface
         const mappedServices = (data || []).map(service => ({
           id: service.id,
-          name: service.nome,
+          name: service.nome,  // Map nome to name as well
           nome: service.nome,
           descricao: service.descricao,
           preco: service.preco,
@@ -80,7 +80,7 @@ export const useServices = () => {
       const { data, error } = await supabase
         .from('servicos')
         .insert([{
-          nome: serviceData.nome,
+          nome: serviceData.nome || serviceData.name, // Use nome if available, otherwise use name
           descricao: serviceData.descricao,
           preco: serviceData.preco,
           duracao: serviceData.duracao,
@@ -96,7 +96,7 @@ export const useServices = () => {
 
       const newService: Service = {
         id: data.id,
-        name: data.nome,
+        name: data.nome,  // Ensure name is set
         nome: data.nome,
         descricao: data.descricao,
         preco: data.preco,
@@ -122,7 +122,7 @@ export const useServices = () => {
       const updateData: any = {};
       
       // Map fields from the Service interface to database columns
-      if (serviceData.nome) updateData.nome = serviceData.nome;
+      if (serviceData.name || serviceData.nome) updateData.nome = serviceData.nome || serviceData.name;
       if (serviceData.descricao !== undefined) updateData.descricao = serviceData.descricao;
       if (serviceData.preco !== undefined) updateData.preco = serviceData.preco;
       if (serviceData.duracao !== undefined) updateData.duracao = serviceData.duracao;
@@ -141,7 +141,7 @@ export const useServices = () => {
 
       const updatedService: Service = {
         id: data.id,
-        name: data.nome,
+        name: data.nome,  // Ensure name is set
         nome: data.nome,
         descricao: data.descricao,
         preco: data.preco,

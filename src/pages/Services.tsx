@@ -55,6 +55,7 @@ const Services = () => {
     try {
       // Format the service for the database
       const dbService = {
+        name: newService.name, // Add name property required by Service interface
         nome: newService.name,
         descricao: newService.description,
         preco: parseFloat(newService.price),
@@ -83,6 +84,7 @@ const Services = () => {
     try {
       // Format the service for the database
       const dbService = {
+        name: updatedService.name, // Add name property required by Service interface
         nome: updatedService.name,
         descricao: updatedService.description,
         preco: parseFloat(updatedService.price),
