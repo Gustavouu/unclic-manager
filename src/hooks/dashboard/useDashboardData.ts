@@ -1,10 +1,12 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FilterPeriod, DashboardStats } from '@/types/dashboard';
 import { useTenant } from '@/contexts/TenantContext';
 
-export { DashboardStats }; // Export DashboardStats from the hook
+// Re-export as a type to fix the isolatedModules error
+export type { DashboardStats };
 
 export const useDashboardData = (period: FilterPeriod = 'month') => {
   const [stats, setStats] = useState<DashboardStats>({

@@ -1,4 +1,6 @@
 
+export type ProfessionalStatus = "active" | "vacation" | "leave" | "inactive";
+
 export type Professional = {
   id: string;
   name: string;
@@ -9,6 +11,9 @@ export type Professional = {
   specialties: string[];
   commissionPercentage?: number;
   photoUrl?: string;
+  status: ProfessionalStatus;
+  hireDate?: string;
+  userId?: string;
 };
 
 export type ProfessionalCreateForm = Omit<Professional, 'id'>;

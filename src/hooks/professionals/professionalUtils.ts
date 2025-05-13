@@ -1,56 +1,33 @@
 
-import { useMemo, useCallback } from "react";
-import { Professional } from "./types";
+import { useMemo } from "react";
+import { Professional, ProfessionalStatus } from "./types";
 
 export const useProfessionalUtils = (professionals: Professional[] = []) => {
-  // Garantir que professionals é sempre um array
-  const safeProfessionals = Array.isArray(professionals) ? professionals : [];
-  
-  // Extrair todas as especialidades dos profissionais com verificações adequadas
   const specialties = useMemo(() => {
-    if (!safeProfessionals || safeProfessionals.length === 0) {
-      // Retornar especializações padrão se não houver profissionais
-      return [
-        "Cabeleireiro", 
-        "Manicure", 
-        "Pedicure", 
-        "Esteticista", 
-        "Massagista", 
-        "Barbeiro", 
-        "Maquiador"
-      ];
-    }
-    
-    const allSpecialties = safeProfessionals.flatMap(p => {
-      if (!p) return [];
-      if (!Array.isArray(p.specialties)) return [];
-      return p.specialties;
-    });
-    
-    // Se não houver especialidades extraídas, retornar as padrão
-    if (allSpecialties.length === 0) {
-      return [
-        "Cabeleireiro", 
-        "Manicure", 
-        "Pedicure", 
-        "Esteticista", 
-        "Massagista", 
-        "Barbeiro", 
-        "Maquiador"
-      ];
-    }
-    
-    return [...new Set(allSpecialties)].filter(Boolean);
-  }, [safeProfessionals]);
+    // Extract all unique specialties from professionals
+    const allSpecialties = professionals.flatMap(p => p.specialties || []);
+    return [...new Set(allSpecialties)].sort();
+  }, [professionals]);
   
-  // Encontrar profissional por ID com verificação de nulos
-  const getProfessionalById = useCallback((id: string) => {
-    if (!safeProfessionals || safeProfessionals.length === 0) return undefined;
-    return safeProfessionals.find(p => p?.id === id);
-  }, [safeProfessionals]);
-
+  const getAvailableProfessionalsBySpecialty = (specialty: string) => {
+    return professionals.filter(
+      p => p.status === 'active' && p.specialties && p.specialties.includes(specialty)
+    );
+  };
+  
+  const getProfessionalById = (id: string) => {
+    return professionals.find(p => p.id === id);
+  };
+  
+  const getProfessionalsByStatus = (status: ProfessionalStatus | 'all') => {
+    if (status === 'all') return professionals;
+    return professionals.filter(p => p.status === status);
+  };
+  
   return {
     specialties,
-    getProfessionalById
+    getAvailableProfessionalsBySpecialty,
+    getProfessionalById,
+    getProfessionalsByStatus
   };
 };
