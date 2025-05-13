@@ -37,17 +37,28 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     loading,
     error,
     updateBusinessStatus,
-    fetchBusinessData: refreshBusinessData
+    fetchBusinessData
   } = useCurrentBusiness();
 
-  const updateTenantId = (id: string | null) => {
+  const updateTenantId = useCallback((id: string | null) => {
     setCurrentTenantId(id);
     if (id) {
       localStorage.setItem("currentBusinessId", id);
     } else {
       localStorage.removeItem("currentBusinessId");
     }
-  };
+  }, []);
+
+  const refreshBusinessData = useCallback(async () => {
+    console.log('Refreshing business data...');
+    try {
+      await fetchBusinessData(true); // true to skip cache
+      return Promise.resolve();
+    } catch (err) {
+      console.error('Error refreshing business data:', err);
+      return Promise.reject(err);
+    }
+  }, [fetchBusinessData]);
 
   return (
     <TenantContext.Provider

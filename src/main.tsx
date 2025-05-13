@@ -6,6 +6,7 @@ import App from "./App";
 import "./index.css";
 import { SessionProvider } from "./contexts/SessionContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { TenantProvider } from "./contexts/TenantContext";
 import { initializeEnv } from "./lib/env";
 
 // Initialize environment validation
@@ -22,7 +23,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <BrowserRouter>
       <SessionProvider>
         <AuthProvider>
-          <App />
+          <TenantProvider>
+            <App />
+          </TenantProvider>
         </AuthProvider>
       </SessionProvider>
     </BrowserRouter>

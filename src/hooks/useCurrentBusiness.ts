@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,21 +11,36 @@ export const useCurrentBusiness = () => {
   const [businessData, setBusinessData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastFetchTimestamp, setLastFetchTimestamp] = useState<number>(0);
+
+  // Add a cache timeout of 5 minutes (300000 ms)
+  const CACHE_TIMEOUT = 5 * 60 * 1000;
 
   const fetchBusinessData = useCallback(async (skipCache = false) => {
     if (!user) {
+      console.log('No authenticated user, skipping business fetch');
       setLoading(false);
+      return;
+    }
+
+    const now = Date.now();
+    // If we've fetched recently and don't want to skip cache, don't fetch again
+    if (!skipCache && now - lastFetchTimestamp < CACHE_TIMEOUT && businessData) {
+      console.log('Using cached business data');
       return;
     }
 
     try {
       setLoading(true);
+      console.log('Fetching business data for user:', user.id);
       
       // Check if we already have a businessId in localStorage
       let currentBusinessId = localStorage.getItem('currentBusinessId');
+      console.log('Current business ID from localStorage:', currentBusinessId);
       
       if (!currentBusinessId) {
         // If not, fetch it from the database
+        console.log('No business ID in localStorage, fetching from database');
         const { data: userData, error: userError } = await supabase
           .from('usuarios')
           .select('id_negocio')
@@ -34,16 +48,21 @@ export const useCurrentBusiness = () => {
           .maybeSingle();
 
         if (userError) {
+          console.error('Error fetching user business ID:', userError);
           throw userError;
         }
 
         if (!userData?.id_negocio) {
           // User doesn't have a business associated
+          console.log('User has no associated business');
           setLoading(false);
+          setBusinessId(null);
+          setBusinessData(null);
           return;
         }
         
         currentBusinessId = userData.id_negocio;
+        console.log('Retrieved business ID from database:', currentBusinessId);
         
         // Store it in localStorage for future use
         localStorage.setItem('currentBusinessId', currentBusinessId);
@@ -53,6 +72,7 @@ export const useCurrentBusiness = () => {
       setBusinessId(currentBusinessId);
 
       // Fetch complete business data
+      console.log('Fetching complete business data for ID:', currentBusinessId);
       const { data: businessData, error: businessError } = await supabase
         .from('negocios')
         .select('*')
@@ -60,10 +80,13 @@ export const useCurrentBusiness = () => {
         .maybeSingle();
 
       if (businessError) {
+        console.error('Error fetching business data:', businessError);
         throw businessError;
       }
 
+      console.log('Business data retrieved successfully:', businessData ? 'yes' : 'no');
       setBusinessData(businessData);
+      setLastFetchTimestamp(Date.now());
       
       // Make sure we keep the businessId in localStorage
       if (businessData && businessData.id) {
@@ -76,11 +99,19 @@ export const useCurrentBusiness = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, businessData, lastFetchTimestamp]);
 
   useEffect(() => {
-    fetchBusinessData();
-  }, [fetchBusinessData]);
+    if (user) {
+      fetchBusinessData();
+    } else {
+      // Clear business data if user is not logged in
+      setBusinessId(null);
+      setBusinessData(null);
+      setError(null);
+      localStorage.removeItem('currentBusinessId');
+    }
+  }, [fetchBusinessData, user]);
 
   const updateBusinessStatus = async (id: string, status: string): Promise<boolean> => {
     try {

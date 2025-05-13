@@ -20,13 +20,54 @@ export const useServices = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { businessId } = useTenant();
+  const { businessId, currentBusiness, refreshBusinessData } = useTenant();
   const [lastUpdate, setLastUpdate] = useState(Date.now());
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
+
+  // Enhanced function to check for business ID with retries
+  const checkBusinessId = useCallback(async (): Promise<string | null> => {
+    if (businessId) {
+      console.log('Using existing business ID:', businessId);
+      return businessId;
+    }
+
+    // Try to refresh the business data to get latest ID
+    if (retryCount < maxRetries) {
+      console.log(`Attempting to refresh business data (attempt ${retryCount + 1}/${maxRetries})`);
+      setRetryCount(prev => prev + 1);
+      
+      try {
+        await refreshBusinessData();
+        // After refresh, check if we have businessId now
+        if (businessId) {
+          console.log('Successfully retrieved business ID after refresh:', businessId);
+          return businessId;
+        }
+      } catch (err) {
+        console.error('Failed to refresh business data:', err);
+      }
+    }
+    
+    // If we still don't have a business ID, try to get it from localStorage
+    const storedBusinessId = localStorage.getItem('currentBusinessId');
+    if (storedBusinessId) {
+      console.log('Retrieved business ID from localStorage:', storedBusinessId);
+      return storedBusinessId;
+    }
+    
+    return null;
+  }, [businessId, retryCount, refreshBusinessData]);
 
   // Function to fetch services that can be called to refresh data
   const fetchServices = useCallback(async () => {
-    if (!businessId) {
+    // First, ensure we have a valid business ID
+    const currentBusinessId = await checkBusinessId();
+    
+    if (!currentBusinessId) {
       console.log('No business ID available, skipping services fetch');
+      setError("ID do negócio não disponível. Por favor, verifique se você está associado a um negócio.");
+      toast.error("Negócio não encontrado. Verifique sua conta ou contate o suporte.");
       setIsLoading(false);
       return;
     }
@@ -35,7 +76,7 @@ export const useServices = () => {
     setError(null);
     
     try {
-      console.log('Fetching services for business ID:', businessId);
+      console.log('Fetching services for business ID:', currentBusinessId);
       
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
@@ -49,7 +90,7 @@ export const useServices = () => {
       const { data, error } = await supabase
         .from('servicos')
         .select('*')
-        .eq('id_negocio', businessId)
+        .eq('id_negocio', currentBusinessId)
         .eq('ativo', true);
 
       if (error) {
@@ -82,7 +123,7 @@ export const useServices = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [businessId]);
+  }, [checkBusinessId]);
 
   // Effect to fetch services when businessId changes or lastUpdate is updated
   useEffect(() => {
@@ -91,8 +132,11 @@ export const useServices = () => {
 
   const createService = async (serviceData: Omit<Service, 'id'>) => {
     try {
-      if (!businessId) {
-        throw new Error("ID do negócio não disponível");
+      // Ensure we have a valid business ID
+      const currentBusinessId = await checkBusinessId();
+      
+      if (!currentBusinessId) {
+        throw new Error("ID do negócio não disponível. Verifique se você está associado a um negócio.");
       }
       
       // Ensure we have an active session
@@ -111,7 +155,7 @@ export const useServices = () => {
           id_categoria: serviceData.categoria_id,
           ativo: serviceData.ativo ?? true,
           imagem_url: serviceData.imagem_url,
-          id_negocio: businessId
+          id_negocio: currentBusinessId
         }])
         .select()
         .single();
@@ -143,8 +187,12 @@ export const useServices = () => {
     }
   };
 
+  // Update the updateService and deleteService functions to use checkBusinessId
   const updateService = async (id: string, serviceData: Partial<Service>) => {
     try {
+      // Ensure we have a valid business ID
+      await checkBusinessId();
+      
       // Ensure we have an active session
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
@@ -201,6 +249,9 @@ export const useServices = () => {
 
   const deleteService = async (id: string) => {
     try {
+      // Ensure we have a valid business ID
+      await checkBusinessId();
+      
       // Ensure we have an active session
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
@@ -231,6 +282,7 @@ export const useServices = () => {
 
   // Function to manually refresh the services list
   const refreshServices = () => {
+    setRetryCount(0); // Reset retry count
     setLastUpdate(Date.now());
   };
 
