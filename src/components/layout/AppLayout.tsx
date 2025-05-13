@@ -19,11 +19,12 @@ export const AppLayout = ({ children, breadcrumb }: AppLayoutProps) => {
   
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-background">
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} />
       <MobileSidebar />
       
-      <div className={cn("flex-1 flex flex-col ml-16 md:ml-60", {
+      <div className={cn("flex-1 flex flex-col transition-all duration-300", {
         "ml-0 md:ml-16": !sidebarOpen,
+        "ml-16 md:ml-60": sidebarOpen
       })}>
         <Header onMenuToggle={handleMenuToggle} breadcrumb={breadcrumb} />
         <main className="flex-1 overflow-auto p-4 sm:p-6">

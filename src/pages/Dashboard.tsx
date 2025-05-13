@@ -1,21 +1,19 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
-import { useDashboardData } from "@/hooks/dashboard/useDashboardData";
-import { useTenant } from "@/contexts/TenantContext";
-import { KPICard } from "@/components/dashboard/KPICard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { KpiCards } from "@/components/dashboard/KpiCards";
 import { FilterPeriod } from "@/types/dashboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BusinessSetupAlert } from "@/components/dashboard/BusinessSetupAlert";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useDashboardAnalytics } from "@/hooks/dashboard/useDashboardAnalytics";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/format";
-import { Users, CalendarClock, DollarSign, Scissors, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CalendarClock, User, BarChart3 } from "lucide-react";
 
 const Dashboard = () => {
   const [period, setPeriod] = useState<FilterPeriod>("month");
-  const { stats, loading: statsLoading } = useDashboardData(period);
-  const { businessNeedsSetup, loading: businessLoading } = useTenant();
+  const { metrics, loading, error } = useDashboardAnalytics(period);
   
   useEffect(() => {
     document.title = "Dashboard | Unclic Manager";
@@ -25,158 +23,276 @@ const Dashboard = () => {
     setPeriod(value as FilterPeriod);
   };
 
-  // Componente do filtro de período para o final da página
-  const PeriodFilter = (
-    <div className="w-[180px]">
-      <Select value={period} onValueChange={handlePeriodChange}>
-        <SelectTrigger>
-          <SelectValue placeholder="Período" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="today">Hoje</SelectItem>
-          <SelectItem value="week">Esta Semana</SelectItem>
-          <SelectItem value="month">Este Mês</SelectItem>
-          <SelectItem value="quarter">Este Trimestre</SelectItem>
-          <SelectItem value="year">Este Ano</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-  );
-
-  // Use conditional rendering based on loading states and business setup
-  if (businessLoading || statsLoading) {
-    return (
-      <div className="space-y-6">
-        <p className="text-muted-foreground">Carregando...</p>
-      </div>
-    );
-  }
-
-  // Render business setup alert if needed
-  if (businessNeedsSetup) {
+  if (error) {
     return (
       <div className="space-y-6">
         <PageHeader
           title="Painel de Controle"
-          description="Bem-vindo ao seu dashboard. Configure seu negócio para começar."
+          description="Ocorreu um erro ao carregar os dados do dashboard."
         />
-        <BusinessSetupAlert 
-          message="Configure seu negócio para visualizar o painel de controle completo." 
-        />
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center flex-col gap-4 text-center">
+              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                <span className="text-xl">!</span>
+              </div>
+              <h3 className="text-lg font-medium">Erro ao carregar dados</h3>
+              <p className="text-muted-foreground">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Painel de Controle"
-        description="Bem-vindo ao seu dashboard. Aqui você encontra os dados mais importantes do seu negócio."
-      />
+      <div className="flex justify-between items-center">
+        <PageHeader
+          title="Painel de Controle"
+          description="Bem-vindo ao seu dashboard. Aqui você encontra os dados mais importantes do seu negócio."
+        />
+        
+        <div className="w-[180px]">
+          <Select value={period} onValueChange={handlePeriodChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Hoje</SelectItem>
+              <SelectItem value="week">Esta Semana</SelectItem>
+              <SelectItem value="month">Este Mês</SelectItem>
+              <SelectItem value="quarter">Este Trimestre</SelectItem>
+              <SelectItem value="year">Este Ano</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
       
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title="Clientes Ativos"
-          value={stats.clientsCount || 0}
-          description="Total de clientes"
-          icon={<Users className="text-blue-600" />}
-          accentColor="border-l-4 border-l-blue-500"
-        />
-        
-        <KPICard
-          title="Próximos Agendamentos"
-          value={stats.todayAppointments || 0}
-          description="Agendamentos próximos"
-          icon={<CalendarClock className="text-indigo-600" />}
-          accentColor="border-l-4 border-l-indigo-500"
-        />
-        
-        <KPICard
-          title="Receita"
-          value={formatCurrency(stats.monthlyRevenue || 0)}
-          description="Este mês"
-          icon={<DollarSign className="text-green-600" />}
-          accentColor="border-l-4 border-l-green-500"
-        />
-        
-        <KPICard
-          title="Serviços Realizados"
-          value={stats.monthlyServices || 0}
-          description="Este mês"
-          icon={<Scissors className="text-amber-600" />}
-          accentColor="border-l-4 border-l-amber-500"
-        />
-      </div>
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, index) => (
+            <Card key={index}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-32" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-24 mb-2" />
+                <Skeleton className="h-4 w-16" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <KpiCards stats={metrics} period={period} />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Financial Performance Chart */}
+        {/* Revenue Chart */}
         <Card className="lg:col-span-2">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">Desempenho Financeiro</CardTitle>
-                <p className="text-sm text-muted-foreground">Receitas e despesas ao longo do período</p>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="active">Barras</Button>
-                <Button variant="ghost" size="sm">Linha</Button>
-              </div>
-            </div>
+          <CardHeader>
+            <CardTitle>Receita no Período</CardTitle>
           </CardHeader>
-          <CardContent className="p-4">
-            <div className="h-64 flex items-center justify-center bg-slate-50 rounded-md">
-              <p className="text-muted-foreground">Gráfico de desempenho financeiro</p>
-            </div>
+          <CardContent className="h-[300px]">
+            {loading ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <Skeleton className="h-full w-full rounded-md" />
+              </div>
+            ) : metrics.revenueData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={metrics.revenueData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis 
+                    tickFormatter={(value) => `R$${Math.floor(value)}`}
+                  />
+                  <Tooltip formatter={(value) => [`R$ ${value}`, 'Receita']} />
+                  <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <p className="text-muted-foreground">Nenhum dado disponível para o período</p>
+              </div>
+            )}
           </CardContent>
         </Card>
         
-        {/* Insights Card */}
+        {/* Status Summary */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Insights</CardTitle>
+          <CardHeader>
+            <CardTitle>Status de Agendamentos</CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y">
-              <div className="flex gap-3 items-start p-4">
-                <div className="p-2 rounded-full bg-amber-50 text-amber-600">
-                  <TrendingUp size={18} />
+          <CardContent>
+            {loading ? (
+              <div className="space-y-4">
+                {[...Array(4)].map((_, index) => (
+                  <Skeleton key={index} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                    <CalendarClock size={20} />
+                  </div>
+                  <div>
+                    <div className="font-medium">Agendados</div>
+                    <div className="text-sm text-muted-foreground">
+                      {metrics.appointmentsByStatus.scheduled} agendamentos
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">Receita abaixo da média</p>
-                  <p className="text-sm text-muted-foreground">
-                    A receita está 10% abaixo da média dos últimos 3 meses
-                  </p>
+                
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                    <User size={20} />
+                  </div>
+                  <div>
+                    <div className="font-medium">Concluídos</div>
+                    <div className="text-sm text-muted-foreground">
+                      {metrics.appointmentsByStatus.completed} agendamentos
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                    <BarChart3 size={20} />
+                  </div>
+                  <div>
+                    <div className="font-medium">Cancelados</div>
+                    <div className="text-sm text-muted-foreground">
+                      {metrics.appointmentsByStatus.canceled} agendamentos
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="h-12 w-full bg-gray-100 dark:bg-gray-800 rounded-md mt-4">
+                  <div className="flex h-full">
+                    {metrics.monthlyServices > 0 && (
+                      <>
+                        <div 
+                          className="bg-blue-500 h-full rounded-l-md"
+                          style={{ 
+                            width: `${(metrics.appointmentsByStatus.scheduled / metrics.monthlyServices) * 100}%` 
+                          }}
+                        />
+                        <div 
+                          className="bg-green-500 h-full"
+                          style={{ 
+                            width: `${(metrics.appointmentsByStatus.completed / metrics.monthlyServices) * 100}%` 
+                          }}
+                        />
+                        <div 
+                          className="bg-red-500 h-full rounded-r-md"
+                          style={{ 
+                            width: `${(metrics.appointmentsByStatus.canceled / metrics.monthlyServices) * 100}%` 
+                          }}
+                        />
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-              
-              <div className="flex gap-3 items-start p-4">
-                <div className="p-2 rounded-full bg-indigo-50 text-indigo-600">
-                  <Scissors size={18} />
-                </div>
-                <div>
-                  <p className="font-medium">Serviço destaque</p>
-                  <p className="text-sm text-muted-foreground">
-                    Monitore quais serviços estão com maior procura
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex gap-3 items-start p-4">
-                <div className="p-2 rounded-full bg-blue-50 text-blue-600">
-                  <Users size={18} />
-                </div>
-                <div>
-                  <p className="font-medium">Base de clientes estável</p>
-                  <p className="text-sm text-muted-foreground">
-                    Considere estratégias para atrair novos clientes
-                  </p>
-                </div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
+      
+      {/* Upcoming Appointments */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Próximos Agendamentos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, index) => (
+                <Skeleton key={index} className="h-20 w-full" />
+              ))}
+            </div>
+          ) : metrics.upcomingAppointments.length > 0 ? (
+            <div className="space-y-4">
+              {metrics.upcomingAppointments.map((appointment: any, index) => (
+                <div key={index} className="flex items-center justify-between border-b pb-4 last:border-0">
+                  <div className="flex gap-4">
+                    <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                      <span className="font-medium text-blue-600">
+                        {appointment.clientes?.nome?.substring(0, 2).toUpperCase() || "CL"}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="font-medium">{appointment.clientes?.nome || "Cliente"}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {appointment.servicos?.nome || "Serviço"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-medium">
+                      {new Date(appointment.data).toLocaleDateString()} 
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {appointment.hora_inicio}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-40 text-center">
+              <div>
+                <CalendarClock className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="font-medium">Nenhum agendamento próximo</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Não há agendamentos programados para os próximos dias
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      {/* Popular Services */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Serviços Populares</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, index) => (
+                <Skeleton key={index} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : metrics.popularServices.length > 0 ? (
+            <div className="space-y-4">
+              {metrics.popularServices.map((service, index) => (
+                <div key={index} className="flex flex-col">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium">{service.name}</div>
+                    <div className="text-sm">{service.count} agendamentos</div>
+                  </div>
+                  <div className="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full mt-1">
+                    <div 
+                      className="bg-blue-500 h-2 rounded-full" 
+                      style={{ width: `${service.percentage}%` }} 
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">
+                Nenhum serviço foi realizado no período selecionado
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
