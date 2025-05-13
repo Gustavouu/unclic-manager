@@ -1,130 +1,129 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { MapPin } from "lucide-react";
-import { toast } from "sonner";
-import { fetchAddressByCEP, formatCEP, validateCEP } from "@/utils/addressUtils";
+import { FormField } from "@/components/ui/form-field";
 
 export const BusinessAddressSection: React.FC = () => {
   const { businessData, updateBusinessData } = useOnboarding();
-  const [isLoadingCEP, setIsLoadingCEP] = useState(false);
 
   const handleChange = (field: string, value: string) => {
     updateBusinessData({ [field]: value });
   };
 
-  const handleCEPChange = (value: string) => {
-    const formattedCEP = formatCEP(value);
-    updateBusinessData({ cep: formattedCEP });
+  const handleCepBlur = async () => {
+    const cep = businessData.cep?.replace(/\D/g, '');
+    
+    if (cep?.length === 8) {
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const data = await response.json();
+        
+        if (!data.erro) {
+          updateBusinessData({
+            address: data.logradouro,
+            neighborhood: data.bairro,
+            city: data.localidade,
+            state: data.uf,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching address from CEP:", error);
+      }
+    }
   };
 
-  const searchCEP = async () => {
-    const cepError = validateCEP(businessData.cep);
-    if (cepError) {
-      toast.error(cepError);
-      return;
-    }
-
-    setIsLoadingCEP(true);
-    try {
-      const addressData = await fetchAddressByCEP(businessData.cep);
-      
-      if (addressData.error) {
-        toast.error(addressData.error);
-      } else {
-        updateBusinessData({
-          address: addressData.street || "",
-          neighborhood: addressData.neighborhood || "",
-          city: addressData.city || "",
-          state: addressData.state || ""
-        });
-        toast.success("Endereço localizado com sucesso!");
-      }
-    } catch (error) {
-      toast.error("Erro ao buscar CEP");
-    } finally {
-      setIsLoadingCEP(false);
-    }
+  const handleCepChange = (value: string) => {
+    // Apply CEP formatting
+    const formatted = value
+      .replace(/\D/g, '')
+      .replace(/^(\d{5})(\d)/, '$1-$2')
+      .slice(0, 9);
+    
+    updateBusinessData({ cep: formatted });
   };
 
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Endereço</h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="business-cep">CEP</Label>
-          <div className="flex gap-2">
-            <Input
-              id="business-cep"
-              value={businessData.cep}
-              onChange={(e) => handleCEPChange(e.target.value)}
-              placeholder="00000-000"
-              maxLength={9}
-            />
-            <Button 
-              type="button" 
-              onClick={searchCEP} 
-              disabled={isLoadingCEP} 
-              variant="outline"
-            >
-              <MapPin className="h-4 w-4 mr-2" />
-              {isLoadingCEP ? "Buscando..." : "Buscar"}
-            </Button>
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="business-address">Logradouro</Label>
-          <Input
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          id="business-cep"
+          label="CEP"
+          value={businessData.cep || ""}
+          onChange={handleCepChange}
+          onBlur={handleCepBlur}
+          placeholder="00000-000"
+          required
+          error={!businessData.cep ? "CEP é obrigatório" : ""}
+          touched={true}
+        />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2">
+          <FormField
             id="business-address"
-            value={businessData.address}
-            onChange={(e) => handleChange("address", e.target.value)}
-            placeholder="Ex: Rua das Flores"
+            label="Endereço"
+            value={businessData.address || ""}
+            onChange={(value) => handleChange("address", value)}
+            required
+            error={!businessData.address ? "Endereço é obrigatório" : ""}
+            touched={true}
           />
         </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="business-number">Número</Label>
-          <Input
+        <div>
+          <FormField
             id="business-number"
-            value={businessData.number}
-            onChange={(e) => handleChange("number", e.target.value)}
-            placeholder="Ex: 123"
+            label="Número"
+            value={businessData.number || ""}
+            onChange={(value) => handleChange("number", value)}
+            required
+            error={!businessData.number ? "Número é obrigatório" : ""}
+            touched={true}
           />
         </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="business-neighborhood">Bairro</Label>
-          <Input
-            id="business-neighborhood"
-            value={businessData.neighborhood}
-            onChange={(e) => handleChange("neighborhood", e.target.value)}
-            placeholder="Ex: Centro"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="business-city">Cidade</Label>
-          <Input
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          id="business-neighborhood"
+          label="Bairro"
+          value={businessData.neighborhood || ""}
+          onChange={(value) => handleChange("neighborhood", value)}
+          required
+          error={!businessData.neighborhood ? "Bairro é obrigatório" : ""}
+          touched={true}
+        />
+        <FormField
+          id="business-complement"
+          label="Complemento (opcional)"
+          value={businessData.complement || ""}
+          onChange={(value) => handleChange("complement", value)}
+        />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2">
+          <FormField
             id="business-city"
-            value={businessData.city}
-            onChange={(e) => handleChange("city", e.target.value)}
-            placeholder="Ex: São Paulo"
+            label="Cidade"
+            value={businessData.city || ""}
+            onChange={(value) => handleChange("city", value)}
+            required
+            error={!businessData.city ? "Cidade é obrigatória" : ""}
+            touched={true}
           />
         </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="business-state">Estado</Label>
-          <Input
+        <div>
+          <FormField
             id="business-state"
-            value={businessData.state}
-            onChange={(e) => handleChange("state", e.target.value)}
-            placeholder="Ex: SP"
-            maxLength={2}
+            label="Estado"
+            value={businessData.state || ""}
+            onChange={(value) => handleChange("state", value)}
+            required
+            error={!businessData.state ? "Estado é obrigatório" : ""}
+            touched={true}
           />
         </div>
       </div>
