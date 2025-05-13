@@ -30,13 +30,23 @@ const getStatusBadge = (status: AppointmentStatus) => {
 
 export function AppointmentsList({ appointments, isLoading = false, onAppointmentUpdate, onAppointmentDelete }: AppointmentsListProps) {
   if (isLoading) {
-    return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
+    return (
+      <div className="p-8 text-center">
+        <div className="flex justify-center items-center space-x-2">
+          <div className="w-4 h-4 rounded-full animate-pulse bg-blue-600"></div>
+          <div className="w-4 h-4 rounded-full animate-pulse bg-blue-600" style={{ animationDelay: '0.2s' }}></div>
+          <div className="w-4 h-4 rounded-full animate-pulse bg-blue-600" style={{ animationDelay: '0.4s' }}></div>
+        </div>
+        <p className="mt-2 text-muted-foreground">Carregando agendamentos...</p>
+      </div>
+    );
   }
 
   if (appointments.length === 0) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        Nenhum agendamento encontrado.
+        <p className="mb-2">Nenhum agendamento encontrado.</p>
+        <p className="text-sm">Crie um novo agendamento para começar.</p>
       </div>
     );
   }
@@ -57,11 +67,11 @@ export function AppointmentsList({ appointments, isLoading = false, onAppointmen
         </TableHeader>
         <TableBody>
           {appointments.map((appointment) => (
-            <TableRow key={appointment.id}>
+            <TableRow key={appointment.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onAppointmentUpdate?.()}>
               <TableCell className="font-medium">{appointment.clientName}</TableCell>
               <TableCell>{appointment.serviceName}</TableCell>
-              <TableCell>{format(appointment.date, 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
-              <TableCell>{format(appointment.date, 'HH:mm', { locale: ptBR })}</TableCell>
+              <TableCell>{format(new Date(appointment.date), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+              <TableCell>{format(new Date(appointment.date), 'HH:mm', { locale: ptBR })}</TableCell>
               <TableCell>{appointment.duration} min</TableCell>
               <TableCell>{getStatusBadge(appointment.status)}</TableCell>
               <TableCell className="text-right">

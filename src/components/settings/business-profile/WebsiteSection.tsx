@@ -1,124 +1,94 @@
 
-import { FormField } from "@/components/ui/form-field";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Globe, Copy, ExternalLink } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
-import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { Link } from "react-router-dom";
+import { FormControl } from "@/components/ui/form";
+import { useEffect, useState } from "react";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 interface WebsiteSectionProps {
-  updateField: (name: string, value: string) => void;
   getFieldValue: (name: string) => string;
   getFieldError: (name: string) => string | null;
+  updateField: (name: string, value: string) => void;
   hasFieldBeenTouched: (name: string) => boolean;
 }
 
-export const WebsiteSection = ({ 
-  updateField, 
-  getFieldValue, 
-  getFieldError, 
-  hasFieldBeenTouched 
+export const WebsiteSection = ({
+  getFieldValue,
+  getFieldError,
+  updateField,
+  hasFieldBeenTouched
 }: WebsiteSectionProps) => {
-  const [copied, setCopied] = useState(false);
-  const { businessData } = useOnboarding();
+  const { businessData } = useCurrentBusiness();
+  const [slugValue, setSlugValue] = useState("");
   
-  // Gera o URL do site baseado no nome do negócio
-  const generateWebsiteUrl = () => {
-    if (!businessData.name) return "";
-    
-    // Formata o nome do negócio para URL (remove acentos, espaços, etc.)
-    const formattedName = businessData.name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]/g, ""); // Removidos os hifens
-    
-    return `${formattedName}.unclic.com.br`;
-  };
-  
-  // Se não houver um site definido, gera um baseado no nome
-  const websiteUrl = getFieldValue("businessWebsite") || generateWebsiteUrl();
-  
-  const handleCopyUrl = () => {
-    navigator.clipboard.writeText(`https://${websiteUrl}`);
-    setCopied(true);
-    toast.success("URL copiado para a área de transferência");
-    
-    // Reset copied state after 2 seconds
-    setTimeout(() => setCopied(false), 2000);
-  };
-  
-  const handleOpenWebsite = () => {
-    window.open(`/${websiteUrl}`, "_blank");
-  };
+  useEffect(() => {
+    if (businessData) {
+      setSlugValue(businessData.slug || "");
+      
+      // Buscar se existe um website associado ao negócio nas configurações
+      const fetchWebsite = async () => {
+        try {
+          const { data: configData, error } = await supabase
+            .from("configuracoes_negocio")
+            .select("website_url")
+            .eq("id_negocio", businessData.id)
+            .single();
+            
+          if (!error && configData && configData.website_url) {
+            updateField("businessWebsite", configData.website_url);
+          }
+        } catch (error) {
+          console.error("Erro ao buscar website:", error);
+        }
+      };
+      
+      fetchWebsite();
+    }
+  }, [businessData]);
   
   return (
-    <div className="space-y-4 mt-6">
-      <h3 className="text-lg font-medium flex items-center gap-2">
-        <Globe className="h-5 w-5" />
-        Site do Estabelecimento
-      </h3>
-      
-      <div className="space-y-2">
-        <Label htmlFor="business-website">URL do Site</Label>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 flex items-center border rounded-md overflow-hidden">
-            <span className="bg-muted text-muted-foreground px-3 py-2 text-sm border-r">
-              https://
+    <Card>
+      <CardHeader className="pb-3">
+        <h3 className="text-lg font-medium">Website</h3>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="businessSlug">Identificador Único (slug)</Label>
+          <div className="flex items-center">
+            <span className="px-3 py-2 bg-gray-100 border border-r-0 rounded-l-md text-gray-600 text-sm">
+              unclic.com.br/
             </span>
-            <Input 
-              id="business-website" 
-              type="text" 
-              value={websiteUrl}
-              onChange={(e) => updateField("businessWebsite", e.target.value)}
-              className="border-0 flex-1" 
-              placeholder="seunegocio.unclic.com.br"
+            <Input
+              id="businessSlug"
+              value={slugValue}
+              disabled
+              className="flex-grow rounded-l-none bg-gray-50"
             />
           </div>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            title="Copiar URL"
-            onClick={handleCopyUrl}
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            title="Abrir site"
-            onClick={handleOpenWebsite}
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
+          <p className="text-xs text-muted-foreground">
+            Este identificador é usado para criar a URL da página do seu negócio.
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Este é o endereço onde seus clientes podem acessar seu negócio online para agendamentos e pagamentos.
-        </p>
-      </div>
-      
-      <div className="p-3 bg-muted rounded-md">
-        <p className="text-sm font-medium">Dicas para seu site:</p>
-        <ul className="text-sm mt-1 space-y-1 list-disc pl-5">
-          <li>Mantenha seu perfil de negócio completo para melhorar a experiência dos clientes.</li>
-          <li>Compartilhe este link em suas redes sociais para que seus clientes possam fazer agendamentos.</li>
-          <li>Adicione este link à sua biografia do Instagram e outros perfis sociais.</li>
-        </ul>
-      </div>
-      
-      <div className="mt-4">
-        <Link 
-          to={`/${websiteUrl}`} 
-          target="_blank"
-          className="flex items-center gap-2 text-primary hover:underline"
-        >
-          <Globe className="h-4 w-4" />
-          Visualizar o site (prévia)
-        </Link>
-      </div>
-    </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="businessWebsite">Website Próprio</Label>
+          <FormControl>
+            <Input
+              id="businessWebsite"
+              placeholder="https://www.seusite.com.br"
+              value={getFieldValue("businessWebsite")}
+              onChange={(e) => updateField("businessWebsite", e.target.value)}
+              className={getFieldError("businessWebsite") && hasFieldBeenTouched("businessWebsite") ? "border-red-500" : ""}
+            />
+          </FormControl>
+          {getFieldError("businessWebsite") && hasFieldBeenTouched("businessWebsite") && (
+            <p className="text-sm text-red-500">{getFieldError("businessWebsite")}</p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
+
+const supabase = supabase;

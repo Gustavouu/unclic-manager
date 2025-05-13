@@ -1,19 +1,24 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Save, Rocket } from "lucide-react";
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
-import { mockSaveFunction, showSuccessToast, showErrorToast } from "@/utils/formUtils";
+import { showSuccessToast, showErrorToast } from "@/utils/formUtils";
 import { Toaster } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useBusinessConfig } from "@/hooks/business/useBusinessConfig";
+import { useSearchParams } from "react-router-dom";
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState("business-profile");
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") || "business-profile";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
+  const { saveConfig, saving: configSaving } = useBusinessConfig();
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -23,14 +28,12 @@ const Settings = () => {
     setIsSaving(true);
     
     try {
-      const success = await mockSaveFunction();
+      // Cada aba é responsável por salvar suas próprias alterações
+      // Aqui podemos adicionar algum processamento global se necessário
       
-      if (success) {
-        showSuccessToast("Todas as configurações foram salvas com sucesso!");
-      } else {
-        showErrorToast();
-      }
+      showSuccessToast("Todas as configurações foram salvas com sucesso!");
     } catch (error) {
+      console.error("Erro ao salvar configurações:", error);
       showErrorToast();
     } finally {
       setIsSaving(false);
@@ -40,6 +43,13 @@ const Settings = () => {
   const handleOnboarding = () => {
     navigate("/onboarding");
   };
+  
+  useEffect(() => {
+    // Atualizar a URL com a aba ativa
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("tab", activeTab);
+    window.history.replaceState({}, "", `${window.location.pathname}?${newParams.toString()}`);
+  }, [activeTab]);
 
   return (
     <OnboardingProvider>
@@ -75,9 +85,13 @@ const Settings = () => {
               Onboarding
             </Button>
             
-            <Button onClick={handleGlobalSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
+            <Button 
+              onClick={handleGlobalSave} 
+              disabled={isSaving || configSaving} 
+              className="bg-blue-600 hover:bg-blue-700"
+            >
               <Save className="mr-2 h-4 w-4" />
-              {isSaving ? "Salvando..." : "Salvar Alterações"}
+              {isSaving || configSaving ? "Salvando..." : "Salvar Alterações"}
             </Button>
           </div>
         </div>
