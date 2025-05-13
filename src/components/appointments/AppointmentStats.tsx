@@ -2,16 +2,16 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarClock, CheckCircle, Clock, XCircle } from "lucide-react";
-import { AppointmentType } from '../appointments/calendar/types';
 import { format, isToday, isTomorrow, isThisWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Appointment, AppointmentStatus } from '@/hooks/appointments/types';
 
-type AppointmentStatProps = {
-  appointments: AppointmentType[];
-  isLoading: boolean;
+export type AppointmentStatProps = {
+  appointments?: Appointment[];
+  isLoading?: boolean;
 };
 
-export const AppointmentStats = ({ appointments, isLoading }: AppointmentStatProps) => {
+export const AppointmentStats = ({ appointments = [], isLoading = false }: AppointmentStatProps) => {
   // Calculate the statistics based on the appointments data
   const calculateStats = () => {
     if (!appointments || appointments.length === 0) {

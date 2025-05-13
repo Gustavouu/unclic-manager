@@ -7,52 +7,38 @@ import { MonthView } from "./calendar/MonthView";
 import { DayView } from "./calendar/DayView";
 import { WeekView } from "./calendar/WeekView";
 import { CalendarFooter } from "./calendar/CalendarFooter";
-import { CalendarViewType, AppointmentType, AppointmentStatus as ComponentAppointmentStatus } from "./types";
+import { CalendarViewType } from "./types";
 import { useBusinessHours } from "@/hooks/useBusinessHours";
-import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { AppointmentDialog } from "./dialog/AppointmentDialog";
 import { CalendarProvider, useCalendarContext } from "./calendar/CalendarContext";
 import { SERVICE_TYPE_NAMES } from "./types";
 import { toast } from "sonner";
+import { Appointment } from "@/hooks/appointments/types";
 
 interface AppointmentCalendarProps {
   initialView?: CalendarViewType;
+  appointments?: Appointment[];
+  isLoading?: boolean;
+  onAppointmentUpdate?: () => void;
+  onAppointmentDelete?: (id: string) => Promise<void>;
 }
 
-export const AppointmentCalendar = ({ initialView }: AppointmentCalendarProps) => {
-  // Get appointments from the hook
-  const { appointments, isLoading, fetchAppointments } = useAppointments();
-  
-  // Convert appointments to calendar format
-  const calendarAppointments: AppointmentType[] = appointments.map(app => ({
-    id: app.id,
-    date: app.date,
-    clientName: app.clientName,
-    serviceName: app.serviceName,
-    serviceType: app.serviceType,
-    duration: app.duration || 60,
-    price: app.price || 0,
-    status: app.status as ComponentAppointmentStatus, // Type casting to ensure compatibility
-    professionalId: app.professionalId
-  }));
-  
-  // Refresh appointments when the component mounts and every 30 seconds
-  useEffect(() => {
-    console.log("Fetching appointments in AppointmentCalendar");
-    fetchAppointments();
-    
-    // Set up a polling interval to refresh appointments
-    const intervalId = setInterval(() => {
-      console.log("Refreshing appointments (interval)");
-      fetchAppointments();
-    }, 30000); // Refresh every 30 seconds
-    
-    return () => clearInterval(intervalId);
-  }, [fetchAppointments]);
-
+export const AppointmentCalendar = ({ 
+  initialView,
+  appointments = [],
+  isLoading = false,
+  onAppointmentUpdate,
+  onAppointmentDelete
+}: AppointmentCalendarProps) => {
+  // Convert appointments to calendar format if needed
   return (
-    <CalendarProvider appointments={calendarAppointments}>
-      <CalendarContent isLoading={isLoading} initialView={initialView} />
+    <CalendarProvider appointments={appointments}>
+      <CalendarContent 
+        isLoading={isLoading} 
+        initialView={initialView} 
+        onAppointmentUpdate={onAppointmentUpdate}
+        onAppointmentDelete={onAppointmentDelete}
+      />
     </CalendarProvider>
   );
 };
@@ -60,9 +46,16 @@ export const AppointmentCalendar = ({ initialView }: AppointmentCalendarProps) =
 interface CalendarContentProps {
   isLoading: boolean;
   initialView?: CalendarViewType;
+  onAppointmentUpdate?: () => void;
+  onAppointmentDelete?: (id: string) => Promise<void>;
 }
 
-const CalendarContent = ({ isLoading, initialView }: CalendarContentProps) => {
+const CalendarContent = ({ 
+  isLoading, 
+  initialView,
+  onAppointmentUpdate,
+  onAppointmentDelete 
+}: CalendarContentProps) => {
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
   
   const { 
@@ -104,6 +97,9 @@ const CalendarContent = ({ isLoading, initialView }: CalendarContentProps) => {
   const handleDialogClose = () => {
     setAppointmentDialogOpen(false);
     setSelectedAppointment(null);
+    if (onAppointmentUpdate) {
+      onAppointmentUpdate();
+    }
   };
   
   // Quando estamos arrastando um agendamento
@@ -177,6 +173,7 @@ const CalendarContent = ({ isLoading, initialView }: CalendarContentProps) => {
           open={appointmentDialogOpen}
           onClose={handleDialogClose}
           appointment={selectedAppointment}
+          onDelete={onAppointmentDelete}
         />
       )}
     </div>

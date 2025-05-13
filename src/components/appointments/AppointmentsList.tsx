@@ -1,15 +1,16 @@
 
 import React from 'react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { AppointmentType } from './calendar/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
-import { AppointmentStatus } from '@/hooks/appointments/types';
+import { Appointment, AppointmentStatus } from '@/hooks/appointments/types';
 
 export interface AppointmentsListProps {
-  appointments: AppointmentType[];
+  appointments: Appointment[];
   isLoading?: boolean;
+  onAppointmentUpdate?: () => void;
+  onAppointmentDelete?: (id: string) => Promise<void>;
 }
 
 const getStatusBadge = (status: AppointmentStatus) => {
@@ -27,7 +28,7 @@ const getStatusBadge = (status: AppointmentStatus) => {
   }
 };
 
-export function AppointmentsList({ appointments, isLoading = false }: AppointmentsListProps) {
+export function AppointmentsList({ appointments, isLoading = false, onAppointmentUpdate, onAppointmentDelete }: AppointmentsListProps) {
   if (isLoading) {
     return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
   }

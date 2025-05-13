@@ -13,7 +13,7 @@ import { Calendar, Grid3X3 } from "lucide-react";
 import { useRouteCalendarView } from "@/hooks/useRouteCalendarView";
 import { CalendarViewType } from "@/components/appointments/calendar/types";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
-import { AppointmentType } from "@/hooks/appointments/types";
+import { Appointment } from "@/hooks/appointments/types";
 import { toast } from "sonner";
 
 const AppointmentsPage = () => {

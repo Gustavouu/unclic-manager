@@ -13,16 +13,22 @@ import { toast } from "sonner";
 
 interface AppointmentStepperFormProps {
   onClose: () => void;
+  onAppointmentCreated?: () => void;
+  createAppointment?: (data: Omit<Appointment, "id">) => Promise<string>;
   preselectedClientId?: string;
   preselectedClientName?: string;
 }
 
 export function AppointmentStepperForm({
   onClose,
+  onAppointmentCreated,
+  createAppointment,
   preselectedClientId,
   preselectedClientName
 }: AppointmentStepperFormProps) {
-  const { createAppointment } = useAppointments();
+  const appointmentsHook = useAppointments();
+  const actualCreateAppointment = createAppointment || appointmentsHook.createAppointment;
+  
   const { services, isLoading: servicesLoading } = useServices();
   const { professionals } = useProfessionals();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,7 +113,11 @@ export function AppointmentStepperForm({
         notes: data.notes
       };
       
-      await createAppointment(appointmentData);
+      await actualCreateAppointment(appointmentData);
+      
+      if (onAppointmentCreated) {
+        onAppointmentCreated();
+      }
       
       toast.success("Agendamento criado com sucesso!");
       onClose();
