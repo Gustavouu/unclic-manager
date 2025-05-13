@@ -7,9 +7,9 @@ import {
 } from "@/components/ui/dialog";
 import { ProfessionalForm } from "./form/ProfessionalForm";
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { ProfessionalCreateForm } from "@/hooks/professionals/types";
+import { toast } from "sonner";
 
 interface NewProfessionalDialogProps {
   open: boolean;
@@ -22,7 +22,6 @@ export const NewProfessionalDialog = ({
 }: NewProfessionalDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addProfessional } = useProfessionals();
-  const { toast } = useToast();
 
   const handleClose = () => {
     if (!isSubmitting) {
@@ -34,18 +33,11 @@ export const NewProfessionalDialog = ({
     try {
       setIsSubmitting(true);
       await addProfessional(data);
-      toast({
-        title: "Sucesso",
-        description: "Colaborador adicionado com sucesso!"
-      });
+      toast.success("Colaborador adicionado com sucesso!");
       onOpenChange(false);
     } catch (error) {
       console.error("Error adding professional:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível adicionar o colaborador.",
-        variant: "destructive"
-      });
+      toast.error("Não foi possível adicionar o colaborador.");
     } finally {
       setIsSubmitting(false);
     }

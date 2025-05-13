@@ -9,7 +9,7 @@ import { ProfessionalCreateForm, Professional } from "@/hooks/professionals/type
 import { ProfessionalFormFields } from "./ProfessionalFormFields";
 import { professionalSchema } from "../schemas/professionalFormSchema";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 export interface ProfessionalFormProps {
   onClose: () => void;
@@ -27,8 +27,6 @@ export const ProfessionalForm = ({
   editMode = false,
   isSubmitting = false
 }: ProfessionalFormProps) => {
-  const { toast } = useToast();
-  
   // Get professionals data and ensure specialties is properly initialized
   const { specialties = [] } = useProfessionals();
   
@@ -61,11 +59,7 @@ export const ProfessionalForm = ({
       await onSubmit(formData);
     } catch (error) {
       console.error("Error processing professional:", error);
-      toast({
-        title: "Erro",
-        description: `Ocorreu um erro ao ${editMode ? 'atualizar' : 'adicionar'} o colaborador.`,
-        variant: "destructive",
-      });
+      toast.error(`Ocorreu um erro ao ${editMode ? 'atualizar' : 'adicionar'} o colaborador.`);
     }
   };
 

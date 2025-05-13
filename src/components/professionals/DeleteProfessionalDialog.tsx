@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface DeleteProfessionalDialogProps {
   open: boolean;
@@ -27,7 +28,6 @@ export const DeleteProfessionalDialog = ({
 }: DeleteProfessionalDialogProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { removeProfessional } = useProfessionals();
-  const { toast } = useToast();
 
   const handleClose = () => {
     if (!isDeleting) {
@@ -41,18 +41,11 @@ export const DeleteProfessionalDialog = ({
     try {
       setIsDeleting(true);
       await removeProfessional(professional.id);
-      toast({
-        title: "Sucesso",
-        description: "Colaborador removido com sucesso!"
-      });
+      toast.success("Colaborador removido com sucesso!");
       onOpenChange(false);
     } catch (error) {
       console.error("Error removing professional:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível remover o colaborador.",
-        variant: "destructive"
-      });
+      toast.error("Não foi possível remover o colaborador.");
     } finally {
       setIsDeleting(false);
     }

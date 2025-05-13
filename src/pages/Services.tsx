@@ -3,13 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServicesTable } from "@/components/services/ServicesTable";
 import { StatsCard } from "@/components/common/StatsCard";
 import { services as initialServices, ServiceData } from "@/components/services/servicesData";
-import { useToast } from "@/hooks/use-toast";
 import { useUserPermissions } from "@/components/hooks/useUserPermissions";
 import { LoadingState } from "@/hooks/use-loading-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Scissors, Calendar, BadgeDollarSign, Bookmark } from "lucide-react";
 import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
 import { ServicesHeader } from "@/components/services/ServicesHeader";
+import { toast } from "sonner";
 
 const Services = () => {
   const [services, setServices] = useState<ServiceData[]>([]);
@@ -18,7 +18,6 @@ const Services = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<string>('all');
-  const { toast } = useToast();
   const { canAccess } = useUserPermissions();
 
   useEffect(() => {
@@ -39,26 +38,19 @@ const Services = () => {
         console.error("Erro ao buscar serviços:", error);
         setError(error.message || "Erro ao carregar os serviços");
         setLoadingState('error');
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar os serviços. Tente novamente mais tarde.",
-          variant: "destructive",
-        });
+        toast.error("Não foi possível carregar os serviços. Tente novamente mais tarde.");
       }
     };
     
     fetchServices();
-  }, [toast]);
+  }, []);
 
   const handleServiceCreated = (newService: ServiceData) => {
     const updatedServices = [...services, newService];
     setServices(updatedServices);
     setFilteredServices(applyFilters(updatedServices, searchQuery, activeTab));
     
-    toast({
-      title: "Serviço criado",
-      description: `O serviço "${newService.name}" foi criado com sucesso.`,
-    });
+    toast.success(`O serviço "${newService.name}" foi criado com sucesso.`);
   };
 
   const handleServiceUpdated = (updatedService: ServiceData) => {
@@ -69,10 +61,7 @@ const Services = () => {
     setServices(updatedServices);
     setFilteredServices(applyFilters(updatedServices, searchQuery, activeTab));
     
-    toast({
-      title: "Serviço atualizado",
-      description: `O serviço "${updatedService.name}" foi atualizado com sucesso.`,
-    });
+    toast.success(`O serviço "${updatedService.name}" foi atualizado com sucesso.`);
   };
 
   const handleServiceDeleted = (serviceId: string) => {
@@ -82,12 +71,10 @@ const Services = () => {
     setServices(updatedServices);
     setFilteredServices(applyFilters(updatedServices, searchQuery, activeTab));
     
-    toast({
-      title: "Serviço removido",
-      description: serviceToDelete 
-        ? `O serviço "${serviceToDelete.name}" foi removido com sucesso.` 
-        : "O serviço foi removido com sucesso.",
-    });
+    toast.success(serviceToDelete 
+      ? `O serviço "${serviceToDelete.name}" foi removido com sucesso.` 
+      : "O serviço foi removido com sucesso."
+    );
   };
 
   const handleSearch = (query: string) => {

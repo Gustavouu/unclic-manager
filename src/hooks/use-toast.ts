@@ -16,7 +16,7 @@ export type Toast = {
   description?: React.ReactNode
   action?: ToastActionElement
   variant?: "default" | "destructive" | "success" | "warning" | "info"
-} & ToastProps
+}
 
 const actionTypes = {
   default: sonnerToast,

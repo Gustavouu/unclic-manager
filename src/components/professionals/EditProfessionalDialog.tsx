@@ -9,7 +9,7 @@ import { ProfessionalForm } from "./form/ProfessionalForm";
 import { Professional, ProfessionalCreateForm } from "@/hooks/professionals/types";
 import { useEffect, useState } from "react";
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 interface EditProfessionalDialogProps {
   open: boolean;
@@ -25,7 +25,6 @@ export const EditProfessionalDialog = ({
   const [currentProfessional, setCurrentProfessional] = useState<Professional | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { updateProfessional } = useProfessionals();
-  const { toast } = useToast();
   
   // When the dialog opens or professional changes, update the local state
   useEffect(() => {
@@ -47,18 +46,11 @@ export const EditProfessionalDialog = ({
     try {
       setIsSubmitting(true);
       await updateProfessional(currentProfessional.id, data);
-      toast({
-        title: "Sucesso",
-        description: "Colaborador atualizado com sucesso!"
-      });
+      toast.success("Colaborador atualizado com sucesso!");
       onOpenChange(false);
     } catch (error) {
       console.error("Error updating professional:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o colaborador.",
-        variant: "destructive"
-      });
+      toast.error("Não foi possível atualizar o colaborador.");
     } finally {
       setIsSubmitting(false);
     }

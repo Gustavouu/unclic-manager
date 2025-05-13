@@ -1,33 +1,26 @@
 
-export type Option = {
-  label: string;
-  value: string;
-};
+export * from "../../components/professionals/multiselect/types";
 
-export type ProfessionalStatus = 'active' | 'inactive' | 'vacation' | 'leave';
+export type ProfessionalStatus = 'active' | 'inactive';
 
 export interface Professional {
   id: string;
   name: string;
-  role?: string;
-  email?: string;
-  phone?: string;
-  specialties?: string[];
-  photoUrl?: string;
+  email: string;
+  phone: string;
+  role: string;
   bio?: string;
-  status: ProfessionalStatus;
-  hireDate?: string;
-  commissionPercentage?: number;
-  userId?: string;
+  specialties?: string[];
+  commissionPercentage: number;
+  status?: ProfessionalStatus;
+  photoUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  appointmentsCount?: number;
+  revenueGenerated?: number;
 }
 
-export interface ProfessionalCreateForm {
-  name: string;
-  role?: string;
-  email?: string;
-  phone?: string;
-  specialties?: string[];
-  photoUrl?: string;
-  bio?: string;
-  commissionPercentage?: number;
-}
+export type ProfessionalCreateForm = Omit<
+  Professional,
+  'id' | 'status' | 'createdAt' | 'updatedAt' | 'appointmentsCount' | 'revenueGenerated'
+>;
