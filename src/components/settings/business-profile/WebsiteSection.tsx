@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { FormControl } from "@/components/ui/form";
 import { useEffect, useState } from "react";
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WebsiteSectionProps {
   getFieldValue: (name: string) => string;
@@ -90,5 +91,3 @@ export const WebsiteSection = ({
     </Card>
   );
 };
-
-const supabase = supabase;
