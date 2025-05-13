@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +13,7 @@ export const useCurrentBusiness = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchBusinessData = useCallback(async () => {
+  const fetchBusinessData = useCallback(async (skipCache = false) => {
     if (!user) {
       setLoading(false);
       return;

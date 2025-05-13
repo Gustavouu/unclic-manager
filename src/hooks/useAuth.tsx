@@ -1,9 +1,7 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
-import { useSession } from "@/contexts/SessionContext";
 
 interface AuthContextProps {
   user: User | null;
@@ -31,16 +29,33 @@ const AuthContext = createContext<AuthContextProps>({
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const { session } = useSession();
+
+  // Set up auth state listener
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, sessionData) => {
+        setSession(sessionData);
+        setUser(sessionData?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
 
   // Monitor for suspicious activity
   const [loginAttempts, setLoginAttempts] = useState<Record<string, { count: number, lastAttempt: number }>>({});
-
-  useEffect(() => {
-    setUser(session?.user ?? null);
-    setLoading(false);
-  }, [session]);
 
   const trackLoginAttempt = (email: string, success: boolean): boolean => {
     const now = Date.now();

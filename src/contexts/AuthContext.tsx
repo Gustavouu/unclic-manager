@@ -1,10 +1,20 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth as useAuthHook } from "@/hooks/useAuth";
 
-// Re-export the AuthProvider directly from the useAuth hook
-export const { AuthProvider } = useAuth;
+// Create a context for authentication with the hook
+export const AuthContext = createContext(null);
 
-// Also export the context and hook for easier access elsewhere
-export const AuthContext = useAuth.context;
-export const useAuthContext = useAuth.useAuthContext;
+// Export the hook for accessing auth context
+export const useAuthContext = () => useContext(AuthContext);
+
+// Export the AuthProvider component
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const authUtils = useAuthHook();
+  
+  return (
+    <AuthContext.Provider value={authUtils}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
