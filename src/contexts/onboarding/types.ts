@@ -1,4 +1,3 @@
-
 // Types for the onboarding context
 
 // Business data types
@@ -29,6 +28,9 @@ export interface BusinessData {
     linkedin?: string;
     twitter?: string;
   };
+  // Add compatibility fields for existing code
+  cep?: string;
+  number?: string;
 }
 
 // Service types

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, ReactNode, useState, useRef, useEffect } from "react";
 import { OnboardingContextType, BusinessData, OnboardingMethod, OnboardingStatus } from "./types";
 import { useBusinessDataState } from "./hooks/useBusinessDataState";
@@ -37,8 +36,10 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     email: "",
     phone: "",
     cep: "",
+    zipCode: "",
     address: "",
     number: "",
+    addressNumber: "",
     neighborhood: "",
     city: "",
     state: ""
@@ -94,8 +95,10 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
       email: "",
       phone: "",
       cep: "",
+      zipCode: "",
       address: "",
       number: "",
+      addressNumber: "",
       neighborhood: "",
       city: "",
       state: ""
@@ -106,6 +109,49 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     
     // Clear localStorage
     localStorage.removeItem('unclic-manager-onboarding');
+  };
+
+  // The updateBusinessData function should be modified to handle the dual naming
+  const updateBusinessData = (data: Partial<BusinessData>) => {
+    setBusinessDataState(prev => {
+      // Sync zipCode and cep fields if either is provided
+      const updatedData = { ...prev, ...data };
+      
+      // Keep zipCode and cep in sync
+      if (data.zipCode && !data.cep) {
+        updatedData.cep = data.zipCode;
+      }
+      if (data.cep && !data.zipCode) {
+        updatedData.zipCode = data.cep;
+      }
+      
+      // Keep addressNumber and number in sync
+      if (data.addressNumber && !data.number) {
+        updatedData.number = data.addressNumber;
+      }
+      if (data.number && !data.addressNumber) {
+        updatedData.addressNumber = data.number;
+      }
+      
+      // For nested objects like socialMedia, merge them properly
+      if (data.socialMedia) {
+        updatedData.socialMedia = {
+          ...prev.socialMedia,
+          ...data.socialMedia
+        };
+      }
+      
+      // Set a new timeout for auto-save
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      
+      saveTimeoutRef.current = window.setTimeout(() => {
+        saveProgress();
+      }, 1000) as unknown as number;
+      
+      return updatedData;
+    });
   };
 
   // The context value object with all the state and functions

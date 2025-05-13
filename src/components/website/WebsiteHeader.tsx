@@ -22,7 +22,7 @@ export const WebsiteHeader: React.FC<WebsiteHeaderProps> = ({
           <p className="text-muted-foreground flex items-center gap-1">
             <MapPin className="h-4 w-4" />
             {businessData.address}
-            {businessData.number && `, ${businessData.number}`}
+            {(businessData.number || businessData.addressNumber) && `, ${businessData.number || businessData.addressNumber}`}
             {businessData.city && ` - ${businessData.city}`}
             {businessData.state && `/${businessData.state}`}
           </p>

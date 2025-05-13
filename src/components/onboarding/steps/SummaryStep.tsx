@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +16,7 @@ export const SummaryStep: React.FC = () => {
     businessData.email.trim() !== "" && 
     businessData.phone.trim() !== "" &&
     businessData.address.trim() !== "" &&
-    businessData.cep.trim() !== "";
+    (businessData.cep || businessData.zipCode || "").trim() !== "";
   
   const isServicesComplete = services.length > 0;
   
@@ -69,8 +70,8 @@ export const SummaryStep: React.FC = () => {
                     <p><strong>Nome:</strong> {businessData.name}</p>
                     <p><strong>Email:</strong> {businessData.email}</p>
                     <p><strong>Telefone:</strong> {businessData.phone}</p>
-                    <p><strong>Endereço:</strong> {businessData.address}, {businessData.number} - {businessData.city}/{businessData.state}</p>
-                    <p><strong>CEP:</strong> {businessData.cep}</p>
+                    <p><strong>Endereço:</strong> {businessData.address}, {businessData.number || businessData.addressNumber} - {businessData.city}/{businessData.state}</p>
+                    <p><strong>CEP:</strong> {businessData.cep || businessData.zipCode}</p>
                     {businessData.website && (
                       <p className="flex items-center gap-1">
                         <Globe className="h-3 w-3" />

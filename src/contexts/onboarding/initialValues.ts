@@ -8,9 +8,11 @@ export const initialBusinessData: BusinessData = {
   phone: "",
   logo: null,
   banner: null,
-  cep: "",
+  cep: "", // Maintain for backward compatibility
+  zipCode: "", // New field name
   address: "",
-  number: "",
+  number: "", // Maintain for backward compatibility
+  addressNumber: "", // New field name
   neighborhood: "",
   city: "",
   state: "",

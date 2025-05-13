@@ -40,7 +40,12 @@ export const OnboardingControls: React.FC = () => {
         toast.error("Preencha os campos obrigatórios para continuar");
         return;
       }
-      if (!businessData.cep || !businessData.address || !businessData.number) {
+      
+      // Check for required address fields (using both naming conventions)
+      const zipCode = businessData.cep || businessData.zipCode;
+      const addressNumber = businessData.number || businessData.addressNumber;
+      
+      if (!zipCode || !businessData.address || !addressNumber) {
         toast.error("Preencha o endereço completo para continuar");
         return;
       }
@@ -145,11 +150,11 @@ export const OnboardingControls: React.FC = () => {
             email: businessData.email,
             phone: businessData.phone,
             address: businessData.address,
-            number: businessData.number,
+            number: businessData.number || businessData.addressNumber,
             neighborhood: businessData.neighborhood,
             city: businessData.city,
             state: businessData.state,
-            cep: businessData.cep
+            cep: businessData.cep || businessData.zipCode
           },
           userId: user.id
         }

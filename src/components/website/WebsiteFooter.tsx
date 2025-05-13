@@ -18,7 +18,7 @@ export const WebsiteFooter: React.FC<WebsiteFooterProps> = ({ businessName, busi
         {businessData?.address && (
           <p className="mt-1 text-muted-foreground">
             {businessData.address}
-            {businessData.number ? `, ${businessData.number}` : ''}
+            {businessData.number || businessData.addressNumber ? `, ${businessData.number || businessData.addressNumber}` : ''}
             {businessData.neighborhood ? ` - ${businessData.neighborhood}` : ''}
             {businessData.city ? `, ${businessData.city}` : ''}
             {businessData.state ? ` - ${businessData.state}` : ''}

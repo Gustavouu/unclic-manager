@@ -40,7 +40,7 @@ const BusinessWebsite = () => {
     email: businessData.email || "contato@demo.com",
     phone: businessData.phone || "(11) 9999-9999",
     address: businessData.address || "Av. Exemplo",
-    number: businessData.number || "123",
+    number: businessData.number || businessData.addressNumber || "123",
     neighborhood: businessData.neighborhood || "Centro",
     city: businessData.city || "São Paulo",
     state: businessData.state || "SP",
