@@ -1,13 +1,14 @@
 
 import * as React from "react"
-import { toast } from "sonner"
+import { toast as sonnerToast } from "sonner"
 
-type ToastProps = React.ComponentPropsWithoutRef<typeof toast>
-type ToastActionElement = React.ReactElement<typeof toast>
+type ToastProps = React.ComponentPropsWithoutRef<typeof sonnerToast>
+
+export type ToastActionElement = React.ReactElement<typeof sonnerToast>
 
 export type ToastActionProps = {
   altText: string
-} & React.ComponentPropsWithoutRef<typeof toast>
+} & React.ComponentPropsWithoutRef<typeof sonnerToast>
 
 export type Toast = {
   id?: string
@@ -18,11 +19,11 @@ export type Toast = {
 } & ToastProps
 
 const actionTypes = {
-  default: toast,
-  success: toast.success,
-  error: toast.error,
-  warning: toast.warning,
-  info: toast.info
+  default: sonnerToast,
+  success: sonnerToast.success,
+  error: sonnerToast.error,
+  warning: sonnerToast.warning,
+  info: sonnerToast.info
 } as const
 
 type ActionType = keyof typeof actionTypes
@@ -31,7 +32,7 @@ export const useToast = () => {
   const showToast = React.useCallback(
     ({ title, description, variant = "default", ...props }: Toast) => {
       const actionType = (variant === "destructive" ? "error" : variant) as ActionType
-      const toastFunction = actionTypes[actionType] || toast
+      const toastFunction = actionTypes[actionType] || sonnerToast
       
       return toastFunction(title, {
         description,
@@ -43,10 +44,10 @@ export const useToast = () => {
 
   return {
     toast: showToast,
-    dismiss: toast.dismiss,
+    dismiss: sonnerToast.dismiss,
     toasts: [] // For compatibility with older implementations
   }
 }
 
 // Re-export the toast methods for convenience
-export { toast }
+export { sonnerToast as toast }

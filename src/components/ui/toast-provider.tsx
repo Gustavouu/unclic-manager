@@ -1,5 +1,5 @@
 
-import { Toaster } from "sonner";
+import { Toaster as SonnerToaster } from "sonner";
 import { useTheme } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,7 @@ export function ToastProvider({
   const { theme = "system" } = useTheme();
 
   return (
-    <Toaster
+    <SonnerToaster
       position={position}
       theme={theme as "light" | "dark" | "system"}
       className={cn("toaster group", className)}
