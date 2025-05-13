@@ -58,10 +58,10 @@ export function AppointmentsCalendarView({
           locale={ptBR}
           className="rounded-md border w-full"
           components={{
-            DayContent: ({ day }) => (
+            DayContent: (props) => (
               <div className="relative flex items-center justify-center h-full w-full">
-                {day.day}
-                {renderDay(day.date)}
+                {props.date.getDate()}
+                {renderDay(props.date)}
               </div>
             ),
           }}
