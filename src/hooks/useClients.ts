@@ -1,226 +1,303 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useTenant } from '@/contexts/TenantContext';
+import { toast } from 'sonner';
+import { sanitizeFormData } from '@/utils/sanitize';
 
-export interface Client {
+interface Cliente {
   id: string;
-  name: string;
-  nome: string; // Portuguese version of name
+  nome: string;
   email?: string;
-  phone?: string;
-  telefone?: string; // Portuguese version of phone
-  ultima_visita?: string;
-  valor_total_gasto?: number;
-  total_agendamentos?: number;
-  status?: 'active' | 'inactive';
-  criado_em?: string;
+  telefone?: string;
+  data_nascimento?: string;
+  genero?: string;
+  endereco?: string;
   cidade?: string;
   estado?: string;
+  cep?: string;
+  notas?: string;
+  id_negocio: string;
+}
+
+interface ClienteInput {
+  nome: string;
+  email?: string;
+  telefone?: string;
+  data_nascimento?: string;
+  genero?: string;
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
   notas?: string;
 }
 
 export const useClients = () => {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [clients, setClients] = useState<Cliente[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { businessId } = useTenant();
+  const { currentBusiness } = useTenant();
 
-  useEffect(() => {
-    const fetchClients = async () => {
-      if (!businessId) {
-        console.log('No business ID available, skipping client fetch');
-        return;
-      }
+  /**
+   * Fetch clients with secure business filtering
+   */
+  const fetchClients = useCallback(async () => {
+    if (!currentBusiness?.id) {
+      setError('Negócio não identificado. Por favor, selecione um negócio.');
+      return [];
+    }
 
-      setIsLoading(true);
-      try {
-        console.log('Fetching clients for business ID:', businessId);
-        const { data, error } = await supabase
-          .from('clientes')
-          .select('*')
-          .eq('id_negocio', businessId);
+    setLoading(true);
+    setError(null);
 
-        if (error) {
-          console.error("Erro ao buscar clientes:", error);
-          setError(error.message);
-          toast.error("Não foi possível carregar os clientes.");
-          return;
-        }
-
-        // Map the database columns to our client interface
-        const mappedClients = (data || []).map(client => ({
-          id: client.id,
-          name: client.nome,
-          nome: client.nome,
-          email: client.email,
-          phone: client.telefone,
-          telefone: client.telefone,
-          ultima_visita: client.ultima_visita,
-          valor_total_gasto: client.valor_total_gasto,
-          total_agendamentos: client.total_agendamentos,
-          status: client.status || 'active',
-          criado_em: client.criado_em,
-          cidade: client.cidade,
-          estado: client.estado,
-          notas: client.notas
-        }));
-
-        setClients(mappedClients);
-      } catch (err: any) {
-        console.error("Erro inesperado ao buscar clientes:", err);
-        setError(err.message);
-        toast.error("Erro ao carregar clientes.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchClients();
-  }, [businessId, toast]);
-
-  const createClient = async (clientData: Partial<Client>) => {
     try {
-      if (!businessId) {
-        throw new Error("ID do negócio não disponível");
-      }
-      
-      console.log('Creating client for business ID:', businessId, clientData);
-      
+      // Fetch only clients for the current business
       const { data, error } = await supabase
         .from('clientes')
-        .insert([{
-          ...clientData,
-          id_negocio: businessId
-        }])
-        .select()
+        .select('*')
+        .eq('id_negocio', currentBusiness.id)
+        .order('nome', { ascending: true });
+
+      if (error) throw error;
+
+      setClients(data || []);
+      return data || [];
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Erro ao buscar clientes';
+      setError(errorMsg);
+      toast.error('Erro ao carregar clientes', {
+        description: errorMsg,
+      });
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [currentBusiness?.id]);
+
+  /**
+   * Create a new client with secure business assignment
+   */
+  const createClient = useCallback(async (clientData: ClienteInput) => {
+    if (!currentBusiness?.id) {
+      const errorMsg = 'Negócio não identificado. Por favor, selecione um negócio.';
+      setError(errorMsg);
+      toast.error('Erro ao criar cliente', {
+        description: errorMsg,
+      });
+      return null;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Sanitize input data
+      const sanitizedData = sanitizeFormData(clientData);
+      
+      // Always assign the current business ID
+      const clientWithBusinessId = {
+        ...sanitizedData,
+        id_negocio: currentBusiness.id
+      };
+
+      // Insert the client
+      const { data, error } = await supabase
+        .from('clientes')
+        .insert(clientWithBusinessId)
+        .select();
+
+      if (error) throw error;
+
+      const newClient = data?.[0];
+      
+      if (newClient) {
+        setClients(prev => [...prev, newClient]);
+        toast.success('Cliente criado com sucesso');
+      }
+      
+      return newClient || null;
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Erro ao criar cliente';
+      setError(errorMsg);
+      toast.error('Erro ao criar cliente', {
+        description: errorMsg,
+      });
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [currentBusiness?.id]);
+
+  /**
+   * Update an existing client with security checks
+   */
+  const updateClient = useCallback(async (id: string, clientData: Partial<ClienteInput>) => {
+    if (!currentBusiness?.id) {
+      const errorMsg = 'Negócio não identificado. Por favor, selecione um negócio.';
+      setError(errorMsg);
+      toast.error('Erro ao atualizar cliente', {
+        description: errorMsg,
+      });
+      return false;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Sanitize input data
+      const sanitizedData = sanitizeFormData(clientData);
+      
+      // Verify the client belongs to the current business before updating
+      const { data: existingClient, error: fetchError } = await supabase
+        .from('clientes')
+        .select('id_negocio')
+        .eq('id', id)
         .single();
 
-      if (error) {
-        console.error("Error creating client:", error);
-        throw error;
+      if (fetchError) throw fetchError;
+
+      if (existingClient?.id_negocio !== currentBusiness.id) {
+        throw new Error('Você não tem permissão para atualizar este cliente.');
       }
 
-      // Map the database response to our client interface
-      const newClient: Client = {
-        id: data.id,
-        name: data.nome,
-        nome: data.nome,
-        email: data.email,
-        phone: data.telefone,
-        telefone: data.telefone,
-        ultima_visita: data.ultima_visita,
-        valor_total_gasto: data.valor_total_gasto || 0,
-        total_agendamentos: data.total_agendamentos || 0,
-        status: data.status || 'active',
-        criado_em: data.criado_em,
-        cidade: data.cidade,
-        estado: data.estado,
-        notas: data.notas
-      };
-      
-      setClients(prev => [...prev, newClient]);
-      toast.success("Cliente criado com sucesso!");
-      return newClient;
-      
+      // Update the client
+      const { error } = await supabase
+        .from('clientes')
+        .update(sanitizedData)
+        .eq('id', id)
+        .eq('id_negocio', currentBusiness.id); // Extra security to ensure updating only own clients
+
+      if (error) throw error;
+
+      // Update local state
+      setClients(prev => prev.map(client => 
+        client.id === id ? { ...client, ...sanitizedData } : client
+      ));
+
+      toast.success('Cliente atualizado com sucesso');
+      return true;
     } catch (err: any) {
-      console.error("Error creating client:", err);
-      toast.error("Erro ao criar cliente: " + err.message);
-      throw err;
+      const errorMsg = err?.message || 'Erro ao atualizar cliente';
+      setError(errorMsg);
+      toast.error('Erro ao atualizar cliente', {
+        description: errorMsg,
+      });
+      return false;
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [currentBusiness?.id]);
 
-  const findClientByEmail = async (email: string) => {
+  /**
+   * Delete a client with security checks
+   */
+  const deleteClient = useCallback(async (id: string) => {
+    if (!currentBusiness?.id) {
+      const errorMsg = 'Negócio não identificado. Por favor, selecione um negócio.';
+      setError(errorMsg);
+      toast.error('Erro ao excluir cliente', {
+        description: errorMsg,
+      });
+      return false;
+    }
+
+    setLoading(true);
+    setError(null);
+
     try {
-      if (!businessId) {
-        throw new Error("ID do negócio não disponível");
+      // Verify the client belongs to the current business before deleting
+      const { data: existingClient, error: fetchError } = await supabase
+        .from('clientes')
+        .select('id_negocio')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      if (existingClient?.id_negocio !== currentBusiness.id) {
+        throw new Error('Você não tem permissão para excluir este cliente.');
       }
+
+      // Delete the client
+      const { error } = await supabase
+        .from('clientes')
+        .delete()
+        .eq('id', id)
+        .eq('id_negocio', currentBusiness.id); // Extra security to ensure deleting only own clients
+
+      if (error) throw error;
+
+      // Update local state
+      setClients(prev => prev.filter(client => client.id !== id));
+
+      toast.success('Cliente excluído com sucesso');
+      return true;
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Erro ao excluir cliente';
+      setError(errorMsg);
+      toast.error('Erro ao excluir cliente', {
+        description: errorMsg,
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [currentBusiness?.id]);
+
+  /**
+   * Search clients with secure business filtering
+   */
+  const searchClients = useCallback(async (searchTerm: string) => {
+    if (!currentBusiness?.id) {
+      setError('Negócio não identificado. Por favor, selecione um negócio.');
+      return [];
+    }
+
+    if (!searchTerm || searchTerm.trim().length < 3) {
+      return fetchClients(); // Return all clients if search term is too short
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Sanitize the search term and prepare it for safe search
+      const sanitizedTerm = searchTerm.replace(/[%_]/g, '\\$&').trim();
       
-      console.log('Finding client by email for business ID:', businessId, email);
-      
+      // Search only within the current business's clients
       const { data, error } = await supabase
         .from('clientes')
         .select('*')
-        .eq('email', email)
-        .eq('id_negocio', businessId)
-        .maybeSingle();
+        .eq('id_negocio', currentBusiness.id)
+        .or(`nome.ilike.%${sanitizedTerm}%,email.ilike.%${sanitizedTerm}%,telefone.ilike.%${sanitizedTerm}%`)
+        .order('nome', { ascending: true });
 
       if (error) throw error;
-      
-      if (!data) return null;
-      
-      // Map database fields to our client interface
-      return {
-        id: data.id,
-        name: data.nome,
-        nome: data.nome,
-        email: data.email,
-        phone: data.telefone,
-        telefone: data.telefone,
-        ultima_visita: data.ultima_visita,
-        valor_total_gasto: data.valor_total_gasto || 0,
-        status: data.status || 'active',
-        criado_em: data.criado_em,
-        cidade: data.cidade,
-        estado: data.estado,
-        notas: data.notas
-      };
-      
+
+      setClients(data || []);
+      return data || [];
     } catch (err: any) {
-      console.error("Error finding client:", err);
-      return null;
+      const errorMsg = err?.message || 'Erro ao buscar clientes';
+      setError(errorMsg);
+      toast.error('Erro na busca de clientes', {
+        description: errorMsg,
+      });
+      return [];
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [currentBusiness?.id, fetchClients]);
 
-  const findClientByPhone = async (phone: string) => {
-    try {
-      if (!businessId) {
-        throw new Error("ID do negócio não disponível");
-      }
-      
-      console.log('Finding client by phone for business ID:', businessId, phone);
-      
-      const { data, error } = await supabase
-        .from('clientes')
-        .select('*')
-        .eq('telefone', phone)
-        .eq('id_negocio', businessId)
-        .maybeSingle();
-
-      if (error) throw error;
-      
-      if (!data) return null;
-      
-      // Map database fields to our client interface
-      return {
-        id: data.id,
-        name: data.nome,
-        nome: data.nome,
-        email: data.email,
-        phone: data.telefone,
-        telefone: data.telefone,
-        ultima_visita: data.ultima_visita,
-        valor_total_gasto: data.valor_total_gasto || 0,
-        status: data.status || 'active',
-        criado_em: data.criado_em,
-        cidade: data.cidade,
-        estado: data.estado,
-        notas: data.notas
-      };
-      
-    } catch (err: any) {
-      console.error("Error finding client by phone:", err);
-      return null;
-    }
-  };
-
-  return { 
-    clients, 
-    isLoading, 
-    error, 
-    createClient, 
-    findClientByEmail,
-    findClientByPhone
+  return {
+    clients,
+    loading,
+    error,
+    fetchClients,
+    createClient,
+    updateClient,
+    deleteClient,
+    searchClients
   };
 };

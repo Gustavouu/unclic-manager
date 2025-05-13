@@ -1,121 +1,193 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { LoadingButton } from "@/components/ui/loading-button";
+import { Toaster, toast } from "sonner";
 import { AsyncFeedback } from "@/components/ui/async-feedback";
-import { Toaster } from "sonner";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Lock, ShieldCheck } from "lucide-react";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
 
 const ResetPassword = () => {
-  const { resetPassword } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isResetComplete, setIsResetComplete] = useState(false);
   
-  const handleResetPassword = async (e: React.FormEvent) => {
+  // Verifique se o usuário tem um token de redefinição válido
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      
+      if (!data.session) {
+        toast.error("Link inválido ou expirado", {
+          description: "Por favor, solicite um novo link de redefinição de senha"
+        });
+        
+        // Redirecionar para a página de recuperação de senha após um breve delay
+        setTimeout(() => {
+          navigate("/forgot-password");
+        }, 2000);
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus('loading');
+    
+    // Validação simples
+    if (password.length < 6) {
+      setErrorMessage("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setErrorMessage("As senhas não coincidem");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setErrorMessage("");
     
     try {
-      await resetPassword(email);
-      setStatus('success');
+      // Atualizar a senha do usuário
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+      
+      if (error) throw error;
+      
+      // Mostrar sucesso
+      setIsResetComplete(true);
+      toast.success("Senha atualizada com sucesso", {
+        description: "Você pode fazer login com sua nova senha"
+      });
+      
+      // Redirecionar para a página de login após alguns segundos
+      setTimeout(() => {
+        navigate("/login");
+      }, 3000);
     } catch (error: any) {
-      console.error("Erro ao resetar senha:", error);
-      setErrorMessage(error.message || "Erro ao solicitar redefinição de senha");
-      setStatus('error');
+      console.error("Erro ao redefinir senha:", error);
+      setErrorMessage(error.message || "Ocorreu um erro ao redefinir sua senha. Tente novamente.");
+      
+      toast.error("Erro ao redefinir senha", {
+        description: "Não foi possível atualizar sua senha"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
-      <Toaster position="top-right" />
-      <Card className="w-full max-w-md overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Redefinir senha</CardTitle>
-          <CardDescription>
-            {status === 'success'
-              ? "Verifique seu email para instruções"
-              : "Enviaremos um link para redefinir sua senha"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {status === 'success' ? (
-            <AsyncFeedback 
-              status="success" 
-              message="Email enviado com sucesso"
-              description={`Se houver uma conta associada ao email ${email}, você receberá um link para redefinir sua senha. Verifique também sua pasta de spam caso não encontre o email.`}
-              className="py-8"
-            />
-          ) : status === 'error' ? (
-            <AsyncFeedback 
-              status="error" 
-              message="Não foi possível enviar o email"
-              description={errorMessage}
-              className="mb-4"
-            >
-              <form onSubmit={handleResetPassword} className="mt-4 space-y-4">
+    <ErrorBoundary>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+        <Toaster position="top-right" />
+        <Card className="w-full max-w-md overflow-hidden transition-all duration-300 shadow-lg hover:shadow-xl">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Redefinir Senha</CardTitle>
+            <CardDescription>
+              {isResetComplete 
+                ? "Sua senha foi alterada com sucesso"
+                : "Crie uma nova senha para sua conta"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {errorMessage && (
+              <AsyncFeedback 
+                status="error" 
+                message="Erro" 
+                description={errorMessage}
+                className="mb-4"
+              />
+            )}
+            
+            {isResetComplete ? (
+              <div className="text-center p-4">
+                <div className="mb-4 p-4 bg-green-50 rounded-full inline-flex items-center justify-center">
+                  <ShieldCheck className="h-8 w-8 text-green-500" />
+                </div>
+                <p className="text-gray-600 mb-4">
+                  Sua senha foi redefinida com sucesso. Você será redirecionado para a página de login em instantes.
+                </p>
+                <Button 
+                  onClick={() => navigate("/login")}
+                  className="w-full"
+                >
+                  Ir para o login
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium">Email</label>
+                  <label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
+                    <Lock className="h-4 w-4" /> Nova senha
+                  </label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
+                    disabled={isSubmitting}
                     className="transition-all duration-200"
+                    autoComplete="new-password"
+                  />
+                  <p className="text-xs text-gray-500">
+                    A senha deve ter pelo menos 6 caracteres
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="confirmPassword" className="text-sm font-medium flex items-center gap-2">
+                    <Lock className="h-4 w-4" /> Confirmar nova senha
+                  </label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    disabled={isSubmitting}
+                    className="transition-all duration-200"
+                    autoComplete="new-password"
                   />
                 </div>
-                <LoadingButton 
+                <Button 
                   type="submit" 
                   className="w-full" 
-                  isLoading={false}
-                  icon={<Send className="h-4 w-4" />}
+                  disabled={isSubmitting}
                 >
-                  Enviar instruções
-                </LoadingButton>
+                  {isSubmitting ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-white rounded-full" />
+                      Processando...
+                    </div>
+                  ) : "Redefinir senha"}
+                </Button>
               </form>
-            </AsyncFeedback>
-          ) : (
-            <form onSubmit={handleResetPassword} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">Email</label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="transition-all duration-200"
-                />
-              </div>
-              <LoadingButton 
-                type="submit" 
-                className="w-full" 
-                isLoading={status === 'loading'}
-                icon={<Send className="h-4 w-4" />}
-              >
-                Enviar instruções
-              </LoadingButton>
-            </form>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <LoadingButton
-            variant="link"
-            onClick={() => navigate("/login")}
-            icon={<ArrowLeft className="h-4 w-4" />}
-          >
-            Voltar para o login
-          </LoadingButton>
-        </CardFooter>
-      </Card>
-    </div>
+            )}
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button 
+              variant="link" 
+              onClick={() => navigate("/login")}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar para o login
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    </ErrorBoundary>
   );
 };
 
