@@ -1,22 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { Option } from './types';
+import { Option, MultiSelectProps } from './types';
 import { cn } from '@/lib/utils';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-
-export interface MultiSelectProps {
-  options: Option[];
-  selected: string[];
-  onChange: (values: string[]) => void;
-  placeholder?: string;
-  className?: string;
-  emptyMessage?: string;
-  disabled?: boolean;
-}
 
 export const MultiSelect: React.FC<MultiSelectProps> = ({
   options,
@@ -28,29 +18,29 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   disabled = false,
 }) => {
   const [open, setOpen] = useState(false);
-  const [selectedValues, setSelectedValues] = useState<string[]>(selected || []);
+  const [selectedValues, setSelectedValues] = useState<Option[]>(selected || []);
 
   useEffect(() => {
     setSelectedValues(selected || []);
   }, [selected]);
 
   const handleSelect = (value: string) => {
-    const newSelectedValues = selectedValues.includes(value)
-      ? selectedValues.filter(v => v !== value)
-      : [...selectedValues, value];
+    const optionItem = options.find(option => option.value === value);
+    if (!optionItem) return;
+
+    const newSelectedValues = selectedValues.some(item => item.value === value)
+      ? selectedValues.filter(item => item.value !== value)
+      : [...selectedValues, optionItem];
     
     setSelectedValues(newSelectedValues);
     onChange(newSelectedValues);
   };
 
   const handleRemove = (value: string) => {
-    const newSelectedValues = selectedValues.filter(v => v !== value);
+    const newSelectedValues = selectedValues.filter(item => item.value !== value);
     setSelectedValues(newSelectedValues);
     onChange(newSelectedValues);
   };
-
-  const selectedLabels = selectedValues
-    .map(value => options.find(option => option.value === value)?.label || value);
 
   return (
     <div className="space-y-2">
@@ -70,22 +60,18 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
           >
             {selectedValues.length > 0 ? (
               <div className="flex flex-wrap gap-1">
-                {selectedValues.length <= 2 && selectedLabels.map((label, i) => (
+                {selectedValues.length <= 2 && selectedValues.map((item, i) => (
                   <Badge
                     key={i}
                     variant="secondary"
                     className="mr-1 mb-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemove(selectedValues[i]);
-                    }}
                   >
-                    {label}
+                    {item.label}
                     <button
                       className="ml-1 rounded-full outline-none"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleRemove(selectedValues[i]);
+                        handleRemove(item.value);
                       }}
                     >
                       <X className="h-3 w-3" />
@@ -118,7 +104,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      selectedValues.includes(option.value) ? "opacity-100" : "opacity-0"
+                      selectedValues.some(item => item.value === option.value) ? "opacity-100" : "opacity-0"
                     )}
                   />
                   {option.label}
@@ -132,5 +118,5 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   );
 };
 
-// Re-export the MultiSelect component for compatibility
+// Re-export para compatibilidade
 export { MultiSelect as ProfessionalsMultiSelect };

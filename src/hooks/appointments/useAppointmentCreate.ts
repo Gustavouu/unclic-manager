@@ -32,7 +32,7 @@ export const useAppointmentCreate = (setAppointments: any = null) => {
         throw error;
       }
 
-      toast("Seu agendamento foi criado com sucesso.");
+      toast.success("Seu agendamento foi criado com sucesso.");
       
       // Update the appointments list if setAppointments was provided
       if (setAppointments && Array.isArray(data)) {
@@ -42,9 +42,7 @@ export const useAppointmentCreate = (setAppointments: any = null) => {
       return data;
     } catch (error: any) {
       setError(error);
-      toast(error.message, {
-        variant: "destructive",
-      });
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +65,7 @@ export const useAppointmentCreate = (setAppointments: any = null) => {
         throw error;
       }
 
-      toast("Seu agendamento foi atualizado com sucesso.");
+      toast.success("Seu agendamento foi atualizado com sucesso.");
       
       // Update the appointments list if setAppointments was provided
       if (setAppointments && Array.isArray(data) && data.length > 0) {
@@ -79,9 +77,7 @@ export const useAppointmentCreate = (setAppointments: any = null) => {
       return data;
     } catch (error: any) {
       setError(error);
-      toast(error.message, {
-        variant: "destructive",
-      });
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +106,7 @@ export const useAppointmentCreate = (setAppointments: any = null) => {
         throw error;
       }
 
-      toast("Seu agendamento foi cancelado com sucesso.");
+      toast.success("Seu agendamento foi cancelado com sucesso.");
       
       // Update the appointments list if setAppointments was provided
       if (setAppointments && Array.isArray(data) && data.length > 0) {
@@ -122,9 +118,7 @@ export const useAppointmentCreate = (setAppointments: any = null) => {
       return data;
     } catch (error: any) {
       setError(error);
-      toast(error.message, {
-        variant: "destructive",
-      });
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -148,7 +142,7 @@ export const useAppointmentCreate = (setAppointments: any = null) => {
         throw error;
       }
 
-      toast("Seu agendamento foi reagendado com sucesso.");
+      toast.success("Seu agendamento foi reagendado com sucesso.");
       
       // Update the appointments list if setAppointments was provided
       if (setAppointments && Array.isArray(data) && data.length > 0) {
@@ -160,9 +154,7 @@ export const useAppointmentCreate = (setAppointments: any = null) => {
       return data;
     } catch (error: any) {
       setError(error);
-      toast(error.message, {
-        variant: "destructive",
-      });
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }

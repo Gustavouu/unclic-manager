@@ -2,7 +2,8 @@
 import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MultiSelect, Option } from "@/components/professionals/multiselect";
+import { MultiSelect } from "@/components/professionals/multiselect";
+import { Option } from "@/components/professionals/multiselect/types";
 import { UseFormReturn } from "react-hook-form";
 import { ProfessionalFormData } from "@/hooks/professionals/types";
 
@@ -94,7 +95,7 @@ export const SpecialtiesSelect = ({ form, specialties = [] }: SpecialtiesSelectP
           <FormControl>
             <MultiSelect
               options={specialtyOptions}
-              value={selectedSpecialties}
+              selected={selectedSpecialties}
               onChange={(selected) => {
                 const values = selected.map(option => option.value);
                 field.onChange(values);

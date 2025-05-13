@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Professional, ProfessionalFormData } from "./types";
+import { Professional, ProfessionalFormData, ProfessionalStatus } from "./types";
 import { useTenant } from "@/contexts/TenantContext";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -31,7 +31,7 @@ export const useProfessionalOperations = () => {
           .eq("id_negocio", businessId);
 
         if (profissionaisError) {
-          console.error("Error fetching profissionais:", professionaisError);
+          console.error("Error fetching profissionais:", profissionaisError);
           throw profissionaisError;
         }
 
@@ -55,9 +55,7 @@ export const useProfessionalOperations = () => {
       return professionals;
     } catch (error: any) {
       setError(error);
-      toast(`Erro ao carregar profissionais: ${error.message}`, {
-        variant: "destructive",
-      });
+      toast.error(`Erro ao carregar profissionais: ${error.message}`);
       console.error("Error in fetchProfessionals:", error);
       return [];
     } finally {
@@ -85,7 +83,7 @@ export const useProfessionalOperations = () => {
 
       if (error) throw error;
 
-      toast("Profissional adicionado com sucesso!");
+      toast.success("Profissional adicionado com sucesso!");
 
       if (newProfessional) {
         setProfessionals(prev => [...prev, newProfessional]);
@@ -94,9 +92,7 @@ export const useProfessionalOperations = () => {
       return newProfessional;
     } catch (error: any) {
       setError(error);
-      toast(`Erro ao criar profissional: ${error.message}`, {
-        variant: "destructive",
-      });
+      toast.error(`Erro ao criar profissional: ${error.message}`);
       return null;
     } finally {
       setIsLoading(false);
@@ -121,7 +117,7 @@ export const useProfessionalOperations = () => {
 
       if (error) throw error;
 
-      toast("Profissional atualizado com sucesso!");
+      toast.success("Profissional atualizado com sucesso!");
 
       if (updatedProfessional) {
         setProfessionals(prev => 
@@ -132,9 +128,7 @@ export const useProfessionalOperations = () => {
       return updatedProfessional;
     } catch (error: any) {
       setError(error);
-      toast(`Erro ao atualizar profissional: ${error.message}`, {
-        variant: "destructive",
-      });
+      toast.error(`Erro ao atualizar profissional: ${error.message}`);
       return null;
     } finally {
       setIsLoading(false);
@@ -153,15 +147,13 @@ export const useProfessionalOperations = () => {
 
       if (error) throw error;
 
-      toast("Profissional removido com sucesso!");
+      toast.success("Profissional removido com sucesso!");
 
       setProfessionals(prev => prev.filter(p => p.id !== id));
       return true;
     } catch (error: any) {
       setError(error);
-      toast(`Erro ao remover profissional: ${error.message}`, {
-        variant: "destructive",
-      });
+      toast.error(`Erro ao remover profissional: ${error.message}`);
       return false;
     } finally {
       setIsLoading(false);
