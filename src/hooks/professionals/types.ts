@@ -1,22 +1,5 @@
 
-// Professional type interfaces
-export type ProfessionalStatus = 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE';
-
-// Add lowercase status constants for backward compatibility with existing code
-export const PROFESSIONAL_STATUS = {
-  ACTIVE: 'ACTIVE' as ProfessionalStatus,
-  INACTIVE: 'INACTIVE' as ProfessionalStatus,
-  ON_LEAVE: 'ON_LEAVE' as ProfessionalStatus,
-};
-
-// For legacy code compatibility
-export const STATUS_MAPPING = {
-  'active': 'ACTIVE',
-  'inactive': 'INACTIVE', 
-  'vacation': 'ON_LEAVE',
-  'leave': 'ON_LEAVE'
-} as const;
-
+// Standard type interface for professionals data
 export interface Professional {
   id: string;
   name: string;
@@ -24,56 +7,35 @@ export interface Professional {
   phone?: string;
   bio?: string;
   avatar?: string;
-  status?: ProfessionalStatus;
-  establishmentId?: string;
-  tenantId?: string;
-  services?: string[];
-  workingHours?: any;
-  isActive?: boolean;
-  hireDate?: string;
-  userId?: string;
-  
-  // Adding missing properties that were causing TypeScript errors
-  role?: string;
-  photoUrl?: string; 
   specialties?: string[];
-  commissionPercentage?: number;
+  position?: string;
+  status?: string;
+  isActive?: boolean;
+  commission_percentage?: number;
+  hire_date?: string | Date;
+  business_id: string;
+  user_id?: string;
+  workingHours?: Record<string, any>;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface ProfessionalCreateForm {
-  name?: string;
-  email?: string; 
+// Input type for creating/updating a professional
+export interface ProfessionalInput {
+  name: string;
+  email?: string;
   phone?: string;
   bio?: string;
   avatar?: string;
-  status?: ProfessionalStatus;
-  establishmentId?: string;
-  tenantId?: string;
-  services?: string[];
-  workingHours?: any;
-  isActive?: boolean;
-  hireDate?: string;
-  userId?: string;
-  
-  // Adding missing properties that were causing TypeScript errors
-  role?: string;
   specialties?: string[];
-  commissionPercentage?: number;
-  photoUrl?: string;
+  position?: string;
+  commission_percentage?: number;
+  workingHours?: Record<string, any>;
 }
 
-export interface UseProfessionalsReturn {
-  professionals: Professional[];
-  loading: boolean;
-  error: Error | null;
-  createProfessional: (professional: ProfessionalCreateForm) => Promise<Professional>;
-  updateProfessional: (id: string, professional: Partial<Professional>) => Promise<Professional>;
-  deleteProfessional: (id: string) => Promise<boolean>;
-  
-  // Adding necessary methods for the rest of the application
-  addProfessional: (professional: ProfessionalCreateForm) => Promise<Professional>;
-  removeProfessional: (id: string) => Promise<boolean>;
-  isLoading: boolean;
-  specialties: string[];
-  getProfessionalById?: (id: string) => Professional | undefined;
+// Filter options for fetching professionals
+export interface ProfessionalFilters {
+  isActive?: boolean;
+  specialties?: string[];
+  search?: string;
 }

@@ -15,7 +15,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Client } from "@/hooks/useClients";
 import { useState } from "react";
@@ -122,12 +121,12 @@ export function ClientsTable({
                   <TableCell>
                     <div className="flex items-center">
                       <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-2 text-xs font-medium uppercase">
-                        {client.nome.charAt(0)}
+                        {client.name.charAt(0)}
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-medium">{client.nome}</span>
+                        <span className="font-medium">{client.name}</span>
                         <span className="text-xs text-muted-foreground md:hidden">
-                          {client.email || client.telefone || "Sem contato"}
+                          {client.email || client.phone || "Sem contato"}
                         </span>
                       </div>
                     </div>
@@ -140,25 +139,25 @@ export function ClientsTable({
                           <span className="text-sm">{client.email}</span>
                         </div>
                       )}
-                      {client.telefone && (
+                      {client.phone && (
                         <div className="flex items-center">
                           <Phone size={14} className="mr-1 text-muted-foreground" />
-                          <span className="text-sm">{client.telefone}</span>
+                          <span className="text-sm">{client.phone}</span>
                         </div>
                       )}
-                      {!client.email && !client.telefone && (
+                      {!client.email && !client.phone && (
                         <span className="text-sm text-muted-foreground">Sem contato</span>
                       )}
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    <span className="text-sm">{formatDate(client.ultima_visita)}</span>
+                    <span className="text-sm">{formatDate(client.last_visit)}</span>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    <span className="text-sm">{formatCurrency(client.valor_total_gasto || 0)}</span>
+                    <span className="text-sm">{formatCurrency(client.total_spent || 0)}</span>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    <span className="text-sm">{client.cidade || "-"}</span>
+                    <span className="text-sm">{client.city || "-"}</span>
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end">

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,24 +26,35 @@ export const useCurrentBusiness = () => {
       let currentBusinessId = localStorage.getItem('currentBusinessId');
       
       if (!currentBusinessId) {
-        // If not, fetch it from the database
-        const { data: userData, error: userError } = await supabase
-          .from('usuarios')
-          .select('id_negocio')
+        // If not, first try to fetch it from the new application_users table
+        let { data: userData, error: userError } = await supabase
+          .from('application_users')
+          .select('business_id')
           .eq('id', user.id)
           .maybeSingle();
-
-        if (userError) {
-          throw userError;
-        }
-
-        if (!userData?.id_negocio) {
-          // User doesn't have a business associated
-          setLoading(false);
-          return;
-        }
         
-        currentBusinessId = userData.id_negocio;
+        if (userError || !userData?.business_id) {
+          // If not found, try the legacy usuarios table
+          const { data: legacyUserData, error: legacyUserError } = await supabase
+            .from('usuarios')
+            .select('id_negocio')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          if (legacyUserError) {
+            throw legacyUserError;
+          }
+
+          if (!legacyUserData?.id_negocio) {
+            // User doesn't have a business associated
+            setLoading(false);
+            return;
+          }
+          
+          currentBusinessId = legacyUserData.id_negocio;
+        } else {
+          currentBusinessId = userData.business_id;
+        }
         
         // Store it in localStorage for future use
         localStorage.setItem('currentBusinessId', currentBusinessId);
@@ -51,15 +63,51 @@ export const useCurrentBusiness = () => {
       // Set the business ID in state
       setBusinessId(currentBusinessId);
 
-      // Fetch complete business data
-      const { data: businessData, error: businessError } = await supabase
-        .from('negocios')
+      // First try to fetch from businesses table
+      let { data: businessData, error: businessError } = await supabase
+        .from('businesses')
         .select('*')
         .eq('id', currentBusinessId)
         .maybeSingle();
+      
+      if (businessError || !businessData) {
+        // If not found, try the legacy negocios table
+        const { data: legacyBusinessData, error: legacyBusinessError } = await supabase
+          .from('negocios')
+          .select('*')
+          .eq('id', currentBusinessId)
+          .maybeSingle();
 
-      if (businessError) {
-        throw businessError;
+        if (legacyBusinessError) {
+          throw legacyBusinessError;
+        }
+        
+        // If using legacy data, map to new structure
+        if (legacyBusinessData) {
+          businessData = {
+            id: legacyBusinessData.id,
+            name: legacyBusinessData.nome,
+            slug: legacyBusinessData.slug,
+            admin_email: legacyBusinessData.email_admin,
+            phone: legacyBusinessData.telefone,
+            address: legacyBusinessData.endereco,
+            address_number: legacyBusinessData.numero,
+            address_complement: legacyBusinessData.complemento,
+            neighborhood: legacyBusinessData.bairro,
+            city: legacyBusinessData.cidade,
+            state: legacyBusinessData.estado,
+            zip_code: legacyBusinessData.cep,
+            ein: legacyBusinessData.cnpj,
+            legal_name: legacyBusinessData.razao_social,
+            trade_name: legacyBusinessData.nome_fantasia,
+            logo_url: legacyBusinessData.url_logo,
+            description: legacyBusinessData.descricao,
+            status: legacyBusinessData.status,
+            subscription_status: legacyBusinessData.status_assinatura,
+            created_at: legacyBusinessData.criado_em,
+            updated_at: legacyBusinessData.atualizado_em
+          };
+        }
       }
 
       setBusinessData(businessData);
