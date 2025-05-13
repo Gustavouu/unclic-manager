@@ -1,7 +1,6 @@
 
 import React, { useState, FormEvent } from 'react';
 import { z } from 'zod';
-import { Form } from '@/components/ui/form';
 import { sanitizeFormData } from '@/utils/sanitize';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -86,8 +85,11 @@ export function ValidatedForm({
         Object.entries(formattedErrors).forEach(([field, error]) => {
           if (field === '_errors' && Array.isArray(error)) {
             errorMessages.push(...error);
-          } else if (typeof error === 'object' && error?._errors) {
-            errorMessages.push(`${field}: ${error._errors.join(', ')}`);
+          } else if (typeof error === 'object' && error && '_errors' in error) {
+            const fieldErrors = error._errors;
+            if (Array.isArray(fieldErrors)) {
+              errorMessages.push(`${field}: ${fieldErrors.join(', ')}`);
+            }
           }
         });
 
@@ -122,7 +124,7 @@ export function ValidatedForm({
   };
 
   return (
-    <Form {...props} className={cn('relative', className)} onSubmit={handleSubmit}>
+    <form {...props} className={cn('relative', className)} onSubmit={handleSubmit}>
       {/* Hidden CSRF token field */}
       <input type="hidden" name="csrf_token" value={csrfToken} />
       
@@ -133,6 +135,6 @@ export function ValidatedForm({
         }
         return child;
       })}
-    </Form>
+    </form>
   );
 }

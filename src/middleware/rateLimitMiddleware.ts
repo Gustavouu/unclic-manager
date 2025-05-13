@@ -1,7 +1,4 @@
 
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-
 // Simple in-memory rate limiter store
 // In production, use Redis or another persistent store
 interface RateLimitRecord {
@@ -13,9 +10,9 @@ const RATE_LIMIT_STORE: Map<string, Record<string, RateLimitRecord>> = new Map()
 
 // Rate limit configuration by route pattern
 const RATE_LIMIT_CONFIG: Record<string, { limit: number, window: number }> = {
-  '/api/auth': { limit: 10, window: 60 * 1000 }, // 10 requests per minute
-  '/api/password-reset': { limit: 5, window: 5 * 60 * 1000 }, // 5 requests per 5 minutes
-  '/api/payment': { limit: 20, window: 60 * 1000 }, // 20 requests per minute
+  '/auth': { limit: 10, window: 60 * 1000 }, // 10 requests per minute
+  '/password-reset': { limit: 5, window: 5 * 60 * 1000 }, // 5 requests per 5 minutes
+  '/payment': { limit: 20, window: 60 * 1000 }, // 20 requests per minute
   'default': { limit: 100, window: 60 * 1000 } // Default: 100 requests per minute
 };
 
@@ -23,10 +20,10 @@ const RATE_LIMIT_CONFIG: Record<string, { limit: number, window: number }> = {
  * Middleware for rate limiting requests based on IP address and route
  */
 export async function rateLimitMiddleware(
-  request: NextRequest
-) {
-  const ip = request.ip || 'unknown';
-  const url = request.nextUrl;
+  request: Request, 
+  ip: string = 'unknown'
+): Promise<{ allowed: boolean; headers: Record<string, string>; retryAfter?: number }> {
+  const url = new URL(request.url);
   const path = url.pathname;
 
   // Skip rate limiting for non-API routes and static assets
@@ -34,7 +31,7 @@ export async function rateLimitMiddleware(
       path.includes('/assets/') || 
       path.includes('/static/') ||
       request.method === 'OPTIONS') {
-    return NextResponse.next();
+    return { allowed: true, headers: {} };
   }
 
   // Get appropriate rate limit config for this route
@@ -42,7 +39,7 @@ export async function rateLimitMiddleware(
   
   // Find matching route config
   for (const route in RATE_LIMIT_CONFIG) {
-    if (route !== 'default' && path.startsWith(route)) {
+    if (route !== 'default' && path.includes(route)) {
       config = RATE_LIMIT_CONFIG[route];
       break;
     }
@@ -79,34 +76,31 @@ export async function rateLimitMiddleware(
     }
     
     // Return rate limit exceeded response
-    return new NextResponse(
-      JSON.stringify({
-        error: 'Rate limit exceeded',
-        retryAfter: Math.ceil((record.resetTime - Date.now()) / 1000)
-      }),
-      {
-        status: 429,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-RateLimit-Limit': config.limit.toString(),
-          'X-RateLimit-Remaining': '0',
-          'X-RateLimit-Reset': Math.ceil(record.resetTime / 1000).toString(),
-          'Retry-After': Math.ceil((record.resetTime - Date.now()) / 1000).toString()
-        }
-      }
-    );
+    return {
+      allowed: false,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-RateLimit-Limit': config.limit.toString(),
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': Math.ceil(record.resetTime / 1000).toString(),
+        'Retry-After': Math.ceil((record.resetTime - Date.now()) / 1000).toString()
+      },
+      retryAfter: Math.ceil((record.resetTime - Date.now()) / 1000)
+    };
   }
   
   // Increment counter
   record.count++;
   
   // Add rate limit headers to response
-  const response = NextResponse.next();
-  response.headers.set('X-RateLimit-Limit', config.limit.toString());
-  response.headers.set('X-RateLimit-Remaining', (config.limit - record.count).toString());
-  response.headers.set('X-RateLimit-Reset', Math.ceil(record.resetTime / 1000).toString());
-  
-  return response;
+  return {
+    allowed: true,
+    headers: {
+      'X-RateLimit-Limit': config.limit.toString(),
+      'X-RateLimit-Remaining': (config.limit - record.count).toString(),
+      'X-RateLimit-Reset': Math.ceil(record.resetTime / 1000).toString()
+    }
+  };
 }
 
 // Helper function to clean up old records
