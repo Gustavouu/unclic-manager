@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from './input';
 import { useTenant } from '@/contexts/TenantContext';
 import { sanitizeInput } from '@/utils/sanitize';
+import { handleApiError } from '@/utils/errorHandler';
 
 interface SecureAutocompleteProps {
   id: string;
@@ -84,7 +85,7 @@ export const SecureAutocomplete = ({
       const uniqueValues = Array.from(new Set(data.map(item => item[column])));
       setSuggestions(uniqueValues);
     } catch (error) {
-      console.error('Error fetching suggestions:', error);
+      handleApiError(error, 'Erro ao buscar sugestões');
       setSuggestions([]);
     } finally {
       setIsLoading(false);
@@ -131,6 +132,9 @@ export const SecureAutocomplete = ({
           disabled={disabled}
           required={required}
           autoComplete="off" // Disable browser autocomplete
+          aria-autocomplete="list"
+          aria-controls={`${id}-suggestions`}
+          aria-expanded={isFocused && suggestions.length > 0}
         />
         
         {isLoading && (
@@ -142,8 +146,10 @@ export const SecureAutocomplete = ({
       
       {isFocused && suggestions.length > 0 && (
         <ul 
+          id={`${id}-suggestions`}
           ref={suggestionsRef}
           className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+          role="listbox"
         >
           {suggestions.map((suggestion, index) => (
             <li 
@@ -154,6 +160,8 @@ export const SecureAutocomplete = ({
                 setSuggestions([]);
                 setIsFocused(false);
               }}
+              role="option"
+              aria-selected={value === suggestion}
             >
               {suggestion}
             </li>

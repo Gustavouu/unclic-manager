@@ -9,6 +9,8 @@ import { Toaster, toast } from "sonner";
 import { AsyncFeedback } from "@/components/ui/async-feedback";
 import { LogIn, Lock, Mail, UserPlus } from "lucide-react";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+import { handleApiError } from "@/utils/errorHandler";
+import { sanitizeInput } from "@/utils/sanitize";
 
 const Login = () => {
   const { signIn, user, loading } = useAuth();
@@ -31,8 +33,16 @@ const Login = () => {
     setIsSubmitting(true);
     setErrorMessage("");
     
+    // Validação básica
+    const sanitizedEmail = sanitizeInput(email);
+    if (!sanitizedEmail || !password) {
+      setErrorMessage("Email e senha são obrigatórios.");
+      setIsSubmitting(false);
+      return;
+    }
+    
     try {
-      await signIn(email, password);
+      await signIn(sanitizedEmail, password);
       
       // Show success message
       toast.success("Login realizado com sucesso", {
@@ -44,20 +54,9 @@ const Login = () => {
         navigate(from, { replace: true });
       }, 500);
     } catch (error: any) {
-      console.error("Erro de login:", error);
-      
-      // Show more user-friendly error messages
-      if (error.message.includes("Invalid login")) {
-        setErrorMessage("Email ou senha incorretos. Por favor, verifique suas credenciais.");
-      } else if (error.message.includes("Email not confirmed")) {
-        setErrorMessage("Seu email ainda não foi confirmado. Por favor, verifique sua caixa de entrada.");
-      } else {
-        setErrorMessage(error.message || "Falha na autenticação. Verifique suas credenciais.");
-      }
-      
-      toast.error("Falha no login", {
-        description: "Verifique suas credenciais e tente novamente",
-      });
+      // Usar o tratador de erros padronizado
+      const errorDetails = handleApiError(error);
+      setErrorMessage(errorDetails.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -122,7 +121,8 @@ const Login = () => {
                   required
                   disabled={isSubmitting || loading}
                   className="transition-all duration-200"
-                  autoComplete="off" // Desativar autocompletar para proteção de dados
+                  autoComplete="username" // Melhor prática para autocompletar
+                  aria-invalid={errorMessage ? "true" : "false"}
                 />
               </div>
               <div className="space-y-2">
@@ -147,7 +147,8 @@ const Login = () => {
                   required
                   disabled={isSubmitting || loading}
                   className="transition-all duration-200"
-                  autoComplete="new-password" // Prevenir autocompletar de senhas
+                  autoComplete="current-password" // Melhor prática para autocompletar
+                  aria-invalid={errorMessage ? "true" : "false"}
                 />
               </div>
               <LoadingButton 

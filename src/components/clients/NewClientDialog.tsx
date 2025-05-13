@@ -9,10 +9,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { handleApiError, handleFormErrors } from '@/utils/errorHandler';
+import { sanitizeFormData } from '@/utils/sanitize';
 import * as z from 'zod';
+import { useTenant } from '@/contexts/TenantContext';
 
 const clientSchema = z.object({
-  nome: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres' }),
+  nome: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres' })
+    .max(100, { message: 'O nome deve ter no máximo 100 caracteres' }),
   email: z.string().email({ message: 'Email inválido' }).optional().or(z.literal('')),
   telefone: z.string().optional().or(z.literal('')),
   cidade: z.string().optional().or(z.literal('')),
@@ -28,6 +32,7 @@ interface NewClientDialogProps {
 
 export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogProps) => {
   const { createClient } = useClients();
+  const { currentBusiness } = useTenant();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
@@ -46,13 +51,22 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
       setIsSubmitting(true);
       console.log("Submitting client data:", data);
       
-      // Ensure nome is always present as required by ClienteInput type
+      // Sanitizar os dados do formulário
+      const sanitizedData = sanitizeFormData(data);
+      
+      if (!currentBusiness?.id) {
+        throw new Error('ID do negócio não disponível');
+      }
+      
+      // Ensure all required fields are present with proper types
       const clientData: ClienteInput = {
-        nome: data.nome,
-        email: data.email || undefined,
-        telefone: data.telefone || undefined,
-        cidade: data.cidade || undefined,
-        estado: data.estado || undefined
+        nome: sanitizedData.nome,
+        email: sanitizedData.email || undefined,
+        telefone: sanitizedData.telefone || undefined,
+        cidade: sanitizedData.cidade || undefined,
+        estado: sanitizedData.estado || undefined,
+        // Garantir que o ID do negócio esteja sempre presente
+        id_negocio: currentBusiness.id
       };
       
       const newClient = await createClient(clientData);
@@ -64,8 +78,7 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
       
       onClose();
     } catch (error) {
-      console.error("Error creating client:", error);
-      toast.error("Erro ao criar cliente");
+      handleApiError(error, "Erro ao criar cliente");
     } finally {
       setIsSubmitting(false);
     }
@@ -86,6 +99,7 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
                 id="nome" 
                 {...register('nome')}
                 placeholder="Nome completo do cliente" 
+                aria-invalid={errors.nome ? "true" : "false"}
               />
               {errors.nome && (
                 <p className="text-sm text-red-500">{errors.nome.message}</p>
@@ -99,6 +113,7 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
                 type="email"
                 {...register('email')}
                 placeholder="email@exemplo.com" 
+                aria-invalid={errors.email ? "true" : "false"}
               />
               {errors.email && (
                 <p className="text-sm text-red-500">{errors.email.message}</p>
@@ -111,6 +126,7 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
                 id="telefone"
                 {...register('telefone')}
                 placeholder="(00) 00000-0000" 
+                aria-invalid={errors.telefone ? "true" : "false"}
               />
               {errors.telefone && (
                 <p className="text-sm text-red-500">{errors.telefone.message}</p>
@@ -124,6 +140,7 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
                   id="cidade"
                   {...register('cidade')}
                   placeholder="Cidade" 
+                  aria-invalid={errors.cidade ? "true" : "false"}
                 />
                 {errors.cidade && (
                   <p className="text-sm text-red-500">{errors.cidade.message}</p>
@@ -136,6 +153,7 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
                   id="estado"
                   {...register('estado')}
                   placeholder="Estado" 
+                  aria-invalid={errors.estado ? "true" : "false"}
                 />
                 {errors.estado && (
                   <p className="text-sm text-red-500">{errors.estado.message}</p>

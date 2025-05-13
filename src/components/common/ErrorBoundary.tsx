@@ -1,5 +1,6 @@
 
 import React, { Component, ReactNode } from "react";
+import { logErrorToService } from "@/utils/errorHandler";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -30,6 +31,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     // Log the error to console
     console.error("ErrorBoundary caught an error:", error, errorInfo);
     
+    // Log to monitoring service
+    logErrorToService(error, { 
+      component: 'ErrorBoundary',
+      react: errorInfo
+    });
+    
     // Call the onError callback if provided
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
@@ -53,7 +60,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                 Não foi possível carregar esta página. Por favor, tente novamente.
               </p>
               
-              {this.state.error && (
+              {process.env.NODE_ENV === 'development' && this.state.error && (
                 <p className="mt-4 p-2 bg-red-50 text-sm text-red-800 rounded">
                   {this.state.error.toString()}
                 </p>

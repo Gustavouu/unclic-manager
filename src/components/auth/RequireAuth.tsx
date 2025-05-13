@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/contexts/TenantContext';
 import { useLoading } from '@/contexts/LoadingContext';
 import { toast } from 'sonner';
+import { logErrorToService } from '@/utils/errorHandler';
 
 interface RequireAuthProps {
   children: ReactNode;
@@ -24,8 +25,25 @@ export const RequireAuth = ({
   useEffect(() => {
     if (!user && !authLoading) {
       console.log('RequireAuth: User not authenticated, redirecting to login');
+      
+      // Log unexpected auth failures (if user was previously authenticated)
+      const wasAuthenticated = localStorage.getItem('wasAuthenticated');
+      if (wasAuthenticated === 'true') {
+        logErrorToService({
+          type: 'AUTH_ERROR',
+          message: 'Session lost unexpectedly'
+        }, {
+          component: 'RequireAuth',
+          path: location.pathname
+        });
+      }
     }
-  }, [user, authLoading]);
+    
+    // Track authentication state for unexpected logouts
+    if (user) {
+      localStorage.setItem('wasAuthenticated', 'true');
+    }
+  }, [user, authLoading, location.pathname]);
   
   // Ensure loading is complete
   completeLoading();
