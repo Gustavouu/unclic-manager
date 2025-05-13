@@ -17,12 +17,21 @@ export const RequireAuth = ({
   skipOnboardingCheck = false 
 }: RequireAuthProps) => {
   const { user, loading: authLoading } = useAuth();
-  const { currentBusiness, loading: businessLoading } = useTenant();
+  const { currentBusiness, businessId, loading: businessLoading, refreshBusinessData } = useTenant();
   const { completeLoading } = useLoading();
   const location = useLocation();
   
   // Effect to log authentication state for debugging
   useEffect(() => {
+    console.log('RequireAuth: auth state', { 
+      isAuthenticated: !!user, 
+      authLoading, 
+      businessId,
+      businessStatus: currentBusiness?.status,
+      businessLoading,
+      path: location.pathname
+    });
+    
     if (!user && !authLoading) {
       console.log('RequireAuth: User not authenticated, redirecting to login');
       
@@ -43,16 +52,29 @@ export const RequireAuth = ({
     if (user) {
       localStorage.setItem('wasAuthenticated', 'true');
     }
-  }, [user, authLoading, location.pathname]);
+  }, [user, authLoading, businessId, currentBusiness, businessLoading, location.pathname]);
+  
+  // Refresh business data if we have a user but no business data
+  useEffect(() => {
+    if (user && !businessLoading && !currentBusiness && !skipOnboardingCheck) {
+      console.log('RequireAuth: User authenticated but no business data, refreshing');
+      refreshBusinessData().catch(err => {
+        console.error('Failed to refresh business data:', err);
+      });
+    }
+  }, [user, businessLoading, currentBusiness, skipOnboardingCheck, refreshBusinessData]);
   
   // Ensure loading is complete
   completeLoading();
   
   // Show loading while checking authentication
   if (authLoading) {
-    return <div className="flex min-h-screen items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-    </div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <span className="ml-3">Verificando autenticação...</span>
+      </div>
+    );
   }
   
   // If not authenticated, redirect to login with return path
@@ -73,15 +95,23 @@ export const RequireAuth = ({
   
   // Show loading while checking business data
   if (businessLoading) {
-    return <div className="flex min-h-screen items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-    </div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center flex-col">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <span className="mt-3">Carregando dados do seu negócio...</span>
+      </div>
+    );
   }
   
   // Check if onboarding is needed
   const needsOnboarding = !currentBusiness || currentBusiness.status === 'pendente';
   
-  if (needsOnboarding) {
+  // Skip onboarding check for the onboarding page itself to avoid loops
+  if (location.pathname === '/onboarding') {
+    return <>{children}</>;
+  }
+  
+  if (needsOnboarding && !location.pathname.includes('/onboarding')) {
     // Needs to complete onboarding, redirect
     toast.info("Onboarding necessário", {
       description: "Complete o cadastro do seu negócio para continuar",

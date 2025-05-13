@@ -1,21 +1,9 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
 
-interface AuthContextProps {
-  user: User | null;
-  session: Session | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: any) => Promise<void>;
-  signOut: (options?: { fromAll?: boolean }) => Promise<void>;
-  updateProfile: (data: any) => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  updatePassword: (newPassword: string) => Promise<void>;
-}
-
-// Use this hook to access auth functionality
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -25,19 +13,53 @@ export const useAuth = () => {
   useEffect(() => {
     // First set up the auth state listener
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, sessionData) => {
-        setSession(sessionData);
-        setUser(sessionData?.user ?? null);
-        setLoading(false);
+      (event, newSession) => {
+        console.log('Auth state changed:', event);
+        
+        // Only update session/user when they actually change
+        setSession(prev => {
+          const sessionChanged = 
+            (!prev && newSession) || 
+            (prev && !newSession) || 
+            (prev?.user?.id !== newSession?.user?.id);
+            
+          if (sessionChanged) {
+            setUser(newSession?.user ?? null);
+            setLoading(false);
+            
+            // Log the event for debugging
+            if (event === 'SIGNED_IN') {
+              console.log('User signed in:', newSession?.user?.id);
+            } else if (event === 'SIGNED_OUT') {
+              console.log('User signed out');
+              // Clear business ID from localStorage when signing out
+              localStorage.removeItem('currentBusinessId');
+            }
+          }
+          
+          return sessionChanged ? newSession : prev;
+        });
       }
     );
 
     // Then get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const initializeAuth = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          throw error;
+        }
+        
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+      } catch (err) {
+        console.error('Error getting session:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
 
     return () => {
       authListener?.subscription.unsubscribe();
@@ -65,22 +87,9 @@ export const useAuth = () => {
     return !success && updatedCount >= 5;
   };
 
-  const logSuspiciousActivity = async (type: string, details: any) => {
-    try {
-      await supabase.from('security_events').insert({
-        user_id: user?.id,
-        event_type: type,
-        details,
-        ip_address: null, // Will be populated by server
-        user_agent: navigator.userAgent
-      });
-    } catch (error) {
-      console.error('Failed to log security event:', error);
-    }
-  };
-
   const signIn = async (email: string, password: string) => {
     try {
+      setLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -89,41 +98,28 @@ export const useAuth = () => {
       if (error) {
         const isSuspicious = trackLoginAttempt(email, false);
         if (isSuspicious) {
-          await logSuspiciousActivity('multiple_failed_logins', { email });
+          console.warn('Multiple failed login attempts detected:', { email });
         }
         throw error;
       }
 
       // Reset failed attempts on successful login
       trackLoginAttempt(email, true);
+      toast.success("Login realizado com sucesso!");
 
-      // Record login event
-      try {
-        await supabase.from('login_history').insert({
-          user_id: data.user?.id,
-          success: true,
-          ip_address: null, // Will be populated by server
-          user_agent: navigator.userAgent,
-          device_info: {
-            platform: navigator.platform,
-            language: navigator.language,
-            screen: {
-              width: window.screen.width,
-              height: window.screen.height
-            }
-          }
-        });
-      } catch (logError) {
-        console.error("Error logging login history:", logError);
-      }
+      return data;
     } catch (error: any) {
       console.error("Error signing in:", error);
+      toast.error(error.message || "Erro ao fazer login");
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
+      setLoading(true);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -135,14 +131,21 @@ export const useAuth = () => {
       if (error) {
         throw error;
       }
+
+      toast.success("Cadastro realizado com sucesso! Verifique seu email.");
+      return data;
     } catch (error: any) {
       console.error("Error signing up:", error);
+      toast.error(error.message || "Erro ao criar conta");
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async (options?: { fromAll?: boolean }) => {
     try {
+      setLoading(true);
       // Clear business ID from localStorage
       localStorage.removeItem('currentBusinessId');
       
@@ -155,16 +158,19 @@ export const useAuth = () => {
         throw error;
       }
       
-      // Redirect to login
-      window.location.href = '/login';
+      toast.success("Logout realizado com sucesso!");
     } catch (error: any) {
       console.error("Error signing out:", error);
+      toast.error(error.message || "Erro ao fazer logout");
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const updateProfile = async (userData: any) => {
     try {
+      setLoading(true);
       if (!user) throw new Error("No user logged in");
       
       const { error } = await supabase.auth.updateUser({
@@ -172,15 +178,21 @@ export const useAuth = () => {
       });
       
       if (error) throw error;
+      
+      toast.success("Perfil atualizado com sucesso!");
     } catch (error: any) {
       console.error("Error updating profile:", error);
+      toast.error(error.message || "Erro ao atualizar perfil");
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const resetPassword = async (email: string) => {
     try {
-      // Apply rate limiting for password resets - max 3 attempts per hour
+      setLoading(true);
+      // Apply rate limiting for password resets
       const resetKey = `pwd_reset_${email}`;
       const resetAttempts = JSON.parse(sessionStorage.getItem(resetKey) || '{"count":0,"timestamp":0}');
       
@@ -212,14 +224,20 @@ export const useAuth = () => {
       });
       
       if (error) throw error;
+      
+      toast.success("Email de recuperação enviado com sucesso!");
     } catch (error: any) {
       console.error("Error resetting password:", error);
+      toast.error(error.message || "Erro ao resetar senha");
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
   
   const updatePassword = async (newPassword: string) => {
     try {
+      setLoading(true);
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       
       if (error) throw error;
@@ -227,9 +245,32 @@ export const useAuth = () => {
       toast.success("Senha atualizada com sucesso!");
     } catch (error: any) {
       console.error("Error updating password:", error);
+      toast.error(error.message || "Erro ao atualizar senha");
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
+
+  // Check if the user has a business already
+  const hasActiveBusiness = useCallback(async (): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('id_negocio')
+        .eq('id', user.id)
+        .maybeSingle();
+        
+      if (error) throw error;
+      
+      return !!data?.id_negocio;
+    } catch (error) {
+      console.error('Error checking if user has business:', error);
+      return false;
+    }
+  }, [user]);
 
   return {
     user,
@@ -240,7 +281,8 @@ export const useAuth = () => {
     signOut,
     updateProfile,
     resetPassword,
-    updatePassword
+    updatePassword,
+    hasActiveBusiness
   };
 };
 

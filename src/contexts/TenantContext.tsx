@@ -1,11 +1,12 @@
 
-import { createContext, useContext, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from "react";
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TenantContextType {
   currentTenantId: string | null;
   setCurrentTenantId: (id: string | null) => void;
-  // Add missing properties used across the application
   currentBusiness: any;
   businessId: string | null;
   loading: boolean;
@@ -26,9 +27,10 @@ const TenantContext = createContext<TenantContextType>({
 });
 
 export const TenantProvider = ({ children }: { children: ReactNode }) => {
-  const [currentTenantId, setCurrentTenantId] = useState<string | null>(
-    localStorage.getItem("currentBusinessId")
-  );
+  const { user } = useAuth();
+  const [currentTenantId, setCurrentTenantId] = useState<string | null>(() => {
+    return localStorage.getItem("currentBusinessId");
+  });
 
   // Use the current business hook to get additional data and methods
   const {
@@ -40,8 +42,32 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     fetchBusinessData
   } = useCurrentBusiness();
 
+  // When businessId changes from useCurrentBusiness, sync with currentTenantId
+  useEffect(() => {
+    if (businessId && businessId !== currentTenantId) {
+      console.log('Syncing businessId to currentTenantId:', businessId);
+      updateTenantId(businessId);
+    }
+  }, [businessId]);
+
+  // When user changes (login/logout), check localStorage and sync
+  useEffect(() => {
+    if (!user) {
+      // If user logged out, clear the tenant ID
+      updateTenantId(null);
+    } else if (!currentTenantId) {
+      // If user logged in but no tenant ID, try to get from localStorage
+      const storedId = localStorage.getItem("currentBusinessId");
+      if (storedId) {
+        updateTenantId(storedId);
+      }
+    }
+  }, [user]);
+
   const updateTenantId = useCallback((id: string | null) => {
+    console.log('Updating tenant ID:', id);
     setCurrentTenantId(id);
+    
     if (id) {
       localStorage.setItem("currentBusinessId", id);
     } else {
@@ -59,6 +85,17 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       return Promise.reject(err);
     }
   }, [fetchBusinessData]);
+
+  // Log state changes for debugging
+  useEffect(() => {
+    console.log('TenantContext state updated:', { 
+      currentTenantId, 
+      businessId, 
+      hasBusinessData: !!currentBusiness,
+      loading,
+      error
+    });
+  }, [currentTenantId, businessId, currentBusiness, loading, error]);
 
   return (
     <TenantContext.Provider
