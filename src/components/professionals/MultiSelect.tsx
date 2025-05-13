@@ -126,7 +126,7 @@ export function MultiSelect({
                   <SelectedItem 
                     key={option.value}
                     option={option}
-                    onUnselect={handleUnselect}
+                    onRemove={handleUnselect}
                   />
                 ))}
               </div>
@@ -151,13 +151,28 @@ export function MultiSelect({
         </div>
         
         <div className="relative mt-1">
-          <DropdownList
-            open={open}
-            options={filteredOptions}
-            onSelect={handleSelect}
-            inputValue={inputValue}
-            emptyMessage={emptyMessage}
-          />
+          <DropdownList isOpen={open}>
+            {filteredOptions.length > 0 ? (
+              <div className="py-1">
+                {filteredOptions.map((option) => (
+                  <div
+                    key={option.value}
+                    onClick={() => handleSelect(option)}
+                    className={cn(
+                      "px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground",
+                      "transition-colors"
+                    )}
+                  >
+                    {option.label}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-3 py-2 text-sm text-muted-foreground text-center">
+                {emptyMessage}
+              </div>
+            )}
+          </DropdownList>
         </div>
       </Command>
     </div>

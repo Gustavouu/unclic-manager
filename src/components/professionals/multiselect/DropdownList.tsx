@@ -3,17 +3,30 @@ import React from "react";
 import { Option } from "./types";
 
 export interface DropdownListProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   maxHeight?: number;
   isOpen: boolean;
+  
+  // Add the additional props that are being passed from MultiSelect.tsx
+  open?: boolean;
+  options?: Option[];
+  onSelect?: (selectedOption: Option) => void;
+  inputValue?: string;
+  emptyMessage?: string;
 }
 
 export const DropdownList = ({ 
   children,
   maxHeight = 200,
-  isOpen
+  isOpen,
+  open, // Backward compatibility
+  options, // May be used in future versions
+  onSelect, // May be used in future versions
+  inputValue, // May be used in future versions
+  emptyMessage // May be used in future versions
 }: DropdownListProps) => {
-  if (!isOpen) return null;
+  // Use either isOpen or open for backward compatibility
+  if (!isOpen && !open) return null;
 
   return (
     <div 

@@ -147,38 +147,36 @@ export const ProfessionalsMultiSelect = ({
       </div>
 
       {/* Dropdown menu */}
-      {isOpen && (
-        <DropdownList maxHeight={300} isOpen={isOpen}>
-          {/* Search input */}
-          <div className="p-2 sticky top-0 bg-white z-10 border-b">
-            <input
-              ref={inputRef}
-              className="border rounded p-2 w-full text-sm bg-background"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
+      <DropdownList isOpen={isOpen}>
+        {/* Search input */}
+        <div className="p-2 sticky top-0 bg-white z-10 border-b">
+          <input
+            ref={inputRef}
+            className="border rounded p-2 w-full text-sm bg-background"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
 
-          {/* Options list */}
-          <div className="py-1">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map(option => (
-                <SelectableItem
-                  key={option.value}
-                  option={option}
-                  onSelect={() => handleSelectOption(option)}
-                />
-              ))
-            ) : (
-              <div className="px-3 py-2 text-sm text-muted-foreground text-center">
-                No options found
-              </div>
-            )}
-          </div>
-        </DropdownList>
-      )}
+        {/* Options list */}
+        <div className="py-1">
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map(option => (
+              <SelectableItem
+                key={option.value}
+                option={option}
+                onSelect={() => handleSelectOption(option)}
+              />
+            ))
+          ) : (
+            <div className="px-3 py-2 text-sm text-muted-foreground text-center">
+              No options found
+            </div>
+          )}
+        </div>
+      </DropdownList>
     </div>
   );
 };
