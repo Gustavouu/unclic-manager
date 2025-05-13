@@ -49,8 +49,8 @@ const Dashboard = () => {
       <OnboardingBanner onDismiss={() => {}} />
 
       <DashboardFilters 
-        currentPeriod={period} 
-        onPeriodChange={setPeriod} 
+        period={period} 
+        onFilterChange={setPeriod} 
       />
 
       <KpiCards 
