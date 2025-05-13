@@ -21,19 +21,27 @@ export const useCurrentBusiness = () => {
 
     try {
       setLoading(true);
+      setError(null);
       
       // Check if we already have a businessId in localStorage
       let currentBusinessId = localStorage.getItem('currentBusinessId');
       
       if (!currentBusinessId) {
-        // If not, first try to fetch it from the new application_users table
+        console.log('No business ID in localStorage, fetching from database');
+        
+        // First try to fetch from the new application_users table
         let { data: userData, error: userError } = await supabase
           .from('application_users')
           .select('business_id')
           .eq('id', user.id)
           .maybeSingle();
         
-        if (userError || !userData?.business_id) {
+        if (userError) {
+          console.error('Error fetching from application_users:', userError);
+        }
+        
+        if (!userData?.business_id) {
+          console.log('No business_id in application_users, trying usuarios table');
           // If not found, try the legacy usuarios table
           const { data: legacyUserData, error: legacyUserError } = await supabase
             .from('usuarios')
@@ -42,35 +50,56 @@ export const useCurrentBusiness = () => {
             .maybeSingle();
 
           if (legacyUserError) {
-            throw legacyUserError;
+            console.error('Error fetching from usuarios:', legacyUserError);
+            throw new Error('Não foi possível identificar seu negócio. Por favor, tente novamente mais tarde.');
           }
 
           if (!legacyUserData?.id_negocio) {
             // User doesn't have a business associated
+            console.log('User has no business associated');
             setLoading(false);
+            setError('Nenhum negócio associado ao usuário.');
             return;
           }
           
           currentBusinessId = legacyUserData.id_negocio;
+          console.log('Found business ID in usuarios table:', currentBusinessId);
         } else {
           currentBusinessId = userData.business_id;
+          console.log('Found business ID in application_users table:', currentBusinessId);
         }
         
         // Store it in localStorage for future use
-        localStorage.setItem('currentBusinessId', currentBusinessId);
+        if (currentBusinessId) {
+          localStorage.setItem('currentBusinessId', currentBusinessId);
+        }
+      } else {
+        console.log('Using business ID from localStorage:', currentBusinessId);
       }
 
       // Set the business ID in state
       setBusinessId(currentBusinessId);
 
+      if (!currentBusinessId) {
+        setError('ID do negócio não disponível');
+        setLoading(false);
+        return;
+      }
+
       // First try to fetch from businesses table
+      console.log('Fetching business data from businesses table');
       let { data: businessData, error: businessError } = await supabase
         .from('businesses')
         .select('*')
         .eq('id', currentBusinessId)
         .maybeSingle();
       
-      if (businessError || !businessData) {
+      if (businessError) {
+        console.error('Error fetching from businesses:', businessError);
+      }
+      
+      if (!businessData) {
+        console.log('No data in businesses table, trying negocios table');
         // If not found, try the legacy negocios table
         const { data: legacyBusinessData, error: legacyBusinessError } = await supabase
           .from('negocios')
@@ -79,11 +108,13 @@ export const useCurrentBusiness = () => {
           .maybeSingle();
 
         if (legacyBusinessError) {
-          throw legacyBusinessError;
+          console.error('Error fetching from negocios:', legacyBusinessError);
+          throw new Error('Não foi possível carregar dados do seu negócio. Por favor, tente novamente mais tarde.');
         }
         
         // If using legacy data, map to new structure
         if (legacyBusinessData) {
+          console.log('Found business data in negocios table');
           businessData = {
             id: legacyBusinessData.id,
             name: legacyBusinessData.nome,
@@ -107,7 +138,11 @@ export const useCurrentBusiness = () => {
             created_at: legacyBusinessData.criado_em,
             updated_at: legacyBusinessData.atualizado_em
           };
+        } else {
+          console.log('No business data found in either table');
         }
+      } else {
+        console.log('Found business data in businesses table');
       }
 
       setBusinessData(businessData);
@@ -131,10 +166,48 @@ export const useCurrentBusiness = () => {
 
   const updateBusinessStatus = async (id: string, status: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase
-        .rpc('set_business_status', { business_id: id, new_status: status });
+      // First try with set_business_status RPC
+      let success = false;
+      try {
+        const { data, error } = await supabase
+          .rpc('set_business_status', { business_id: id, new_status: status });
 
-      if (error) throw error;
+        if (error) {
+          console.error('Error in set_business_status RPC:', error);
+        } else {
+          success = true;
+        }
+      } catch (rpcError) {
+        console.error('Failed to call set_business_status RPC:', rpcError);
+      }
+      
+      // If RPC fails, try direct update to businesses
+      if (!success) {
+        try {
+          const { error: businessError } = await supabase
+            .from('businesses')
+            .update({ status: status, updated_at: new Date() })
+            .eq('id', id);
+            
+          if (businessError) {
+            console.error('Error updating businesses:', businessError);
+            
+            // Finally try negocios table
+            const { error: negociosError } = await supabase
+              .from('negocios')
+              .update({ status: status, atualizado_em: new Date() })
+              .eq('id', id);
+              
+            if (negociosError) {
+              console.error('Error updating negocios:', negociosError);
+              throw negociosError;
+            }
+          }
+        } catch (updateError) {
+          console.error('Failed to update business status:', updateError);
+          throw updateError;
+        }
+      }
       
       // Update local business data
       if (businessData && id === businessData.id) {

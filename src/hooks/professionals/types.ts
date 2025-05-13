@@ -1,62 +1,47 @@
 
-export type Professional = {
+export interface Professional {
   id: string;
-  name: string;
-  email: string;
-  phone: string;
-  specialties: string[];
-  photo_url?: string;
-  bio?: string;
-  position?: string;
-  hire_date?: Date | string; // Supporting both Date and string format
-  commission_percentage?: number;
-  isActive?: boolean;
-  status?: ProfessionalStatus;
+  tenantId?: string;
   business_id?: string;
+  id_negocio?: string;
+  userId?: string;
   user_id?: string;
-  
-  // Adding fields for backwards compatibility
-  role?: string; // Alias for position
-  photoUrl?: string; // Alias for photo_url
-  commissionPercentage?: number; // Alias for commission_percentage
-  userId?: string; // Alias for user_id
-  hireDate?: Date | string; // Alias for hire_date
-};
-
-export enum ProfessionalStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  ON_LEAVE = 'ON_LEAVE'
+  establishmentId?: string;
+  name: string;
+  nome?: string;
+  email?: string;
+  phone?: string;
+  telefone?: string;
+  bio?: string;
+  avatar?: string;
+  foto_url?: string;
+  isActive?: boolean;
+  ativo?: boolean;
+  workingHours?: any;
+  horarios_trabalho?: any;
+  hire_date?: string | Date;
+  hireDate?: string | Date;
+  data_contratacao?: string | Date;
+  commission_percentage?: number;
+  comissao_percentual?: number;
+  specialties?: string[];
+  especializacoes?: string[];
+  position?: string;
+  cargo?: string;
+  createdAt?: string | Date;
+  criado_em?: string | Date;
+  updatedAt?: string | Date;
+  atualizado_em?: string | Date;
 }
 
-// Status mapping for compatibility with string statuses
-export const STATUS_MAPPING = {
-  'active': ProfessionalStatus.ACTIVE,
-  'inactive': ProfessionalStatus.INACTIVE,
-  'on_leave': ProfessionalStatus.ON_LEAVE,
-  'vacation': ProfessionalStatus.ON_LEAVE
-};
-
-export const PROFESSIONAL_STATUS = ProfessionalStatus;
-
-export type ProfessionalFormValues = {
+export type ProfessionalFormData = {
   name: string;
-  email: string;
-  phone: string;
-  position?: string;
-  specialties: string[];
-  photo_url?: string;
+  email?: string;
+  phone?: string;
   bio?: string;
+  position?: string;
+  specialties?: string[];
   commission_percentage?: number;
-  status?: ProfessionalStatus;
-  
-  // Adding fields for backwards compatibility
-  role?: string;
-  photoUrl?: string;
-  commissionPercentage?: number;
-  hire_date?: string;
-  hireDate?: string;
+  avatar?: string;
+  isActive?: boolean;
 };
-
-// For backward compatibility with existing code
-export type ProfessionalCreateForm = ProfessionalFormValues;
