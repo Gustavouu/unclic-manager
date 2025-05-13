@@ -10,15 +10,17 @@ export const useProfessionals = () => {
   // Use the professional operations hook
   const operations = useProfessionalOperations();
   
-  // Extract all the functionality and data
+  // Make sure we're getting all the functionality we're exposing
   const { 
     professionals, 
     isLoading, 
     error,
     fetchProfessionals,
+    createProfessional,
     addProfessional,
     updateProfessional,
     updateProfessionalStatus,
+    deleteProfessional,
     removeProfessional,
     getProfessionalById
   } = operations;

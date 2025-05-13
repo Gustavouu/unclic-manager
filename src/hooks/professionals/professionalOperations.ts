@@ -10,6 +10,7 @@ export const useProfessionalOperations = () => {
   const [error, setError] = useState<Error | null>(null);
   const { currentBusiness } = useTenant();
   const businessId = currentBusiness?.id;
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
 
   const fetchProfessionals = async (): Promise<Professional[]> => {
     setIsLoading(true);
@@ -30,7 +31,7 @@ export const useProfessionalOperations = () => {
           .eq("id_negocio", businessId);
 
         if (profissionaisError) {
-          console.error("Error fetching profissionais:", profissionaisError);
+          console.error("Error fetching profissionais:", professionaisError);
           throw profissionaisError;
         }
 
@@ -50,11 +51,11 @@ export const useProfessionalOperations = () => {
         })) || [];
       }
 
+      setProfessionals(professionals);
       return professionals;
     } catch (error: any) {
       setError(error);
-      toast({
-        description: `Erro ao carregar profissionais: ${error.message}`,
+      toast(`Erro ao carregar profissionais: ${error.message}`, {
         variant: "destructive",
       });
       console.error("Error in fetchProfessionals:", error);
@@ -84,15 +85,16 @@ export const useProfessionalOperations = () => {
 
       if (error) throw error;
 
-      toast({
-        description: "Profissional adicionado com sucesso!",
-      });
+      toast("Profissional adicionado com sucesso!");
+
+      if (newProfessional) {
+        setProfessionals(prev => [...prev, newProfessional]);
+      }
 
       return newProfessional;
     } catch (error: any) {
       setError(error);
-      toast({
-        description: `Erro ao criar profissional: ${error.message}`,
+      toast(`Erro ao criar profissional: ${error.message}`, {
         variant: "destructive",
       });
       return null;
@@ -119,15 +121,18 @@ export const useProfessionalOperations = () => {
 
       if (error) throw error;
 
-      toast({
-        description: "Profissional atualizado com sucesso!",
-      });
+      toast("Profissional atualizado com sucesso!");
+
+      if (updatedProfessional) {
+        setProfessionals(prev => 
+          prev.map(p => p.id === id ? updatedProfessional : p)
+        );
+      }
 
       return updatedProfessional;
     } catch (error: any) {
       setError(error);
-      toast({
-        description: `Erro ao atualizar profissional: ${error.message}`,
+      toast(`Erro ao atualizar profissional: ${error.message}`, {
         variant: "destructive",
       });
       return null;
@@ -148,15 +153,13 @@ export const useProfessionalOperations = () => {
 
       if (error) throw error;
 
-      toast({
-        description: "Profissional removido com sucesso!",
-      });
+      toast("Profissional removido com sucesso!");
 
+      setProfessionals(prev => prev.filter(p => p.id !== id));
       return true;
     } catch (error: any) {
       setError(error);
-      toast({
-        description: `Erro ao remover profissional: ${error.message}`,
+      toast(`Erro ao remover profissional: ${error.message}`, {
         variant: "destructive",
       });
       return false;
@@ -165,11 +168,26 @@ export const useProfessionalOperations = () => {
     }
   };
 
+  const getProfessionalById = (id: string): Professional | undefined => {
+    return professionals.find(p => p.id === id);
+  };
+
+  const updateProfessionalStatus = async (id: string, status: string): Promise<boolean> => {
+    return updateProfessional(id, { status: status as any })
+      .then(() => true)
+      .catch(() => false);
+  };
+
   return {
+    professionals,
     fetchProfessionals,
     createProfessional,
+    addProfessional: createProfessional,
     updateProfessional,
     deleteProfessional,
+    removeProfessional: deleteProfessional,
+    getProfessionalById,
+    updateProfessionalStatus,
     isLoading,
     error
   };

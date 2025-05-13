@@ -27,7 +27,7 @@ export const useAppointments = () => {
   } = useAppointmentsFetch();
   
   const { createAppointment, updateAppointment, cancelAppointment, isLoading: isCreating } = useAppointmentCreate(setAppointments);
-  const { updateAppointment: updateAppointmentData, isLoading: isUpdating } = useAppointmentUpdate(setAppointments);
+  const { updateAppointment: updateAppointmentData, isUpdating, error: updateError } = useAppointmentUpdate(setAppointments);
   const { deleteAppointment } = useAppointmentDelete(setAppointments);
   
   // Maintain backward compatibility with the existing updateAppointmentStatus method
@@ -37,7 +37,7 @@ export const useAppointments = () => {
 
   return {
     appointments,
-    isLoading,
+    isLoading: isLoading || isCreating || isUpdating,
     createAppointment,
     updateAppointment,
     updateAppointmentStatus,

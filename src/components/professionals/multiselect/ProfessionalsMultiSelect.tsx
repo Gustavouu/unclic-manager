@@ -1,316 +1,136 @@
 
-import { useState, useEffect } from 'react';
-import { useProfessionals } from '@/hooks/professionals/useProfessionals';
+import React, { useState, useEffect } from 'react';
 import { Option } from './types';
-import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Check, ChevronsUpDown, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Badge } from '@/components/ui/badge';
 
-// Types for the inner components
-interface SelectedItemProps {
-  option: Option;
-  onRemove: () => void;
-}
-
-interface DropdownListProps {
-  isOpen: boolean;
-  maxHeight: number;
-  children: React.ReactNode;
-}
-
-interface ProfessionalsMultiSelectProps {
-  selectedProfessionalIds: string[];
-  onChange: (ids: string[]) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  allowAll?: boolean;
-}
-
-// Generic MultiSelect props
 export interface MultiSelectProps {
   options: Option[];
-  value: Option[];
-  onChange: (value: Option[]) => void;
+  selected: string[];
+  onChange: (values: string[]) => void;
   placeholder?: string;
+  className?: string;
   emptyMessage?: string;
+  disabled?: boolean;
 }
 
-// Inner components
-const SelectedItem = ({ option, onRemove }: SelectedItemProps) => (
-  <Badge 
-    variant="secondary" 
-    className="m-1 gap-1 pl-2 pr-1 py-1 flex items-center"
-  >
-    {option.label}
-    <Button 
-      variant="ghost" 
-      size="sm" 
-      className="h-4 w-4 p-0 ml-1 rounded-full" 
-      onClick={onRemove}
-    >
-      <X className="h-3 w-3" />
-    </Button>
-  </Badge>
-);
-
-const DropdownList = ({ isOpen, maxHeight, children }: DropdownListProps) => {
-  if (!isOpen) return null;
-  
-  return (
-    <div className="relative w-full">
-      <div className="absolute z-50 mt-1 w-full rounded-md border border-input bg-popover shadow-md">
-        <ScrollArea className="rounded-md p-1" style={{ maxHeight }}>
-          {children}
-        </ScrollArea>
-      </div>
-    </div>
-  );
-};
-
-// Generic MultiSelect component that we'll export
 export const MultiSelect: React.FC<MultiSelectProps> = ({
   options,
-  value,
+  selected,
   onChange,
-  placeholder = "Select options...",
-  emptyMessage = "No options available"
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const [filteredOptions, setFilteredOptions] = useState<Option[]>([]);
-
-  // Filter options based on input value and current selection
-  useEffect(() => {
-    if (options) {
-      const filtered = options.filter(opt => 
-        opt.label.toLowerCase().includes(inputValue.toLowerCase()) &&
-        !value.some(selected => selected.value === opt.value)
-      );
-      setFilteredOptions(filtered);
-    }
-  }, [inputValue, options, value]);
-
-  const handleSelect = (option: Option) => {
-    onChange([...value, option]);
-    setInputValue("");
-  };
-
-  const handleRemove = (optionToRemove: Option) => {
-    onChange(value.filter(opt => opt.value !== optionToRemove.value));
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-    if (!isOpen) setIsOpen(true);
-  };
-
-  const handleFocus = () => {
-    setIsOpen(true);
-  };
-
-  const handleClickOutside = () => {
-    setIsOpen(false);
-    setInputValue("");
-  };
-
-  return (
-    <div className="relative">
-      <div className="flex flex-wrap items-center rounded-md border border-input px-3 py-1 text-sm shadow-sm">
-        {value.map(option => (
-          <SelectedItem
-            key={option.value}
-            option={option}
-            onRemove={() => handleRemove(option)}
-          />
-        ))}
-        
-        <Input
-          type="text"
-          className="flex-grow border-0 bg-transparent p-1 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-          placeholder={value.length > 0 ? "" : placeholder}
-          value={inputValue}
-          onChange={handleInputChange}
-          onFocus={handleFocus}
-        />
-      </div>
-
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={handleClickOutside}
-        />
-      )}
-
-      <DropdownList isOpen={isOpen} maxHeight={200}>
-        {filteredOptions.length === 0 ? (
-          <div className="px-2 py-3 text-center text-sm text-muted-foreground">
-            {emptyMessage}
-          </div>
-        ) : (
-          filteredOptions.map(option => (
-            <div
-              key={option.value}
-              className={cn(
-                "cursor-pointer px-2 py-1.5 text-sm rounded-sm",
-                "hover:bg-accent hover:text-accent-foreground"
-              )}
-              onClick={() => handleSelect(option)}
-            >
-              {option.label}
-            </div>
-          ))
-        )}
-      </DropdownList>
-    </div>
-  );
-};
-
-export const ProfessionalsMultiSelect: React.FC<ProfessionalsMultiSelectProps> = ({
-  selectedProfessionalIds,
-  onChange,
-  placeholder = "Selecionar profissionais...",
+  placeholder = "Selecione itens...",
+  className,
+  emptyMessage = "Nenhuma opção encontrada.",
   disabled = false,
-  allowAll = false
 }) => {
-  const { professionals, isLoading } = useProfessionals();
-  const [isOpen, setIsOpen] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const [options, setOptions] = useState<Option[]>([]);
-  const [filteredOptions, setFilteredOptions] = useState<Option[]>([]);
-  const [selectedOptions, setSelectedOptions] = useState<Option[]>([]);
+  const [open, setOpen] = useState(false);
+  const [selectedValues, setSelectedValues] = useState<string[]>(selected || []);
 
-  // Populate options when professionals data is loaded
   useEffect(() => {
-    if (professionals && professionals.length > 0) {
-      const newOptions = professionals.map(professional => ({
-        label: professional.name || professional.nome || '',
-        value: professional.id
-      }));
-      
-      if (allowAll) {
-        newOptions.unshift({ label: "Todos", value: "all" });
-      }
-      
-      setOptions(newOptions);
-    }
-  }, [professionals, allowAll]);
+    setSelectedValues(selected || []);
+  }, [selected]);
 
-  // Set selected options based on selectedProfessionalIds
-  useEffect(() => {
-    if (options.length > 0) {
-      const selected = options.filter(opt => 
-        selectedProfessionalIds.includes(opt.value)
-      );
-      setSelectedOptions(selected);
-    }
-  }, [selectedProfessionalIds, options]);
-
-  // Filter options based on input value
-  useEffect(() => {
-    if (options.length > 0) {
-      const filtered = options.filter(opt => 
-        opt.label.toLowerCase().includes(inputValue.toLowerCase()) &&
-        !selectedOptions.some(selected => selected.value === opt.value)
-      );
-      setFilteredOptions(filtered);
-    }
-  }, [inputValue, options, selectedOptions]);
-
-  const handleSelect = (option: Option) => {
-    // Handle "All" option
-    if (option.value === "all") {
-      // If "All" is selected, select all except "All" itself
-      const allProfessionalIds = options
-        .filter(opt => opt.value !== "all")
-        .map(opt => opt.value);
-      onChange(allProfessionalIds);
-    } else {
-      const newSelectedIds = [...selectedProfessionalIds, option.value];
-      onChange(newSelectedIds);
-    }
-    setInputValue("");
+  const handleSelect = (value: string) => {
+    const newSelectedValues = selectedValues.includes(value)
+      ? selectedValues.filter(v => v !== value)
+      : [...selectedValues, value];
+    
+    setSelectedValues(newSelectedValues);
+    onChange(newSelectedValues);
   };
 
-  const handleRemove = (optionToRemove: Option) => {
-    const newSelectedIds = selectedProfessionalIds.filter(
-      id => id !== optionToRemove.value
-    );
-    onChange(newSelectedIds);
+  const handleRemove = (value: string) => {
+    const newSelectedValues = selectedValues.filter(v => v !== value);
+    setSelectedValues(newSelectedValues);
+    onChange(newSelectedValues);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-    if (!isOpen) setIsOpen(true);
-  };
-
-  const handleFocus = () => {
-    setIsOpen(true);
-  };
-
-  const handleClickOutside = () => {
-    setIsOpen(false);
-    setInputValue("");
-  };
+  const selectedLabels = selectedValues
+    .map(value => options.find(option => option.value === value)?.label || value);
 
   return (
-    <div className="relative">
-      <div className="flex flex-wrap items-center rounded-md border border-input px-3 py-1 text-sm shadow-sm">
-        {selectedOptions.map(option => (
-          <SelectedItem
-            key={option.value}
-            option={option}
-            onRemove={() => handleRemove(option)}
-          />
-        ))}
-        
-        <Input
-          type="text"
-          className="flex-grow border-0 bg-transparent p-1 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-          placeholder={selectedOptions.length > 0 ? "" : placeholder}
-          value={inputValue}
-          onChange={handleInputChange}
-          onFocus={handleFocus}
-          disabled={disabled || isLoading}
-        />
-      </div>
-
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={handleClickOutside}
-        />
-      )}
-
-      <DropdownList isOpen={isOpen} maxHeight={200}>
-        {isLoading ? (
-          <div className="px-2 py-3 text-center text-sm text-muted-foreground">
-            Carregando...
-          </div>
-        ) : filteredOptions.length === 0 ? (
-          <div className="px-2 py-3 text-center text-sm text-muted-foreground">
-            Nenhum profissional encontrado
-          </div>
-        ) : (
-          filteredOptions.map(option => (
-            <div
-              key={option.value}
-              className={cn(
-                "cursor-pointer px-2 py-1.5 text-sm rounded-sm",
-                "hover:bg-accent hover:text-accent-foreground"
-              )}
-              onClick={() => handleSelect(option)}
-            >
-              {option.label}
-            </div>
-          ))
-        )}
-      </DropdownList>
+    <div className="space-y-2">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn(
+              "w-full justify-between",
+              selectedValues.length > 0 ? "h-full" : "h-10",
+              className
+            )}
+            onClick={() => setOpen(!open)}
+            disabled={disabled}
+          >
+            {selectedValues.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {selectedValues.length <= 2 && selectedLabels.map((label, i) => (
+                  <Badge
+                    key={i}
+                    variant="secondary"
+                    className="mr-1 mb-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemove(selectedValues[i]);
+                    }}
+                  >
+                    {label}
+                    <button
+                      className="ml-1 rounded-full outline-none"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemove(selectedValues[i]);
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+                {selectedValues.length > 2 && (
+                  <Badge variant="secondary" className="mb-1">
+                    {selectedValues.length} itens selecionados
+                  </Badge>
+                )}
+              </div>
+            ) : (
+              <span className="text-muted-foreground">{placeholder}</span>
+            )}
+            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Pesquisar..." />
+            <CommandEmpty>{emptyMessage}</CommandEmpty>
+            <CommandGroup className="max-h-64 overflow-auto">
+              {options.map(option => (
+                <CommandItem
+                  key={option.value}
+                  value={option.label}
+                  onSelect={() => handleSelect(option.value)}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      selectedValues.includes(option.value) ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {option.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };
 
-// Re-export type for convenience - using 'export type' for isolatedModules
-export type { Option } from './types';
+// Re-export the MultiSelect component for compatibility
+export { MultiSelect as ProfessionalsMultiSelect };

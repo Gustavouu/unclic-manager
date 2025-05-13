@@ -37,7 +37,7 @@ export const ProfessionalForm = ({
       email: professional?.email || "",
       phone: professional?.phone || "",
       position: professional?.position || professional?.role || "",
-      specialties: professional?.specialties || [],
+      specialties: professional?.specialties || [] as string[],
       commission_percentage: professional?.commission_percentage || professional?.commissionPercentage || 0,
       photoUrl: professional?.photoUrl || professional?.photo_url || ""
     },
@@ -50,7 +50,7 @@ export const ProfessionalForm = ({
       // Create a clean copy of the form data
       const formData = {
         ...data,
-        specialties: Array.isArray(data.specialties) ? data.specialties : []
+        specialties: Array.isArray(data.specialties) ? data.specialties as string[] : []
       };
       
       console.log("Submitting professional form data:", formData);
@@ -58,7 +58,7 @@ export const ProfessionalForm = ({
       await onSubmit(formData);
     } catch (error) {
       console.error("Error processing professional:", error);
-      toast.error(`Ocorreu um erro ao ${editMode ? 'atualizar' : 'adicionar'} o colaborador.`);
+      toast(`Ocorreu um erro ao ${editMode ? 'atualizar' : 'adicionar'} o colaborador.`);
     }
   };
 
