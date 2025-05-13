@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'sonner';
@@ -21,60 +21,84 @@ export const useServices = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { businessId } = useTenant();
+  const [lastUpdate, setLastUpdate] = useState(Date.now());
 
-  useEffect(() => {
-    const fetchServices = async () => {
-      if (!businessId) {
-        console.log('No business ID available, skipping services fetch');
+  // Function to fetch services that can be called to refresh data
+  const fetchServices = useCallback(async () => {
+    if (!businessId) {
+      console.log('No business ID available, skipping services fetch');
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      console.log('Fetching services for business ID:', businessId);
+      
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        console.error("No active session found");
+        setError("Sessão não encontrada. Faça login novamente.");
+        toast.error("Sessão expirada. Por favor, faça login novamente.");
+        setIsLoading(false);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from('servicos')
+        .select('*')
+        .eq('id_negocio', businessId)
+        .eq('ativo', true);
+
+      if (error) {
+        console.error("Erro ao buscar serviços:", error);
+        setError(error.message);
+        toast.error("Não foi possível carregar os serviços.");
         return;
       }
 
-      setIsLoading(true);
-      try {
-        console.log('Fetching services for business ID:', businessId);
-        const { data, error } = await supabase
-          .from('servicos')
-          .select('*')
-          .eq('id_negocio', businessId)
-          .eq('ativo', true);
+      console.log('Services fetched successfully:', data?.length || 0, 'services');
+      
+      // Map the database columns to our service interface
+      const mappedServices = (data || []).map(service => ({
+        id: service.id,
+        name: service.nome,  // Map nome to name as well
+        nome: service.nome,
+        descricao: service.descricao,
+        preco: service.preco,
+        duracao: service.duracao,
+        categoria_id: service.id_categoria,
+        ativo: service.ativo,
+        imagem_url: service.imagem_url
+      }));
 
-        if (error) {
-          console.error("Erro ao buscar serviços:", error);
-          setError(error.message);
-          toast.error("Não foi possível carregar os serviços.");
-          return;
-        }
-
-        // Map the database columns to our service interface
-        const mappedServices = (data || []).map(service => ({
-          id: service.id,
-          name: service.nome,  // Map nome to name as well
-          nome: service.nome,
-          descricao: service.descricao,
-          preco: service.preco,
-          duracao: service.duracao,
-          categoria_id: service.id_categoria,
-          ativo: service.ativo,
-          imagem_url: service.imagem_url
-        }));
-
-        setServices(mappedServices);
-      } catch (err: any) {
-        console.error("Erro inesperado ao buscar serviços:", err);
-        setError(err.message);
-        toast.error("Erro ao carregar serviços.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchServices();
+      setServices(mappedServices);
+    } catch (err: any) {
+      console.error("Erro inesperado ao buscar serviços:", err);
+      setError(err.message);
+      toast.error("Erro ao carregar serviços.");
+    } finally {
+      setIsLoading(false);
+    }
   }, [businessId]);
+
+  // Effect to fetch services when businessId changes or lastUpdate is updated
+  useEffect(() => {
+    fetchServices();
+  }, [fetchServices, lastUpdate]);
 
   const createService = async (serviceData: Omit<Service, 'id'>) => {
     try {
       if (!businessId) {
         throw new Error("ID do negócio não disponível");
+      }
+      
+      // Ensure we have an active session
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        throw new Error("Sessão expirada. Por favor, faça login novamente.");
       }
       
       const { data, error } = await supabase
@@ -106,8 +130,10 @@ export const useServices = () => {
         imagem_url: data.imagem_url
       };
       
+      // Update local state and force refresh
       setServices(prev => [...prev, newService]);
       toast.success("Serviço criado com sucesso!");
+      setLastUpdate(Date.now()); // Force a refresh to ensure data consistency
       return newService;
       
     } catch (err: any) {
@@ -119,6 +145,12 @@ export const useServices = () => {
 
   const updateService = async (id: string, serviceData: Partial<Service>) => {
     try {
+      // Ensure we have an active session
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        throw new Error("Sessão expirada. Por favor, faça login novamente.");
+      }
+      
       const updateData: any = {};
       
       // Map fields from the Service interface to database columns
@@ -151,11 +183,13 @@ export const useServices = () => {
         imagem_url: data.imagem_url
       };
       
+      // Update local state
       setServices(prev => prev.map(service => 
         service.id === id ? updatedService : service
       ));
       
       toast.success("Serviço atualizado com sucesso!");
+      setLastUpdate(Date.now()); // Force a refresh to ensure data consistency
       return updatedService;
       
     } catch (err: any) {
@@ -167,6 +201,12 @@ export const useServices = () => {
 
   const deleteService = async (id: string) => {
     try {
+      // Ensure we have an active session
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        throw new Error("Sessão expirada. Por favor, faça login novamente.");
+      }
+      
       // Instead of hard deleting, we set ativo = false
       const { error } = await supabase
         .from('servicos')
@@ -179,6 +219,7 @@ export const useServices = () => {
       setServices(prev => prev.filter(service => service.id !== id));
       
       toast.success("Serviço removido com sucesso!");
+      setLastUpdate(Date.now()); // Force a refresh to ensure data consistency
       return true;
       
     } catch (err: any) {
@@ -188,12 +229,18 @@ export const useServices = () => {
     }
   };
 
+  // Function to manually refresh the services list
+  const refreshServices = () => {
+    setLastUpdate(Date.now());
+  };
+
   return {
     services,
     isLoading,
     error,
     createService,
     updateService,
-    deleteService
+    deleteService,
+    refreshServices
   };
 };
