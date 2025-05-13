@@ -59,14 +59,13 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
       }
       
       // Ensure all required fields are present with proper types
+      // Use the expected property names as defined in ClienteInput type
       const clientData: ClienteInput = {
         nome: sanitizedData.nome,
         email: sanitizedData.email || undefined,
         telefone: sanitizedData.telefone || undefined,
         cidade: sanitizedData.cidade || undefined,
         estado: sanitizedData.estado || undefined,
-        // Garantir que o ID do negócio esteja sempre presente
-        id_negocio: currentBusiness.id
       };
       
       const newClient = await createClient(clientData);
