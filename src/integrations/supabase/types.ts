@@ -65,166 +65,6 @@ export type Database = {
           },
         ]
       }
-      agendamentos: {
-        Row: {
-          atualizado_em: string | null
-          avaliacao: number | null
-          comentario_avaliacao: string | null
-          criado_em: string | null
-          data: string
-          duracao: number
-          forma_pagamento: string | null
-          hora_fim: string
-          hora_inicio: string
-          id: string
-          id_cliente: string
-          id_funcionario: string
-          id_negocio: string
-          id_servico: string
-          lembrete_enviado: boolean | null
-          observacoes: string | null
-          status: string | null
-          valor: number
-        }
-        Insert: {
-          atualizado_em?: string | null
-          avaliacao?: number | null
-          comentario_avaliacao?: string | null
-          criado_em?: string | null
-          data: string
-          duracao: number
-          forma_pagamento?: string | null
-          hora_fim: string
-          hora_inicio: string
-          id?: string
-          id_cliente: string
-          id_funcionario: string
-          id_negocio: string
-          id_servico: string
-          lembrete_enviado?: boolean | null
-          observacoes?: string | null
-          status?: string | null
-          valor: number
-        }
-        Update: {
-          atualizado_em?: string | null
-          avaliacao?: number | null
-          comentario_avaliacao?: string | null
-          criado_em?: string | null
-          data?: string
-          duracao?: number
-          forma_pagamento?: string | null
-          hora_fim?: string
-          hora_inicio?: string
-          id?: string
-          id_cliente?: string
-          id_funcionario?: string
-          id_negocio?: string
-          id_servico?: string
-          lembrete_enviado?: boolean | null
-          observacoes?: string | null
-          status?: string | null
-          valor?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agendamentos_id_cliente_fkey"
-            columns: ["id_cliente"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agendamentos_id_funcionario_fkey"
-            columns: ["id_funcionario"]
-            isOneToOne: false
-            referencedRelation: "funcionarios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agendamentos_id_negocio_fkey"
-            columns: ["id_negocio"]
-            isOneToOne: false
-            referencedRelation: "negocios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agendamentos_id_servico_fkey"
-            columns: ["id_servico"]
-            isOneToOne: false
-            referencedRelation: "servicos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      analises_negocio: {
-        Row: {
-          agendamentos_concluidos: number | null
-          clientes_recorrentes: number | null
-          criado_em: string | null
-          data: string
-          despesas_total: number | null
-          funcionarios_destaque: Json | null
-          id: string
-          id_negocio: string
-          lucro_liquido: number | null
-          novos_clientes: number | null
-          nps: number | null
-          receita_total: number | null
-          servicos_populares: Json | null
-          taxa_cancelamento: number | null
-          taxa_ocupacao: number | null
-          tempo_medio_atendimento: number | null
-          total_agendamentos: number | null
-        }
-        Insert: {
-          agendamentos_concluidos?: number | null
-          clientes_recorrentes?: number | null
-          criado_em?: string | null
-          data: string
-          despesas_total?: number | null
-          funcionarios_destaque?: Json | null
-          id?: string
-          id_negocio: string
-          lucro_liquido?: number | null
-          novos_clientes?: number | null
-          nps?: number | null
-          receita_total?: number | null
-          servicos_populares?: Json | null
-          taxa_cancelamento?: number | null
-          taxa_ocupacao?: number | null
-          tempo_medio_atendimento?: number | null
-          total_agendamentos?: number | null
-        }
-        Update: {
-          agendamentos_concluidos?: number | null
-          clientes_recorrentes?: number | null
-          criado_em?: string | null
-          data?: string
-          despesas_total?: number | null
-          funcionarios_destaque?: Json | null
-          id?: string
-          id_negocio?: string
-          lucro_liquido?: number | null
-          novos_clientes?: number | null
-          nps?: number | null
-          receita_total?: number | null
-          servicos_populares?: Json | null
-          taxa_cancelamento?: number | null
-          taxa_ocupacao?: number | null
-          tempo_medio_atendimento?: number | null
-          total_agendamentos?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "analises_negocio_id_negocio_fkey"
-            columns: ["id_negocio"]
-            isOneToOne: false
-            referencedRelation: "negocios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       application_users: {
         Row: {
           avatar_url: string | null
@@ -320,13 +160,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "appointment_services_appointmentId_fkey"
-            columns: ["appointmentId"]
-            isOneToOne: false
-            referencedRelation: "appointments"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "appointment_services_serviceId_fkey"
             columns: ["serviceId"]
             isOneToOne: false
@@ -335,114 +168,160 @@ export type Database = {
           },
         ]
       }
-      appointments: {
+      Appointments: {
         Row: {
-          cancelledAt: string | null
-          cancelReason: string | null
-          createdAt: string
-          createdById: string | null
-          customerId: string | null
-          customerNotes: string | null
-          endTime: string
-          establishmentId: string
+          atualizado_em: string | null
+          avaliacao: number | null
+          comentario_avaliacao: string | null
+          criado_em: string | null
+          data: string
+          duracao: number
+          forma_pagamento: string | null
+          hora_fim: string
+          hora_inicio: string
           id: string
-          internalNotes: string | null
-          notes: string | null
-          professionalId: string
-          reminderSentAt: string | null
-          source: Database["public"]["Enums"]["AppointmentSource"]
-          startTime: string
-          status: Database["public"]["Enums"]["AppointmentStatus"]
-          tenantId: string
-          updatedAt: string
-          updatedById: string | null
+          id_cliente: string
+          id_funcionario: string
+          id_negocio: string
+          id_servico: string
+          lembrete_enviado: boolean | null
+          observacoes: string | null
+          status: string | null
+          valor: number
         }
         Insert: {
-          cancelledAt?: string | null
-          cancelReason?: string | null
-          createdAt?: string
-          createdById?: string | null
-          customerId?: string | null
-          customerNotes?: string | null
-          endTime: string
-          establishmentId: string
-          id: string
-          internalNotes?: string | null
-          notes?: string | null
-          professionalId: string
-          reminderSentAt?: string | null
-          source?: Database["public"]["Enums"]["AppointmentSource"]
-          startTime: string
-          status?: Database["public"]["Enums"]["AppointmentStatus"]
-          tenantId: string
-          updatedAt: string
-          updatedById?: string | null
+          atualizado_em?: string | null
+          avaliacao?: number | null
+          comentario_avaliacao?: string | null
+          criado_em?: string | null
+          data: string
+          duracao: number
+          forma_pagamento?: string | null
+          hora_fim: string
+          hora_inicio: string
+          id?: string
+          id_cliente: string
+          id_funcionario: string
+          id_negocio: string
+          id_servico: string
+          lembrete_enviado?: boolean | null
+          observacoes?: string | null
+          status?: string | null
+          valor: number
         }
         Update: {
-          cancelledAt?: string | null
-          cancelReason?: string | null
-          createdAt?: string
-          createdById?: string | null
-          customerId?: string | null
-          customerNotes?: string | null
-          endTime?: string
-          establishmentId?: string
+          atualizado_em?: string | null
+          avaliacao?: number | null
+          comentario_avaliacao?: string | null
+          criado_em?: string | null
+          data?: string
+          duracao?: number
+          forma_pagamento?: string | null
+          hora_fim?: string
+          hora_inicio?: string
           id?: string
-          internalNotes?: string | null
-          notes?: string | null
-          professionalId?: string
-          reminderSentAt?: string | null
-          source?: Database["public"]["Enums"]["AppointmentSource"]
-          startTime?: string
-          status?: Database["public"]["Enums"]["AppointmentStatus"]
-          tenantId?: string
-          updatedAt?: string
-          updatedById?: string | null
+          id_cliente?: string
+          id_funcionario?: string
+          id_negocio?: string
+          id_servico?: string
+          lembrete_enviado?: boolean | null
+          observacoes?: string | null
+          status?: string | null
+          valor?: number
         }
         Relationships: [
           {
-            foreignKeyName: "appointments_createdById_fkey"
-            columns: ["createdById"]
+            foreignKeyName: "agendamentos_id_cliente_fkey"
+            columns: ["id_cliente"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "appointments_customerId_fkey"
-            columns: ["customerId"]
+            foreignKeyName: "agendamentos_id_funcionario_fkey"
+            columns: ["id_funcionario"]
             isOneToOne: false
-            referencedRelation: "customers"
+            referencedRelation: "funcionarios"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "appointments_establishmentId_fkey"
-            columns: ["establishmentId"]
+            foreignKeyName: "agendamentos_id_negocio_fkey"
+            columns: ["id_negocio"]
             isOneToOne: false
-            referencedRelation: "establishments"
+            referencedRelation: "negocios"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "appointments_professionalId_fkey"
-            columns: ["professionalId"]
+            foreignKeyName: "agendamentos_id_servico_fkey"
+            columns: ["id_servico"]
             isOneToOne: false
-            referencedRelation: "professionals"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appointments_tenantId_fkey"
-            columns: ["tenantId"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appointments_updatedById_fkey"
-            columns: ["updatedById"]
-            isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "servicos"
             referencedColumns: ["id"]
           },
         ]
+      }
+      Appointments_backup: {
+        Row: {
+          atualizado_em: string | null
+          avaliacao: number | null
+          comentario_avaliacao: string | null
+          criado_em: string | null
+          data: string | null
+          duracao: number | null
+          forma_pagamento: string | null
+          hora_fim: string | null
+          hora_inicio: string | null
+          id: string | null
+          id_cliente: string | null
+          id_funcionario: string | null
+          id_negocio: string | null
+          id_servico: string | null
+          lembrete_enviado: boolean | null
+          observacoes: string | null
+          status: string | null
+          valor: number | null
+        }
+        Insert: {
+          atualizado_em?: string | null
+          avaliacao?: number | null
+          comentario_avaliacao?: string | null
+          criado_em?: string | null
+          data?: string | null
+          duracao?: number | null
+          forma_pagamento?: string | null
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string | null
+          id_cliente?: string | null
+          id_funcionario?: string | null
+          id_negocio?: string | null
+          id_servico?: string | null
+          lembrete_enviado?: boolean | null
+          observacoes?: string | null
+          status?: string | null
+          valor?: number | null
+        }
+        Update: {
+          atualizado_em?: string | null
+          avaliacao?: number | null
+          comentario_avaliacao?: string | null
+          criado_em?: string | null
+          data?: string | null
+          duracao?: number | null
+          forma_pagamento?: string | null
+          hora_fim?: string | null
+          hora_inicio?: string | null
+          id?: string | null
+          id_cliente?: string | null
+          id_funcionario?: string | null
+          id_negocio?: string | null
+          id_servico?: string | null
+          lembrete_enviado?: boolean | null
+          observacoes?: string | null
+          status?: string | null
+          valor?: number | null
+        }
+        Relationships: []
       }
       audit_logs: {
         Row: {
@@ -550,13 +429,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "bookings_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "bookings_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
@@ -568,6 +440,74 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_analysis: {
+        Row: {
+          agendamentos_concluidos: number | null
+          clientes_recorrentes: number | null
+          criado_em: string | null
+          data: string
+          despesas_total: number | null
+          funcionarios_destaque: Json | null
+          id: string
+          id_negocio: string
+          lucro_liquido: number | null
+          novos_clientes: number | null
+          nps: number | null
+          receita_total: number | null
+          servicos_populares: Json | null
+          taxa_cancelamento: number | null
+          taxa_ocupacao: number | null
+          tempo_medio_atendimento: number | null
+          total_agendamentos: number | null
+        }
+        Insert: {
+          agendamentos_concluidos?: number | null
+          clientes_recorrentes?: number | null
+          criado_em?: string | null
+          data: string
+          despesas_total?: number | null
+          funcionarios_destaque?: Json | null
+          id?: string
+          id_negocio: string
+          lucro_liquido?: number | null
+          novos_clientes?: number | null
+          nps?: number | null
+          receita_total?: number | null
+          servicos_populares?: Json | null
+          taxa_cancelamento?: number | null
+          taxa_ocupacao?: number | null
+          tempo_medio_atendimento?: number | null
+          total_agendamentos?: number | null
+        }
+        Update: {
+          agendamentos_concluidos?: number | null
+          clientes_recorrentes?: number | null
+          criado_em?: string | null
+          data?: string
+          despesas_total?: number | null
+          funcionarios_destaque?: Json | null
+          id?: string
+          id_negocio?: string
+          lucro_liquido?: number | null
+          novos_clientes?: number | null
+          nps?: number | null
+          receita_total?: number | null
+          servicos_populares?: Json | null
+          taxa_cancelamento?: number | null
+          taxa_ocupacao?: number | null
+          tempo_medio_atendimento?: number | null
+          total_agendamentos?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analises_negocio_id_negocio_fkey"
+            columns: ["id_negocio"]
+            isOneToOne: false
+            referencedRelation: "negocios"
             referencedColumns: ["id"]
           },
         ]
@@ -665,131 +605,6 @@ export type Database = {
         }
         Relationships: []
       }
-      campanhas_marketing: {
-        Row: {
-          atualizado_em: string | null
-          canais: string[] | null
-          cliques: number | null
-          conversoes: number | null
-          criado_em: string | null
-          criado_por: string | null
-          data_fim: string
-          data_inicio: string
-          id: string
-          id_negocio: string
-          impressoes: number | null
-          nome: string
-          orcamento: number | null
-          publico_alvo: string | null
-          resultados: Json | null
-          roi: number | null
-          status: string | null
-          tipo: string
-          total_gasto: number | null
-        }
-        Insert: {
-          atualizado_em?: string | null
-          canais?: string[] | null
-          cliques?: number | null
-          conversoes?: number | null
-          criado_em?: string | null
-          criado_por?: string | null
-          data_fim: string
-          data_inicio: string
-          id?: string
-          id_negocio: string
-          impressoes?: number | null
-          nome: string
-          orcamento?: number | null
-          publico_alvo?: string | null
-          resultados?: Json | null
-          roi?: number | null
-          status?: string | null
-          tipo: string
-          total_gasto?: number | null
-        }
-        Update: {
-          atualizado_em?: string | null
-          canais?: string[] | null
-          cliques?: number | null
-          conversoes?: number | null
-          criado_em?: string | null
-          criado_por?: string | null
-          data_fim?: string
-          data_inicio?: string
-          id?: string
-          id_negocio?: string
-          impressoes?: number | null
-          nome?: string
-          orcamento?: number | null
-          publico_alvo?: string | null
-          resultados?: Json | null
-          roi?: number | null
-          status?: string | null
-          tipo?: string
-          total_gasto?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "campanhas_marketing_criado_por_fkey"
-            columns: ["criado_por"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campanhas_marketing_id_negocio_fkey"
-            columns: ["id_negocio"]
-            isOneToOne: false
-            referencedRelation: "negocios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      categorias: {
-        Row: {
-          atualizado_em: string | null
-          cor: string | null
-          criado_em: string | null
-          descricao: string | null
-          icone: string | null
-          id: string
-          id_negocio: string
-          nome: string
-          tipo: string
-        }
-        Insert: {
-          atualizado_em?: string | null
-          cor?: string | null
-          criado_em?: string | null
-          descricao?: string | null
-          icone?: string | null
-          id?: string
-          id_negocio: string
-          nome: string
-          tipo: string
-        }
-        Update: {
-          atualizado_em?: string | null
-          cor?: string | null
-          criado_em?: string | null
-          descricao?: string | null
-          icone?: string | null
-          id?: string
-          id_negocio?: string
-          nome?: string
-          tipo?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "categorias_id_negocio_fkey"
-            columns: ["id_negocio"]
-            isOneToOne: false
-            referencedRelation: "negocios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       categories: {
         Row: {
           business_id: string
@@ -834,7 +649,7 @@ export type Database = {
           },
         ]
       }
-      clientes: {
+      clients: {
         Row: {
           atualizado_em: string | null
           cep: string | null
@@ -910,81 +725,76 @@ export type Database = {
             foreignKeyName: "clientes_id_usuario_fkey"
             columns: ["id_usuario"]
             isOneToOne: false
-            referencedRelation: "usuarios"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
       }
-      clients: {
+      clients_backup: {
         Row: {
-          address: string | null
-          birth_date: string | null
-          business_id: string
-          city: string | null
-          created_at: string | null
+          atualizado_em: string | null
+          cep: string | null
+          cidade: string | null
+          criado_em: string | null
+          data_nascimento: string | null
           email: string | null
-          gender: string | null
-          id: string
-          last_visit: string | null
-          name: string
-          notes: string | null
-          phone: string | null
-          preferences: Json | null
-          state: string | null
-          total_spent: number | null
-          updated_at: string | null
-          user_id: string | null
-          zip_code: string | null
+          endereco: string | null
+          estado: string | null
+          genero: string | null
+          id: string | null
+          id_negocio: string | null
+          id_usuario: string | null
+          nome: string | null
+          notas: string | null
+          preferencias: Json | null
+          telefone: string | null
+          tenant_id: string | null
+          ultima_visita: string | null
+          valor_total_gasto: number | null
         }
         Insert: {
-          address?: string | null
-          birth_date?: string | null
-          business_id: string
-          city?: string | null
-          created_at?: string | null
+          atualizado_em?: string | null
+          cep?: string | null
+          cidade?: string | null
+          criado_em?: string | null
+          data_nascimento?: string | null
           email?: string | null
-          gender?: string | null
-          id?: string
-          last_visit?: string | null
-          name: string
-          notes?: string | null
-          phone?: string | null
-          preferences?: Json | null
-          state?: string | null
-          total_spent?: number | null
-          updated_at?: string | null
-          user_id?: string | null
-          zip_code?: string | null
+          endereco?: string | null
+          estado?: string | null
+          genero?: string | null
+          id?: string | null
+          id_negocio?: string | null
+          id_usuario?: string | null
+          nome?: string | null
+          notas?: string | null
+          preferencias?: Json | null
+          telefone?: string | null
+          tenant_id?: string | null
+          ultima_visita?: string | null
+          valor_total_gasto?: number | null
         }
         Update: {
-          address?: string | null
-          birth_date?: string | null
-          business_id?: string
-          city?: string | null
-          created_at?: string | null
+          atualizado_em?: string | null
+          cep?: string | null
+          cidade?: string | null
+          criado_em?: string | null
+          data_nascimento?: string | null
           email?: string | null
-          gender?: string | null
-          id?: string
-          last_visit?: string | null
-          name?: string
-          notes?: string | null
-          phone?: string | null
-          preferences?: Json | null
-          state?: string | null
-          total_spent?: number | null
-          updated_at?: string | null
-          user_id?: string | null
-          zip_code?: string | null
+          endereco?: string | null
+          estado?: string | null
+          genero?: string | null
+          id?: string | null
+          id_negocio?: string | null
+          id_usuario?: string | null
+          nome?: string | null
+          notas?: string | null
+          preferencias?: Json | null
+          telefone?: string | null
+          tenant_id?: string | null
+          ultima_visita?: string | null
+          valor_total_gasto?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "clients_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "negocios"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       commission_rules: {
         Row: {
@@ -1068,13 +878,6 @@ export type Database = {
           updatedAt?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "commissions_appointmentId_fkey"
-            columns: ["appointmentId"]
-            isOneToOne: false
-            referencedRelation: "appointments"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "commissions_financialTransactionId_fkey"
             columns: ["financialTransactionId"]
@@ -1487,13 +1290,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "estoque_id_categoria_fkey"
-            columns: ["id_categoria"]
-            isOneToOne: false
-            referencedRelation: "categorias"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "estoque_id_negocio_fkey"
             columns: ["id_negocio"]
             isOneToOne: false
@@ -1698,24 +1494,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "financial_transactions_appointmentId_fkey"
-            columns: ["appointmentId"]
-            isOneToOne: false
-            referencedRelation: "appointments"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "financial_transactions_categoryId_fkey"
             columns: ["categoryId"]
             isOneToOne: false
             referencedRelation: "financial_categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "financial_transactions_createdById_fkey"
-            columns: ["createdById"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -1798,7 +1580,7 @@ export type Database = {
             foreignKeyName: "funcionarios_id_usuario_fkey"
             columns: ["id_usuario"]
             isOneToOne: false
-            referencedRelation: "usuarios"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1870,7 +1652,7 @@ export type Database = {
           },
         ]
       }
-      integracoes: {
+      integrations: {
         Row: {
           ativo: boolean | null
           atualizado_em: string | null
@@ -1922,50 +1704,6 @@ export type Database = {
             columns: ["id_negocio"]
             isOneToOne: false
             referencedRelation: "negocios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      integrations: {
-        Row: {
-          config: Json | null
-          createdAt: string
-          id: string
-          lastSyncAt: string | null
-          name: string
-          status: Database["public"]["Enums"]["IntegrationStatus"]
-          tenantId: string
-          type: Database["public"]["Enums"]["IntegrationType"]
-          updatedAt: string
-        }
-        Insert: {
-          config?: Json | null
-          createdAt?: string
-          id: string
-          lastSyncAt?: string | null
-          name: string
-          status?: Database["public"]["Enums"]["IntegrationStatus"]
-          tenantId: string
-          type: Database["public"]["Enums"]["IntegrationType"]
-          updatedAt: string
-        }
-        Update: {
-          config?: Json | null
-          createdAt?: string
-          id?: string
-          lastSyncAt?: string | null
-          name?: string
-          status?: Database["public"]["Enums"]["IntegrationStatus"]
-          tenantId?: string
-          type?: Database["public"]["Enums"]["IntegrationType"]
-          updatedAt?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "integrations_tenantId_fkey"
-            columns: ["tenantId"]
-            isOneToOne: false
-            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -2108,7 +1846,7 @@ export type Database = {
             foreignKeyName: "invoices_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "clientes"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
@@ -2385,59 +2123,81 @@ export type Database = {
       }
       marketing_campaigns: {
         Row: {
-          channel: Database["public"]["Enums"]["MarketingChannel"]
-          content: string | null
-          createdAt: string
-          description: string | null
+          atualizado_em: string | null
+          canais: string[] | null
+          cliques: number | null
+          conversoes: number | null
+          criado_em: string | null
+          criado_por: string | null
+          data_fim: string
+          data_inicio: string
           id: string
-          metrics: Json | null
-          name: string
-          scheduledAt: string | null
-          sentAt: string | null
-          status: Database["public"]["Enums"]["CampaignStatus"]
-          targetAudience: Json | null
-          tenantId: string
-          type: Database["public"]["Enums"]["CampaignType"]
-          updatedAt: string
+          id_negocio: string
+          impressoes: number | null
+          nome: string
+          orcamento: number | null
+          publico_alvo: string | null
+          resultados: Json | null
+          roi: number | null
+          status: string | null
+          tipo: string
+          total_gasto: number | null
         }
         Insert: {
-          channel: Database["public"]["Enums"]["MarketingChannel"]
-          content?: string | null
-          createdAt?: string
-          description?: string | null
-          id: string
-          metrics?: Json | null
-          name: string
-          scheduledAt?: string | null
-          sentAt?: string | null
-          status?: Database["public"]["Enums"]["CampaignStatus"]
-          targetAudience?: Json | null
-          tenantId: string
-          type: Database["public"]["Enums"]["CampaignType"]
-          updatedAt: string
+          atualizado_em?: string | null
+          canais?: string[] | null
+          cliques?: number | null
+          conversoes?: number | null
+          criado_em?: string | null
+          criado_por?: string | null
+          data_fim: string
+          data_inicio: string
+          id?: string
+          id_negocio: string
+          impressoes?: number | null
+          nome: string
+          orcamento?: number | null
+          publico_alvo?: string | null
+          resultados?: Json | null
+          roi?: number | null
+          status?: string | null
+          tipo: string
+          total_gasto?: number | null
         }
         Update: {
-          channel?: Database["public"]["Enums"]["MarketingChannel"]
-          content?: string | null
-          createdAt?: string
-          description?: string | null
+          atualizado_em?: string | null
+          canais?: string[] | null
+          cliques?: number | null
+          conversoes?: number | null
+          criado_em?: string | null
+          criado_por?: string | null
+          data_fim?: string
+          data_inicio?: string
           id?: string
-          metrics?: Json | null
-          name?: string
-          scheduledAt?: string | null
-          sentAt?: string | null
-          status?: Database["public"]["Enums"]["CampaignStatus"]
-          targetAudience?: Json | null
-          tenantId?: string
-          type?: Database["public"]["Enums"]["CampaignType"]
-          updatedAt?: string
+          id_negocio?: string
+          impressoes?: number | null
+          nome?: string
+          orcamento?: number | null
+          publico_alvo?: string | null
+          resultados?: Json | null
+          roi?: number | null
+          status?: string | null
+          tipo?: string
+          total_gasto?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "marketing_campaigns_tenantId_fkey"
-            columns: ["tenantId"]
+            foreignKeyName: "campanhas_marketing_criado_por_fkey"
+            columns: ["criado_por"]
             isOneToOne: false
-            referencedRelation: "tenants"
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campanhas_marketing_id_negocio_fkey"
+            columns: ["id_negocio"]
+            isOneToOne: false
+            referencedRelation: "negocios"
             referencedColumns: ["id"]
           },
         ]
@@ -2483,7 +2243,7 @@ export type Database = {
           },
         ]
       }
-      metricas_dashboard: {
+      metrics_dashboard: {
         Row: {
           created_at: string | null
           data_referencia: string
@@ -2614,6 +2374,99 @@ export type Database = {
           numero?: string | null
           razao_social?: string | null
           slug?: string
+          status?: string | null
+          status_assinatura?: string | null
+          telefone?: string | null
+          url_logo?: string | null
+        }
+        Relationships: []
+      }
+      negocios_backup: {
+        Row: {
+          atualizado_em: string | null
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
+          complemento: string | null
+          criado_em: string | null
+          data_fim_assinatura: string | null
+          data_fim_teste: string | null
+          descricao: string | null
+          email_admin: string | null
+          endereco: string | null
+          estado: string | null
+          fuso_horario: string | null
+          id: string | null
+          idioma: string | null
+          latitude: number | null
+          longitude: number | null
+          moeda: string | null
+          nome: string | null
+          nome_fantasia: string | null
+          numero: string | null
+          razao_social: string | null
+          slug: string | null
+          status: string | null
+          status_assinatura: string | null
+          telefone: string | null
+          url_logo: string | null
+        }
+        Insert: {
+          atualizado_em?: string | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          complemento?: string | null
+          criado_em?: string | null
+          data_fim_assinatura?: string | null
+          data_fim_teste?: string | null
+          descricao?: string | null
+          email_admin?: string | null
+          endereco?: string | null
+          estado?: string | null
+          fuso_horario?: string | null
+          id?: string | null
+          idioma?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          moeda?: string | null
+          nome?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          razao_social?: string | null
+          slug?: string | null
+          status?: string | null
+          status_assinatura?: string | null
+          telefone?: string | null
+          url_logo?: string | null
+        }
+        Update: {
+          atualizado_em?: string | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          complemento?: string | null
+          criado_em?: string | null
+          data_fim_assinatura?: string | null
+          data_fim_teste?: string | null
+          descricao?: string | null
+          email_admin?: string | null
+          endereco?: string | null
+          estado?: string | null
+          fuso_horario?: string | null
+          id?: string | null
+          idioma?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          moeda?: string | null
+          nome?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          razao_social?: string | null
+          slug?: string | null
           status?: string | null
           status_assinatura?: string | null
           telefone?: string | null
@@ -2834,7 +2687,7 @@ export type Database = {
             foreignKeyName: "payment_methods_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "clientes"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
@@ -3002,7 +2855,7 @@ export type Database = {
             foreignKeyName: "perfis_acesso_id_usuario_fkey"
             columns: ["id_usuario"]
             isOneToOne: false
-            referencedRelation: "usuarios"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -3274,13 +3127,6 @@ export type Database = {
             columns: ["tenantId"]
             isOneToOne: false
             referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "professionals_userId_fkey"
-            columns: ["userId"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -3583,13 +3429,6 @@ export type Database = {
             referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "services_v2_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categorias"
-            referencedColumns: ["id"]
-          },
         ]
       }
       servicos: {
@@ -3643,13 +3482,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "servicos_id_categoria_fkey"
-            columns: ["id_categoria"]
-            isOneToOne: false
-            referencedRelation: "categorias"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "servicos_id_negocio_fkey"
             columns: ["id_negocio"]
             isOneToOne: false
@@ -3657,6 +3489,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      servicos_backup: {
+        Row: {
+          ativo: boolean | null
+          atualizado_em: string | null
+          comissao_percentual: number | null
+          criado_em: string | null
+          descricao: string | null
+          duracao: number | null
+          id: string | null
+          id_categoria: string | null
+          id_negocio: string | null
+          ids_equipamentos: string[] | null
+          imagem_url: string | null
+          nome: string | null
+          preco: number | null
+          requer_equipamento: boolean | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          atualizado_em?: string | null
+          comissao_percentual?: number | null
+          criado_em?: string | null
+          descricao?: string | null
+          duracao?: number | null
+          id?: string | null
+          id_categoria?: string | null
+          id_negocio?: string | null
+          ids_equipamentos?: string[] | null
+          imagem_url?: string | null
+          nome?: string | null
+          preco?: number | null
+          requer_equipamento?: boolean | null
+        }
+        Update: {
+          ativo?: boolean | null
+          atualizado_em?: string | null
+          comissao_percentual?: number | null
+          criado_em?: string | null
+          descricao?: string | null
+          duracao?: number | null
+          id?: string | null
+          id_categoria?: string | null
+          id_negocio?: string | null
+          ids_equipamentos?: string[] | null
+          imagem_url?: string | null
+          nome?: string | null
+          preco?: number | null
+          requer_equipamento?: boolean | null
+        }
+        Relationships: []
       }
       stock_items: {
         Row: {
@@ -3760,13 +3643,6 @@ export type Database = {
           type?: Database["public"]["Enums"]["MovementType"]
         }
         Relationships: [
-          {
-            foreignKeyName: "stock_movements_createdById_fkey"
-            columns: ["createdById"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "stock_movements_productId_fkey"
             columns: ["productId"]
@@ -3890,7 +3766,7 @@ export type Database = {
             foreignKeyName: "subscriptions_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "clientes"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
@@ -4011,28 +3887,21 @@ export type Database = {
             foreignKeyName: "transacoes_criado_por_fkey"
             columns: ["criado_por"]
             isOneToOne: false
-            referencedRelation: "usuarios"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "transacoes_id_agendamento_fkey"
             columns: ["id_agendamento"]
             isOneToOne: false
-            referencedRelation: "agendamentos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transacoes_id_categoria_fkey"
-            columns: ["id_categoria"]
-            isOneToOne: false
-            referencedRelation: "categorias"
+            referencedRelation: "Appointments"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "transacoes_id_cliente_fkey"
             columns: ["id_cliente"]
             isOneToOne: false
-            referencedRelation: "clientes"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
@@ -4125,13 +3994,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "transactions_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "transactions_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -4167,75 +4029,9 @@ export type Database = {
             referencedRelation: "roles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_roles_userId_fkey"
-            columns: ["userId"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       users: {
-        Row: {
-          createdAt: string
-          email: string
-          id: string
-          lastLogin: string | null
-          name: string
-          password: string
-          phone: string | null
-          refreshToken: string | null
-          refreshTokenExpiresAt: string | null
-          status: Database["public"]["Enums"]["UserStatus"]
-          tenantId: string
-          twoFactorEnabled: boolean
-          twoFactorSecret: string | null
-          updatedAt: string
-        }
-        Insert: {
-          createdAt?: string
-          email: string
-          id: string
-          lastLogin?: string | null
-          name: string
-          password: string
-          phone?: string | null
-          refreshToken?: string | null
-          refreshTokenExpiresAt?: string | null
-          status?: Database["public"]["Enums"]["UserStatus"]
-          tenantId: string
-          twoFactorEnabled?: boolean
-          twoFactorSecret?: string | null
-          updatedAt: string
-        }
-        Update: {
-          createdAt?: string
-          email?: string
-          id?: string
-          lastLogin?: string | null
-          name?: string
-          password?: string
-          phone?: string | null
-          refreshToken?: string | null
-          refreshTokenExpiresAt?: string | null
-          status?: Database["public"]["Enums"]["UserStatus"]
-          tenantId?: string
-          twoFactorEnabled?: boolean
-          twoFactorSecret?: string | null
-          updatedAt?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "users_tenantId_fkey"
-            columns: ["tenantId"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      usuarios: {
         Row: {
           atualizado_em: string | null
           cpf: string | null
@@ -4293,6 +4089,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      users_backup: {
+        Row: {
+          atualizado_em: string | null
+          cpf: string | null
+          criado_em: string | null
+          data_nascimento: string | null
+          email: string | null
+          funcao: string | null
+          id: string | null
+          id_negocio: string | null
+          nome_completo: string | null
+          senha_hash: string | null
+          status: string | null
+          telefone: string | null
+          ultimo_acesso: string | null
+          url_avatar: string | null
+        }
+        Insert: {
+          atualizado_em?: string | null
+          cpf?: string | null
+          criado_em?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          funcao?: string | null
+          id?: string | null
+          id_negocio?: string | null
+          nome_completo?: string | null
+          senha_hash?: string | null
+          status?: string | null
+          telefone?: string | null
+          ultimo_acesso?: string | null
+          url_avatar?: string | null
+        }
+        Update: {
+          atualizado_em?: string | null
+          cpf?: string | null
+          criado_em?: string | null
+          data_nascimento?: string | null
+          email?: string | null
+          funcao?: string | null
+          id?: string | null
+          id_negocio?: string | null
+          nome_completo?: string | null
+          senha_hash?: string | null
+          status?: string | null
+          telefone?: string | null
+          ultimo_acesso?: string | null
+          url_avatar?: string | null
+        }
+        Relationships: []
       }
       webhook_events: {
         Row: {

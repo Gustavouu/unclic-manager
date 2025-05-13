@@ -37,14 +37,14 @@ export function PaymentTransactionsTable() {
         .select(`
           id, 
           status, 
-          valor, 
-          metodo_pagamento, 
-          criado_em, 
-          atualizado_em, 
-          notas,
-          clientes(nome)
+          amount, 
+          payment_method, 
+          created_at, 
+          updated_at, 
+          notes,
+          clients:client_id(name)
         `)
-        .order('criado_em', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
@@ -61,9 +61,9 @@ export function PaymentTransactionsTable() {
         let payment_url = '';
         let service_name = 'N/A';
         
-        if (item.notas) {
+        if (item.notes) {
           try {
-            const notesData = JSON.parse(item.notas as string);
+            const notesData = JSON.parse(item.notes as string);
             transaction_id = notesData.transaction_id || '';
             payment_url = notesData.payment_url || '';
             service_name = notesData.service_name || 'N/A';
@@ -74,17 +74,17 @@ export function PaymentTransactionsTable() {
         
         // Make sure we get the cliente nome correctly
         let customerName = "Cliente não identificado";
-        if (item.clientes) {
+        if (item.clients) {
           // Handle different response formats from Supabase
-          if (typeof item.clientes === 'object' && item.clientes !== null) {
+          if (typeof item.clients === 'object' && item.clients !== null) {
             // Single object case
-            if ('nome' in item.clientes) {
-              customerName = (item.clientes as { nome: string }).nome || "Cliente não identificado";
+            if ('name' in item.clients) {
+              customerName = (item.clients as { name: string }).name || "Cliente não identificado";
             } 
             // Array case
-            else if (Array.isArray(item.clientes) && item.clientes.length > 0) {
-              if (typeof item.clientes[0] === 'object' && item.clientes[0] !== null && 'nome' in item.clientes[0]) {
-                customerName = (item.clientes[0] as { nome: string }).nome || "Cliente não identificado";
+            else if (Array.isArray(item.clients) && item.clients.length > 0) {
+              if (typeof item.clients[0] === 'object' && item.clients[0] !== null && 'name' in item.clients[0]) {
+                customerName = (item.clients[0] as { name: string }).name || "Cliente não identificado";
               }
             }
           }
@@ -93,10 +93,10 @@ export function PaymentTransactionsTable() {
         return {
           id: item.id,
           status: item.status,
-          amount: item.valor,
-          payment_method: item.metodo_pagamento,
-          created_at: item.criado_em,
-          updated_at: item.atualizado_em,
+          amount: item.amount,
+          payment_method: item.payment_method,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
           customer_name: customerName,
           service_name: service_name,
           transaction_id,

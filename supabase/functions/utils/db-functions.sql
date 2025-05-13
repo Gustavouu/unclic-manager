@@ -7,7 +7,8 @@ SECURITY DEFINER
 AS $$
 BEGIN
   UPDATE public.negocios 
-  SET status = new_status
+  SET status = new_status,
+      updated_at = NOW()
   WHERE id = business_id;
   
   RETURN FOUND;

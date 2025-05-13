@@ -6,20 +6,20 @@ import { toast } from "sonner";
 
 export interface Service {
   id: string;
-  nome: string;
-  preco: number;
-  duracao: number;
-  descricao?: string;
-  id_categoria?: string;
-  comissao_percentual?: number;
-  imagem_url?: string;
-  ativo: boolean;
-  isActive?: boolean; // Alias for ativo for compatibility with components
+  name: string;
+  price: number;
+  duration: number;
+  description?: string;
+  category_id?: string;
+  commission_percentage?: number;
+  image_url?: string;
+  is_active: boolean;
+  isActive?: boolean; // Alias for is_active for compatibility with components
 }
 
 export const useServices = () => {
   const [services, setServices] = useState<Service[]>([]);
-  const [categories, setCategories] = useState<{ id: string; nome: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { businessId } = useTenant();
   
@@ -31,15 +31,15 @@ export const useServices = () => {
       
       const { data, error } = await supabase
         .from('servicos')
-        .select('*, categorias:id_categoria(id, nome)')
-        .eq('id_negocio', businessId);
+        .select('*, categorias:category_id(id, name)')
+        .eq('business_id', businessId);
         
       if (error) throw error;
       
       // Add the isActive alias for compatibility
       const processedServices = (data || []).map(service => ({
         ...service,
-        isActive: service.ativo
+        isActive: service.is_active
       }));
       
       setServices(processedServices);
@@ -57,9 +57,9 @@ export const useServices = () => {
     try {
       const { data, error } = await supabase
         .from('categorias')
-        .select('id, nome')
-        .eq('id_negocio', businessId)
-        .eq('tipo', 'servico');
+        .select('id, name')
+        .eq('business_id', businessId)
+        .eq('type', 'servico');
         
       if (error) throw error;
       
@@ -70,7 +70,7 @@ export const useServices = () => {
     }
   };
   
-  const createService = async (service: Omit<Service, 'id' | 'ativo' | 'isActive'>) => {
+  const createService = async (service: Omit<Service, 'id' | 'is_active' | 'isActive'>) => {
     if (!businessId) {
       toast.error("ID do negócio não disponível");
       return null;
@@ -81,8 +81,8 @@ export const useServices = () => {
         .from('servicos')
         .insert([{
           ...service,
-          id_negocio: businessId,
-          ativo: true
+          business_id: businessId,
+          is_active: true
         }])
         .select()
         .single();
@@ -91,7 +91,7 @@ export const useServices = () => {
       
       const newService = {
         ...data,
-        isActive: data.ativo
+        isActive: data.is_active
       };
       
       setServices(prev => [...prev, newService]);
@@ -107,10 +107,10 @@ export const useServices = () => {
   
   const updateService = async (id: string, updates: Partial<Omit<Service, 'id' | 'isActive'>>) => {
     try {
-      // Handle the isActive/ativo mapping if it's in the updates
+      // Handle the isActive/is_active mapping if it's in the updates
       const dbUpdates = { ...updates };
-      if ('ativo' in updates) {
-        dbUpdates.ativo = updates.ativo;
+      if ('is_active' in updates) {
+        dbUpdates.is_active = updates.is_active;
       }
       
       const { error } = await supabase
@@ -126,7 +126,7 @@ export const useServices = () => {
             ? { 
                 ...service, 
                 ...updates, 
-                isActive: 'ativo' in updates ? updates.ativo : service.isActive 
+                isActive: 'is_active' in updates ? updates.is_active : service.isActive 
               } 
             : service
         )
@@ -142,7 +142,7 @@ export const useServices = () => {
   };
   
   const toggleServiceActive = async (id: string, active: boolean) => {
-    return updateService(id, { ativo: active });
+    return updateService(id, { is_active: active });
   };
   
   useEffect(() => {

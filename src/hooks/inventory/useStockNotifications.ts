@@ -39,18 +39,18 @@ export function useStockNotifications() {
         // Fallback to estoque table (old schema)
         const { data: estoqueItems, error: estoqueError } = await supabase
           .from('estoque')
-          .select('id, nome, quantidade, quantidade_minima')
-          .eq('id_negocio', businessId);
+          .select('id, name, quantity, min_quantity')
+          .eq('business_id', businessId);
           
         if (estoqueError) throw estoqueError;
         
         const lowItems = estoqueItems
-          ?.filter(item => item.quantidade < item.quantidade_minima)
+          ?.filter(item => item.quantity < item.min_quantity)
           .map(item => ({
             id: item.id,
-            name: item.nome,
-            currentQuantity: item.quantidade,
-            minQuantity: item.quantidade_minima,
+            name: item.name,
+            currentQuantity: item.quantity,
+            minQuantity: item.min_quantity,
             unit: "unidade"
           })) || [];
           
