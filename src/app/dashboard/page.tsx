@@ -1,30 +1,38 @@
 
-import { Metadata } from "next";
+"use client";
+
 import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
 import { ClientsComparisonChart } from "@/components/dashboard/ClientsComparisonChart";
 import { BirthdayClients } from "@/components/dashboard/BirthdayClients";
 import { DataMigrationTool } from "@/components/admin/DataMigrationTool";
-
-export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "Visão geral do seu negócio",
-};
+import { DashboardStats } from "@/types/dashboard";
 
 export default function DashboardPage() {
   // Using static data for testing purposes
-  const mockDashboardStats = {
-    monthlyRevenue: 8500,
-    appointmentsCount: 150,
+  const mockDashboardStats: DashboardStats = {
+    totalAppointments: 150,
+    completedAppointments: 120,
+    totalRevenue: 8500,
+    newClients: 12,
     clientsCount: 85,
+    todayAppointments: 8,
+    monthlyRevenue: 8500,
+    monthlyServices: 150,
+    occupancyRate: 75,
+    popularServices: [
+      { id: "1", name: "Corte de Cabelo", count: 78 },
+      { id: "2", name: "Barba", count: 45 },
+      { id: "3", name: "Combo", count: 35 },
+    ],
+    upcomingAppointments: [],
+    nextAppointments: [],
+    revenueData: [{date: "2023-01-01", value: 1000}],
+    retentionRate: 80,
     newClientsCount: 12,
     returningClientsCount: 73,
-    popularServices: [
-      { name: "Corte de Cabelo", count: 78 },
-      { name: "Barba", count: 45 },
-      { name: "Combo", count: 35 },
-    ],
-    averageRating: 4.8,
+    appointmentsCount: 150,
+    averageRating: 4.8
   };
 
   return (

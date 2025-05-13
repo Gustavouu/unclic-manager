@@ -13,19 +13,26 @@ export function ClientStats({ clients }: ClientStatsProps) {
   
   // Calculate active clients (visited in last 30 days)
   const activeClients = clients.filter(client => {
-    if (!client.ultima_visita) return false;
-    const lastVisit = new Date(client.ultima_visita);
+    if (!client.last_visit && !client.ultima_visita) return false;
+    const lastVisitDate = client.last_visit || client.ultima_visita;
+    if (!lastVisitDate) return false;
+    
+    const lastVisit = new Date(lastVisitDate);
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return lastVisit >= thirtyDaysAgo;
   }).length;
   
   // Calculate total spent by all clients
-  const totalSpent = clients.reduce((sum, client) => sum + (client.valor_total_gasto || 0), 0);
+  const totalSpent = clients.reduce((sum, client) => {
+    const spent = client.total_spent || client.valor_total_gasto || 0;
+    return sum + spent;
+  }, 0);
   
   // Calculate average appointments per client
   const totalAppointments = clients.reduce((sum, client) => {
-    return sum + (client.total_agendamentos || 0);
+    const appointments = client.total_appointments || client.total_agendamentos || 0;
+    return sum + appointments;
   }, 0);
   
   const avgAppointments = totalClients > 0 

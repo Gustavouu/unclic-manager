@@ -9,31 +9,51 @@
 export interface Client {
   id: string;
   name: string;
-  nome: string; // Portuguese version of name
+  nome?: string; // Portuguese version of name
   email?: string;
   phone?: string;
   telefone?: string; // Portuguese version of phone
   ultima_visita?: string;
+  last_visit?: string;
   valor_total_gasto?: number;
+  total_spent?: number;
   total_agendamentos?: number;
   status?: 'active' | 'inactive';
-  criado_em: string;
+  criado_em?: string;
+  created_at?: string;
   cidade?: string;
+  city?: string;
   estado?: string;
+  state?: string;
   notas?: string;
+  notes?: string;
   tenant_id?: string; // Standard field
+  business_id?: string; // New field
   id_negocio?: string; // Original field
+  gender?: string;
+  genero?: string;
+  birth_date?: string | Date;
+  data_nascimento?: string | Date;
+  address?: string;
+  endereco?: string;
 }
 
 /**
  * Data required to create a new client
  */
 export interface ClientFormData {
-  nome: string;
+  nome?: string;
+  name?: string;
   email?: string;
   telefone?: string;
+  phone?: string;
   cidade?: string;
+  city?: string;
   estado?: string;
+  state?: string;
+  address?: string;
+  gender?: string;
+  notes?: string;
 }
 
 /**
@@ -42,7 +62,9 @@ export interface ClientFormData {
 export interface ClientSearchParams {
   email?: string;
   telefone?: string;
+  phone?: string;
   nome?: string;
+  name?: string;
 }
 
 /**
@@ -55,7 +77,7 @@ export interface ClientOperationResult {
 }
 
 /**
- * Client list operation result
+ * Client list result
  */
 export interface ClientListResult {
   success: boolean;

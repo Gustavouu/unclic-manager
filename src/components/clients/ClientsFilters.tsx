@@ -30,14 +30,14 @@ export function ClientsFilters({ clients, onFilteredClientsChange }: ClientsFilt
   const cities = Array.from(
     new Set(
       clients
-        .map((client) => client.cidade)
+        .map((client) => client.city || client.cidade)
         .filter(Boolean)
     )
   ).sort();
   
   // Get max amount spent
   const maxAmountPossible = Math.max(
-    ...clients.map((client) => client.valor_total_gasto || 0)
+    ...clients.map((client) => client.total_spent || client.valor_total_gasto || 0)
   );
   
   useEffect(() => {
@@ -49,24 +49,25 @@ export function ClientsFilters({ clients, onFilteredClientsChange }: ClientsFilt
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (client) =>
-          client.nome.toLowerCase().includes(term) ||
+          (client.name || client.nome || "").toLowerCase().includes(term) ||
           (client.email && client.email.toLowerCase().includes(term)) ||
-          (client.telefone && client.telefone.includes(term))
+          (client.phone || client.telefone || "").includes(term)
       );
     }
     
     // City filter
     if (selectedCity) {
       filtered = filtered.filter(
-        (client) => client.cidade === selectedCity
+        (client) => (client.city || client.cidade) === selectedCity
       );
     }
     
     // Amount filter
     filtered = filtered.filter(
-      (client) =>
-        (client.valor_total_gasto || 0) >= minAmount &&
-        (client.valor_total_gasto || 0) <= maxAmount
+      (client) => {
+        const spent = client.total_spent || client.valor_total_gasto || 0;
+        return spent >= minAmount && spent <= maxAmount;
+      }
     );
     
     // Last visit filter
@@ -77,9 +78,10 @@ export function ClientsFilters({ clients, onFilteredClientsChange }: ClientsFilt
       cutoffDate.setDate(now.getDate() - daysAgo);
       
       filtered = filtered.filter((client) => {
-        if (!client.ultima_visita) return lastVisit === "never";
+        const lastVisitDate = client.last_visit || client.ultima_visita;
+        if (!lastVisitDate) return lastVisit === "never";
         
-        const visitDate = new Date(client.ultima_visita);
+        const visitDate = new Date(lastVisitDate);
         return lastVisit === "never" 
           ? false 
           : visitDate >= cutoffDate;
@@ -121,7 +123,7 @@ export function ClientsFilters({ clients, onFilteredClientsChange }: ClientsFilt
               <SelectValue placeholder="Todas as cidades" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as cidades</SelectItem>
+              <SelectItem value="">Todas as cidades</SelectItem>
               {cities.map((city) => (
                 <SelectItem key={city} value={city || "unknown"}>
                   {city || "Sem cidade"}

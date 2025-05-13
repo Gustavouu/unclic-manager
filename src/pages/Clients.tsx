@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ClientsHeader } from "@/components/clients/ClientsHeader";
 import { ClientsTable } from "@/components/clients/ClientsTable";
@@ -31,7 +32,8 @@ const Clients = () => {
   // Calculate stats for cards
   const activeClients = clients.filter(client => client.status !== 'inactive').length;
   const newClientsThisMonth = clients.filter(client => {
-    const createdDate = client.criado_em ? new Date(client.criado_em) : null;
+    const createdDate = client.created_at ? new Date(client.created_at) : 
+                      client.criado_em ? new Date(client.criado_em) : null;
     if (!createdDate) return false;
     
     const now = new Date();

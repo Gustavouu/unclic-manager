@@ -26,4 +26,6 @@ export interface DashboardStats {
   retentionRate: number;
   newClientsCount: number;
   returningClientsCount: number;
+  appointmentsCount?: number; // For backward compatibility
+  averageRating?: number;
 }

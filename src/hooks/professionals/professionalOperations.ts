@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { Professional, ProfessionalCreateForm, ProfessionalStatus, PROFESSIONAL_STATUS, STATUS_MAPPING } from "./types";
@@ -61,7 +60,8 @@ export const useProfessionalOperations = () => {
             status: status,
             hireDate: prof.data_contratacao || '',
             commissionPercentage: prof.comissao_percentual || 0,
-            userId: prof.id_usuario
+            userId: prof.id_usuario,
+            business_id: prof.id_negocio
           };
         });
         
@@ -123,7 +123,8 @@ export const useProfessionalOperations = () => {
         status: PROFESSIONAL_STATUS.ACTIVE,
         hireDate: newProfData.data_contratacao || '',
         commissionPercentage: newProfData.comissao_percentual || 0,
-        userId: newProfData.id_usuario
+        userId: newProfData.id_usuario,
+        business_id: newProfData.id_negocio
       };
       
       // Atualizar o estado com o novo profissional
@@ -201,7 +202,8 @@ export const useProfessionalOperations = () => {
         status: mappedStatus,
         hireDate: updatedData.data_contratacao || '',
         commissionPercentage: updatedData.comissao_percentual || 0,
-        userId: updatedData.id_usuario
+        userId: updatedData.id_usuario,
+        business_id: updatedData.id_negocio
       };
       
       setProfessionals(prev => 
