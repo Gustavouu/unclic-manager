@@ -1,9 +1,8 @@
-
+import { Client } from "@/hooks/useClients";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Client } from "@/hooks/useClients";
 import { CheckIcon, SearchIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import {

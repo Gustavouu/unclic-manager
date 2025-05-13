@@ -5,7 +5,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'sonner';
 import { sanitizeFormData } from '@/utils/sanitize';
 
-interface Cliente {
+export interface Cliente {
   id: string;
   nome: string;
   email?: string;
@@ -18,9 +18,16 @@ interface Cliente {
   cep?: string;
   notas?: string;
   id_negocio: string;
+  tenant_id?: string;
+  criado_em?: string;
+  atualizado_em?: string;
+  ultima_visita?: string;
+  valor_total_gasto?: number;
+  status?: string;
+  total_agendamentos?: number;
 }
 
-interface ClienteInput {
+export interface ClienteInput {
   nome: string;
   email?: string;
   telefone?: string;
@@ -32,6 +39,9 @@ interface ClienteInput {
   cep?: string;
   notas?: string;
 }
+
+// For components expecting the "Client" name
+export type Client = Cliente;
 
 export const useClients = () => {
   const [clients, setClients] = useState<Cliente[]>([]);
@@ -290,14 +300,50 @@ export const useClients = () => {
     }
   }, [currentBusiness?.id, fetchClients]);
 
+  /**
+   * Find a client by email
+   */
+  const findClientByEmail = useCallback(async (email: string) => {
+    if (!currentBusiness?.id || !email) {
+      return null;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('*')
+        .eq('id_negocio', currentBusiness.id)
+        .eq('email', email)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // code for no rows returned
+        throw error;
+      }
+
+      return data || null;
+    } catch (err: any) {
+      const errorMsg = err?.message || 'Erro ao buscar cliente';
+      setError(errorMsg);
+      console.error('Erro ao buscar cliente por email:', err);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [currentBusiness?.id]);
+
   return {
     clients,
     loading,
+    isLoading: loading, // Alias for components expecting isLoading
     error,
     fetchClients,
     createClient,
     updateClient,
     deleteClient,
-    searchClients
+    searchClients,
+    findClientByEmail
   };
 };

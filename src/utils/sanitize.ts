@@ -73,11 +73,12 @@ export const sanitizeSQLInput = (input: string): string => {
  * @returns Sanitized form data object
  */
 export const sanitizeFormData = <T extends Record<string, any>>(formData: T): T => {
-  const sanitized = { ...formData };
+  const sanitized = { ...formData } as T;
   
   Object.keys(sanitized).forEach(key => {
-    if (typeof sanitized[key] === 'string') {
-      sanitized[key] = sanitizeInput(sanitized[key]);
+    const k = key as keyof typeof sanitized;
+    if (typeof sanitized[k] === 'string') {
+      sanitized[k] = sanitizeInput(sanitized[k] as string) as any;
     }
   });
   

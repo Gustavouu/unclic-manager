@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { useClients } from "@/hooks/useClients";
+import { useClients, ClienteInput } from "@/hooks/useClients";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,7 +46,16 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
       setIsSubmitting(true);
       console.log("Submitting client data:", data);
       
-      const newClient = await createClient(data);
+      // Ensure nome is always present as required by ClienteInput type
+      const clientData: ClienteInput = {
+        nome: data.nome,
+        email: data.email || undefined,
+        telefone: data.telefone || undefined,
+        cidade: data.cidade || undefined,
+        estado: data.estado || undefined
+      };
+      
+      const newClient = await createClient(clientData);
       
       if (newClient && onClientCreated) {
         onClientCreated(newClient);
