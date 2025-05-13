@@ -3,6 +3,7 @@ import { createContext, useContext, useState, ReactNode, useCallback, useEffect 
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface TenantContextType {
   currentTenantId: string | null;
@@ -13,6 +14,7 @@ interface TenantContextType {
   error: string | null;
   updateBusinessStatus: (id: string, status: string) => Promise<boolean>;
   refreshBusinessData: () => Promise<void>;
+  businessNeedsSetup: boolean;
 }
 
 const TenantContext = createContext<TenantContextType>({
@@ -23,11 +25,13 @@ const TenantContext = createContext<TenantContextType>({
   loading: false,
   error: null,
   updateBusinessStatus: async () => false,
-  refreshBusinessData: async () => {}
+  refreshBusinessData: async () => {},
+  businessNeedsSetup: false
 });
 
 export const TenantProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [currentTenantId, setCurrentTenantId] = useState<string | null>(() => {
     return localStorage.getItem("currentBusinessId");
   });
@@ -41,6 +45,11 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     updateBusinessStatus,
     fetchBusinessData
   } = useCurrentBusiness();
+  
+  // Calculate if business needs setup
+  const businessNeedsSetup = !currentBusiness || 
+                             currentBusiness?.status === 'pendente' || 
+                             !businessId;
 
   // When businessId changes from useCurrentBusiness, sync with currentTenantId
   useEffect(() => {
@@ -63,6 +72,19 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       }
     }
   }, [user]);
+  
+  // For non-onboarding routes, redirect to onboarding if business needs setup
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    if (user && 
+        !loading && 
+        businessNeedsSetup && 
+        !currentPath.includes('/onboarding') && 
+        !currentPath.includes('/login') && 
+        !currentPath.includes('/register')) {
+      navigate('/onboarding');
+    }
+  }, [user, loading, businessNeedsSetup, navigate]);
 
   const updateTenantId = useCallback((id: string | null) => {
     console.log('Updating tenant ID:', id);
@@ -92,10 +114,12 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       currentTenantId, 
       businessId, 
       hasBusinessData: !!currentBusiness,
+      businessStatus: currentBusiness?.status,
       loading,
-      error
+      error,
+      businessNeedsSetup
     });
-  }, [currentTenantId, businessId, currentBusiness, loading, error]);
+  }, [currentTenantId, businessId, currentBusiness, loading, error, businessNeedsSetup]);
 
   return (
     <TenantContext.Provider
@@ -107,7 +131,8 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
         loading,
         error,
         updateBusinessStatus,
-        refreshBusinessData
+        refreshBusinessData,
+        businessNeedsSetup
       }}
     >
       {children}

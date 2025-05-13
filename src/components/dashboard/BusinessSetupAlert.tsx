@@ -10,11 +10,13 @@ import { toast } from 'sonner';
 interface BusinessSetupAlertProps {
   message?: string;
   showButton?: boolean;
+  className?: string;
 }
 
 export const BusinessSetupAlert: React.FC<BusinessSetupAlertProps> = ({ 
   message = "Você precisa configurar seu negócio para acessar esta funcionalidade.",
-  showButton = true
+  showButton = true,
+  className = ""
 }) => {
   const navigate = useNavigate();
   const { refreshBusinessData } = useTenant();
@@ -38,20 +40,20 @@ export const BusinessSetupAlert: React.FC<BusinessSetupAlertProps> = ({
   };
 
   return (
-    <Alert>
+    <Alert className={className}>
       <AlertTitle>Configuração Necessária</AlertTitle>
-      <AlertDescription>
-        {message}
+      <AlertDescription className="space-y-4">
+        <p>{message}</p>
         
         {showButton && (
-          <div className="flex gap-3 mt-4">
+          <div className="flex flex-wrap gap-3 mt-4">
             <Button onClick={handleOnboarding} variant="default">
               <Rocket className="mr-2 h-4 w-4" />
               Configurar Negócio
             </Button>
             
             <Button onClick={handleRefresh} variant="outline" disabled={isRefreshing}>
-              <RefreshCcw className="mr-2 h-4 w-4" />
+              <RefreshCcw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? "Atualizando..." : "Atualizar Dados"}
             </Button>
           </div>

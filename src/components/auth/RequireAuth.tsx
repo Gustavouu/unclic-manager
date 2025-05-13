@@ -17,7 +17,13 @@ export const RequireAuth = ({
   skipOnboardingCheck = false 
 }: RequireAuthProps) => {
   const { user, loading: authLoading } = useAuth();
-  const { currentBusiness, businessId, loading: businessLoading, refreshBusinessData } = useTenant();
+  const { 
+    currentBusiness, 
+    businessId, 
+    loading: businessLoading, 
+    refreshBusinessData,
+    businessNeedsSetup 
+  } = useTenant();
   const { completeLoading } = useLoading();
   const location = useLocation();
   
@@ -29,7 +35,8 @@ export const RequireAuth = ({
       businessId,
       businessStatus: currentBusiness?.status,
       businessLoading,
-      path: location.pathname
+      path: location.pathname,
+      businessNeedsSetup
     });
     
     if (!user && !authLoading) {
@@ -52,7 +59,7 @@ export const RequireAuth = ({
     if (user) {
       localStorage.setItem('wasAuthenticated', 'true');
     }
-  }, [user, authLoading, businessId, currentBusiness, businessLoading, location.pathname]);
+  }, [user, authLoading, businessId, currentBusiness, businessLoading, location.pathname, businessNeedsSetup]);
   
   // Refresh business data if we have a user but no business data
   useEffect(() => {
@@ -104,14 +111,12 @@ export const RequireAuth = ({
   }
   
   // Check if onboarding is needed
-  const needsOnboarding = !currentBusiness || currentBusiness.status === 'pendente';
-  
   // Skip onboarding check for the onboarding page itself to avoid loops
   if (location.pathname === '/onboarding') {
     return <>{children}</>;
   }
   
-  if (needsOnboarding && !location.pathname.includes('/onboarding')) {
+  if (businessNeedsSetup && !location.pathname.includes('/onboarding')) {
     // Needs to complete onboarding, redirect
     toast.info("Onboarding necessário", {
       description: "Complete o cadastro do seu negócio para continuar",
