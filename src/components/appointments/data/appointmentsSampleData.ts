@@ -1,5 +1,5 @@
 
-import { Appointment, AppointmentStatus } from "../types";
+import { Appointment, AppointmentStatus } from "@/hooks/appointments/types";
 
 // Sample data
 export const appointments: Appointment[] = [
@@ -12,7 +12,8 @@ export const appointments: Appointment[] = [
     price: 180,
     serviceType: "hair",
     duration: 120,
-    clientId: "client1" // Added required clientId
+    clientId: "client1",
+    professionalId: "prof1" // Added required professionalId
   },
   {
     id: "2",
@@ -23,7 +24,8 @@ export const appointments: Appointment[] = [
     price: 95,
     serviceType: "barber",
     duration: 60,
-    clientId: "client2" // Added required clientId
+    clientId: "client2",
+    professionalId: "prof2" // Added required professionalId
   },
   {
     id: "3",
@@ -34,7 +36,8 @@ export const appointments: Appointment[] = [
     price: 60,
     serviceType: "nails",
     duration: 45,
-    clientId: "client3" // Added required clientId
+    clientId: "client3",
+    professionalId: "prof3" // Added required professionalId
   },
   {
     id: "4",
@@ -45,7 +48,8 @@ export const appointments: Appointment[] = [
     price: 120,
     serviceType: "makeup",
     duration: 90,
-    clientId: "client4" // Added required clientId
+    clientId: "client4",
+    professionalId: "prof1" // Added required professionalId
   },
   {
     id: "5",
@@ -56,6 +60,7 @@ export const appointments: Appointment[] = [
     price: 150,
     serviceType: "skincare",
     duration: 75,
-    clientId: "client5" // Added required clientId
+    clientId: "client5",
+    professionalId: "prof2" // Added required professionalId
   },
 ];

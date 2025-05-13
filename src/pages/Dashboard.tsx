@@ -38,21 +38,27 @@ const Dashboard = () => {
     })
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 
+  // Adjust popularServices to include percentage
+  const popularServicesWithPercentage = stats.popularServices.map(service => ({
+    ...service,
+    percentage: (service.count / Math.max(1, stats.popularServices.reduce((sum, s) => sum + s.count, 0))) * 100
+  }));
+
   return (
     <div className="space-y-6">
       <DashboardHeader />
 
-      <OnboardingBanner />
+      <OnboardingBanner onDismiss={() => {}} />
 
-      <DashboardFilters period={period} onPeriodChange={setPeriod} />
+      <DashboardFilters currentPeriod={period} onPeriodChange={setPeriod} />
 
-      <KpiCards stats={stats} isLoading={loading} />
+      <KpiCards data={stats} loading={loading} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <DashboardWidget title="Desempenho Financeiro">
           <FinancialCharts
-            revenueData={stats.revenueData}
-            isLoading={loading}
+            revenue={stats.revenueData}
+            loading={loading}
           />
         </DashboardWidget>
 
@@ -68,15 +74,15 @@ const Dashboard = () => {
         <div className="md:col-span-2">
           <DashboardWidget title="Serviços Populares">
             <PopularServices
-              services={stats.popularServices}
-              isLoading={loading}
+              services={popularServicesWithPercentage}
+              loading={loading}
             />
           </DashboardWidget>
         </div>
 
         <div>
           <DashboardWidget title="Comparação de Clientes">
-            <ClientsComparisonChart stats={stats} isLoading={loading} />
+            <ClientsComparisonChart data={stats} loading={loading} />
           </DashboardWidget>
         </div>
       </div>
@@ -84,19 +90,19 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <DashboardWidget title="Insights do Negócio">
-            <DashboardInsights stats={stats} isLoading={loading} />
+            <DashboardInsights data={stats} loading={loading} />
           </DashboardWidget>
         </div>
 
         <div>
           <RetentionRateCard
-            stats={stats}
-            isLoading={loading}
+            retention={stats.retention || 0}
+            loading={loading}
           />
         </div>
       </div>
 
-      <StatusFixButton onFix={refresh} />
+      <StatusFixButton onClick={refresh} />
       <DashboardFooter />
     </div>
   );

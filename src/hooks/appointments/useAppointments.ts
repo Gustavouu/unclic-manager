@@ -14,7 +14,8 @@ import { useAppointmentCreate } from "./useAppointmentCreate";
 import { useAppointmentUpdate } from "./useAppointmentUpdate";
 import { useAppointmentDelete } from "./useAppointmentDelete";
 
-export { AppointmentStatus, Appointment };
+// Export types using 'export type' syntax for module interoperability
+export type { AppointmentStatus, Appointment };
 
 export const useAppointments = () => {
   const { 
