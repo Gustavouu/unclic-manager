@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { PROFESSIONAL_STATUS, ProfessionalStatus } from "@/hooks/professionals/types";
+import { ProfessionalStatus } from "@/hooks/professionals/types";
 
 interface ProfessionalFiltersProps {
   onOpenAddProfessional: () => void;

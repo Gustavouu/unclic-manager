@@ -1,38 +1,29 @@
 
-import * as React from "react";
-import { X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Option } from "../multiselect/types";
+import React from 'react';
+import { X } from 'lucide-react';
+import { Option } from './types';
 
-interface SelectedItemProps {
+export interface SelectedItemProps {
   option: Option;
-  onUnselect: (option: Option) => void;
+  onRemove: (optionValue: string) => void;
 }
 
-export const SelectedItem = React.memo(({ 
-  option, 
-  onUnselect
-}: SelectedItemProps) => (
-  <Badge key={option.value} variant="secondary" className="rounded-sm">
-    {option.label}
-    <button
-      className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          onUnselect(option);
-        }
-      }}
-      onMouseDown={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      onClick={() => onUnselect(option)}
-      aria-label={`Remove ${option.label}`}
-      type="button"
+export const SelectedItem = ({ option, onRemove }: SelectedItemProps) => {
+  return (
+    <div 
+      className="flex items-center gap-1 bg-primary/10 text-primary text-sm px-2 py-1 rounded-sm"
     >
-      <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-    </button>
-  </Badge>
-));
-
-SelectedItem.displayName = "SelectedItem";
+      <span>{option.label}</span>
+      <button
+        type="button"
+        className="text-primary hover:bg-primary/20 rounded-sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove(option.value);
+        }}
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+};

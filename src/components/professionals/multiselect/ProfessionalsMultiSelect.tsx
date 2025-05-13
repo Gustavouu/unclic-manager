@@ -1,160 +1,184 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
-import { Option } from "./types";
-import { SelectableItem } from "./SelectableItem";
-import { SelectedItem } from "./SelectedItem";
-import { DropdownList } from "./DropdownList";
+
+import React, { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { ChevronDown, X } from 'lucide-react';
+import { Option } from './types';
+import { SelectedItem } from './SelectedItem';
+import { SelectableItem } from './SelectableItem';
+import { DropdownList } from './DropdownList';
 
 interface ProfessionalsMultiSelectProps {
-  selectedIds: string[];
-  onChange: (selectedIds: string[]) => void;
+  options: Option[];
+  selectedValues: string[];
+  onChange: (values: string[]) => void;
   placeholder?: string;
   disabled?: boolean;
-  maxHeight?: number;
+  label?: string;
 }
 
-export function ProfessionalsMultiSelect({
-  selectedIds = [],
+export const ProfessionalsMultiSelect = ({
+  options,
+  selectedValues,
   onChange,
-  placeholder = "Selecionar profissionais",
+  placeholder = "Select options...",
   disabled = false,
-  maxHeight = 300
-}: ProfessionalsMultiSelectProps) {
-  const [options, setOptions] = useState<Option[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  label,
+}: ProfessionalsMultiSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchText, setSearchText] = useState("");
-  const { businessId } = useCurrentBusiness();
-  
-  useEffect(() => {
-    if (!businessId) return;
+  const [searchQuery, setSearchQuery] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Create a map of selected options for quick lookup
+  const selectedValuesSet = new Set(selectedValues);
+
+  // Filter options based on search query and already selected options
+  const filteredOptions = options.filter(option => {
+    const matchesSearch = !searchQuery || 
+      option.label.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const fetchProfessionals = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('funcionarios')
-          .select('id, name')
-          .eq('business_id', businessId)
-          .order('name', { ascending: true });
-        
-        if (error) throw error;
-        
-        setOptions(
-          data.map(prof => ({
-            label: prof.name,
-            value: prof.id
-          }))
-        );
-      } catch (error) {
-        console.error("Error loading professionals:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // Only show options that are not already selected
+    const notAlreadySelected = !selectedValuesSet.has(option.value);
     
-    fetchProfessionals();
-  }, [businessId]);
-  
-  const handleToggle = () => {
+    return matchesSearch && notAlreadySelected;
+  });
+
+  // Get the full option objects for selected values
+  const selectedOptions = options.filter(option => selectedValuesSet.has(option.value));
+
+  const toggleDropdown = () => {
     if (!disabled) {
       setIsOpen(!isOpen);
       if (!isOpen) {
-        setSearchText('');
+        setTimeout(() => {
+          inputRef.current?.focus();
+        }, 0);
       }
     }
   };
 
-  const handleSelect = (optionValue: string) => {
-    const newSelectedIds = selectedIds.includes(optionValue)
-      ? selectedIds.filter(id => id !== optionValue)
-      : [...selectedIds, optionValue];
-    
-    onChange(newSelectedIds);
+  const handleSelectOption = (option: Option) => {
+    onChange([...selectedValues, option.value]);
+    setSearchQuery('');
   };
-  
-  const handleRemove = (optionValue: string) => {
-    onChange(selectedIds.filter(id => id !== optionValue));
+
+  const handleRemoveOption = (valueToRemove: string) => {
+    onChange(selectedValues.filter(value => value !== valueToRemove));
   };
-  
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchText(e.target.value);
+
+  const handleClearAll = () => {
+    onChange([]);
   };
-  
-  const filteredOptions = searchText 
-    ? options.filter(opt => 
-        opt.label.toLowerCase().includes(searchText.toLowerCase())
-      )
-    : options;
-    
-  const selectedOptions = options.filter(opt => 
-    selectedIds.includes(opt.value)
-  );
-  
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current && 
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
-    <div className="relative">
-      <button
-        type="button"
-        className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm"
-        onClick={handleToggle}
-        disabled={disabled}
+    <div className="relative w-full" ref={containerRef}>
+      {label && (
+        <div className="mb-2 text-sm font-medium">{label}</div>
+      )}
+      
+      <div 
+        className={`
+          border rounded-md w-full p-1 min-h-10 flex flex-wrap items-center gap-1
+          ${disabled ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer'}
+          ${isOpen ? 'border-primary' : 'border-input'}
+        `}
+        onClick={toggleDropdown}
       >
-        <span className="block truncate">
-          {selectedOptions.length > 0
-            ? selectedOptions.map(opt => opt.label).join(", ")
-            : placeholder}
-        </span>
-        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-          <svg
-            className="h-5 w-5 text-gray-400"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-          >
-            <path
-              d="M7 7l3-3 3 3m0 6l-3 3-3-3"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
-      </button>
-      <DropdownList isOpen={isOpen} maxHeight={maxHeight}>
-        <div className="p-2">
-          <input
-            type="search"
-            className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm"
-            placeholder="Buscar..."
-            onChange={handleSearch}
-            value={searchText}
+        {/* Selected options */}
+        {selectedOptions.length > 0 ? (
+          <>
+            <div className="flex flex-wrap gap-1 p-1">
+              {selectedOptions.map((option) => (
+                <SelectedItem 
+                  key={option.value}
+                  option={option}
+                  onRemove={() => handleRemoveOption(option.value)}
+                />
+              ))}
+            </div>
+            
+            {/* Clear all button */}
+            {selectedOptions.length > 0 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="ml-auto h-7 px-2 text-muted-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClearAll();
+                }}
+                disabled={disabled}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </>
+        ) : (
+          <div className="px-2 py-1 text-muted-foreground">
+            {placeholder}
+          </div>
+        )}
+        
+        <div className="ml-auto flex items-center self-stretch pl-1">
+          <ChevronDown
+            className={`h-4 w-4 text-muted-foreground transition ${
+              isOpen ? 'rotate-180' : ''
+            }`}
           />
         </div>
-        {isLoading ? (
-          <div className="p-4 text-center text-gray-500">Carregando...</div>
-        ) : filteredOptions.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">Nenhum profissional encontrado.</div>
-        ) : (
-          filteredOptions.map((option) => (
-            <SelectableItem
-              key={option.value}
-              option={option}
-              isSelected={selectedIds.includes(option.value)}
-              onSelect={handleSelect}
-            />
-          ))
-        )}
-      </DropdownList>
-      <div className="absolute top-full left-0 mt-1 flex flex-wrap gap-1">
-        {selectedOptions.map((option) => (
-          <SelectedItem
-            key={option.value}
-            option={option}
-            onRemove={handleRemove}
-          />
-        ))}
       </div>
+
+      {/* Dropdown menu */}
+      {isOpen && (
+        <DropdownList maxHeight={300} isOpen={isOpen}>
+          {/* Search input */}
+          <div className="p-2 sticky top-0 bg-white z-10 border-b">
+            <input
+              ref={inputRef}
+              className="border rounded p-2 w-full text-sm bg-background"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+
+          {/* Options list */}
+          <div className="py-1">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map(option => (
+                <SelectableItem
+                  key={option.value}
+                  option={option}
+                  onSelect={() => handleSelectOption(option)}
+                />
+              ))
+            ) : (
+              <div className="px-3 py-2 text-sm text-muted-foreground text-center">
+                No options found
+              </div>
+            )}
+          </div>
+        </DropdownList>
+      )}
     </div>
   );
-}
+};

@@ -1,45 +1,25 @@
 
-import * as React from "react";
-import { CommandEmpty, CommandGroup, CommandList } from "@/components/ui/command";
-import { SelectableItem } from "./SelectableItem";
-import { Option } from "./types";
+import React from 'react';
 
-interface DropdownListProps {
-  open: boolean;
-  options: Option[];
-  onSelect: (option: Option) => void;
-  inputValue: string;
-  emptyMessage?: string;
+export interface DropdownListProps {
+  maxHeight: number;
+  isOpen: boolean;
+  children: React.ReactNode;
 }
 
-export const DropdownList = React.memo(({
-  open,
-  options,
-  onSelect,
-  inputValue,
-  emptyMessage = "No options available"
-}: DropdownListProps) => {
-  if (!open) return null;
-
+export const DropdownList = ({ children, isOpen, maxHeight }: DropdownListProps) => {
   return (
-    <div className="absolute top-0 z-10 w-full bg-popover text-popover-foreground shadow-md rounded-md border animate-in fade-in-0 zoom-in-95">
-      <CommandList>
-        <CommandEmpty className="py-6 text-center text-sm">
-          {emptyMessage}
-        </CommandEmpty>
-        <CommandGroup>
-          {options.map((option) => (
-            <SelectableItem 
-              key={option.value} 
-              option={option} 
-              onSelect={onSelect}
-              inputValue={inputValue}
-            />
-          ))}
-        </CommandGroup>
-      </CommandList>
+    <div
+      className={`
+        absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg overflow-hidden
+        ${isOpen ? 'opacity-100' : 'opacity-0 invisible'}
+        transition-all duration-200
+      `}
+      style={{ maxHeight: `${maxHeight}px` }}
+    >
+      <div className="overflow-y-auto" style={{ maxHeight: `${maxHeight}px` }}>
+        {children}
+      </div>
     </div>
   );
-});
-
-DropdownList.displayName = "DropdownList";
+};
