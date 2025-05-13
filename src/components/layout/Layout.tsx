@@ -1,17 +1,17 @@
 
-import { useEffect, useState, ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Sidebar } from "./sidebar/Sidebar";
 import { Header } from "./Header";
-import { MobileSidebar } from "./sidebar/MobileSidebar";
+import { SideMenu } from "./SideMenu";
 import { useTenant } from "@/contexts/TenantContext";
 import { toast } from "sonner";
 
-const Layout = ({ children }: { children?: ReactNode }) => {
+const Layout = () => {
   const { currentBusiness, loading, error, refreshBusinessData } = useTenant();
   const navigate = useNavigate();
   const [dataRefreshed, setDataRefreshed] = useState(false);
-  
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   useEffect(() => {
     // Only refresh data once when the component mounts to prevent infinite loops
     if (!dataRefreshed) {
@@ -75,13 +75,32 @@ const Layout = ({ children }: { children?: ReactNode }) => {
   
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-background">
-      <Sidebar />
-      <MobileSidebar />
+      {/* Sidebar */}
+      <div className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-white shadow-sm transition-transform duration-300 ease-in-out border-r dark:bg-background dark:border-gray-800 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="h-16 flex items-center border-b px-4">
+          <h1 className="text-xl font-semibold text-blue-600">Unclic</h1>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <SideMenu />
+        </div>
+        <div className="border-t p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center">
+              <span className="text-sm font-medium">GH</span>
+            </div>
+            <div className="flex flex-1 flex-col overflow-hidden">
+              <span className="text-sm font-medium truncate">Gustavo Henrique</span>
+              <span className="text-xs text-muted-foreground truncate">exemplo@gmail.com</span>
+            </div>
+          </div>
+        </div>
+      </div>
       
-      <div className="flex-1 flex flex-col ml-0 md:ml-60">
-        <Header />
+      {/* Main content */}
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'ml-0'}`}>
+        <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
         <main className="flex-1 overflow-auto p-4 sm:p-6">
-          <div className="container mx-auto max-w-7xl">
+          <div className="container mx-auto">
             <Outlet />
           </div>
         </main>
