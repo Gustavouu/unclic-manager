@@ -1,70 +1,66 @@
-
-import { Routes, Route } from "react-router-dom";
-import { ThemeProvider } from './components/theme-provider';
-import { Toaster } from './components/ui/sonner';
-import Layout from "./components/layout/Layout";
-import Dashboard from "./pages/Dashboard";
-import Appointments from "./pages/Appointments";
-import Clients from "./pages/Clients";
-import Reports from "./pages/Reports";
-import Finance from "./pages/Finance";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import Index from "./pages/Index";
-import Inventory from "./pages/Inventory";
-import Professionals from "./pages/Professionals";
-import Services from "./pages/Services";
-import OnboardingPage from "./pages/Onboarding";
-import Login from "./pages/auth/Login";
-import SignUp from "./pages/auth/SignUp";
-import ResetPassword from "./pages/auth/ResetPassword";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import "./services/InitializationService"; // Import initialization service
-import { RequireAuth } from "./components/auth/RequireAuth";
-import Payments from "./pages/Payments"; // Add import for Payments page
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { ThemeProvider } from "@/components/ui/theme-provider"
+import Index from './pages/Index';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
+import ResetPasswordConfirmation from './pages/auth/ResetPasswordConfirmation';
+import Dashboard from './pages/Dashboard';
+import Onboarding from './pages/Onboarding';
+import SelectTenant from './pages/SelectTenant';
+import AccessDenied from './pages/AccessDenied';
+import ErrorPage from './pages/Error';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
+import { RequireAuth } from './components/auth/RequireAuth';
+import { AuthProvider } from './hooks/useAuth';
 import { TenantProvider } from './contexts/TenantContext';
-import ErrorBoundary from "./components/common/ErrorBoundary";
+import { LoadingProvider } from './contexts/LoadingContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { ToastProvider } from "@/components/ui/use-toast"
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { SessionProvider } from "@/contexts/SessionContext";
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <TenantProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/onboarding" element={
-              <RequireAuth skipOnboardingCheck={true}>
-                <OnboardingPage />
-              </RequireAuth>
-            } />
-            <Route path="/*" element={
-              <RequireAuth>
-                <Layout>
-                  <Routes>
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/appointments" element={<Appointments />} />
-                    <Route path="/clients" element={<Clients />} />
-                    <Route path="/services" element={<Services />} />
-                    <Route path="/professionals" element={<Professionals />} />
-                    <Route path="/reports" element={<Reports />} />
-                    <Route path="/finance" element={<Finance />} />
-                    <Route path="/inventory" element={<Inventory />} />
-                    <Route path="/payments" element={<Payments />} />
-                    <Route path="/settings/*" element={<Settings />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Layout>
-              </RequireAuth>
-            } />
-          </Routes>
-          <Toaster richColors position="top-right" />
-        </TenantProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+    <ThemeProvider defaultTheme="light" storageKey="unclic-ui-theme">
+      <QueryClientProvider client={queryClient}>
+        <SessionProvider>
+          <AuthProvider>
+            <TenantProvider>
+              <LoadingProvider>
+                <NotificationProvider>
+                  <ToastProvider>
+                    <Router>
+                      <Routes>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/reset-password-confirmation" element={<ResetPasswordConfirmation />} />
+                        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                        <Route path="/terms-of-service" element={<TermsOfService />} />
+                        
+                        <Route path="/" element={<RequireAuth><Index /></RequireAuth>} />
+                        <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+                        <Route path="/onboarding" element={<RequireAuth skipOnboardingCheck={true}><Onboarding /></RequireAuth>} />
+                        <Route path="/select-tenant" element={<RequireAuth skipOnboardingCheck={true}><SelectTenant /></RequireAuth>} />
+                        <Route path="/access-denied" element={<RequireAuth skipOnboardingCheck={true}><AccessDenied /></RequireAuth>} />
+                        <Route path="/error" element={<ErrorPage />} />
+                      </Routes>
+                    </Router>
+                  </ToastProvider>
+                </NotificationProvider>
+              </LoadingProvider>
+            </TenantProvider>
+          </AuthProvider>
+        </SessionProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

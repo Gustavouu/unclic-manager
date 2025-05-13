@@ -1,27 +1,6 @@
 
+# This file determines which Edge Functions to deploy.
 project_id = "jcdymkgmtxpryceziazt"
 
-[api]
-enabled = true
-port = 54321
-schemas = ["public", "storage", "graphql_public"]
-
-[db]
-port = 54322
-
-[realtime]
-enabled = true
-
-[studio]
-enabled = true
-port = 54323
-
-[functions]
-[functions.check-slug-availability]
-verify_jwt = true
-
-[functions.create-business]
-verify_jwt = true
-
-[functions.complete-business-setup]
-verify_jwt = true
+[functions.security-log]
+verify_jwt = false

@@ -2,6 +2,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
+import { toast } from "sonner";
+import { useSession } from "@/contexts/SessionContext";
 
 interface AuthContextProps {
   user: User | null;
@@ -9,9 +11,10 @@ interface AuthContextProps {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: any) => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: (options?: { fromAll?: boolean }) => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
-  resetPassword: (email: string) => Promise<void>; // Added resetPassword
+  resetPassword: (email: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps>({
@@ -22,80 +25,54 @@ const AuthContext = createContext<AuthContextProps>({
   signUp: async () => {},
   signOut: async () => {},
   updateProfile: async () => {},
-  resetPassword: async () => {} // Added resetPassword
+  resetPassword: async () => {},
+  updatePassword: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { session } = useSession();
+
+  // Monitor for suspicious activity
+  const [loginAttempts, setLoginAttempts] = useState<Record<string, { count: number, lastAttempt: number }>>({});
 
   useEffect(() => {
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // If session changes, we need to update user's business ID in localStorage
-        if (session?.user) {
-          // We use setTimeout to avoid supabase auth deadlocks
-          setTimeout(async () => {
-            try {
-              const { data, error } = await supabase
-                .from('usuarios')
-                .select('id_negocio')
-                .eq('id', session.user.id)
-                .maybeSingle();
-                
-              if (data?.id_negocio) {
-                localStorage.setItem('currentBusinessId', data.id_negocio);
-              }
-            } catch (err) {
-              console.error("Error fetching business ID on auth state change:", err);
-            }
-          }, 0);
-        }
-        
-        setLoading(false);
-      }
-    );
+    setUser(session?.user ?? null);
+    setLoading(false);
+  }, [session]);
 
-    // Then check for existing session
-    const initializeAuth = async () => {
-      setLoading(true);
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      // If we have a session, fetch business ID
-      if (session?.user) {
-        try {
-          const { data, error } = await supabase
-            .from('usuarios')
-            .select('id_negocio')
-            .eq('id', session.user.id)
-            .maybeSingle();
-            
-          if (data?.id_negocio) {
-            localStorage.setItem('currentBusinessId', data.id_negocio);
-          }
-        } catch (err) {
-          console.error("Error fetching business ID on initialization:", err);
-        }
-      }
-      
-      setLoading(false);
-    };
+  const trackLoginAttempt = (email: string, success: boolean): boolean => {
+    const now = Date.now();
+    const attempts = loginAttempts[email] || { count: 0, lastAttempt: 0 };
+    
+    // Reset counter after 30 minutes of inactivity
+    const updatedCount = (now - attempts.lastAttempt > 30 * 60 * 1000) 
+      ? 1 
+      : attempts.count + (success ? 0 : 1);
+    
+    setLoginAttempts(prev => ({
+      ...prev,
+      [email]: { count: updatedCount, lastAttempt: now }
+    }));
+    
+    // Return true if suspicious (5+ failed attempts)
+    return !success && updatedCount >= 5;
+  };
 
-    initializeAuth();
-
-    // Cleanup subscription on unmount
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  const logSuspiciousActivity = async (type: string, details: any) => {
+    try {
+      await supabase.from('security_events').insert({
+        user_id: user?.id,
+        event_type: type,
+        details,
+        ip_address: null, // Will be populated by server
+        user_agent: navigator.userAgent
+      });
+    } catch (error) {
+      console.error('Failed to log security event:', error);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -105,9 +82,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (error) {
+        const isSuspicious = trackLoginAttempt(email, false);
+        if (isSuspicious) {
+          await logSuspiciousActivity('multiple_failed_logins', { email });
+        }
         throw error;
       }
-    } catch (error) {
+
+      // Reset failed attempts on successful login
+      trackLoginAttempt(email, true);
+
+      // Record login event
+      try {
+        await supabase.from('login_history').insert({
+          user_id: data.user?.id,
+          success: true,
+          ip_address: null, // Will be populated by server
+          user_agent: navigator.userAgent,
+          device_info: {
+            platform: navigator.platform,
+            language: navigator.language,
+            screen: {
+              width: window.screen.width,
+              height: window.screen.height
+            }
+          }
+        });
+      } catch (logError) {
+        console.error("Error logging login history:", logError);
+      }
+    } catch (error: any) {
       console.error("Error signing in:", error);
       throw error;
     }
@@ -119,29 +123,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email,
         password,
         options: {
-          data: userData, // Store user profile data like name
+          data: userData,
         },
       });
 
       if (error) {
         throw error;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error signing up:", error);
       throw error;
     }
   };
 
-  const signOut = async () => {
+  const signOut = async (options?: { fromAll?: boolean }) => {
     try {
       // Clear business ID from localStorage
       localStorage.removeItem('currentBusinessId');
       
-      const { error } = await supabase.auth.signOut();
+      // Sign out from all devices if requested
+      const { error } = await supabase.auth.signOut({
+        scope: options?.fromAll ? 'global' : undefined
+      });
+      
       if (error) {
         throw error;
       }
-    } catch (error) {
+      
+      // Redirect to login
+      window.location.href = '/login';
+    } catch (error: any) {
       console.error("Error signing out:", error);
       throw error;
     }
@@ -156,22 +167,61 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (error) throw error;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating profile:", error);
       throw error;
     }
   };
 
-  // Add resetPassword method
   const resetPassword = async (email: string) => {
     try {
+      // Apply rate limiting for password resets - max 3 attempts per hour
+      const resetKey = `pwd_reset_${email}`;
+      const resetAttempts = JSON.parse(sessionStorage.getItem(resetKey) || '{"count":0,"timestamp":0}');
+      
+      const now = Date.now();
+      const hourAgo = now - 60 * 60 * 1000;
+      
+      // Reset counter if older than an hour
+      if (resetAttempts.timestamp < hourAgo) {
+        resetAttempts.count = 0;
+        resetAttempts.timestamp = now;
+      }
+      
+      // Check limit
+      if (resetAttempts.count >= 3) {
+        const minutesRemaining = Math.ceil((resetAttempts.timestamp + 60 * 60 * 1000 - now) / (60 * 1000));
+        toast.error(`Limite de tentativas excedido`, {
+          description: `Tente novamente em ${minutesRemaining} minutos`
+        });
+        return;
+      }
+      
+      // Increment counter
+      resetAttempts.count++;
+      resetAttempts.timestamp = Math.max(resetAttempts.timestamp, now);
+      sessionStorage.setItem(resetKey, JSON.stringify(resetAttempts));
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + '/reset-password-confirmation',
       });
       
       if (error) throw error;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error resetting password:", error);
+      throw error;
+    }
+  };
+  
+  const updatePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      
+      if (error) throw error;
+      
+      toast.success("Senha atualizada com sucesso!");
+    } catch (error: any) {
+      console.error("Error updating password:", error);
       throw error;
     }
   };
@@ -187,6 +237,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signOut,
         updateProfile,
         resetPassword,
+        updatePassword
       }}
     >
       {children}
