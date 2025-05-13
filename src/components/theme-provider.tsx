@@ -22,6 +22,16 @@ const initialState: ThemeProviderState = {
 
 export const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
 
+// Export useTheme hook for components to access theme context
+export const useTheme = (): ThemeProviderState => {
+  const context = React.useContext(ThemeProviderContext);
+  
+  if (context === undefined)
+    throw new Error("useTheme must be used within a ThemeProvider");
+    
+  return context;
+};
+
 export function ThemeProvider({
   children,
   defaultTheme = "system",

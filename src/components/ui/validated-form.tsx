@@ -124,7 +124,7 @@ export function ValidatedForm({
   };
 
   return (
-    <form {...props} className={cn('relative', className)} onSubmit={handleSubmit}>
+    <form {...props} onSubmit={handleSubmit} className={cn('relative', className)}>
       {/* Hidden CSRF token field */}
       <input type="hidden" name="csrf_token" value={csrfToken} />
       
