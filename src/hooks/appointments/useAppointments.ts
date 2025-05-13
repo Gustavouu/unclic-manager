@@ -26,13 +26,13 @@ export const useAppointments = () => {
     fetchAppointments 
   } = useAppointmentsFetch();
   
-  const { createAppointment, isCreating } = useAppointmentCreate(setAppointments);
-  const { updateAppointment, isUpdating } = useAppointmentUpdate(setAppointments);
+  const { createAppointment, updateAppointment, cancelAppointment, isLoading: isCreating } = useAppointmentCreate(setAppointments);
+  const { updateAppointment: updateAppointmentData, isLoading: isUpdating } = useAppointmentUpdate(setAppointments);
   const { deleteAppointment } = useAppointmentDelete(setAppointments);
   
   // Maintain backward compatibility with the existing updateAppointmentStatus method
   const updateAppointmentStatus = async (id: string, status: AppointmentStatus) => {
-    return updateAppointment(id, { status });
+    return updateAppointmentData(id, { status });
   };
 
   return {

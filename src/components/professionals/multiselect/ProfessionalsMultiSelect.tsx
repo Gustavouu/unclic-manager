@@ -312,5 +312,5 @@ export const ProfessionalsMultiSelect: React.FC<ProfessionalsMultiSelectProps> =
   );
 };
 
-// Export Option type for convenience
-export { Option } from './types';
+// Re-export type for convenience - using 'export type' for isolatedModules
+export type { Option } from './types';

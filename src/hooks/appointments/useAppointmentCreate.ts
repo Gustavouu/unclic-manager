@@ -1,17 +1,19 @@
-// Modified to only fix the error with AppointmentStatus
+
+// Modified to fix the errors
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { toast } from "sonner";
-// Import AppointmentStatus enum that we added to professionals/types.ts
+// Import AppointmentStatus enum from professionals/types.ts
 import { AppointmentStatus, APPOINTMENT_STATUS_RECORD } from "@/hooks/professionals/types";
 
-export const useAppointmentCreate = () => {
+export const useAppointmentCreate = (setAppointments: any = null) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { tenantId } = useTenant();
+  const { currentBusiness } = useTenant();
+  const tenantId = currentBusiness?.id;
 
-  const createAppointment = async (formData) => {
+  const createAppointment = async (formData: any) => {
     setIsLoading(true);
     setError(null);
 
@@ -31,14 +33,18 @@ export const useAppointmentCreate = () => {
       }
 
       toast({
-        title: "Agendamento criado!",
         description: "Seu agendamento foi criado com sucesso.",
       });
+      
+      // Update the appointments list if setAppointments was provided
+      if (setAppointments && Array.isArray(data)) {
+        setAppointments((prev: any) => [...prev, ...data]);
+      }
+      
       return data;
-    } catch (error) {
+    } catch (error: any) {
       setError(error);
       toast({
-        title: "Erro ao criar agendamento",
         description: error.message,
         variant: "destructive",
       });
@@ -47,7 +53,7 @@ export const useAppointmentCreate = () => {
     }
   };
 
-  const updateAppointment = async (id, formData) => {
+  const updateAppointment = async (id: string, formData: any) => {
     setIsLoading(true);
     setError(null);
 
@@ -65,14 +71,20 @@ export const useAppointmentCreate = () => {
       }
 
       toast({
-        title: "Agendamento atualizado!",
         description: "Seu agendamento foi atualizado com sucesso.",
       });
+      
+      // Update the appointments list if setAppointments was provided
+      if (setAppointments && Array.isArray(data) && data.length > 0) {
+        setAppointments((prev: any) => 
+          prev.map((item: any) => item.id === id ? data[0] : item)
+        );
+      }
+      
       return data;
-    } catch (error) {
+    } catch (error: any) {
       setError(error);
       toast({
-        title: "Erro ao atualizar agendamento",
         description: error.message,
         variant: "destructive",
       });
@@ -81,11 +93,11 @@ export const useAppointmentCreate = () => {
     }
   };
 
-  const cancelAppointment = async (id) => {
+  const cancelAppointment = async (id: string) => {
     setIsLoading(true);
     setError(null);
     
-    // Use the proper status record with updated type
+    // Use the proper status record
     const statusMapping = {
       ...APPOINTMENT_STATUS_RECORD,
       [AppointmentStatus.SCHEDULED]: "scheduled" // This fixes the TypeScript error
@@ -105,14 +117,20 @@ export const useAppointmentCreate = () => {
       }
 
       toast({
-        title: "Agendamento cancelado!",
         description: "Seu agendamento foi cancelado com sucesso.",
       });
+      
+      // Update the appointments list if setAppointments was provided
+      if (setAppointments && Array.isArray(data) && data.length > 0) {
+        setAppointments((prev: any) => 
+          prev.map((item: any) => item.id === id ? data[0] : item)
+        );
+      }
+      
       return data;
-    } catch (error) {
+    } catch (error: any) {
       setError(error);
       toast({
-        title: "Erro ao cancelar agendamento",
         description: error.message,
         variant: "destructive",
       });
@@ -121,7 +139,7 @@ export const useAppointmentCreate = () => {
     }
   };
 
-  const rescheduleAppointment = async (id, newDate, newStartTime) => {
+  const rescheduleAppointment = async (id: string, newDate: any, newStartTime: any) => {
     setIsLoading(true);
     setError(null);
 
@@ -140,14 +158,20 @@ export const useAppointmentCreate = () => {
       }
 
       toast({
-        title: "Agendamento reagendado!",
         description: "Seu agendamento foi reagendado com sucesso.",
       });
+      
+      // Update the appointments list if setAppointments was provided
+      if (setAppointments && Array.isArray(data) && data.length > 0) {
+        setAppointments((prev: any) => 
+          prev.map((item: any) => item.id === id ? data[0] : item)
+        );
+      }
+      
       return data;
-    } catch (error) {
+    } catch (error: any) {
       setError(error);
       toast({
-        title: "Erro ao reagendar agendamento",
         description: error.message,
         variant: "destructive",
       });
