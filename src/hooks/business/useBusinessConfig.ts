@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 interface BusinessHours {
@@ -30,6 +30,18 @@ interface BusinessConfig {
   logoUrl: string | null;
   bannerUrl: string | null;
   paymentGatewayConfig: any;
+  // Novos campos para agendamentos
+  allowSimultaneousBookings: boolean;
+  requireManualConfirmation: boolean;
+  blockNoShowClients: boolean;
+  sendEmailConfirmation: boolean;
+  sendReminders: boolean;
+  reminderTimeHours: number;
+  sendAfterServiceMessage: boolean;
+  afterServiceMessageHours: number;
+  cancellationPolicyHours: number;
+  noShowFee: number;
+  cancellationMessage: string;
 }
 
 const defaultBusinessHours: BusinessHours = {
@@ -60,6 +72,18 @@ const defaultConfig: BusinessConfig = {
   logoUrl: null, // URL do logo
   bannerUrl: null, // URL do banner
   paymentGatewayConfig: {}, // configurações do gateway de pagamento
+  // Valores padrão para os novos campos
+  allowSimultaneousBookings: true,
+  requireManualConfirmation: false,
+  blockNoShowClients: false,
+  sendEmailConfirmation: true,
+  sendReminders: true,
+  reminderTimeHours: 24,
+  sendAfterServiceMessage: false,
+  afterServiceMessageHours: 2,
+  cancellationPolicyHours: 24,
+  noShowFee: 0,
+  cancellationMessage: "O agendamento foi cancelado. Entre em contato conosco para mais informações."
 };
 
 export const useBusinessConfig = () => {
@@ -109,6 +133,18 @@ export const useBusinessConfig = () => {
             logoUrl: businessConfig.logo_url,
             bannerUrl: businessConfig.banner_url,
             paymentGatewayConfig: businessConfig.configuracoes_gateway_pagamento || defaultConfig.paymentGatewayConfig,
+            // Novos campos
+            allowSimultaneousBookings: businessConfig.permite_agendamentos_simultaneos ?? defaultConfig.allowSimultaneousBookings,
+            requireManualConfirmation: businessConfig.confirmacao_manual_agendamentos ?? defaultConfig.requireManualConfirmation,
+            blockNoShowClients: businessConfig.bloquear_clientes_faltantes ?? defaultConfig.blockNoShowClients,
+            sendEmailConfirmation: businessConfig.enviar_confirmacao_email ?? defaultConfig.sendEmailConfirmation,
+            sendReminders: businessConfig.enviar_lembretes ?? defaultConfig.sendReminders,
+            reminderTimeHours: businessConfig.tempo_lembrete_horas ?? defaultConfig.reminderTimeHours,
+            sendAfterServiceMessage: businessConfig.mensagem_pos_atendimento ?? defaultConfig.sendAfterServiceMessage,
+            afterServiceMessageHours: businessConfig.tempo_mensagem_pos_horas ?? defaultConfig.afterServiceMessageHours,
+            cancellationPolicyHours: businessConfig.politica_cancelamento_horas ?? defaultConfig.cancellationPolicyHours,
+            noShowFee: businessConfig.taxa_nao_comparecimento ?? defaultConfig.noShowFee,
+            cancellationMessage: businessConfig.mensagem_cancelamento || defaultConfig.cancellationMessage,
           });
         } else {
           // Se não existir configuração, criar uma com os valores padrão
@@ -144,6 +180,18 @@ export const useBusinessConfig = () => {
           cores_primarias: defaultConfig.primaryColor,
           cores_secundarias: defaultConfig.secondaryColor,
           politica_cancelamento: defaultConfig.cancellationPolicy,
+          // Novos campos
+          permite_agendamentos_simultaneos: defaultConfig.allowSimultaneousBookings,
+          confirmacao_manual_agendamentos: defaultConfig.requireManualConfirmation,
+          bloquear_clientes_faltantes: defaultConfig.blockNoShowClients,
+          enviar_confirmacao_email: defaultConfig.sendEmailConfirmation,
+          enviar_lembretes: defaultConfig.sendReminders,
+          tempo_lembrete_horas: defaultConfig.reminderTimeHours,
+          mensagem_pos_atendimento: defaultConfig.sendAfterServiceMessage,
+          tempo_mensagem_pos_horas: defaultConfig.afterServiceMessageHours,
+          politica_cancelamento_horas: defaultConfig.cancellationPolicyHours,
+          taxa_nao_comparecimento: defaultConfig.noShowFee,
+          mensagem_cancelamento: defaultConfig.cancellationMessage,
         })
         .select("id")
         .single();
@@ -187,6 +235,18 @@ export const useBusinessConfig = () => {
         logo_url: updatedConfig.logoUrl ?? config.logoUrl,
         banner_url: updatedConfig.bannerUrl ?? config.bannerUrl,
         configuracoes_gateway_pagamento: updatedConfig.paymentGatewayConfig ?? config.paymentGatewayConfig,
+        // Novos campos
+        permite_agendamentos_simultaneos: updatedConfig.allowSimultaneousBookings ?? config.allowSimultaneousBookings,
+        confirmacao_manual_agendamentos: updatedConfig.requireManualConfirmation ?? config.requireManualConfirmation,
+        bloquear_clientes_faltantes: updatedConfig.blockNoShowClients ?? config.blockNoShowClients,
+        enviar_confirmacao_email: updatedConfig.sendEmailConfirmation ?? config.sendEmailConfirmation,
+        enviar_lembretes: updatedConfig.sendReminders ?? config.sendReminders,
+        tempo_lembrete_horas: updatedConfig.reminderTimeHours ?? config.reminderTimeHours,
+        mensagem_pos_atendimento: updatedConfig.sendAfterServiceMessage ?? config.sendAfterServiceMessage,
+        tempo_mensagem_pos_horas: updatedConfig.afterServiceMessageHours ?? config.afterServiceMessageHours,
+        politica_cancelamento_horas: updatedConfig.cancellationPolicyHours ?? config.cancellationPolicyHours,
+        taxa_nao_comparecimento: updatedConfig.noShowFee ?? config.noShowFee,
+        mensagem_cancelamento: updatedConfig.cancellationMessage ?? config.cancellationMessage,
       };
 
       const { error } = await supabase
