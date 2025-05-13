@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { FormControl } from "@/components/ui/form";
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 interface GeneralInfoSectionProps {
@@ -51,15 +50,13 @@ export const GeneralInfoSection = ({
           <Label htmlFor="businessName">
             Nome do Negócio <span className="text-red-500">*</span>
           </Label>
-          <FormControl>
-            <Input
-              id="businessName"
-              placeholder="Nome da sua empresa"
-              value={getFieldValue("businessName")}
-              onChange={(e) => updateField("businessName", e.target.value)}
-              className={getFieldError("businessName") && hasFieldBeenTouched("businessName") ? "border-red-500" : ""}
-            />
-          </FormControl>
+          <Input
+            id="businessName"
+            placeholder="Nome da sua empresa"
+            value={getFieldValue("businessName")}
+            onChange={(e) => updateField("businessName", e.target.value)}
+            className={getFieldError("businessName") && hasFieldBeenTouched("businessName") ? "border-red-500" : ""}
+          />
           {getFieldError("businessName") && hasFieldBeenTouched("businessName") && (
             <p className="text-sm text-red-500">{getFieldError("businessName")}</p>
           )}
@@ -69,16 +66,14 @@ export const GeneralInfoSection = ({
           <Label htmlFor="businessEmail">
             Email <span className="text-red-500">*</span>
           </Label>
-          <FormControl>
-            <Input
-              id="businessEmail"
-              type="email"
-              placeholder="Email principal de contato"
-              value={getFieldValue("businessEmail")}
-              onChange={(e) => updateField("businessEmail", e.target.value)}
-              className={getFieldError("businessEmail") && hasFieldBeenTouched("businessEmail") ? "border-red-500" : ""}
-            />
-          </FormControl>
+          <Input
+            id="businessEmail"
+            type="email"
+            placeholder="Email principal de contato"
+            value={getFieldValue("businessEmail")}
+            onChange={(e) => updateField("businessEmail", e.target.value)}
+            className={getFieldError("businessEmail") && hasFieldBeenTouched("businessEmail") ? "border-red-500" : ""}
+          />
           {getFieldError("businessEmail") && hasFieldBeenTouched("businessEmail") && (
             <p className="text-sm text-red-500">{getFieldError("businessEmail")}</p>
           )}
@@ -88,15 +83,13 @@ export const GeneralInfoSection = ({
           <Label htmlFor="businessPhone">
             Telefone <span className="text-red-500">*</span>
           </Label>
-          <FormControl>
-            <Input
-              id="businessPhone"
-              placeholder="(XX) XXXXX-XXXX"
-              value={getFieldValue("businessPhone")}
-              onChange={(e) => updateField("businessPhone", e.target.value)}
-              className={getFieldError("businessPhone") && hasFieldBeenTouched("businessPhone") ? "border-red-500" : ""}
-            />
-          </FormControl>
+          <Input
+            id="businessPhone"
+            placeholder="(XX) XXXXX-XXXX"
+            value={getFieldValue("businessPhone")}
+            onChange={(e) => updateField("businessPhone", e.target.value)}
+            className={getFieldError("businessPhone") && hasFieldBeenTouched("businessPhone") ? "border-red-500" : ""}
+          />
           {getFieldError("businessPhone") && hasFieldBeenTouched("businessPhone") && (
             <p className="text-sm text-red-500">{getFieldError("businessPhone")}</p>
           )}
@@ -104,14 +97,12 @@ export const GeneralInfoSection = ({
 
         <div className="space-y-2">
           <Label htmlFor="businessAddress">Endereço</Label>
-          <FormControl>
-            <Input
-              id="businessAddress"
-              placeholder="Endereço completo"
-              value={getFieldValue("businessAddress")}
-              onChange={(e) => updateField("businessAddress", e.target.value)}
-            />
-          </FormControl>
+          <Input
+            id="businessAddress"
+            placeholder="Endereço completo"
+            value={getFieldValue("businessAddress")}
+            onChange={(e) => updateField("businessAddress", e.target.value)}
+          />
         </div>
       </CardContent>
     </Card>

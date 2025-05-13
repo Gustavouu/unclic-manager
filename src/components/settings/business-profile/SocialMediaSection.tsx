@@ -2,9 +2,8 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { FormControl } from "@/components/ui/form";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
@@ -67,15 +66,13 @@ export const SocialMediaSection = ({
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <Facebook size={16} className="text-gray-400" />
             </div>
-            <FormControl>
-              <Input
-                id="facebookLink"
-                placeholder="https://facebook.com/seunegocio"
-                className="pl-10"
-                value={getFieldValue("facebookLink")}
-                onChange={(e) => updateField("facebookLink", e.target.value)}
-              />
-            </FormControl>
+            <Input
+              id="facebookLink"
+              placeholder="https://facebook.com/seunegocio"
+              className="pl-10"
+              value={getFieldValue("facebookLink")}
+              onChange={(e) => updateField("facebookLink", e.target.value)}
+            />
           </div>
           {getFieldError("facebookLink") && hasFieldBeenTouched("facebookLink") && (
             <p className="text-sm text-red-500">{getFieldError("facebookLink")}</p>
@@ -88,15 +85,13 @@ export const SocialMediaSection = ({
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <Instagram size={16} className="text-gray-400" />
             </div>
-            <FormControl>
-              <Input
-                id="instagramLink"
-                placeholder="@seuinstagram"
-                className="pl-10"
-                value={getFieldValue("instagramLink")}
-                onChange={(e) => updateField("instagramLink", e.target.value)}
-              />
-            </FormControl>
+            <Input
+              id="instagramLink"
+              placeholder="@seuinstagram"
+              className="pl-10"
+              value={getFieldValue("instagramLink")}
+              onChange={(e) => updateField("instagramLink", e.target.value)}
+            />
           </div>
           {getFieldError("instagramLink") && hasFieldBeenTouched("instagramLink") && (
             <p className="text-sm text-red-500">{getFieldError("instagramLink")}</p>
@@ -109,15 +104,13 @@ export const SocialMediaSection = ({
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <Linkedin size={16} className="text-gray-400" />
             </div>
-            <FormControl>
-              <Input
-                id="linkedinLink"
-                placeholder="https://linkedin.com/company/seunegocio"
-                className="pl-10"
-                value={getFieldValue("linkedinLink")}
-                onChange={(e) => updateField("linkedinLink", e.target.value)}
-              />
-            </FormControl>
+            <Input
+              id="linkedinLink"
+              placeholder="https://linkedin.com/company/seunegocio"
+              className="pl-10"
+              value={getFieldValue("linkedinLink")}
+              onChange={(e) => updateField("linkedinLink", e.target.value)}
+            />
           </div>
         </div>
 
@@ -127,15 +120,13 @@ export const SocialMediaSection = ({
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <Twitter size={16} className="text-gray-400" />
             </div>
-            <FormControl>
-              <Input
-                id="twitterLink"
-                placeholder="@seutwitter"
-                className="pl-10"
-                value={getFieldValue("twitterLink")}
-                onChange={(e) => updateField("twitterLink", e.target.value)}
-              />
-            </FormControl>
+            <Input
+              id="twitterLink"
+              placeholder="@seutwitter"
+              className="pl-10"
+              value={getFieldValue("twitterLink")}
+              onChange={(e) => updateField("twitterLink", e.target.value)}
+            />
           </div>
         </div>
       </CardContent>

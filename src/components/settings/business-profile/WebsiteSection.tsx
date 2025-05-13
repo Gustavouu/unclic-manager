@@ -2,7 +2,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { FormControl } from "@/components/ui/form";
 import { useEffect, useState } from "react";
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,15 +73,13 @@ export const WebsiteSection = ({
 
         <div className="space-y-2">
           <Label htmlFor="businessWebsite">Website Próprio</Label>
-          <FormControl>
-            <Input
-              id="businessWebsite"
-              placeholder="https://www.seusite.com.br"
-              value={getFieldValue("businessWebsite")}
-              onChange={(e) => updateField("businessWebsite", e.target.value)}
-              className={getFieldError("businessWebsite") && hasFieldBeenTouched("businessWebsite") ? "border-red-500" : ""}
-            />
-          </FormControl>
+          <Input
+            id="businessWebsite"
+            placeholder="https://www.seusite.com.br"
+            value={getFieldValue("businessWebsite")}
+            onChange={(e) => updateField("businessWebsite", e.target.value)}
+            className={getFieldError("businessWebsite") && hasFieldBeenTouched("businessWebsite") ? "border-red-500" : ""}
+          />
           {getFieldError("businessWebsite") && hasFieldBeenTouched("businessWebsite") && (
             <p className="text-sm text-red-500">{getFieldError("businessWebsite")}</p>
           )}
