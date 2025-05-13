@@ -1,5 +1,14 @@
 
 // Professional type interfaces
+export type ProfessionalStatus = 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE';
+
+// Add lowercase status constants for backward compatibility with existing code
+export const PROFESSIONAL_STATUS = {
+  ACTIVE: 'ACTIVE' as ProfessionalStatus,
+  INACTIVE: 'INACTIVE' as ProfessionalStatus,
+  ON_LEAVE: 'ON_LEAVE' as ProfessionalStatus,
+};
+
 export interface Professional {
   id: string;
   name: string;
@@ -22,8 +31,6 @@ export interface Professional {
   specialties?: string[];
   commissionPercentage?: number;
 }
-
-export type ProfessionalStatus = 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE';
 
 export interface ProfessionalCreateForm {
   name?: string;
@@ -55,9 +62,10 @@ export interface UseProfessionalsReturn {
   updateProfessional: (id: string, professional: Partial<Professional>) => Promise<Professional>;
   deleteProfessional: (id: string) => Promise<boolean>;
   
-  // Adding missing properties and method aliases that were causing TypeScript errors
+  // Adding necessary methods for the rest of the application
   addProfessional: (professional: ProfessionalCreateForm) => Promise<Professional>;
   removeProfessional: (id: string) => Promise<boolean>;
   isLoading: boolean;
   specialties: string[];
+  getProfessionalById?: (id: string) => Professional | undefined;
 }

@@ -1,13 +1,14 @@
 
 import { z } from 'zod';
+import { ProfessionalStatus } from '@/hooks/professionals/types';
 
-// Update the schema to include the missing fields
+// Update the schema to match our ProfessionalStatus type
 export const professionalFormSchema = z.object({
   name: z.string().min(1, 'O nome é obrigatório'),
   email: z.string().email('Email inválido').optional().nullable(),
   phone: z.string().optional().nullable(),
   bio: z.string().optional().nullable(),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'ON_LEAVE']).default('ACTIVE'),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'ON_LEAVE'] as [ProfessionalStatus, ...ProfessionalStatus[]]).default('ACTIVE' as ProfessionalStatus),
   establishmentId: z.string().optional(),
   isActive: z.boolean().default(true),
   role: z.string().optional().nullable(),
