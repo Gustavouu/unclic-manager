@@ -1,59 +1,56 @@
 
-import React from 'react';
-
-interface PopularService {
-  name: string;
-  count: number;
-  percentage: number;
-}
+import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Scissors } from "lucide-react";
 
 interface PopularServicesProps {
-  services: PopularService[];
+  services: Array<{id: string, name: string, count: number, percentage: number}>;
+  loading?: boolean;
 }
 
-export function PopularServices({ services }: PopularServicesProps) {
-  if (!services || services.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-48 text-center p-4">
-        <div className="h-12 w-12 text-muted-foreground mb-2 opacity-50">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path>
-            <line x1="16" y1="8" x2="2" y2="22"></line>
-            <line x1="17.5" y1="15" x2="9" y2="15"></line>
-          </svg>
-        </div>
-        <h3 className="font-medium">Sem dados de serviços</h3>
-        <p className="text-sm text-muted-foreground">
-          Nenhum serviço com dados de popularidade disponível
-        </p>
-      </div>
-    );
-  }
-
+export function PopularServices({ services, loading = false }: PopularServicesProps) {
   return (
-    <div className="space-y-4">
-      {services.map((service) => (
-        <div key={service.name} className="space-y-1">
-          <div className="flex justify-between">
-            <span className="text-sm font-medium">{service.name}</span>
-            <span className="text-sm text-muted-foreground">{service.count} agendamentos</span>
+    <Card>
+      <CardContent className="pt-6">
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="space-y-2">
+                <div className="h-5 bg-gray-100 rounded animate-pulse w-36"></div>
+                <div className="h-2 bg-gray-100 rounded animate-pulse"></div>
+              </div>
+            ))}
           </div>
-          <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full"
-              style={{ width: `${service.percentage}%` }}
-            />
+        ) : services?.length > 0 ? (
+          <div className="space-y-4">
+            {services.map((service) => (
+              <div key={service.id} className="space-y-2">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center">
+                    <span className="font-medium">{service.name}</span>
+                  </div>
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Scissors className="h-3 w-3 mr-1" />
+                    <span>{service.count} agendamentos</span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Progress value={service.percentage} className="h-2" />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{service.percentage.toFixed(1)}% dos serviços</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-      ))}
-    </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+            <Scissors className="h-12 w-12 mb-2 opacity-20" />
+            <p>Nenhum serviço agendado no período</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Users, CalendarClock, DollarSign, Scissors } from "lucide-react";
 import { StatsCard } from "@/components/common/StatsCard";
@@ -29,7 +30,7 @@ export function KpiCards({ stats, period }: KpiCardsProps) {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <StatsCard
         title="Clientes Ativos"
-        value={stats.clientsCount.toString()}
+        value={stats?.clientsCount?.toString() || "0"}
         description={`Total de clientes`}
         icon={<Users size={18} />}
         iconColor="bg-blue-50 text-blue-500"
@@ -38,7 +39,7 @@ export function KpiCards({ stats, period }: KpiCardsProps) {
       
       <StatsCard
         title="Próximos Agendamentos"
-        value={stats.todayAppointments.toString()}
+        value={stats?.todayAppointments?.toString() || "0"}
         description={`Agendamentos próximos`}
         icon={<CalendarClock size={18} />}
         iconColor="bg-indigo-50 text-indigo-500"
@@ -47,7 +48,7 @@ export function KpiCards({ stats, period }: KpiCardsProps) {
       
       <StatsCard
         title="Receita"
-        value={formatCurrency(stats.monthlyRevenue)}
+        value={formatCurrency(stats?.monthlyRevenue || 0)}
         description={periodDesc}
         icon={<DollarSign size={18} />}
         iconColor="bg-green-50 text-green-500"
@@ -56,7 +57,7 @@ export function KpiCards({ stats, period }: KpiCardsProps) {
       
       <StatsCard
         title="Serviços Realizados"
-        value={stats.monthlyServices.toString()}
+        value={stats?.monthlyServices?.toString() || "0"}
         description={periodDesc}
         icon={<Scissors size={18} />}
         iconColor="bg-amber-50 text-amber-500"

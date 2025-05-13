@@ -1,121 +1,68 @@
 
-import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { formatCurrency } from "@/lib/format";
 
 interface FinancialChartsProps {
-  data: any[];
+  revenueData: Array<{date: string, value: number}>;
+  loading?: boolean;
 }
 
-export function FinancialCharts({ data }: FinancialChartsProps) {
-  const [chartView, setChartView] = useState<"bar" | "line">("bar");
-  
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
+export function FinancialCharts({ revenueData, loading = false }: FinancialChartsProps) {
+  // Format date for display
+  const formattedData = revenueData?.map(item => ({
+    ...item,
+    formattedDate: new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+  })) || [];
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg font-display">Desempenho Financeiro</CardTitle>
-            <CardDescription>Receitas e despesas ao longo do período</CardDescription>
-          </div>
-          <Tabs value={chartView} onValueChange={(v) => setChartView(v as "bar" | "line")} className="w-[180px]">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="bar">Barras</TabsTrigger>
-              <TabsTrigger value="line">Linha</TabsTrigger>
-            </TabsList>
-          </Tabs>
+    <div className="space-y-6">
+      {loading ? (
+        <div className="h-64 flex items-center justify-center">
+          <div className="h-64 w-full bg-gray-100 animate-pulse rounded"></div>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[300px]">
-          {chartView === "bar" ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                <YAxis 
-                  tickFormatter={formatCurrency} 
-                  axisLine={false} 
-                  tickLine={false} 
-                  width={80}
-                />
-                <Tooltip 
-                  formatter={(value: number) => [formatCurrency(value)]} 
-                  labelFormatter={(value) => `${value}`}
-                  contentStyle={{ 
-                    borderRadius: '8px',
-                    backgroundColor: 'white', 
-                    borderColor: '#e2e8f0'
-                  }}
-                />
-                <Legend />
-                <Bar 
-                  dataKey="receita" 
-                  name="Receita" 
-                  fill="#22c55e" 
-                  radius={[4, 4, 0, 0]}
-                  barSize={30}
-                />
-                <Bar 
-                  dataKey="despesa" 
-                  name="Despesa" 
-                  fill="#ef4444" 
-                  radius={[4, 4, 0, 0]} 
-                  barSize={30}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                <YAxis 
-                  tickFormatter={formatCurrency} 
-                  axisLine={false} 
-                  tickLine={false} 
-                  width={80}
-                />
-                <Tooltip 
-                  formatter={(value: number) => [formatCurrency(value)]} 
-                  labelFormatter={(value) => `${value}`}
-                  contentStyle={{ 
-                    borderRadius: '8px',
-                    backgroundColor: 'white', 
-                    borderColor: '#e2e8f0'
-                  }}
-                />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="receita" 
-                  name="Receita" 
-                  stroke="#22c55e" 
-                  activeDot={{ r: 8 }}
-                  strokeWidth={2}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="despesa" 
-                  name="Despesa" 
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      ) : (
+        <>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={formattedData}
+                    margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis 
+                      dataKey="formattedDate" 
+                      tick={{ fontSize: 12 }}
+                      tickMargin={10}
+                    />
+                    <YAxis 
+                      tickFormatter={(value) => formatCurrency(value).split(',')[0]}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [formatCurrency(value), 'Receita']}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                        border: '1px solid #e2e8f0'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="value" 
+                      fill="#4F46E5" 
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
   );
 }

@@ -10,8 +10,8 @@ interface DashboardInsightsProps {
 
 export function DashboardInsights({ stats }: DashboardInsightsProps) {
   // Determining some insights based on the data
-  const isRevenuePositive = stats.monthlyRevenue > 5000;
-  const isClientGrowthPositive = stats.clientsCount > 20;
+  const isRevenuePositive = (stats?.monthlyRevenue || 0) > 5000;
+  const isClientGrowthPositive = (stats?.clientsCount || 0) > 20;
   
   const insights = [
     {
@@ -25,8 +25,8 @@ export function DashboardInsights({ stats }: DashboardInsightsProps) {
     },
     {
       title: "Serviço destaque",
-      description: stats.popularServices?.length > 0 
-        ? `"${stats.popularServices[0]?.name}" está com alta procura` 
+      description: stats?.popularServices?.length > 0 
+        ? `"${stats?.popularServices[0]?.name || "Sem dados"}" está com alta procura` 
         : "Monitore quais serviços estão com maior procura",
       icon: Award,
       color: "text-indigo-500",
@@ -35,7 +35,7 @@ export function DashboardInsights({ stats }: DashboardInsightsProps) {
     {
       title: isClientGrowthPositive ? "Base de clientes crescendo" : "Base de clientes estável",
       description: isClientGrowthPositive 
-        ? `Aumento de ${stats.newClientsCount || 5} novos clientes este mês` 
+        ? `Aumento de ${stats?.newClientsCount || 5} novos clientes este mês` 
         : "Considere estratégias para atrair novos clientes",
       icon: Users,
       color: "text-blue-500",

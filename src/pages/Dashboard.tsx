@@ -1,12 +1,9 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { KpiCards } from '@/components/dashboard/KpiCards';
 import { DashboardWidget } from '@/components/dashboard/DashboardWidget';
 import { FinancialCharts } from '@/components/dashboard/FinancialCharts';
 import { PopularServices } from '@/components/dashboard/PopularServices';
-import { UpcomingAppointmentsWidget } from '@/components/dashboard/UpcomingAppointmentsWidget';
-import { DashboardFilters } from '@/components/dashboard/DashboardFilters';
 import { ClientsComparisonChart } from '@/components/dashboard/ClientsComparisonChart';
 import { RetentionRateCard } from '@/components/dashboard/RetentionRateCard';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
@@ -15,6 +12,7 @@ import { DashboardInsights } from '@/components/dashboard/DashboardInsights';
 import { OnboardingBanner } from '@/components/dashboard/OnboardingBanner';
 import { DashboardFooter } from '@/components/dashboard/DashboardFooter';
 import { StatusFixButton } from '@/components/dashboard/StatusFixButton';
+import { DashboardFilters } from '@/components/dashboard/DashboardFilters';
 import { FilterPeriod } from '@/types/dashboard';
 import { useDashboardRealtime } from '@/hooks/dashboard/useDashboardRealtime';
 import { useAppointments } from '@/hooks/appointments/useAppointments';
@@ -36,13 +34,13 @@ const Dashboard = () => {
         appointment.status !== 'cancelado'
       );
     })
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   // Adjust popularServices to include percentage
-  const popularServicesWithPercentage = stats.popularServices.map(service => ({
+  const popularServicesWithPercentage = stats?.popularServices?.map(service => ({
     ...service,
-    percentage: (service.count / Math.max(1, stats.popularServices.reduce((sum, s) => sum + s.count, 0))) * 100
-  }));
+    percentage: (service.count / Math.max(1, stats?.popularServices?.reduce((sum, s) => sum + s.count, 0) || 1)) * 100
+  })) || [];
 
   return (
     <div className="space-y-6">
@@ -50,14 +48,20 @@ const Dashboard = () => {
 
       <OnboardingBanner onDismiss={() => {}} />
 
-      <DashboardFilters currentPeriod={period} onPeriodChange={setPeriod} />
+      <DashboardFilters 
+        currentPeriod={period} 
+        onPeriodChange={setPeriod} 
+      />
 
-      <KpiCards data={stats} loading={loading} />
+      <KpiCards 
+        stats={stats} 
+        period={period} 
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <DashboardWidget title="Desempenho Financeiro">
           <FinancialCharts
-            revenue={stats.revenueData}
+            revenueData={stats?.revenueData || []}
             loading={loading}
           />
         </DashboardWidget>
@@ -82,7 +86,9 @@ const Dashboard = () => {
 
         <div>
           <DashboardWidget title="Comparação de Clientes">
-            <ClientsComparisonChart data={stats} loading={loading} />
+            <ClientsComparisonChart 
+              stats={stats} 
+            />
           </DashboardWidget>
         </div>
       </div>
@@ -90,13 +96,15 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <DashboardWidget title="Insights do Negócio">
-            <DashboardInsights data={stats} loading={loading} />
+            <DashboardInsights 
+              stats={stats} 
+            />
           </DashboardWidget>
         </div>
 
         <div>
           <RetentionRateCard
-            retention={stats.retention || 0}
+            retentionRate={stats?.retentionRate || 0}
             loading={loading}
           />
         </div>

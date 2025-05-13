@@ -11,8 +11,8 @@ interface ClientsComparisonChartProps {
 
 export function ClientsComparisonChart({ stats }: ClientsComparisonChartProps) {
   const data = [
-    { name: 'Novos Clientes', value: stats.newClientsCount || 0, color: '#8B5CF6' },
-    { name: 'Clientes Recorrentes', value: stats.returningClientsCount || 0, color: '#10b981' },
+    { name: 'Novos Clientes', value: stats?.newClientsCount || 0, color: '#8B5CF6' },
+    { name: 'Clientes Recorrentes', value: stats?.returningClientsCount || 0, color: '#10b981' },
   ];
 
   const COLORS = ['#8B5CF6', '#10b981'];
@@ -68,14 +68,14 @@ export function ClientsComparisonChart({ stats }: ClientsComparisonChartProps) {
                 <div className="w-4 h-4 bg-[#8B5CF6] mr-2 rounded"></div>
                 <div>
                   <span className="text-sm font-medium">Novos Clientes</span>
-                  <p className="text-2xl font-bold">{stats.newClientsCount || 0}</p>
+                  <p className="text-2xl font-bold">{stats?.newClientsCount || 0}</p>
                 </div>
               </div>
               <div className="flex items-center">
                 <div className="w-4 h-4 bg-green-500 mr-2 rounded"></div>
                 <div>
                   <span className="text-sm font-medium">Clientes Recorrentes</span>
-                  <p className="text-2xl font-bold">{stats.returningClientsCount || 0}</p>
+                  <p className="text-2xl font-bold">{stats?.returningClientsCount || 0}</p>
                 </div>
               </div>
             </div>
