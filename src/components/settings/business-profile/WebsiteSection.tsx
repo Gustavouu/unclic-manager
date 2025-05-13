@@ -1,10 +1,10 @@
 
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
-import { supabase } from "@/integrations/supabase/client";
 
 interface WebsiteSectionProps {
   getFieldValue: (name: string) => string;
