@@ -1,15 +1,22 @@
 
-import * as z from "zod";
+import { z } from 'zod';
 
-export const professionalSchema = z.object({
-  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
-  email: z.string().email("Email inválido").optional().or(z.literal("")),
-  phone: z.string().optional().or(z.literal("")),
-  role: z.string().min(2, "Cargo deve ter pelo menos 2 caracteres"),
-  bio: z.string().optional().or(z.literal("")),
-  specialties: z.array(z.string()).min(1, "Selecione uma especialização"),
-  commissionPercentage: z.coerce.number().min(0).max(100).optional(),
-  photoUrl: z.string().optional().or(z.literal("")),
+// Update the schema to include the missing fields
+export const professionalFormSchema = z.object({
+  name: z.string().min(1, 'O nome é obrigatório'),
+  email: z.string().email('Email inválido').optional().nullable(),
+  phone: z.string().optional().nullable(),
+  bio: z.string().optional().nullable(),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'ON_LEAVE']).default('ACTIVE'),
+  establishmentId: z.string().optional(),
+  isActive: z.boolean().default(true),
+  role: z.string().optional().nullable(),
+  specialties: z.array(z.string()).optional(),
+  commissionPercentage: z.number().min(0).max(100).optional().nullable(),
+  photoUrl: z.string().optional().nullable(),
+  avatar: z.string().optional().nullable(),
+  services: z.array(z.string()).optional(),
+  hireDate: z.string().optional()
 });
 
-export type ProfessionalFormValues = z.infer<typeof professionalSchema>;
+export type ProfessionalFormValues = z.infer<typeof professionalFormSchema>;

@@ -1,8 +1,5 @@
 
-export * from "../../components/professionals/multiselect/types";
-
-export type ProfessionalStatus = 'active' | 'inactive' | 'vacation' | 'leave';
-
+// Professional type interfaces
 export interface Professional {
   id: string;
   name: string;
@@ -10,49 +7,57 @@ export interface Professional {
   phone?: string;
   bio?: string;
   avatar?: string;
-  photoUrl?: string; // Added field to match usage in components
-  role?: string; // Added field to match usage in components
-  specialties?: string[]; // Added field to match usage in components
-  commissionPercentage?: number; // Added field to match usage in components
   status?: ProfessionalStatus;
   establishmentId?: string;
   tenantId?: string;
   services?: string[];
-  workingHours?: any; // This should be properly typed in the future
+  workingHours?: any;
   isActive?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  appointmentsCount?: number;
-  revenueGenerated?: number;
   hireDate?: string;
   userId?: string;
+  
+  // Adding missing properties that were causing TypeScript errors
+  role?: string;
+  photoUrl?: string; 
+  specialties?: string[];
+  commissionPercentage?: number;
 }
 
-export type ProfessionalCreateForm = Omit<
-  Professional, 
-  'id' | 'createdAt' | 'updatedAt' | 'appointmentsCount' | 'revenueGenerated'
->;
+export type ProfessionalStatus = 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE';
 
-// Enhanced type for professionals hook related to security
-export interface UseProfessionalsOptions {
-  tenantIdOverride?: string;
-  secureMode?: boolean; // Whether to enforce RLS policies in the frontend
-  fetchPolicy?: 'cache-first' | 'network-only';
+export interface ProfessionalCreateForm {
+  name?: string;
+  email?: string; 
+  phone?: string;
+  bio?: string;
+  avatar?: string;
+  status?: ProfessionalStatus;
+  establishmentId?: string;
+  tenantId?: string;
+  services?: string[];
+  workingHours?: any;
+  isActive?: boolean;
+  hireDate?: string;
+  userId?: string;
+  
+  // Adding missing properties that were causing TypeScript errors
+  role?: string;
+  specialties?: string[];
+  commissionPercentage?: number;
+  photoUrl?: string;
 }
 
-// Type for professionals hook return value
 export interface UseProfessionalsReturn {
   professionals: Professional[];
   loading: boolean;
   error: Error | null;
-  specialties?: string[]; // Added field to match usage in components
-  isLoading?: boolean; // Added field to match usage in components
-  refetch: () => Promise<void>;
-  createProfessional: (data: ProfessionalCreateForm) => Promise<Professional | null>;
-  updateProfessional: (id: string, data: Partial<Professional>) => Promise<boolean>;
+  createProfessional: (professional: ProfessionalCreateForm) => Promise<Professional>;
+  updateProfessional: (id: string, professional: Partial<Professional>) => Promise<Professional>;
   deleteProfessional: (id: string) => Promise<boolean>;
-  getProfessionalById: (id: string) => Professional | undefined;
-  // Adding these aliases to match usage in components
-  addProfessional: (data: ProfessionalCreateForm) => Promise<Professional | null>;
+  
+  // Adding missing properties and method aliases that were causing TypeScript errors
+  addProfessional: (professional: ProfessionalCreateForm) => Promise<Professional>;
   removeProfessional: (id: string) => Promise<boolean>;
+  isLoading: boolean;
+  specialties: string[];
 }
