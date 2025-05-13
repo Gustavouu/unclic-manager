@@ -21,3 +21,6 @@ export const professionalFormSchema = z.object({
 });
 
 export type ProfessionalFormValues = z.infer<typeof professionalFormSchema>;
+
+// For backward compatibility, also export as professionalSchema
+export const professionalSchema = professionalFormSchema;

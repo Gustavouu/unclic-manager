@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Professional, UseProfessionalsReturn, ProfessionalCreateForm, PROFESSIONAL_STATUS } from './types';
+import { Professional, UseProfessionalsReturn, ProfessionalCreateForm, PROFESSIONAL_STATUS, ProfessionalStatus } from './types';
 import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'sonner'; // Using sonner directly as it's available in the project
 
@@ -28,7 +28,7 @@ export const useProfessionals = (): UseProfessionalsReturn => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const { tenant } = useTenant();
+  const { tenant } = useTenant() || { tenant: null };
 
   useEffect(() => {
     const fetchProfessionals = async () => {

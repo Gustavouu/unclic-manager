@@ -1,14 +1,13 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from '@/integrations/supabase/client';
-import { Professional, ProfessionalCreateForm, ProfessionalStatus } from "./types";
+import { Professional, ProfessionalCreateForm, ProfessionalStatus, PROFESSIONAL_STATUS } from "./types";
 import { useTenant } from "@/contexts/TenantContext";
 import { toast } from 'sonner';
 
 export const useProfessionalOperations = () => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { businessId } = useTenant();
+  const { businessId } = useTenant() || { businessId: null };
   
   // Fetch professionals when component mounts
   useEffect(() => {
@@ -31,20 +30,39 @@ export const useProfessionalOperations = () => {
           throw error;
         }
         
-        const mappedProfessionals: Professional[] = (data || []).map(prof => ({
-          id: prof.id,
-          name: prof.nome,
-          role: prof.cargo || '',
-          email: prof.email || '',
-          phone: prof.telefone || '',
-          specialties: prof.especializacoes || [],
-          photoUrl: prof.foto_url || '',
-          bio: prof.bio || '',
-          status: (prof.status as ProfessionalStatus) || 'active',
-          hireDate: prof.data_contratacao || '',
-          commissionPercentage: prof.comissao_percentual || 0,
-          userId: prof.id_usuario
-        }));
+        const mappedProfessionals: Professional[] = (data || []).map(prof => {
+          // Map from legacy status to new status format
+          let status: ProfessionalStatus;
+          switch(prof.status) {
+            case 'active':
+              status = PROFESSIONAL_STATUS.ACTIVE;
+              break;
+            case 'inactive':
+              status = PROFESSIONAL_STATUS.INACTIVE;
+              break;
+            case 'vacation':
+            case 'leave':
+              status = PROFESSIONAL_STATUS.ON_LEAVE;
+              break;
+            default:
+              status = PROFESSIONAL_STATUS.ACTIVE;
+          }
+          
+          return {
+            id: prof.id,
+            name: prof.nome,
+            role: prof.cargo || '',
+            email: prof.email || '',
+            phone: prof.telefone || '',
+            specialties: prof.especializacoes || [],
+            photoUrl: prof.foto_url || '',
+            bio: prof.bio || '',
+            status: status,
+            hireDate: prof.data_contratacao || '',
+            commissionPercentage: prof.comissao_percentual || 0,
+            userId: prof.id_usuario
+          };
+        });
         
         setProfessionals(mappedProfessionals);
       } catch (error) {
@@ -67,6 +85,11 @@ export const useProfessionalOperations = () => {
         throw new Error("ID do negócio não disponível");
       }
       
+      // Map status to database format if needed
+      let dbStatus = 'active';
+      if (data.status === PROFESSIONAL_STATUS.INACTIVE) dbStatus = 'inactive';
+      else if (data.status === PROFESSIONAL_STATUS.ON_LEAVE) dbStatus = 'vacation';
+      
       const { data: newProfData, error } = await supabase
         .from('funcionarios')
         .insert([{
@@ -76,7 +99,7 @@ export const useProfessionalOperations = () => {
           telefone: data.phone || '',
           especializacoes: Array.isArray(data.specialties) ? data.specialties : [],
           bio: data.bio || '',
-          status: 'active',
+          status: dbStatus,
           comissao_percentual: data.commissionPercentage || 0,
           data_contratacao: new Date().toISOString().split('T')[0],
           foto_url: data.photoUrl || '',
@@ -96,7 +119,7 @@ export const useProfessionalOperations = () => {
         specialties: newProfData.especializacoes || [],
         photoUrl: newProfData.foto_url || '',
         bio: newProfData.bio || '',
-        status: (newProfData.status as ProfessionalStatus) || 'active',
+        status: PROFESSIONAL_STATUS.ACTIVE,
         hireDate: newProfData.data_contratacao || '',
         commissionPercentage: newProfData.comissao_percentual || 0,
         userId: newProfData.id_usuario

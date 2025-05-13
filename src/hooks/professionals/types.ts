@@ -9,6 +9,14 @@ export const PROFESSIONAL_STATUS = {
   ON_LEAVE: 'ON_LEAVE' as ProfessionalStatus,
 };
 
+// For legacy code compatibility
+export const STATUS_MAPPING = {
+  'active': 'ACTIVE',
+  'inactive': 'INACTIVE', 
+  'vacation': 'ON_LEAVE',
+  'leave': 'ON_LEAVE'
+} as const;
+
 export interface Professional {
   id: string;
   name: string;

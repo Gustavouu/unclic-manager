@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatsCard } from "@/components/common/StatsCard";
 import { Users, Award, Briefcase, Calendar } from "lucide-react";
 import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
+import { PROFESSIONAL_STATUS } from '@/hooks/professionals/types';
 
 const Professionals = () => {
   const [showNewProfessionalDialog, setShowNewProfessionalDialog] = useState(false);
@@ -77,7 +78,7 @@ const Professionals = () => {
         
         <StatsCard
           title="Ativos"
-          value={professionals.filter(p => p.status === 'active').length.toString()}
+          value={professionals.filter(p => p.status === PROFESSIONAL_STATUS.ACTIVE).length.toString()}
           icon={<Users size={18} />}
           iconColor="text-green-600 bg-green-50"
           borderColor="border-l-green-600"

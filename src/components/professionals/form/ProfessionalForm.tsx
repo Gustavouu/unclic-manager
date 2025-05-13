@@ -7,7 +7,7 @@ import { DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { ProfessionalCreateForm, Professional } from "@/hooks/professionals/types";
 import { ProfessionalFormFields } from "./ProfessionalFormFields";
-import { professionalSchema } from "../schemas/professionalFormSchema";
+import { professionalFormSchema } from "../schemas/professionalFormSchema";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,7 +31,7 @@ export const ProfessionalForm = ({
   const { specialties = [] } = useProfessionals();
   
   const form = useForm<ProfessionalCreateForm>({
-    resolver: zodResolver(professionalSchema),
+    resolver: zodResolver(professionalFormSchema),
     defaultValues: {
       name: professional?.name || "",
       email: professional?.email || "",

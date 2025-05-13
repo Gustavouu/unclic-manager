@@ -1,5 +1,5 @@
 
-import { Professional } from "./types";
+import { Professional, ProfessionalStatus } from "./types";
 
 // Dados mockados para exemplo
 export const initialProfessionals: Professional[] = [
@@ -12,7 +12,7 @@ export const initialProfessionals: Professional[] = [
     specialties: ["Corte feminino", "Coloração", "Escova progressiva"],
     photoUrl: "https://i.pravatar.cc/150?img=5",
     bio: "Ana tem mais de 15 anos de experiência em salões de alto padrão.",
-    status: "active",
+    status: "ACTIVE" as ProfessionalStatus,
     hireDate: "2019-05-10",
     commissionPercentage: 40,
     userId: "u1"
@@ -26,7 +26,7 @@ export const initialProfessionals: Professional[] = [
     specialties: ["Corte masculino", "Barba", "Sobrancelha"],
     photoUrl: "https://i.pravatar.cc/150?img=12",
     bio: "Especialista em cortes modernos e barbas estilizadas.",
-    status: "active",
+    status: "ACTIVE" as ProfessionalStatus,
     hireDate: "2020-02-15",
     commissionPercentage: 35,
     userId: "u2"
@@ -40,7 +40,7 @@ export const initialProfessionals: Professional[] = [
     specialties: ["Limpeza de pele", "Massagem facial", "Peeling"],
     photoUrl: "https://i.pravatar.cc/150?img=9",
     bio: "Especializada em tratamentos faciais e corporais rejuvenescedores.",
-    status: "vacation",
+    status: "ON_LEAVE" as ProfessionalStatus,
     hireDate: "2021-10-01",
     commissionPercentage: 30,
     userId: "u3"
@@ -54,7 +54,7 @@ export const initialProfessionals: Professional[] = [
     specialties: ["Manicure", "Pedicure", "Unhas em gel"],
     photoUrl: "https://i.pravatar.cc/150?img=11",
     bio: "Especialista em design de unhas e técnicas artísticas.",
-    status: "leave",
+    status: "ON_LEAVE" as ProfessionalStatus,
     hireDate: "2022-03-20",
     commissionPercentage: 30,
     userId: "u4"
@@ -68,7 +68,7 @@ export const initialProfessionals: Professional[] = [
     specialties: ["Maquiagem social", "Maquiagem artística", "Penteados"],
     photoUrl: "https://i.pravatar.cc/150?img=1",
     bio: "Maquiadora profissional com experiência em eventos e produções.",
-    status: "active",
+    status: "ACTIVE" as ProfessionalStatus,
     hireDate: "2022-01-15",
     commissionPercentage: 35,
     userId: "u5"
@@ -82,7 +82,7 @@ export const initialProfessionals: Professional[] = [
     specialties: ["Massagem relaxante", "Massagem terapêutica", "Drenagem linfática"],
     photoUrl: "https://i.pravatar.cc/150?img=15",
     bio: "Profissional com formação em técnicas de massagem oriental e ocidental.",
-    status: "inactive",
+    status: "INACTIVE" as ProfessionalStatus,
     hireDate: "2020-08-10",
     commissionPercentage: 40,
     userId: "u6"
