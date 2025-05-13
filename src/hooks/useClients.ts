@@ -5,6 +5,8 @@ import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'sonner';
 import { Client, ClientFormData } from '@/types/client';
 
+export type { Client, ClientFormData }; // Export the types from here
+
 export const useClients = (onClientCreated?: (client: any) => void) => {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,10 +16,18 @@ const clientSchema = z.object({
 });
 
 interface StepClientInfoProps {
-  onNext: (data: ClientFormData) => void;
+  onNext: (data: any) => void; 
+  onBack?: () => void;
+  bookingData: any; // Add this to match WebsiteBookingFlow props
+  onUpdateBookingData: (data: any) => void; // Add this to match WebsiteBookingFlow props
 }
 
-export const StepClientInfo: React.FC<StepClientInfoProps> = ({ onNext }) => {
+export const StepClientInfo: React.FC<StepClientInfoProps> = ({ 
+  onNext, 
+  onBack,
+  bookingData,
+  onUpdateBookingData 
+}) => {
   const { register, handleSubmit, formState: { errors } } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
   });
@@ -27,11 +36,23 @@ export const StepClientInfo: React.FC<StepClientInfoProps> = ({ onNext }) => {
 
   const onSubmit = async (data: ClientFormData) => {
     if (data.email) {
-      const client = await findClientByEmail(data.email);
-      if (client) {
-        setExistingClient(client);
+      try {
+        const client = await findClientByEmail(data.email);
+        if (client) {
+          setExistingClient(client);
+        }
+      } catch (error) {
+        console.error("Error finding client:", error);
       }
     }
+    
+    // Update booking data
+    onUpdateBookingData({
+      clientName: data.name,
+      clientEmail: data.email,
+      clientPhone: data.phone
+    });
+    
     onNext(data);
   };
 
@@ -52,7 +73,17 @@ export const StepClientInfo: React.FC<StepClientInfoProps> = ({ onNext }) => {
         <Input id="phone" type="tel" {...register('phone')} />
         {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
       </div>
-      <Button type="submit">Próximo</Button>
+      
+      <div className="flex justify-between pt-4">
+        {onBack && (
+          <Button type="button" variant="outline" onClick={onBack}>
+            Voltar
+          </Button>
+        )}
+        <Button type="submit" className={onBack ? "" : "w-full"}>
+          Próximo
+        </Button>
+      </div>
     </form>
   );
 };
