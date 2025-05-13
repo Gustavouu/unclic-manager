@@ -1,468 +1,195 @@
 
-import React from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useBusinessConfig } from "@/hooks/business/useBusinessConfig";
-import { toast } from "sonner";
-
-// Form schema for validating appointment settings
-const appointmentSettingsSchema = z.object({
-  allowSimultaneousBookings: z.boolean().default(true),
-  requireManualConfirmation: z.boolean().default(false),
-  blockNoShowClients: z.boolean().default(false),
-  maxFutureDays: z.number().int().positive().default(30),
-  sendEmailConfirmation: z.boolean().default(true),
-  sendReminders: z.boolean().default(true),
-  reminderTimeHours: z.number().int().positive().default(24),
-  sendAfterServiceMessage: z.boolean().default(false),
-  afterServiceMessageHours: z.number().int().positive().default(2),
-  cancellationPolicyHours: z.number().int().nonnegative().default(24),
-  noShowFee: z.number().nonnegative().default(0),
-  cancellationMessage: z.string().default("O agendamento foi cancelado. Entre em contato conosco para mais informações.")
-});
-
-type AppointmentSettingsFormValues = z.infer<typeof appointmentSettingsSchema>;
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 
 export const AppointmentsTab = () => {
-  const { 
-    allowSimultaneousBookings,
-    requireManualConfirmation,
-    blockNoShowClients,
-    maxFutureDays,
-    sendEmailConfirmation,
-    sendReminders,
-    reminderTimeHours,
-    sendAfterServiceMessage,
-    afterServiceMessageHours,
-    cancellationPolicyHours,
-    noShowFee,
-    cancellationMessage,
-    loading,
-    saving,
-    saveConfig
-  } = useBusinessConfig();
-
-  const form = useForm<AppointmentSettingsFormValues>({
-    resolver: zodResolver(appointmentSettingsSchema),
-    defaultValues: {
-      allowSimultaneousBookings: allowSimultaneousBookings || true,
-      requireManualConfirmation: requireManualConfirmation || false,
-      blockNoShowClients: blockNoShowClients || false,
-      maxFutureDays: maxFutureDays || 30,
-      sendEmailConfirmation: sendEmailConfirmation || true,
-      sendReminders: sendReminders || true,
-      reminderTimeHours: reminderTimeHours || 24,
-      sendAfterServiceMessage: sendAfterServiceMessage || false,
-      afterServiceMessageHours: afterServiceMessageHours || 2,
-      cancellationPolicyHours: cancellationPolicyHours || 24,
-      noShowFee: noShowFee || 0,
-      cancellationMessage: cancellationMessage || "O agendamento foi cancelado. Entre em contato conosco para mais informações."
-    },
-  });
-
-  // Update form values when business config is loaded
-  React.useEffect(() => {
-    if (!loading) {
-      form.reset({
-        allowSimultaneousBookings,
-        requireManualConfirmation,
-        blockNoShowClients,
-        maxFutureDays,
-        sendEmailConfirmation,
-        sendReminders,
-        reminderTimeHours,
-        sendAfterServiceMessage,
-        afterServiceMessageHours,
-        cancellationPolicyHours,
-        noShowFee,
-        cancellationMessage
-      });
-    }
-  }, [
-    loading, 
-    allowSimultaneousBookings,
-    requireManualConfirmation,
-    blockNoShowClients,
-    maxFutureDays,
-    sendEmailConfirmation,
-    sendReminders,
-    reminderTimeHours,
-    sendAfterServiceMessage,
-    afterServiceMessageHours,
-    cancellationPolicyHours,
-    noShowFee,
-    cancellationMessage,
-    form
-  ]);
-
-  const onSubmit = async (data: AppointmentSettingsFormValues) => {
-    try {
-      const success = await saveConfig(data);
-      if (success) {
-        toast.success("Configurações de agendamento salvas com sucesso");
-      }
-    } catch (error) {
-      console.error("Erro ao salvar configurações de agendamento:", error);
-      toast.error("Erro ao salvar configurações de agendamento");
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-6">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">Configurações de Agendamento</h3>
-        <p className="text-sm text-muted-foreground">
-          Configure como os agendamentos funcionarão em seu negócio.
-        </p>
-      </div>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Regras de Agendamento */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Regras de Agendamento</CardTitle>
-              <CardDescription>
-                Configure as regras básicas para os agendamentos
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="allowSimultaneousBookings"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Agendamentos Simultâneos</FormLabel>
-                      <FormDescription>
-                        Permitir que clientes agendem mais de um serviço ao mesmo tempo
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="requireManualConfirmation"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Confirmação Manual</FormLabel>
-                      <FormDescription>
-                        Agendamentos precisam ser confirmados manualmente pela equipe
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="blockNoShowClients"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Bloqueio de Clientes Faltantes</FormLabel>
-                      <FormDescription>
-                        Bloquear automaticamente clientes que faltaram a agendamentos
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="maxFutureDays"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Limite de Dias para Agendamento Futuro</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="1" 
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Número máximo de dias à frente que os clientes podem agendar
-                    </FormDescription>
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Comunicação e Lembretes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Comunicação e Lembretes</CardTitle>
-              <CardDescription>
-                Configure as notificações e lembretes para agendamentos
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="sendEmailConfirmation"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Confirmação por Email</FormLabel>
-                      <FormDescription>
-                        Enviar email de confirmação após agendamento
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="sendReminders"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Enviar Lembretes</FormLabel>
-                      <FormDescription>
-                        Enviar lembretes antes do horário agendado
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              {form.watch("sendReminders") && (
-                <FormField
-                  control={form.control}
-                  name="reminderTimeHours"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tempo de Antecedência do Lembrete</FormLabel>
-                      <Select 
-                        onValueChange={(value) => field.onChange(Number(value))} 
-                        value={field.value.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tempo de antecedência" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="1">1 hora antes</SelectItem>
-                          <SelectItem value="2">2 horas antes</SelectItem>
-                          <SelectItem value="4">4 horas antes</SelectItem>
-                          <SelectItem value="12">12 horas antes</SelectItem>
-                          <SelectItem value="24">24 horas antes</SelectItem>
-                          <SelectItem value="48">48 horas antes</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Com quanto tempo de antecedência enviar o lembrete
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              <FormField
-                control={form.control}
-                name="sendAfterServiceMessage"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Mensagem Pós-Atendimento</FormLabel>
-                      <FormDescription>
-                        Enviar mensagem após o serviço para solicitar feedback
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              {form.watch("sendAfterServiceMessage") && (
-                <FormField
-                  control={form.control}
-                  name="afterServiceMessageHours"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tempo Após Atendimento</FormLabel>
-                      <Select 
-                        onValueChange={(value) => field.onChange(Number(value))} 
-                        value={field.value.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tempo após atendimento" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="1">1 hora depois</SelectItem>
-                          <SelectItem value="2">2 horas depois</SelectItem>
-                          <SelectItem value="4">4 horas depois</SelectItem>
-                          <SelectItem value="12">12 horas depois</SelectItem>
-                          <SelectItem value="24">24 horas depois</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Quanto tempo após o serviço enviar a mensagem
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Política de Cancelamento */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Política de Cancelamento</CardTitle>
-              <CardDescription>
-                Configure as políticas de cancelamento e taxas por não comparecimento
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="cancellationPolicyHours"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Prazo para Cancelamento</FormLabel>
-                    <Select 
-                      onValueChange={(value) => field.onChange(Number(value))} 
-                      value={field.value.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o prazo para cancelamento" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="0">Sem restrição</SelectItem>
-                        <SelectItem value="1">1 hora antes</SelectItem>
-                        <SelectItem value="2">2 horas antes</SelectItem>
-                        <SelectItem value="4">4 horas antes</SelectItem>
-                        <SelectItem value="12">12 horas antes</SelectItem>
-                        <SelectItem value="24">24 horas antes</SelectItem>
-                        <SelectItem value="48">48 horas antes</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Até quanto tempo antes o cliente pode cancelar o agendamento sem penalidade
-                    </FormDescription>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="noShowFee"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Taxa por Não Comparecimento (R$)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        step="0.01"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Valor a ser cobrado quando o cliente não comparece (0 para não cobrar)
-                    </FormDescription>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="cancellationMessage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mensagem de Cancelamento</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Mensagem exibida quando um agendamento é cancelado"
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Esta mensagem será exibida quando um agendamento for cancelado
-                    </FormDescription>
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end">
-            <Button type="submit" disabled={saving}>
-              {saving ? "Salvando..." : "Salvar Configurações"}
-            </Button>
+    <Card>
+      <CardHeader>
+        <CardTitle>Configurações de Agendamentos</CardTitle>
+        <CardDescription>
+          Configure as regras e políticas para agendamentos de serviços
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Regras de Agendamento</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="allow-multiple">Permitir agendamentos simultâneos</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Clientes podem agendar mais de um serviço ao mesmo tempo
+                  </p>
+                </div>
+                <Switch id="allow-multiple" defaultChecked />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="require-confirmation">Confirmação manual de agendamentos</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Agendamentos precisam ser confirmados pela equipe
+                  </p>
+                </div>
+                <Switch id="require-confirmation" />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="block-no-shows">Bloquear clientes faltantes</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Impedir novos agendamentos de clientes que faltaram
+                  </p>
+                </div>
+                <Switch id="block-no-shows" />
+              </div>
+              
+              <div className="space-y-1">
+                <Label htmlFor="max-future-days">Limite de dias para agendamento futuro</Label>
+                <p className="text-sm text-muted-foreground">
+                  Quantos dias no futuro os clientes podem agendar
+                </p>
+                <Select defaultValue="30">
+                  <SelectTrigger id="max-future-days">
+                    <SelectValue placeholder="Selecione o limite" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">7 dias</SelectItem>
+                    <SelectItem value="14">14 dias</SelectItem>
+                    <SelectItem value="30">30 dias</SelectItem>
+                    <SelectItem value="60">60 dias</SelectItem>
+                    <SelectItem value="90">90 dias</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
-        </form>
-      </Form>
-    </div>
+          
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Lembretes e Confirmações</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="send-confirmation">Enviar confirmação</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Enviar email de confirmação após agendamento
+                  </p>
+                </div>
+                <Switch id="send-confirmation" defaultChecked />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="send-reminder">Enviar lembretes</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Enviar lembretes antes do agendamento
+                  </p>
+                </div>
+                <Switch id="send-reminder" defaultChecked />
+              </div>
+              
+              <div className="space-y-1">
+                <Label htmlFor="reminder-time">Tempo do lembrete</Label>
+                <p className="text-sm text-muted-foreground">
+                  Quando enviar o lembrete antes do agendamento
+                </p>
+                <Select defaultValue="24">
+                  <SelectTrigger id="reminder-time">
+                    <SelectValue placeholder="Selecione o tempo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 hora antes</SelectItem>
+                    <SelectItem value="2">2 horas antes</SelectItem>
+                    <SelectItem value="12">12 horas antes</SelectItem>
+                    <SelectItem value="24">24 horas antes</SelectItem>
+                    <SelectItem value="48">48 horas antes</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-1">
+                <Label htmlFor="follow-up">Mensagem pós-atendimento</Label>
+                <p className="text-sm text-muted-foreground">
+                  Enviar mensagem após o serviço para feedback
+                </p>
+                <Select defaultValue="2">
+                  <SelectTrigger id="follow-up">
+                    <SelectValue placeholder="Selecione o tempo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Não enviar</SelectItem>
+                    <SelectItem value="1">1 hora depois</SelectItem>
+                    <SelectItem value="2">2 horas depois</SelectItem>
+                    <SelectItem value="24">24 horas depois</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <Separator />
+        
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Políticas de Cancelamento</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="cancellation-policy">Política de cancelamento</Label>
+              <Select defaultValue="24">
+                <SelectTrigger id="cancellation-policy">
+                  <SelectValue placeholder="Selecione a política" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Cancelamento a qualquer momento</SelectItem>
+                  <SelectItem value="2">Até 2 horas antes</SelectItem>
+                  <SelectItem value="12">Até 12 horas antes</SelectItem>
+                  <SelectItem value="24">Até 24 horas antes</SelectItem>
+                  <SelectItem value="48">Até 48 horas antes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="no-show-fee">Taxa por não comparecimento</Label>
+              <div className="flex items-center gap-2">
+                <div className="relative w-full">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">R$</span>
+                  <Input id="no-show-fee" type="number" className="pl-8" defaultValue="0" />
+                </div>
+                <span className="text-sm text-muted-foreground">ou</span>
+                <div className="w-20">
+                  <Input type="number" className="text-right" defaultValue="0" />
+                </div>
+                <span className="text-sm text-muted-foreground">%</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="cancellation-message">Mensagem de cancelamento</Label>
+            <Textarea 
+              id="cancellation-message" 
+              placeholder="Mensagem exibida quando um agendamento é cancelado"
+              defaultValue="Lamentamos informar que seu agendamento foi cancelado. Entre em contato conosco para mais informações."
+            />
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-end gap-2">
+        <Button variant="outline">Cancelar</Button>
+        <Button>Salvar Alterações</Button>
+      </CardFooter>
+    </Card>
   );
 };
-
-export default AppointmentsTab;

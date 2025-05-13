@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Toaster } from "sonner";
 
 const SignUp = () => {
-  const { signUp, user, loading } = useAuth();
+  const { signup, user, loading } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -40,7 +39,7 @@ const SignUp = () => {
     setIsSubmitting(true);
     
     try {
-      await signUp(email, password, name);
+      await signup(email, password, name);
       
       // After signup, navigate to index which will handle the routing
       navigate("/");

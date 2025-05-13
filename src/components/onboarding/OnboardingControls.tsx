@@ -2,7 +2,7 @@
 import React, { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { ArrowLeft, ArrowRight, Save, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,11 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { useTenant } from "@/contexts/TenantContext";
 
-interface OnboardingControlsProps {
-  isEditMode?: boolean;
-}
-
-export const OnboardingControls: React.FC<OnboardingControlsProps> = ({ isEditMode = false }) => {
+export const OnboardingControls: React.FC = () => {
   const { 
     currentStep, 
     setCurrentStep, 
@@ -30,13 +26,12 @@ export const OnboardingControls: React.FC<OnboardingControlsProps> = ({ isEditMo
     setError,
     setProcessingStep,
     setBusinessCreated,
-    onboardingMethod,
-    businessCreated
+    onboardingMethod
   } = useOnboarding();
   
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { refreshBusinessData, updateBusinessStatus } = useTenant();
+  const { refreshBusinessData } = useTenant();
   
   const handleNext = async () => {
     // Validar dados do estabelecimento antes de avançar
@@ -50,42 +45,40 @@ export const OnboardingControls: React.FC<OnboardingControlsProps> = ({ isEditMo
         return;
       }
       
-      // If not in edit mode, check slug availability
-      if (!isEditMode) {
-        setStatus("verifying");
-        setProcessingStep("Verificando disponibilidade do nome...");
+      // Check slug availability before proceeding
+      setStatus("verifying");
+      setProcessingStep("Verificando disponibilidade do nome...");
+      
+      try {
+        // Gerar um nome único adicionando um timestamp se necessário
+        const timestamp = Date.now().toString().slice(-4);
+        const modifiedName = `${businessData.name}`;
         
-        try {
-          // Gerar um nome único adicionando um timestamp se necessário
-          const timestamp = Date.now().toString().slice(-4);
-          const modifiedName = `${businessData.name}`;
-          
-          const { data, error } = await supabase.functions.invoke('check-slug-availability', {
-            body: { name: modifiedName },
-          });
-          
-          setStatus("idle");
-          
-          if (error) {
-            console.error("Error checking slug availability:", error);
-            toast.error("Erro ao verificar disponibilidade do nome");
-            return;
-          }
-          
-          if (!data.isAvailable) {
-            // Se o nome não estiver disponível, modifique-o para torná-lo único
-            const uniqueName = `${businessData.name} ${timestamp}`;
-            toast.info(`Nome modificado para '${uniqueName}' para garantir unicidade.`);
-            
-            // Atualizar o nome do negócio com o nome único
-            saveProgress();
-          }
-        } catch (err) {
-          console.error("Failed to check slug availability:", err);
+        const { data, error } = await supabase.functions.invoke('check-slug-availability', {
+          body: { name: modifiedName },
+        });
+        
+        setStatus("idle");
+        
+        if (error) {
+          console.error("Error checking slug availability:", error);
           toast.error("Erro ao verificar disponibilidade do nome");
-          setStatus("idle");
           return;
         }
+        
+        if (!data.isAvailable) {
+          // Se o nome não estiver disponível, modifique-o para torná-lo único
+          const uniqueName = `${businessData.name} ${timestamp}`;
+          toast.info(`Nome modificado para '${uniqueName}' para garantir unicidade.`);
+          
+          // Atualizar o nome do negócio com o nome único
+          saveProgress();
+        }
+      } catch (err) {
+        console.error("Failed to check slug availability:", err);
+        toast.error("Erro ao verificar disponibilidade do nome");
+        setStatus("idle");
+        return;
       }
     }
     
@@ -104,204 +97,6 @@ export const OnboardingControls: React.FC<OnboardingControlsProps> = ({ isEditMo
       setCurrentStep(currentStep - 1);
     }
   }, [currentStep, saveProgress, setCurrentStep]);
-  
-  const handleUpdateBusiness = async () => {
-    if (!isComplete()) {
-      toast.error("Preencha todas as informações obrigatórias antes de salvar");
-      return;
-    }
-    
-    if (!user || !businessCreated?.id) {
-      toast.error("Informações do negócio não encontradas. Tente novamente.");
-      return;
-    }
-    
-    // Update status to processing
-    setStatus("processing");
-    setError(null);
-    setProcessingStep("Atualizando informações do estabelecimento...");
-    
-    try {
-      // Update business information
-      const { error: businessError } = await supabase
-        .from('negocios')
-        .update({
-          nome: businessData.name,
-          email_admin: businessData.email,
-          telefone: businessData.phone,
-          endereco: businessData.address,
-          numero: businessData.number,
-          bairro: businessData.neighborhood,
-          cidade: businessData.city,
-          estado: businessData.state,
-          cep: businessData.cep,
-          atualizado_em: new Date().toISOString()
-        })
-        .eq('id', businessCreated.id);
-      
-      if (businessError) {
-        throw new Error(businessError.message || "Erro ao atualizar informações do negócio");
-      }
-      
-      // Update services
-      // First, remove all existing services
-      if (services.length > 0) {
-        const { error: deleteServicesError } = await supabase
-          .from('servicos')
-          .delete()
-          .eq('id_negocio', businessCreated.id);
-        
-        if (deleteServicesError) {
-          console.error("Error deleting existing services:", deleteServicesError);
-          // Continue anyway to try adding new services
-        }
-        
-        // Add new services
-        const servicesToInsert = services.map(service => ({
-          id_negocio: businessCreated.id,
-          nome: service.name,
-          descricao: service.description || null,
-          preco: service.price,
-          duracao: service.duration,
-          comissao_percentual: 0,
-          ativo: true
-        }));
-        
-        const { error: addServicesError } = await supabase
-          .from('servicos')
-          .insert(servicesToInsert);
-        
-        if (addServicesError) {
-          console.error("Error adding services:", addServicesError);
-          // Continue with other updates
-        }
-      }
-      
-      // Update staff if applicable
-      if (hasStaff && staffMembers.length > 0) {
-        // Remove existing staff
-        const { error: deleteStaffError } = await supabase
-          .from('funcionarios')
-          .delete()
-          .eq('id_negocio', businessCreated.id);
-        
-        if (deleteStaffError) {
-          console.error("Error deleting existing staff:", deleteStaffError);
-          // Continue anyway
-        }
-        
-        // Add new staff
-        const staffToInsert = staffMembers.map(staff => ({
-          id_negocio: businessCreated.id,
-          nome: staff.name,
-          cargo: staff.role || "Profissional",
-          email: staff.email || null,
-          telefone: staff.phone || null,
-          especializacoes: staff.specialties || [],
-          status: "ativo"
-        }));
-        
-        const { error: addStaffError } = await supabase
-          .from('funcionarios')
-          .insert(staffToInsert);
-        
-        if (addStaffError) {
-          console.error("Error adding staff:", addStaffError);
-          // Continue with other updates
-        }
-      }
-      
-      // Update business hours
-      if (Object.keys(businessHours).length > 0) {
-        // Remove existing hours
-        const { error: deleteHoursError } = await supabase
-          .from('horarios_disponibilidade')
-          .delete()
-          .eq('id_negocio', businessCreated.id);
-        
-        if (deleteHoursError) {
-          console.error("Error deleting existing hours:", deleteHoursError);
-          // Continue anyway
-        }
-        
-        // Add new hours
-        const dayMapping: Record<string, number> = {
-          monday: 1,
-          tuesday: 2,
-          wednesday: 3,
-          thursday: 4,
-          friday: 5,
-          saturday: 6,
-          sunday: 0
-        };
-        
-        const hoursToInsert = Object.entries(businessHours)
-          .filter(([_, data]) => data.open)
-          .map(([day, data]) => ({
-            id_negocio: businessCreated.id,
-            dia_semana: dayMapping[day],
-            hora_inicio: data.openTime,
-            hora_fim: data.closeTime,
-            dia_folga: false,
-            capacidade_simultanea: 1,
-            intervalo_entre_agendamentos: 0
-          }));
-        
-        const { error: addHoursError } = await supabase
-          .from('horarios_disponibilidade')
-          .insert(hoursToInsert);
-        
-        if (addHoursError) {
-          console.error("Error adding business hours:", addHoursError);
-          // Continue with other updates
-        }
-      }
-      
-      // Ensure business status is active
-      const statusUpdated = await updateBusinessStatus(businessCreated.id, "ativo");
-      if (!statusUpdated) {
-        console.warn("Failed to update business status through context, trying direct update");
-        
-        const { error: statusError } = await supabase
-          .from('negocios')
-          .update({ 
-            status: 'ativo',
-            atualizado_em: new Date().toISOString()
-          })
-          .eq('id', businessCreated.id);
-          
-        if (statusError) {
-          console.error("Error updating business status:", statusError);
-          // Try one more approach - RPC function
-          await supabase.rpc('set_business_status', {
-            business_id: businessCreated.id,
-            new_status: 'ativo'
-          });
-        }
-      }
-      
-      // Success!
-      setStatus("success");
-      setProcessingStep("Alterações salvas com sucesso!");
-      toast.success("Alterações salvas com sucesso!");
-      
-      // Clear onboarding data from localStorage
-      localStorage.removeItem('unclic-manager-onboarding');
-      
-      // Refresh business data to update contexts
-      await refreshBusinessData();
-      
-      // Redirect to dashboard after a delay
-      setTimeout(() => {
-        navigate("/dashboard", { replace: true });
-      }, 1500);
-      
-    } catch (error: any) {
-      console.error("Erro ao atualizar estabelecimento:", error);
-      setError(error.message || "Erro ao atualizar estabelecimento");
-      setStatus("error");
-    }
-  };
   
   const handleFinish = async () => {
     if (!isComplete()) {
@@ -423,7 +218,7 @@ export const OnboardingControls: React.FC<OnboardingControlsProps> = ({ isEditMo
       // Redirect to dashboard after a delay
       setTimeout(() => {
         navigate("/dashboard", { replace: true });
-      }, 1500);
+      }, 2000);
       
     } catch (error: any) {
       console.error("Erro ao configurar estabelecimento:", error);
@@ -485,7 +280,7 @@ export const OnboardingControls: React.FC<OnboardingControlsProps> = ({ isEditMo
                   // Redirect to dashboard after a delay
                   setTimeout(() => {
                     navigate("/dashboard", { replace: true });
-                  }, 1500);
+                  }, 2000);
                 } else {
                   // Business exists but setup is incomplete
                   setError("Estabelecimento criado com sucesso, mas é necessário finalizar a configuração.");
@@ -511,68 +306,37 @@ export const OnboardingControls: React.FC<OnboardingControlsProps> = ({ isEditMo
     }
   };
   
-  const handleCancel = () => {
-    if (confirm("Deseja realmente cancelar as alterações e voltar para o dashboard?")) {
-      // Clean up localStorage to avoid showing the draft next time
-      localStorage.removeItem('unclic-manager-onboarding');
-      navigate("/dashboard", { replace: true });
-    }
-  };
-  
   return (
     <div className="space-y-4 mt-8">
       <div className="flex justify-between">
-        {isEditMode ? (
-          <>
-            <Button 
-              variant="outline" 
-              onClick={handleCancel}
-            >
-              Cancelar
-            </Button>
-            
-            <LoadingButton 
-              onClick={handleUpdateBusiness}
-              isLoading={status === "processing"}
-              loadingText="Salvando..."
-              icon={<Save className="mr-2 h-4 w-4" />}
-              className="bg-primary hover:bg-primary/90"
-            >
-              Salvar Alterações
-            </LoadingButton>
-          </>
+        <Button 
+          variant="outline" 
+          onClick={handlePrevious} 
+          disabled={currentStep === 0}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+        </Button>
+        
+        {currentStep === 4 ? (
+          <LoadingButton 
+            onClick={handleFinish}
+            isLoading={status === "processing"}
+            loadingText="Finalizando..."
+            icon={<Save className="mr-2 h-4 w-4" />}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Finalizar
+          </LoadingButton>
         ) : (
-          <>
-            <Button 
-              variant="outline" 
-              onClick={handlePrevious} 
-              disabled={currentStep === 0}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-            </Button>
-            
-            {currentStep === 4 ? (
-              <LoadingButton 
-                onClick={handleFinish}
-                isLoading={status === "processing"}
-                loadingText="Finalizando..."
-                icon={<Check className="mr-2 h-4 w-4" />}
-                className="bg-primary hover:bg-primary/90"
-              >
-                Finalizar
-              </LoadingButton>
-            ) : (
-              <LoadingButton
-                onClick={handleNext}
-                isLoading={status === "verifying"}
-                loadingText="Verificando..."
-                icon={<ArrowRight className="ml-2 h-4 w-4" />}
-                className="bg-primary hover:bg-primary/90"
-              >
-                Avançar
-              </LoadingButton>
-            )}
-          </>
+          <LoadingButton
+            onClick={handleNext}
+            isLoading={status === "verifying"}
+            loadingText="Verificando..."
+            icon={<ArrowRight className="ml-2 h-4 w-4" />}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Avançar
+          </LoadingButton>
         )}
       </div>
     </div>

@@ -1,48 +1,88 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FilterPeriod } from '@/types/dashboard';
 import { useTenant } from '@/contexts/TenantContext';
-import { getDateRange, formatDateForQuery } from './utils/dateRangeUtils';
-import { processPopularServices } from './utils/serviceUtils';
-import { formatUpcomingAppointments, calculateRevenueByDay } from './utils/appointmentUtils';
 
-export type { DashboardStats } from './models/dashboardTypes';
-import { 
-  DashboardStats, 
-  AppointmentData, 
-  ServiceData, 
-  UpcomingAppointmentData 
-} from './models/dashboardTypes';
-
-const initialStats: DashboardStats = {
-  totalAppointments: 0,
-  completedAppointments: 0,
-  totalRevenue: 0,
-  newClients: 0,
-  popularServices: [],
-  upcomingAppointments: [],
-  revenueData: [],
-  retentionRate: 0,
-  newClientsCount: 0,
-  returningClientsCount: 0,
+export interface DashboardStats {
+  totalAppointments: number;
+  completedAppointments: number;
+  totalRevenue: number;
+  newClients: number;
+  popularServices: Array<{id: string, name: string, count: number}>;
+  upcomingAppointments: any[];
+  revenueData: Array<{date: string, value: number}>;
+  retentionRate: number;
+  newClientsCount: number;
+  returningClientsCount: number;
   
-  // Added properties with default values
-  clientsCount: 0,
-  todayAppointments: 0,
-  monthlyRevenue: 0,
-  monthlyServices: 0,
-  occupancyRate: 0,
-  nextAppointments: []
-};
+  // Added properties to fix TypeScript errors
+  clientsCount: number;
+  todayAppointments: number;
+  monthlyRevenue: number;
+  monthlyServices: number;
+  occupancyRate: number;
+  nextAppointments: any[];
+}
 
 export const useDashboardData = (period: FilterPeriod = 'month') => {
-  const [stats, setStats] = useState<DashboardStats>(initialStats);
+  const [stats, setStats] = useState<DashboardStats>({
+    totalAppointments: 0,
+    completedAppointments: 0,
+    totalRevenue: 0,
+    newClients: 0,
+    popularServices: [],
+    upcomingAppointments: [],
+    revenueData: [],
+    retentionRate: 0,
+    newClientsCount: 0,
+    returningClientsCount: 0,
+    
+    // Initialize added properties
+    clientsCount: 0,
+    todayAppointments: 0,
+    monthlyRevenue: 0,
+    monthlyServices: 0,
+    occupancyRate: 0,
+    nextAppointments: []
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { businessId } = useTenant();
 
+  // Helper for date ranges based on period
+  const getDateRange = useCallback(() => {
+    const today = new Date();
+    const startDate = new Date();
+    
+    switch(period) {
+      case 'today':
+        // Just today
+        return { start: today, end: today };
+      case 'week':
+        // Last 7 days
+        startDate.setDate(today.getDate() - 7);
+        return { start: startDate, end: today };
+      case 'month':
+        // Last 30 days
+        startDate.setDate(today.getDate() - 30);
+        return { start: startDate, end: today };
+      case 'quarter':
+        // Last 90 days
+        startDate.setDate(today.getDate() - 90);
+        return { start: startDate, end: today };
+      case 'year':
+        // Last 365 days
+        startDate.setDate(today.getDate() - 365);
+        return { start: startDate, end: today };
+      default:
+        // Default to month
+        startDate.setDate(today.getDate() - 30);
+        return { start: startDate, end: today };
+    }
+  }, [period]);
+
+  // Fetch dashboard data
   useEffect(() => {
     const fetchStats = async () => {
       if (!businessId) {
@@ -55,11 +95,11 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
 
       try {
         console.log('Fetching dashboard data for business ID:', businessId, 'period:', period);
-        const dateRange = getDateRange(period);
+        const dateRange = getDateRange();
         
         // Format dates for database queries
-        const startDateFormatted = formatDateForQuery(dateRange.start);
-        const endDateFormatted = formatDateForQuery(dateRange.end);
+        const startDateFormatted = dateRange.start.toISOString().split('T')[0];
+        const endDateFormatted = dateRange.end.toISOString().split('T')[0];
         
         // 1. Get appointment statistics
         const { data: appointmentsData, error: appointmentsError } = await supabase
@@ -117,43 +157,74 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
         const completedAppointments = appointmentsData?.filter(a => a.status === 'concluido').length || 0;
         const totalRevenue = appointmentsData?.reduce((sum, app) => sum + (app.valor || 0), 0) || 0;
         
-        // Process revenue data for chart
-        const revenueData = calculateRevenueByDay(appointmentsData);
+        // Calculate revenue data by day for chart
+        const revenueByDay = new Map<string, number>();
+        appointmentsData?.forEach(app => {
+          const day = app.data;
+          revenueByDay.set(day, (revenueByDay.get(day) || 0) + (app.valor || 0));
+        });
+        
+        const revenueData = Array.from(revenueByDay.entries()).map(([date, value]) => ({
+          date,
+          value
+        })).sort((a, b) => a.date.localeCompare(b.date));
         
         // Process popular services
-        const popularServices = processPopularServices(popularServicesData as ServiceData[]);
+        const serviceCountMap = new Map<string, {id: string, name: string, count: number}>();
+        popularServicesData?.forEach((app: any) => {
+          if (!app.id_servico || !app.servicos) return;
+          
+          const serviceId = app.id_servico;
+          const existing = serviceCountMap.get(serviceId);
+          
+          if (existing) {
+            existing.count += 1;
+          } else {
+            serviceCountMap.set(serviceId, {
+              id: serviceId,
+              name: app.servicos.nome || "Serviço desconhecido",
+              count: 1
+            });
+          }
+        });
         
-        // Format upcoming appointments
-        const upcomingAppointments = formatUpcomingAppointments(upcomingAppointmentsData as UpcomingAppointmentData[]);
+        const popularServices = Array.from(serviceCountMap.values())
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+          
+        // Map upcoming appointments
+        const upcomingAppointments = upcomingAppointmentsData?.map((app: any) => {
+          const clientName = app.clientes && typeof app.clientes === 'object' ? 
+            app.clientes.nome || "Cliente não identificado" : "Cliente não identificado";
+          
+          const serviceName = app.servicos && typeof app.servicos === 'object' ? 
+            app.servicos.nome || "Serviço não identificado" : "Serviço não identificado";
+          
+          const professionalName = app.funcionarios && typeof app.funcionarios === 'object' ? 
+            app.funcionarios.nome || "Profissional não identificado" : "Profissional não identificado";
+          
+          return {
+            id: app.id,
+            clientName,
+            serviceName,
+            professionalName,
+            date: `${app.data}T${app.hora_inicio}`,
+            status: app.status
+          };
+        }) || [];
         
         // Calculate retention metrics
         const retentionRate = completedAppointments > 0 ? 
           Math.round((completedAppointments / totalAppointments) * 100) : 0;
         
-        // Get total clients count
-        const { count: clientsCount, error: clientsCountError } = await supabase
-          .from('clientes')
-          .select('*', { count: 'exact', head: true })
-          .eq('id_negocio', businessId);
-        
-        if (clientsCountError) throw clientsCountError;
-        
-        // Get today's appointments
-        const { data: todayAppointmentsData, error: todayAppointmentsError } = await supabase
-          .from('agendamentos')
-          .select('id')
-          .eq('id_negocio', businessId)
-          .eq('data', new Date().toISOString().split('T')[0]);
-          
-        if (todayAppointmentsError) throw todayAppointmentsError;
-        
-        const todayAppointments = todayAppointmentsData?.length || 0;
-        
-        // Calculate new vs returning clients
+        // Simplified calculation for new vs returning clients
         const newClientsCount = newClientsData?.length || 0;
-        const returningClientsCount = Math.max(0, totalAppointments - newClientsCount);
+        const returningClientsCount = Math.max(
+          0, 
+          totalAppointments - newClientsCount
+        );
         
-        // Update stats state
+        // Update stats state with all required fields
         setStats({
           totalAppointments,
           completedAppointments,
@@ -166,12 +237,12 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           newClientsCount,
           returningClientsCount,
           
-          // Add values for the additional properties
-          clientsCount: clientsCount || 0,
-          todayAppointments,
+          // Add values for the new properties
+          clientsCount: newClientsCount + returningClientsCount,
+          todayAppointments: upcomingAppointments.length,
           monthlyRevenue: totalRevenue,
-          monthlyServices: totalAppointments,
-          occupancyRate: retentionRate, // Using retention rate as placeholder for occupancy rate
+          monthlyServices: completedAppointments,
+          occupancyRate: retentionRate, // Using retention rate as an approximation
           nextAppointments: upcomingAppointments
         });
         
@@ -185,7 +256,7 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
     };
 
     fetchStats();
-  }, [businessId, period]);
+  }, [businessId, period, getDateRange]);
 
   return { stats, loading, error };
 };

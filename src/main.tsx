@@ -2,32 +2,31 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { ThemeProvider } from "./components/theme-provider";
+import { Toaster } from "sonner";
 import App from "./App";
-import "./index.css";
-import { SessionProvider } from "./contexts/SessionContext";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider } from "./hooks/useAuth";
 import { TenantProvider } from "./contexts/TenantContext";
-import { initializeEnv } from "./lib/env";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// Initialize environment validation
-try {
-  initializeEnv();
-} catch (error) {
-  console.error("Failed to initialize environment:", error);
-  // We could show an error screen here, but for now we'll just log the error
-}
+import "./index.css";
 
-// Wrap the app in the necessary providers
+// Create a client
+const queryClient = new QueryClient();
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <BrowserRouter>
-      <SessionProvider>
-        <AuthProvider>
-          <TenantProvider>
-            <App />
-          </TenantProvider>
-        </AuthProvider>
-      </SessionProvider>
+      <ThemeProvider defaultTheme="light" storageKey="unclic-theme">
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <TenantProvider>
+              <App />
+              <Toaster position="top-right" richColors />
+            </TenantProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

@@ -19,7 +19,6 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
   const [processingStep, setProcessingStep] = useState<string | null>(null);
   const [businessCreated, setBusinessCreated] = useState<{id?: string; slug?: string} | null>(null);
-  const [isEditMode, setIsEditMode] = useState<boolean>(false);
   
   const hasLoaded = useRef(false);
   const saveTimeoutRef = useRef<number | null>(null);
@@ -54,7 +53,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   );
   
   // Persistence hook
-  const { saveProgress, loadProgress, loadBusinessData } = usePersistence(
+  const { saveProgress, loadProgress } = usePersistence(
     businessData,
     services,
     staffMembers,
@@ -88,7 +87,6 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     setError(null);
     setProcessingStep(null);
     setBusinessCreated(null);
-    setIsEditMode(false);
     
     // Reset all data
     setBusinessDataState({
@@ -108,32 +106,6 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     
     // Clear localStorage
     localStorage.removeItem('unclic-manager-onboarding');
-  };
-
-  // Function to load existing business data from the database
-  const loadExistingBusinessData = async (businessId: string): Promise<boolean> => {
-    try {
-      setStatus("loading");
-      const success = await loadBusinessData(businessId);
-      
-      if (success) {
-        setIsEditMode(true);
-        // Start at business info step instead of welcome screen
-        setCurrentStep(0);
-        setOnboardingMethod("manual");
-        setStatus("idle");
-        return true;
-      } else {
-        setError("Não foi possível carregar os dados do negócio");
-        setStatus("idle");
-        return false;
-      }
-    } catch (err: any) {
-      console.error("Error loading existing business:", err);
-      setError(err.message || "Erro ao carregar dados do negócio");
-      setStatus("idle");
-      return false;
-    }
   };
 
   // The context value object with all the state and functions
@@ -167,10 +139,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     setProcessingStep,
     resetOnboarding,
     businessCreated,
-    setBusinessCreated,
-    isEditMode,
-    setIsEditMode,
-    loadExistingBusinessData
+    setBusinessCreated
   };
 
   return (

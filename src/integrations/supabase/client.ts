@@ -1,16 +1,20 @@
-
 import { createClient } from '@supabase/supabase-js';
-import { cacheService } from '@/services/cacheService';
 
 // Obter variáveis de ambiente - usando import.meta.env ao invés de process.env para o Vite
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Criar cliente Supabase
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
 
 /**
- * Função para buscar dados com cache usando IndexedDB/localStorage
+ * Função para buscar dados com cache
  * @param cacheKey Chave única para o cache
  * @param fetchFunction Função que realiza a busca dos dados
  * @param ttlMinutes Tempo de vida do cache em minutos
@@ -20,46 +24,39 @@ export async function fetchWithCache<T>(
   fetchFunction: () => Promise<T>, 
   ttlMinutes: number = 5
 ): Promise<T> {
-  try {
-    // Verificar se há dados em cache
-    const cachedData = await cacheService.get<{data: T, timestamp: number}>(cacheKey);
-    
-    if (cachedData) {
-      const cacheAge = (Date.now() - cachedData.timestamp) / (1000 * 60); // em minutos
+  // Verificar se há dados em cache
+  const cachedData = localStorage.getItem(cacheKey);
+  
+  if (cachedData) {
+    try {
+      const { data, timestamp } = JSON.parse(cachedData);
+      const cacheAge = (Date.now() - timestamp) / (1000 * 60); // em minutos
       
       // Se o cache ainda é válido, retornar os dados
       if (cacheAge < ttlMinutes) {
-        console.log(`Usando dados em cache para ${cacheKey}, idade: ${cacheAge.toFixed(1)} minutos`);
-        return cachedData.data;
+        return data as T;
       }
-      
-      console.log(`Cache expirado para ${cacheKey}, idade: ${cacheAge.toFixed(1)} minutos`);
+    } catch (error) {
+      console.error('Erro ao processar cache:', error);
+      // Continuar e buscar dados novos se houver erro no cache
     }
-    
-    // Buscar dados novos
-    const data = await fetchFunction();
-    
-    // Armazenar em cache
-    const cacheObject = {
+  }
+  
+  // Buscar dados novos
+  const data = await fetchFunction();
+  
+  // Armazenar em cache
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify({
       data,
       timestamp: Date.now()
-    };
-    
-    // Calcular o tempo de expiração em milissegundos
-    const expirationMs = ttlMinutes * 60 * 1000;
-    
-    await cacheService.set(cacheKey, cacheObject, {
-      expiration: expirationMs,
-      // Limitar tamanho a 5MB para dados grandes
-      maxSize: 5 * 1024 * 1024
-    });
-    
-    return data;
+    }));
   } catch (error) {
-    console.error(`Erro ao buscar/armazenar em cache (${cacheKey}):`, error);
-    // Em caso de erro no cache, execute a função de busca diretamente
-    return fetchFunction();
+    console.error('Erro ao armazenar em cache:', error);
+    // Continuar mesmo se o cache falhar
   }
+  
+  return data;
 }
 
 // Função para definir o contexto do tenant
@@ -176,40 +173,4 @@ export async function getUserTenants(): Promise<{ data: Tenant[] | null, error: 
     console.error('Erro ao obter tenants do usuário:', error);
     return { data: null, error: error.message };
   }
-}
-
-// Função para invalidar o cache por chave ou prefixo
-export function invalidateCache(keyOrPrefix: string): Promise<boolean> {
-  return new Promise<boolean>((resolve) => {
-    // Se é uma chave específica, deletar diretamente
-    if (!keyOrPrefix.includes('*')) {
-      cacheService.delete(keyOrPrefix)
-        .then(() => resolve(true))
-        .catch((error) => {
-          console.error(`Erro ao invalidar cache para ${keyOrPrefix}:`, error);
-          resolve(false);
-        });
-      return;
-    }
-    
-    // Se contém wildcard *, limpar cache baseado em prefixo
-    const prefix = keyOrPrefix.replace('*', '');
-    
-    // Para invalidação baseada em prefixo, precisamos usar o clear e confiar
-    // que o CacheService lidará com isso corretamente
-    cacheService.clear()
-      .then(() => {
-        console.log(`Cache invalidado para prefixo ${prefix}`);
-        resolve(true);
-      })
-      .catch((error) => {
-        console.error(`Erro ao invalidar cache para prefixo ${prefix}:`, error);
-        resolve(false);
-      });
-  });
-}
-
-// Função para limpar todo o cache
-export function clearAllCache(): Promise<boolean> {
-  return cacheService.clear();
 }

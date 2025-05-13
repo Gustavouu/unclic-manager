@@ -35,14 +35,12 @@ interface AppointmentDialogProps {
   open: boolean;
   onClose: () => void;
   appointment: AppointmentType;
-  onDelete?: (id: string) => Promise<void>;
 }
 
 export function AppointmentDialog({ 
   open, 
   onClose, 
-  appointment,
-  onDelete
+  appointment 
 }: AppointmentDialogProps) {
   const [activeTab, setActiveTab] = useState<string>("details");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -65,11 +63,7 @@ export function AppointmentDialog({
     }
     
     try {
-      if (onDelete) {
-        await onDelete(appointment.id);
-      } else {
-        await deleteAppointment(appointment.id);
-      }
+      await deleteAppointment(appointment.id);
       toast.success("Agendamento removido com sucesso");
       onClose();
     } catch (error) {

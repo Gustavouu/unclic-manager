@@ -1,114 +1,125 @@
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { FormField } from "@/components/ui/form-field";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
+import { Button } from "@/components/ui/button";
+import { MapPin } from "lucide-react";
+import { fetchAddressByCEP } from "@/utils/addressUtils";
+import { toast } from "sonner";
+import { useState } from "react";
+import { formatPhone } from "@/utils/formUtils";
 
 interface GeneralInfoSectionProps {
+  updateField: (name: string, value: string) => void;
   getFieldValue: (name: string) => string;
   getFieldError: (name: string) => string | null;
-  updateField: (name: string, value: string) => void;
   hasFieldBeenTouched: (name: string) => boolean;
 }
 
-export const GeneralInfoSection = ({
-  getFieldValue,
-  getFieldError,
-  updateField,
-  hasFieldBeenTouched
+export const GeneralInfoSection = ({ 
+  updateField, 
+  getFieldValue, 
+  getFieldError, 
+  hasFieldBeenTouched 
 }: GeneralInfoSectionProps) => {
-  const { businessData } = useCurrentBusiness();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  
-  // Sincronizar os valores iniciais com os dados do negócio
-  useEffect(() => {
-    if (businessData) {
-      setName(businessData.nome || "");
-      setEmail(businessData.email_admin || "");
-      setPhone(businessData.telefone || "");
-      setAddress(businessData.endereco || "");
+  const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+
+  const handleFetchAddress = async () => {
+    const cep = prompt("Digite o CEP:");
+    if (!cep) return;
+
+    setIsFetchingAddress(true);
+    try {
+      const addressData = await fetchAddressByCEP(cep);
       
-      // Atualizar os campos do formulário com os dados do negócio
-      updateField("businessName", businessData.nome || "");
-      updateField("businessEmail", businessData.email_admin || "");
-      updateField("businessPhone", businessData.telefone || "");
-      updateField("businessAddress", businessData.endereco || "");
+      if (addressData.error) {
+        toast.error(addressData.error);
+        return;
+      }
+      
+      if (addressData.street) {
+        const fullAddress = `${addressData.street}, ${addressData.neighborhood || ''} - ${addressData.city || ''}, ${addressData.state || ''}`;
+        updateField("businessAddress", fullAddress);
+        toast.success("Endereço preenchido com sucesso!");
+      }
+    } catch (error) {
+      toast.error("Erro ao buscar endereço pelo CEP");
+    } finally {
+      setIsFetchingAddress(false);
     }
-  }, [businessData]);
-  
-  const hasError = (fieldName: string) => {
-    return getFieldError(fieldName) && hasFieldBeenTouched(fieldName);
   };
-  
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedPhone = formatPhone(e.target.value);
+    updateField("businessPhone", formattedPhone);
+  };
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <h3 className="text-lg font-medium">Informações Gerais</h3>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="businessName">
-            Nome do Negócio <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="businessName"
-            placeholder="Nome da sua empresa"
-            value={getFieldValue("businessName")}
-            onChange={(e) => updateField("businessName", e.target.value)}
-            className={hasError("businessName") ? "border-red-500" : ""}
-          />
-          {hasError("businessName") && (
-            <p className="text-sm text-red-500">{getFieldError("businessName")}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="businessEmail">
-            Email <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="businessEmail"
-            type="email"
-            placeholder="Email principal de contato"
-            value={getFieldValue("businessEmail")}
-            onChange={(e) => updateField("businessEmail", e.target.value)}
-            className={hasError("businessEmail") ? "border-red-500" : ""}
-          />
-          {hasError("businessEmail") && (
-            <p className="text-sm text-red-500">{getFieldError("businessEmail")}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="businessPhone">
-            Telefone <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="businessPhone"
-            placeholder="(XX) XXXXX-XXXX"
-            value={getFieldValue("businessPhone")}
-            onChange={(e) => updateField("businessPhone", e.target.value)}
-            className={hasError("businessPhone") ? "border-red-500" : ""}
-          />
-          {hasError("businessPhone") && (
-            <p className="text-sm text-red-500">{getFieldError("businessPhone")}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="businessAddress">Endereço</Label>
-          <Input
-            id="businessAddress"
-            placeholder="Endereço completo"
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Informações Gerais</h3>
+      
+      <FormField
+        id="business-name"
+        label="Nome do Negócio"
+        value={getFieldValue("businessName")}
+        onChange={(value) => updateField("businessName", value)}
+        error={getFieldError("businessName")}
+        touched={hasFieldBeenTouched("businessName")}
+        required
+      />
+      
+      <FormField
+        id="business-email"
+        label="Email de Contato"
+        type="email"
+        value={getFieldValue("businessEmail")}
+        onChange={(value) => updateField("businessEmail", value)}
+        error={getFieldError("businessEmail")}
+        touched={hasFieldBeenTouched("businessEmail")}
+        required
+      />
+      
+      <div className="space-y-2">
+        <Label htmlFor="business-phone" className={hasFieldBeenTouched("businessPhone") && getFieldError("businessPhone") ? "text-destructive" : ""}>
+          Telefone<span className="text-destructive ml-1">*</span>
+        </Label>
+        <Input 
+          id="business-phone" 
+          type="tel"
+          value={getFieldValue("businessPhone")}
+          onChange={handlePhoneChange}
+          placeholder="(00) 00000-0000"
+          className={hasFieldBeenTouched("businessPhone") && getFieldError("businessPhone") ? "border-destructive" : ""}
+        />
+        {getFieldError("businessPhone") && hasFieldBeenTouched("businessPhone") && (
+          <p className="text-sm font-medium text-destructive">{getFieldError("businessPhone")}</p>
+        )}
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="business-address">Endereço</Label>
+        <div className="flex items-center gap-2">
+          <Input 
+            id="business-address" 
+            type="text" 
             value={getFieldValue("businessAddress")}
             onChange={(e) => updateField("businessAddress", e.target.value)}
+            className="flex-1" 
           />
+          <Button 
+            variant="outline" 
+            size="icon" 
+            type="button" 
+            onClick={handleFetchAddress}
+            disabled={isFetchingAddress}
+          >
+            <MapPin className="h-4 w-4" />
+          </Button>
         </div>
-      </CardContent>
-    </Card>
+        {getFieldError("businessAddress") && hasFieldBeenTouched("businessAddress") && (
+          <p className="text-sm font-medium text-destructive">{getFieldError("businessAddress")}</p>
+        )}
+      </div>
+    </div>
   );
 };

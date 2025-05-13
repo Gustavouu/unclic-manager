@@ -6,14 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { toast } from "sonner";
-import { useBusinessConfig } from "@/hooks/business/useBusinessConfig";
 
 export const HoursTab = () => {
-  const { businessHours, saving, updateBusinessHours, saveBusinessHours, bufferTime, minAdvanceTime, saveConfig } = useBusinessConfig();
+  const { businessHours, updateBusinessHours, saveProgress } = useOnboarding();
   const [isEditing, setIsEditing] = useState(false);
-  const [localBufferTime, setLocalBufferTime] = useState(bufferTime.toString());
-  const [localMinAdvanceTime, setLocalMinAdvanceTime] = useState(minAdvanceTime.toString());
   
   const days = [
     { key: "monday", label: "Segunda-feira" },
@@ -34,54 +32,21 @@ export const HoursTab = () => {
   ];
   
   const handleToggleDay = (day: string, checked: boolean) => {
-    if (!isEditing) return;
     updateBusinessHours(day, { open: checked });
   };
   
   const handleTimeChange = (day: string, field: 'openTime' | 'closeTime', value: string) => {
-    if (!isEditing) return;
     updateBusinessHours(day, { [field]: value });
   };
   
-  const handleBufferTimeChange = (value: string) => {
-    setLocalBufferTime(value);
-  };
-  
-  const handleMinAdvanceTimeChange = (value: string) => {
-    setLocalMinAdvanceTime(value);
-  };
-  
-  const handleSaveChanges = async () => {
-    try {
-      // Salvar os horários de funcionamento
-      const hoursSuccess = await saveBusinessHours();
-      
-      // Salvar os ajustes adicionais
-      const bufferTimeValue = parseInt(localBufferTime) || 0;
-      const minAdvanceTimeValue = parseInt(localMinAdvanceTime) || 0;
-      
-      const configSuccess = await saveConfig({
-        bufferTime: bufferTimeValue,
-        minAdvanceTime: minAdvanceTimeValue,
-      });
-      
-      if (hoursSuccess && configSuccess) {
-        toast.success("Todas as configurações de horário foram salvas com sucesso");
-        setIsEditing(false);
-      }
-    } catch (error) {
-      console.error("Erro ao salvar configurações:", error);
-      toast.error("Ocorreu um erro ao salvar as configurações de horário");
-    }
+  const handleSaveChanges = () => {
+    saveProgress();
+    toast.success("Horários salvos com sucesso!");
+    setIsEditing(false);
   };
   
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
-    if (!isEditing) {
-      // Ao entrar no modo de edição, atualizar as variáveis locais
-      setLocalBufferTime(bufferTime.toString());
-      setLocalMinAdvanceTime(minAdvanceTime.toString());
-    }
   };
 
   return (
@@ -185,46 +150,33 @@ export const HoursTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="break-time">Tempo de Intervalo</Label>
-              <Select value={localBufferTime} onValueChange={handleBufferTimeChange} disabled={!isEditing}>
+              <Select defaultValue="0" disabled={!isEditing}>
                 <SelectTrigger id="break-time">
                   <SelectValue placeholder="Selecione o tempo" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="0">Sem Intervalo</SelectItem>
-                  <SelectItem value="5">5 minutos</SelectItem>
-                  <SelectItem value="10">10 minutos</SelectItem>
                   <SelectItem value="15">15 minutos</SelectItem>
                   <SelectItem value="30">30 minutos</SelectItem>
                   <SelectItem value="45">45 minutos</SelectItem>
                   <SelectItem value="60">1 hora</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Intervalo entre agendamentos para preparação
-              </p>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="min-advance-time">Antecedência Mínima</Label>
-              <Select value={localMinAdvanceTime} onValueChange={handleMinAdvanceTimeChange} disabled={!isEditing}>
-                <SelectTrigger id="min-advance-time">
+              <Label htmlFor="buffer-time">Tempo de Preparação</Label>
+              <Select defaultValue="0" disabled={!isEditing}>
+                <SelectTrigger id="buffer-time">
                   <SelectValue placeholder="Selecione o tempo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0">Sem Antecedência</SelectItem>
+                  <SelectItem value="0">Sem Preparação</SelectItem>
+                  <SelectItem value="5">5 minutos</SelectItem>
+                  <SelectItem value="10">10 minutos</SelectItem>
                   <SelectItem value="15">15 minutos</SelectItem>
-                  <SelectItem value="30">30 minutos</SelectItem>
-                  <SelectItem value="60">1 hora</SelectItem>
-                  <SelectItem value="120">2 horas</SelectItem>
-                  <SelectItem value="180">3 horas</SelectItem>
-                  <SelectItem value="360">6 horas</SelectItem>
-                  <SelectItem value="720">12 horas</SelectItem>
-                  <SelectItem value="1440">1 dia</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Tempo mínimo para agendamento
-              </p>
             </div>
           </div>
         </div>
@@ -233,9 +185,7 @@ export const HoursTab = () => {
         {isEditing && (
           <>
             <Button variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
-            <Button onClick={handleSaveChanges} disabled={saving}>
-              {saving ? "Salvando..." : "Salvar Alterações"}
-            </Button>
+            <Button onClick={handleSaveChanges}>Salvar Alterações</Button>
           </>
         )}
       </CardFooter>

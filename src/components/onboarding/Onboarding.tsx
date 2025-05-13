@@ -13,46 +13,25 @@ import { OnboardingHeader } from "./OnboardingHeader";
 import { OnboardingControls } from "./OnboardingControls";
 import { WelcomeScreen } from "./welcome/WelcomeScreen";
 import { OnboardingProcessStatus } from "./status/OnboardingProcessStatus";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info } from "lucide-react";
 
-interface OnboardingProps {
-  hasExistingBusiness?: boolean;
-  businessId?: string | null;
-}
-
-export const Onboarding: React.FC<OnboardingProps> = ({ hasExistingBusiness = false, businessId = null }) => {
+export const Onboarding = () => {
   const { 
     currentStep, 
     loadProgress, 
     saveProgress, 
     onboardingMethod,
     status,
-    error,
-    isEditMode,
-    loadExistingBusinessData,
-    setIsEditMode
+    error
   } = useOnboarding();
 
-  // Load data - either from localStorage or from database for existing business
+  // Load saved data when component mounts
   useEffect(() => {
-    const initData = async () => {
-      // Check if we're editing an existing business
-      if (hasExistingBusiness && businessId) {
-        // Try to load data from the database first
-        await loadExistingBusinessData(businessId);
-      } else {
-        // Try to load from localStorage for new business creation
-        loadProgress();
-      }
-    };
-    
     const timer = setTimeout(() => {
-      initData();
+      loadProgress();
     }, 100);
-    
     return () => clearTimeout(timer);
-  }, [hasExistingBusiness, businessId, loadProgress, loadExistingBusinessData]);
+    // This effect should run only once when component mounts
+  }, [loadProgress]);
 
   // Auto-save data when steps change
   useEffect(() => {
@@ -70,7 +49,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ hasExistingBusiness = fa
       <div className="container max-w-5xl mx-auto py-8 px-4">
         <Card>
           <CardContent className="p-6">
-            <WelcomeScreen isEditMode={hasExistingBusiness} />
+            <WelcomeScreen />
           </CardContent>
         </Card>
       </div>
@@ -93,18 +72,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ hasExistingBusiness = fa
   return (
     <div className="container max-w-5xl mx-auto py-8 px-4">
       <Card>
-        {isEditMode && (
-          <div className="px-6 pt-6">
-            <Alert className="mb-4 bg-blue-50 border-blue-200">
-              <Info className="h-4 w-4 text-blue-500" />
-              <AlertTitle>Modo de Edição</AlertTitle>
-              <AlertDescription>
-                Você está editando as informações do seu negócio existente. As alterações serão salvas automaticamente.
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
-        <OnboardingHeader isEditMode={isEditMode} />
+        <OnboardingHeader />
         <CardContent className="p-6">
           <OnboardingSteps />
           
@@ -127,12 +95,12 @@ export const Onboarding: React.FC<OnboardingProps> = ({ hasExistingBusiness = fa
               </TabsContent>
               
               <TabsContent value="4" className="mt-0">
-                <SummaryStep isEditMode={isEditMode} />
+                <SummaryStep />
               </TabsContent>
             </Tabs>
           </div>
           
-          <OnboardingControls isEditMode={isEditMode} />
+          <OnboardingControls />
         </CardContent>
       </Card>
     </div>

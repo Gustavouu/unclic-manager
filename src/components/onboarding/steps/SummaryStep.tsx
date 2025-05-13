@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,11 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
-interface SummaryStepProps {
-  isEditMode?: boolean;
-}
-
-export const SummaryStep: React.FC<SummaryStepProps> = ({ isEditMode = false }) => {
+export const SummaryStep: React.FC = () => {
   const { businessData, services, staffMembers, businessHours, hasStaff, isComplete } = useOnboarding();
   
   // Check if each step is complete
@@ -48,16 +43,14 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ isEditMode = false }) 
   
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-medium">
-        {isEditMode ? "Revisão das Alterações" : "Revisão Final"}
-      </h3>
+      <h3 className="text-lg font-medium">Revisão Final</h3>
       
       {!isComplete() && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Informações Incompletas</AlertTitle>
           <AlertDescription>
-            Existem informações obrigatórias que ainda não foram preenchidas. Revise os itens destacados abaixo antes de {isEditMode ? "salvar" : "finalizar"}.
+            Existem informações obrigatórias que ainda não foram preenchidas. Revise os itens destacados abaixo antes de finalizar.
           </AlertDescription>
         </Alert>
       )}
@@ -169,11 +162,10 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ isEditMode = false }) 
       {isComplete() && (
         <Alert>
           <CheckCircle className="h-4 w-4" />
-          <AlertTitle>{isEditMode ? "Tudo Pronto para Salvar!" : "Tudo Pronto!"}</AlertTitle>
+          <AlertTitle>Tudo Pronto!</AlertTitle>
           <AlertDescription>
-            {isEditMode 
-              ? "Todas as informações foram revisadas e estão prontas para serem salvas. Clique em 'Salvar Alterações' para atualizar as configurações do seu negócio."
-              : "Todas as informações básicas foram preenchidas. Você pode finalizar o processo de configuração. Você poderá ajustar essas configurações posteriormente nas configurações do sistema."}
+            Todas as informações básicas foram preenchidas. Você pode finalizar o processo de configuração. 
+            Você poderá ajustar essas configurações posteriormente nas configurações do sistema.
           </AlertDescription>
         </Alert>
       )}

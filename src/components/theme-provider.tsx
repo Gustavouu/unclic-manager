@@ -1,6 +1,5 @@
 
-import * as React from "react";
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "dark" | "light" | "system";
 
@@ -20,17 +19,7 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 };
 
-export const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
-
-// Export useTheme hook for components to access theme context
-export const useTheme = (): ThemeProviderState => {
-  const context = React.useContext(ThemeProviderContext);
-  
-  if (context === undefined)
-    throw new Error("useTheme must be used within a ThemeProvider");
-    
-  return context;
-};
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -74,3 +63,12 @@ export function ThemeProvider({
     </ThemeProviderContext.Provider>
   );
 }
+
+export const useTheme = () => {
+  const context = useContext(ThemeProviderContext);
+  
+  if (context === undefined)
+    throw new Error("useTheme must be used within a ThemeProvider");
+  
+  return context;
+};

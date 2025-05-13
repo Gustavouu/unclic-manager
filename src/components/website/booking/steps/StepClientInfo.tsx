@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,7 +6,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useClients, ClienteInput } from "@/hooks/useClients";
+import { useClients } from "@/hooks/useClients";
 import { BookingData } from "../types";
 import { toast } from "sonner";
 
@@ -75,13 +76,11 @@ export function StepClientInfo({ bookingData, onUpdateBookingData, onNext, onBac
       if (!bookingData.clientId) {
         // Create new client if not found
         setIsCreating(true);
-        const clientData: ClienteInput = {
+        const newClient = await createClient({
           nome: data.nome,
           email: data.email,
           telefone: data.telefone
-        };
-        
-        const newClient = await createClient(clientData);
+        });
 
         if (newClient) {
           onUpdateBookingData({

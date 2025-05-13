@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,14 +15,14 @@ import { LogOut, Settings, User } from "lucide-react";
 
 export function UserDropdown() {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
       // Use the logout function from auth context
-      await signOut();
+      await logout();
       // Navigate to login
       navigate("/login");
     } catch (error) {
@@ -31,20 +32,26 @@ export function UserDropdown() {
     }
   };
 
-  // Get user name from user metadata
+  // Helper function to get user name from user object
   const getUserName = () => {
-    // Check if user has name in user_metadata
-    if (user?.user_metadata?.name) {
-      return user.user_metadata.name;
-    }
-    // Otherwise use email without domain
-    if (user?.email) {
-      return user.email.split('@')[0];
-    }
-    return "UN";
+    if (!user) return "Usuário";
+    // Check user.user_metadata first, then raw_user_metadata, then fall back to email
+    return user.user_metadata?.name || 
+           user.user_metadata?.full_name || 
+           (user as any).name ||
+           user.email?.split('@')[0] || 
+           "Usuário";
   };
-
-  const userName = getUserName();
+  
+  const getInitials = (name?: string) => {
+    if (!name) return "UN";
+    return name
+      .split(" ")
+      .map(n => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
+  };
 
   return (
     <div className="mt-auto border-t">
@@ -53,11 +60,11 @@ export function UserDropdown() {
           <button className="flex h-14 w-full items-center p-3 text-left transition-colors hover:bg-accent/50 focus:outline-none">
             <Avatar className="mr-2 h-8 w-8">
               <AvatarImage src="/images/barber-avatar.png" alt="Avatar" />
-              <AvatarFallback>{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarFallback>{getInitials(getUserName())}</AvatarFallback>
             </Avatar>
             <span className="flex-1 overflow-hidden">
               <span className="block truncate font-medium">
-                {userName}
+                {getUserName()}
               </span>
               <span className="block truncate text-xs text-muted-foreground">
                 {user?.email || ""}

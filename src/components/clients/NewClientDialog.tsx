@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { useClients, ClienteInput } from "@/hooks/useClients";
+import { useClients } from "@/hooks/useClients";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,21 +9,20 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { handleApiError, handleFormErrors } from '@/utils/errorHandler';
-import { sanitizeFormData } from '@/utils/sanitize';
 import * as z from 'zod';
+import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/contexts/TenantContext';
+import { ClientFormData } from '@/types/client';
+import { formatPhoneNumber } from '@/services/client/clientUtils';
 
+// Schema for client form validation
 const clientSchema = z.object({
-  nome: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres' })
-    .max(100, { message: 'O nome deve ter no máximo 100 caracteres' }),
+  nome: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres' }),
   email: z.string().email({ message: 'Email inválido' }).optional().or(z.literal('')),
   telefone: z.string().optional().or(z.literal('')),
   cidade: z.string().optional().or(z.literal('')),
   estado: z.string().optional().or(z.literal('')),
 });
-
-type FormData = z.infer<typeof clientSchema>;
 
 interface NewClientDialogProps {
   onClose: () => void;
@@ -31,11 +30,13 @@ interface NewClientDialogProps {
 }
 
 export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogProps) => {
-  const { createClient } = useClients();
-  const { currentBusiness } = useTenant();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { createClient, isSubmitting, error } = useClients(onClientCreated);
+  const [authChecked, setAuthChecked] = useState(false);
+  const { user } = useAuth();
+  const { businessId } = useTenant();
   
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  // Set up the form with validation
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       nome: '',
@@ -46,40 +47,40 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
     }
   });
   
-  const onSubmit = async (data: FormData) => {
+  // Check auth status when component mounts
+  useEffect(() => {
+    setAuthChecked(true);
+  }, [user, businessId]);
+  
+  // Format phone number as user types
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    let formattedPhone = '';
+    
+    if (value.length <= 2) {
+      formattedPhone = value;
+    } else if (value.length <= 6) {
+      formattedPhone = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+    } else if (value.length <= 10) {
+      formattedPhone = `(${value.slice(0, 2)}) ${value.slice(2, 6)}-${value.slice(6)}`;
+    } else {
+      formattedPhone = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7, 11)}`;
+    }
+    
+    setValue('telefone', formattedPhone);
+  };
+  
+  const onSubmit = async (data: ClientFormData) => {
     try {
-      setIsSubmitting(true);
       console.log("Submitting client data:", data);
       
-      // Sanitizar os dados do formulário
-      const sanitizedData = sanitizeFormData(data);
+      const newClient = await createClient(data);
       
-      if (!currentBusiness?.id) {
-        throw new Error('ID do negócio não disponível');
+      if (newClient) {
+        onClose();
       }
-      
-      // Ensure all required fields are present with proper types
-      // Use the expected property names as defined in ClienteInput type
-      const clientData: ClienteInput = {
-        nome: sanitizedData.nome,
-        email: sanitizedData.email || undefined,
-        telefone: sanitizedData.telefone || undefined,
-        cidade: sanitizedData.cidade || undefined,
-        estado: sanitizedData.estado || undefined,
-      };
-      
-      const newClient = await createClient(clientData);
-      
-      if (newClient && onClientCreated) {
-        onClientCreated(newClient);
-        toast.success("Cliente criado com sucesso!");
-      }
-      
-      onClose();
-    } catch (error) {
-      handleApiError(error, "Erro ao criar cliente");
-    } finally {
-      setIsSubmitting(false);
+    } catch (error: any) {
+      console.error("Error in client creation:", error);
     }
   };
 
@@ -90,6 +91,24 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
           <DialogTitle>Novo Cliente</DialogTitle>
         </DialogHeader>
         
+        {!businessId && (
+          <div className="bg-yellow-100 p-3 rounded-md mb-4">
+            <p className="text-yellow-800">Aviso: ID do negócio não disponível. Você precisa estar vinculado a um negócio.</p>
+          </div>
+        )}
+        
+        {!user && authChecked && (
+          <div className="bg-red-100 p-3 rounded-md mb-4">
+            <p className="text-red-800">Aviso: Você precisa estar autenticado para criar clientes.</p>
+          </div>
+        )}
+        
+        {error && (
+          <div className="bg-red-100 p-3 rounded-md mb-4">
+            <p className="text-red-800">Erro: {error}</p>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
           <div className="space-y-4">
             <div className="grid w-full gap-1.5">
@@ -98,7 +117,7 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
                 id="nome" 
                 {...register('nome')}
                 placeholder="Nome completo do cliente" 
-                aria-invalid={errors.nome ? "true" : "false"}
+                className={errors.nome ? "border-red-500" : ""}
               />
               {errors.nome && (
                 <p className="text-sm text-red-500">{errors.nome.message}</p>
@@ -112,7 +131,7 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
                 type="email"
                 {...register('email')}
                 placeholder="email@exemplo.com" 
-                aria-invalid={errors.email ? "true" : "false"}
+                className={errors.email ? "border-red-500" : ""}
               />
               {errors.email && (
                 <p className="text-sm text-red-500">{errors.email.message}</p>
@@ -125,7 +144,8 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
                 id="telefone"
                 {...register('telefone')}
                 placeholder="(00) 00000-0000" 
-                aria-invalid={errors.telefone ? "true" : "false"}
+                className={errors.telefone ? "border-red-500" : ""}
+                onChange={handlePhoneChange}
               />
               {errors.telefone && (
                 <p className="text-sm text-red-500">{errors.telefone.message}</p>
@@ -139,7 +159,7 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
                   id="cidade"
                   {...register('cidade')}
                   placeholder="Cidade" 
-                  aria-invalid={errors.cidade ? "true" : "false"}
+                  className={errors.cidade ? "border-red-500" : ""}
                 />
                 {errors.cidade && (
                   <p className="text-sm text-red-500">{errors.cidade.message}</p>
@@ -152,7 +172,7 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
                   id="estado"
                   {...register('estado')}
                   placeholder="Estado" 
-                  aria-invalid={errors.estado ? "true" : "false"}
+                  className={errors.estado ? "border-red-500" : ""}
                 />
                 {errors.estado && (
                   <p className="text-sm text-red-500">{errors.estado.message}</p>
@@ -163,7 +183,11 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
           
           <DialogFooter>
             <Button variant="outline" type="button" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || !businessId || !user}
+              className="relative"
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

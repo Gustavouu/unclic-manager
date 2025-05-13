@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { ClientsHeader } from "@/components/clients/ClientsHeader";
 import { ClientsTable } from "@/components/clients/ClientsTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useClients, Client } from "@/hooks/useClients";
+import { useClients } from "@/hooks/useClients";
 import { ClientsFiltersSheet } from "@/components/clients/ClientsFiltersSheet";
 import { ClientsFilters } from "@/components/clients/ClientsFilters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,9 +11,9 @@ import { StatsCard } from "@/components/common/StatsCard";
 import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
 
 const Clients = () => {
-  const { clients, loading } = useClients();
+  const { clients, isLoading } = useClients();
   const [showFilters, setShowFilters] = useState(false);
-  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
+  const [filteredClients, setFilteredClients] = useState(clients);
   const [activeTab, setActiveTab] = useState('all');
 
   const toggleFilters = () => {
@@ -114,7 +113,7 @@ const Clients = () => {
                 <div className="flex-1">
                   <ClientsTable 
                     clients={filteredClients} 
-                    isLoading={loading} 
+                    isLoading={isLoading} 
                     showFiltersButton
                     onToggleFilters={toggleFilters}
                   />
@@ -135,7 +134,7 @@ const Clients = () => {
                 <div className="flex-1">
                   <ClientsTable 
                     clients={clientsForActiveTab} 
-                    isLoading={loading} 
+                    isLoading={isLoading} 
                     showFiltersButton
                     onToggleFilters={toggleFilters}
                   />
@@ -156,7 +155,7 @@ const Clients = () => {
                 <div className="flex-1">
                   <ClientsTable 
                     clients={clientsForActiveTab} 
-                    isLoading={loading} 
+                    isLoading={isLoading} 
                     showFiltersButton
                     onToggleFilters={toggleFilters}
                   />

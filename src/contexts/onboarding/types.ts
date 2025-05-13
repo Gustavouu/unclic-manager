@@ -1,4 +1,3 @@
-
 // Types for the onboarding context
 
 // Business data types
@@ -96,7 +95,4 @@ export interface OnboardingContextType {
   resetOnboarding: () => void;
   businessCreated: {id?: string; slug?: string} | null;
   setBusinessCreated: (data: {id?: string; slug?: string} | null) => void;
-  isEditMode: boolean;
-  setIsEditMode: (isEditMode: boolean) => void;
-  loadExistingBusinessData: (businessId: string) => Promise<boolean>;
 }

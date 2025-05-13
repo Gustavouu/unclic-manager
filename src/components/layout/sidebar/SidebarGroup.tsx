@@ -1,20 +1,19 @@
 
-import { cn } from "@/lib/utils";
+import * as React from "react";
 
-interface SidebarGroupProps {
-  title?: string;
-  children: React.ReactNode;
+interface SidebarGroupProps extends React.HTMLAttributes<HTMLElement> {
+  title: string;
 }
 
 export function SidebarGroup({ title, children }: SidebarGroupProps) {
   return (
-    <div className="py-2">
-      {title && (
-        <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground">
-          {title}
-        </h2>
-      )}
-      {children}
+    <div className="py-4 first:pt-0">
+      <div className="mb-2 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        {title}
+      </div>
+      <div className="space-y-1">
+        {children}
+      </div>
     </div>
   );
 }

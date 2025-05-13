@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServicesTable } from "@/components/services/ServicesTable";
 import { StatsCard } from "@/components/common/StatsCard";
+import { services as initialServices, ServiceData } from "@/components/services/servicesData";
 import { useToast } from "@/hooks/use-toast";
 import { useUserPermissions } from "@/components/hooks/useUserPermissions";
 import { LoadingState } from "@/hooks/use-loading-state";
@@ -10,124 +10,84 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Scissors, Calendar, BadgeDollarSign, Bookmark } from "lucide-react";
 import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
 import { ServicesHeader } from "@/components/services/ServicesHeader";
-import { useServices, Service } from "@/hooks/useServices";
-
-// Map database service to front-end ServiceData format
-const mapServiceToServiceData = (service: Service) => {
-  return {
-    id: service.id,
-    name: service.name || service.nome, // Use name or nome based on what's available
-    duration: service.duracao,
-    price: service.preco,
-    category: "Geral", // Default category, can be enhanced with actual categories
-    isPopular: false, // These could be dynamically set based on appointments data
-    isFeatured: false,
-    isActive: service.ativo,
-    description: service.descricao
-  };
-};
 
 const Services = () => {
-  const { services: dbServices, isLoading, error, createService, updateService, deleteService } = useServices();
-  const [filteredServices, setFilteredServices] = useState<any[]>([]);
+  const [services, setServices] = useState<ServiceData[]>([]);
+  const [filteredServices, setFilteredServices] = useState<ServiceData[]>([]);
   const [loadingState, setLoadingState] = useState<LoadingState>('loading');
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<string>('all');
   const { toast } = useToast();
   const { canAccess } = useUserPermissions();
 
-  // Transform database services to the format expected by components
-  const services = dbServices.map(mapServiceToServiceData);
-  
-  // Update loading state based on useServices hook
   useEffect(() => {
-    if (isLoading) {
+    // Simular chamada à API
+    const fetchServices = async () => {
       setLoadingState('loading');
-    } else if (error) {
-      setLoadingState('error');
-    } else {
-      setLoadingState('success');
-      setFilteredServices(applyFilters(services, searchQuery, activeTab));
-    }
-  }, [isLoading, error, services, searchQuery, activeTab]);
+      try {
+        // Em produção, isso seria uma chamada à API real
+        // const { data, error } = await supabase.from('services').select('*');
+        
+        // Simular atraso de rede
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        setServices(initialServices);
+        setFilteredServices(initialServices);
+        setLoadingState('success');
+      } catch (error: any) {
+        console.error("Erro ao buscar serviços:", error);
+        setError(error.message || "Erro ao carregar os serviços");
+        setLoadingState('error');
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os serviços. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    fetchServices();
+  }, [toast]);
 
-  const handleServiceCreated = async (newService: any) => {
-    try {
-      // Format the service for the database
-      const dbService = {
-        name: newService.name, // Add name property required by Service interface
-        nome: newService.name,
-        descricao: newService.description,
-        preco: parseFloat(newService.price),
-        duracao: parseInt(newService.duration),
-        ativo: true,
-        imagem_url: newService.image
-      };
-      
-      await createService(dbService);
-      
-      toast({
-        title: "Serviço criado",
-        description: `O serviço "${newService.name}" foi criado com sucesso.`,
-      });
-    } catch (error: any) {
-      console.error("Error creating service:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível criar o serviço. " + (error.message || ""),
-        variant: "destructive",
-      });
-    }
+  const handleServiceCreated = (newService: ServiceData) => {
+    const updatedServices = [...services, newService];
+    setServices(updatedServices);
+    setFilteredServices(applyFilters(updatedServices, searchQuery, activeTab));
+    
+    toast({
+      title: "Serviço criado",
+      description: `O serviço "${newService.name}" foi criado com sucesso.`,
+    });
   };
 
-  const handleServiceUpdated = async (updatedService: any) => {
-    try {
-      // Format the service for the database
-      const dbService = {
-        name: updatedService.name, // Add name property required by Service interface
-        nome: updatedService.name,
-        descricao: updatedService.description,
-        preco: parseFloat(updatedService.price),
-        duracao: parseInt(updatedService.duration),
-        ativo: updatedService.isActive !== false
-      };
-      
-      await updateService(updatedService.id, dbService);
-      
-      toast({
-        title: "Serviço atualizado",
-        description: `O serviço "${updatedService.name}" foi atualizado com sucesso.`,
-      });
-    } catch (error: any) {
-      console.error("Error updating service:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o serviço. " + (error.message || ""),
-        variant: "destructive",
-      });
-    }
+  const handleServiceUpdated = (updatedService: ServiceData) => {
+    const updatedServices = services.map(service => 
+      service.id === updatedService.id ? updatedService : service
+    );
+    
+    setServices(updatedServices);
+    setFilteredServices(applyFilters(updatedServices, searchQuery, activeTab));
+    
+    toast({
+      title: "Serviço atualizado",
+      description: `O serviço "${updatedService.name}" foi atualizado com sucesso.`,
+    });
   };
 
-  const handleServiceDeleted = async (serviceId: string) => {
-    try {
-      const serviceToDelete = services.find(service => service.id === serviceId);
-      
-      await deleteService(serviceId);
-      
-      toast({
-        title: "Serviço removido",
-        description: serviceToDelete 
-          ? `O serviço "${serviceToDelete.name}" foi removido com sucesso.` 
-          : "O serviço foi removido com sucesso.",
-      });
-    } catch (error: any) {
-      console.error("Error deleting service:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível remover o serviço. " + (error.message || ""),
-        variant: "destructive",
-      });
-    }
+  const handleServiceDeleted = (serviceId: string) => {
+    const serviceToDelete = services.find(service => service.id === serviceId);
+    const updatedServices = services.filter(service => service.id !== serviceId);
+    
+    setServices(updatedServices);
+    setFilteredServices(applyFilters(updatedServices, searchQuery, activeTab));
+    
+    toast({
+      title: "Serviço removido",
+      description: serviceToDelete 
+        ? `O serviço "${serviceToDelete.name}" foi removido com sucesso.` 
+        : "O serviço foi removido com sucesso.",
+    });
   };
 
   const handleSearch = (query: string) => {
@@ -135,7 +95,7 @@ const Services = () => {
     setFilteredServices(applyFilters(services, query, activeTab));
   };
 
-  const applyFilters = (services: any[], query: string, tab: string = 'all') => {
+  const applyFilters = (services: ServiceData[], query: string, tab: string = 'all') => {
     let filtered = services;
     
     // Apply tab filter

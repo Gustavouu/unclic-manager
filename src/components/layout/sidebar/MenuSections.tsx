@@ -16,11 +16,7 @@ import { SidebarGroup } from "./SidebarGroup";
 import { cn } from "@/lib/utils";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 
-interface MenuSectionsProps {
-  collapsed?: boolean;
-}
-
-export function MenuSections({ collapsed = false }: MenuSectionsProps) {
+export function MenuSections() {
   const { pathname } = useLocation();
 
   const menuItems = [
@@ -38,7 +34,7 @@ export function MenuSections({ collapsed = false }: MenuSectionsProps) {
         { icon: Users, title: "Clientes", path: "/clients" },
         { icon: Users, title: "Profissionais", path: "/professionals" },
         { icon: Package, title: "Estoque", path: "/inventory" },
-        { icon: WalletCards, title: "Financeiro", path: "/finances" },
+        { icon: WalletCards, title: "Financeiro", path: "/finance" },
         { icon: CreditCard, title: "Pagamentos", path: "/payments" },
         { icon: BarChart3, title: "Relatórios", path: "/reports" },
         { icon: Settings, title: "Configurações", path: "/settings" }
@@ -49,10 +45,7 @@ export function MenuSections({ collapsed = false }: MenuSectionsProps) {
   return (
     <div className="py-2">
       {menuItems.map((section) => (
-        <SidebarGroup 
-          title={collapsed ? undefined : section.group} 
-          key={section.group}
-        >
+        <SidebarGroup title={section.group} key={section.group}>
           <div className="space-y-1 px-3">
             {section.items.map((item) => {
               const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
@@ -68,7 +61,7 @@ export function MenuSections({ collapsed = false }: MenuSectionsProps) {
                   )}
                 >
                   <item.icon className="h-4 w-4" />
-                  {!collapsed && <span>{item.title}</span>}
+                  <span>{item.title}</span>
                 </Link>
               );
             })}
@@ -76,17 +69,15 @@ export function MenuSections({ collapsed = false }: MenuSectionsProps) {
         </SidebarGroup>
       ))}
       
-      {!collapsed && (
-        <div className="mt-auto px-4 py-3">
-          <div className="flex items-center justify-between rounded-md p-2 bg-gray-50 dark:bg-neutral-900">
-            <div className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              <span className="text-sm">Tema</span>
-            </div>
-            <ThemeSwitcher />
+      <div className="mt-auto px-4 py-3">
+        <div className="flex items-center justify-between rounded-md p-2 bg-gray-50 dark:bg-neutral-900">
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            <span className="text-sm">Tema</span>
           </div>
+          <ThemeSwitcher />
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,61 +1,82 @@
 
-import React, { ReactNode } from "react";
-
-interface BreadcrumbItem {
-  label: string;
-  path?: string;
-}
+import React from 'react';
+import { cn } from '@/lib/utils';
+import { 
+  Breadcrumb, 
+  BreadcrumbItem, 
+  BreadcrumbLink, 
+  BreadcrumbList, 
+  BreadcrumbPage, 
+  BreadcrumbSeparator
+} from '@/components/ui/breadcrumb';
 
 interface PageHeaderProps {
-  title: string;
-  description?: string;
-  actions?: ReactNode;
+  title: React.ReactNode;
+  description?: React.ReactNode;
+  breadcrumb?: { label: string; path?: string }[];
+  actions?: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
-  breadcrumb?: BreadcrumbItem[];
 }
 
 export function PageHeader({
   title,
   description,
-  actions,
-  className = "",
   breadcrumb,
+  actions,
+  children,
+  className
 }: PageHeaderProps) {
   return (
-    <div className={`flex flex-col space-y-2 mb-6 ${className}`}>
+    <header className={cn('mb-6 space-y-2', className)}>
       {breadcrumb && breadcrumb.length > 0 && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          {breadcrumb.map((item, index) => (
-            <React.Fragment key={index}>
-              {index > 0 && <span className="text-muted-foreground/40">/</span>}
-              {item.path ? (
-                <a
-                  href={item.path}
-                  className="hover:text-foreground transition-colors"
-                >
-                  {item.label}
-                </a>
-              ) : (
-                <span className="text-foreground">{item.label}</span>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+        <Breadcrumb className="mb-2">
+          <BreadcrumbList>
+            {breadcrumb.map((item, index) => {
+              if (index === breadcrumb.length - 1) {
+                return (
+                  <BreadcrumbItem key={index}>
+                    <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                );
+              }
+              
+              return (
+                <React.Fragment key={index}>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href={item.path || '#'}>{item.label}</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  {index < breadcrumb.length - 1 && <BreadcrumbSeparator />}
+                </React.Fragment>
+              );
+            })}
+          </BreadcrumbList>
+        </Breadcrumb>
       )}
       
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          {typeof title === 'string' ? (
+            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+          ) : (
+            title
+          )}
           {description && (
-            <p className="text-sm text-muted-foreground mt-1">{description}</p>
+            typeof description === 'string' ? (
+              <p className="text-sm text-muted-foreground mt-1">{description}</p>
+            ) : (
+              description
+            )
           )}
         </div>
         {actions && (
-          <div className="mt-4 sm:mt-0 flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-3 mt-2 sm:mt-0">
             {actions}
           </div>
         )}
       </div>
-    </div>
+      
+      {children && <div className="mt-4">{children}</div>}
+    </header>
   );
 }
