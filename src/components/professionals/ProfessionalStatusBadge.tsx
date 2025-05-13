@@ -15,11 +15,11 @@ export const ProfessionalStatusBadge = ({ status, showLabel = true }: Profession
 
   const getStatusColor = () => {
     switch (normalizedStatus) {
-      case 'ACTIVE':
+      case ProfessionalStatus.ACTIVE:
         return "bg-green-100 text-green-800";
-      case 'ON_LEAVE':
+      case ProfessionalStatus.ON_LEAVE:
         return "bg-amber-100 text-amber-800";
-      case 'INACTIVE':
+      case ProfessionalStatus.INACTIVE:
         return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -28,11 +28,11 @@ export const ProfessionalStatusBadge = ({ status, showLabel = true }: Profession
 
   const getStatusLabel = () => {
     switch (normalizedStatus) {
-      case 'ACTIVE':
+      case ProfessionalStatus.ACTIVE:
         return "Ativo";
-      case 'ON_LEAVE':
+      case ProfessionalStatus.ON_LEAVE:
         return "Ausente";
-      case 'INACTIVE':
+      case ProfessionalStatus.INACTIVE:
         return "Inativo";
       default:
         return "Desconhecido";
