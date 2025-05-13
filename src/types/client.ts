@@ -18,6 +18,7 @@ export interface Client {
   valor_total_gasto?: number;
   total_spent?: number;
   total_agendamentos?: number;
+  total_appointments?: number;
   status?: 'active' | 'inactive';
   criado_em?: string;
   created_at?: string;

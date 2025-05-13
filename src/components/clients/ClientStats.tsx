@@ -31,6 +31,7 @@ export function ClientStats({ clients }: ClientStatsProps) {
   
   // Calculate average appointments per client
   const totalAppointments = clients.reduce((sum, client) => {
+    // Handle both naming conventions (English and Portuguese)
     const appointments = client.total_appointments || client.total_agendamentos || 0;
     return sum + appointments;
   }, 0);
