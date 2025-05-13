@@ -10,20 +10,13 @@ export const professionalFormSchema = z.object({
   bio: z.string().optional().nullable(),
   status: z.enum([ProfessionalStatus.ACTIVE, ProfessionalStatus.INACTIVE, ProfessionalStatus.ON_LEAVE])
     .default(ProfessionalStatus.ACTIVE),
-  establishmentId: z.string().optional(),
-  isActive: z.boolean().default(true),
+  user_id: z.string().optional().nullable(),
   position: z.string().optional().nullable(),
   specialties: z.array(z.string()).optional(),
   commission_percentage: z.number().min(0).max(100).optional().nullable(),
   photo_url: z.string().optional().nullable(),
   hire_date: z.string().optional(),
-  
-  // For backward compatibility
-  role: z.string().optional().nullable(),
-  commissionPercentage: z.number().min(0).max(100).optional().nullable(),
-  photoUrl: z.string().optional().nullable(),
-  services: z.array(z.string()).optional(),
-  avatar: z.string().optional().nullable()
+  working_hours: z.any().optional()
 });
 
 export type ProfessionalFormValues = z.infer<typeof professionalFormSchema>;

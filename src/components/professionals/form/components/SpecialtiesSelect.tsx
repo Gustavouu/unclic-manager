@@ -2,7 +2,7 @@
 import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MultiSelect } from "@/components/professionals/multiselect";
+import { MultiSelect } from "@/components/professionals/multiselect/ProfessionalsMultiSelect";
 import { Option } from "@/components/professionals/multiselect/types";
 import { UseFormReturn } from "react-hook-form";
 import { ProfessionalFormData } from "@/hooks/professionals/types";

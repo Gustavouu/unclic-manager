@@ -1,7 +1,7 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useProfessionals } from '@/hooks/professionals/useProfessionals';
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,23 +18,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { ProfessionalsMultiSelectProps, Option, MultiSelectProps } from './types';
 
-export interface ProfessionalsMultiSelectProps {
-  selectedIds: string[];
-  onChange: (selectedIds: string[]) => void;
-  placeholder?: string;
-  disabled?: boolean;
-}
-
+// Professional-specific MultiSelect component
 export function ProfessionalsMultiSelect({ 
   selectedIds,
   onChange,
-  placeholder = "Selecionar profissionais...",
+  placeholder = "Select professionals...",
   disabled = false
 }: ProfessionalsMultiSelectProps) {
   const [open, setOpen] = useState(false);
-  const { professionals, loading } = useProfessionals({ activeOnly: true });
+  const { professionals, isLoading } = useProfessionals({ activeOnly: true });
   
   // Find a professional by ID
   const findProfessional = (id: string) => {
@@ -103,13 +97,13 @@ export function ProfessionalsMultiSelect({
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0">
           <Command>
-            <CommandInput placeholder="Buscar profissional..." />
+            <CommandInput placeholder="Search professional..." />
             <CommandList>
-              <CommandEmpty>Nenhum profissional encontrado.</CommandEmpty>
+              <CommandEmpty>No professionals found.</CommandEmpty>
               <CommandGroup>
-                {loading ? (
+                {isLoading ? (
                   <CommandItem disabled className="flex items-center justify-center">
-                    Carregando...
+                    Loading...
                   </CommandItem>
                 ) : (
                   professionals.map((professional) => (
@@ -132,6 +126,106 @@ export function ProfessionalsMultiSelect({
                     </CommandItem>
                   ))
                 )}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
+// Generic MultiSelect component
+export function MultiSelect({
+  options,
+  selected,
+  onChange,
+  placeholder = "Select items...",
+  disabled = false,
+  emptyMessage = "No options available"
+}: MultiSelectProps) {
+  const [open, setOpen] = useState(false);
+  
+  // Toggle selection of an option
+  const toggleOption = (option: Option) => {
+    const isSelected = selected.some(item => item.value === option.value);
+    
+    if (isSelected) {
+      onChange(selected.filter(item => item.value !== option.value));
+    } else {
+      onChange([...selected, option]);
+    }
+  };
+
+  // Remove an option from selection
+  const removeOption = (option: Option) => {
+    onChange(selected.filter(item => item.value !== option.value));
+  };
+
+  return (
+    <div className="space-y-2">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn(
+              "w-full justify-between h-auto min-h-10 py-2",
+              disabled && "opacity-50 cursor-not-allowed"
+            )}
+            disabled={disabled}
+          >
+            <div className="flex flex-wrap gap-1 mr-2">
+              {selected.length > 0 ? (
+                selected.map(option => (
+                  <Badge 
+                    key={option.value} 
+                    variant="secondary"
+                    className="flex items-center gap-1 rounded-md px-2 py-1"
+                  >
+                    {option.label}
+                    <X 
+                      className="h-3 w-3 cursor-pointer" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeOption(option);
+                      }} 
+                    />
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-muted-foreground">{placeholder}</span>
+              )}
+            </div>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[300px] p-0">
+          <Command>
+            <CommandInput placeholder="Search..." />
+            <CommandList>
+              <CommandEmpty>{emptyMessage}</CommandEmpty>
+              <CommandGroup>
+                {options.map((option) => (
+                  <CommandItem
+                    key={option.value}
+                    value={option.label}
+                    onSelect={() => {
+                      toggleOption(option);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        selected.some(item => item.value === option.value)
+                          ? "opacity-100" 
+                          : "opacity-0"
+                      )}
+                    />
+                    {option.label}
+                  </CommandItem>
+                ))}
               </CommandGroup>
             </CommandList>
           </Command>

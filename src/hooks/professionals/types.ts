@@ -13,3 +13,20 @@ export type ProfessionalWithServices = Professional & {
     price: number;
   }[];
 };
+
+// Define a ProfessionalStatus enum
+export enum ProfessionalStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  ON_LEAVE = 'on_leave'
+}
+
+// Define mapping for legacy status strings
+export const STATUS_MAPPING = {
+  'active': ProfessionalStatus.ACTIVE,
+  'inactive': ProfessionalStatus.INACTIVE,
+  'on_leave': ProfessionalStatus.ON_LEAVE
+};
+
+// Define type for backward compatibility
+export const PROFESSIONAL_STATUS = ProfessionalStatus;

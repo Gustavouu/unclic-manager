@@ -1,88 +1,116 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/database.types';
-
-export type Professional = Database['public']['Tables']['professionals']['Row'];
-
-// Temporary business ID for demo purposes
-const TEMP_BUSINESS_ID = "00000000-0000-0000-0000-000000000000";
+import { Professional, ProfessionalStatus } from './types';
+import { useTenant } from '@/contexts/TenantContext';
+import { toast } from 'sonner';
 
 export function useProfessionals(options?: { activeOnly?: boolean }) {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [specialties, setSpecialties] = useState<string[]>([]);
+  
+  const { currentBusiness } = useTenant();
+  const businessId = currentBusiness?.id;
 
-  useEffect(() => {
-    const fetchProfessionals = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        let query = supabase
-          .from('professionals')
-          .select('*')
-          .eq('business_id', TEMP_BUSINESS_ID);
+  const fetchProfessionals = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-        if (options?.activeOnly) {
-          query = query.eq('status', 'active');
-        }
-
-        const { data, error } = await query.order('name');
-
-        if (error) throw new Error(error.message);
-        
-        setProfessionals(data || []);
-      } catch (err) {
-        console.error('Error fetching professionals:', err);
-        setError(err instanceof Error ? err : new Error('Unknown error fetching professionals'));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfessionals();
-  }, [options?.activeOnly]);
-
-  const addProfessional = async (professional: Omit<Professional, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      if (!businessId) {
+        throw new Error('No business selected');
+      }
+
+      // First try to fetch from 'professionals' table
       const { data, error } = await supabase
         .from('professionals')
-        .insert({
-          ...professional,
-          business_id: TEMP_BUSINESS_ID
-        })
+        .select('*')
+        .eq('business_id', businessId);
+
+      if (error) throw error;
+
+      setProfessionals(data || []);
+      
+      // Extract unique specialties
+      const uniqueSpecialties = new Set<string>();
+      data?.forEach(professional => {
+        if (professional.specialties && Array.isArray(professional.specialties)) {
+          professional.specialties.forEach(specialty => {
+            uniqueSpecialties.add(specialty);
+          });
+        }
+      });
+      
+      setSpecialties(Array.from(uniqueSpecialties));
+      
+      return data || [];
+    } catch (err: any) {
+      setError(err instanceof Error ? err : new Error('Unknown error'));
+      toast.error(`Failed to load professionals: ${err.message}`);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }, [businessId]);
+
+  useEffect(() => {
+    fetchProfessionals();
+  }, [fetchProfessionals, options?.activeOnly]);
+
+  const createProfessional = async (data: Omit<Professional, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      if (!businessId) {
+        throw new Error('No business selected');
+      }
+
+      // Add business ID to the professional data
+      const professionalData = {
+        ...data,
+        business_id: businessId,
+      };
+
+      const { data: newProfessional, error } = await supabase
+        .from('professionals')
+        .insert([professionalData])
         .select()
         .single();
 
       if (error) throw error;
-      
-      setProfessionals(prev => [...prev, data]);
-      return data;
-    } catch (error) {
-      console.error('Error adding professional:', error);
+
+      setProfessionals(prev => [...prev, newProfessional]);
+      return newProfessional;
+    } catch (error: any) {
+      console.error('Error creating professional:', error);
       throw error;
     }
   };
 
-  const updateProfessional = async (id: string, updates: Partial<Professional>) => {
+  const updateProfessional = async (id: string, data: Partial<Professional>) => {
     try {
-      const { data, error } = await supabase
+      if (!businessId) {
+        throw new Error('No business selected');
+      }
+
+      const { data: updatedProfessional, error } = await supabase
         .from('professionals')
-        .update(updates)
+        .update({
+          ...data,
+          business_id: businessId,
+        })
         .eq('id', id)
-        .eq('business_id', TEMP_BUSINESS_ID)
         .select()
         .single();
 
       if (error) throw error;
-      
+
       setProfessionals(prev => 
-        prev.map(professional => professional.id === id ? data : professional)
+        prev.map(p => p.id === id ? updatedProfessional : p)
       );
-      
-      return data;
-    } catch (error) {
+
+      return updatedProfessional;
+    } catch (error: any) {
       console.error('Error updating professional:', error);
       throw error;
     }
@@ -90,16 +118,20 @@ export function useProfessionals(options?: { activeOnly?: boolean }) {
 
   const deleteProfessional = async (id: string) => {
     try {
+      if (!businessId) {
+        throw new Error('No business selected');
+      }
+
       const { error } = await supabase
         .from('professionals')
         .delete()
-        .eq('id', id)
-        .eq('business_id', TEMP_BUSINESS_ID);
+        .eq('id', id);
 
       if (error) throw error;
-      
-      setProfessionals(prev => prev.filter(professional => professional.id !== id));
-    } catch (error) {
+
+      setProfessionals(prev => prev.filter(p => p.id !== id));
+      return true;
+    } catch (error: any) {
       console.error('Error deleting professional:', error);
       throw error;
     }
@@ -107,9 +139,11 @@ export function useProfessionals(options?: { activeOnly?: boolean }) {
 
   return {
     professionals,
-    loading,
+    specialties,
+    isLoading,
     error,
-    addProfessional,
+    fetchProfessionals,
+    createProfessional,
     updateProfessional,
     deleteProfessional
   };

@@ -49,7 +49,7 @@ export const ProfessionalDetailsDialog = ({
         <DialogHeader>
           <DialogTitle className="text-xl">{professional.name}</DialogTitle>
           <DialogDescription>
-            {professional.position || professional.role}
+            {professional.position}
           </DialogDescription>
         </DialogHeader>
         
