@@ -8,7 +8,7 @@ export type Professional = {
   photo_url?: string;
   bio?: string;
   position?: string;
-  hire_date?: Date;
+  hire_date?: Date | string; // Supporting both Date and string format
   commission_percentage?: number;
   isActive?: boolean;
   status?: ProfessionalStatus;
@@ -20,6 +20,7 @@ export type Professional = {
   photoUrl?: string; // Alias for photo_url
   commissionPercentage?: number; // Alias for commission_percentage
   userId?: string; // Alias for user_id
+  hireDate?: Date | string; // Alias for hire_date
 };
 
 export enum ProfessionalStatus {
@@ -53,6 +54,8 @@ export type ProfessionalFormValues = {
   role?: string;
   photoUrl?: string;
   commissionPercentage?: number;
+  hire_date?: string;
+  hireDate?: string;
 };
 
 // For backward compatibility with existing code

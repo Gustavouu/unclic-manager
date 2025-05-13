@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { Professional, ProfessionalCreateForm, ProfessionalStatus, PROFESSIONAL_STATUS } from "./types";
@@ -56,13 +55,18 @@ export const useProfessionalOperations = () => {
             email: prof.email || '',
             phone: prof.telefone || '',
             specialties: prof.especializacoes || [],
-            photoUrl: prof.foto_url || '',
+            photo_url: prof.foto_url || '',
+            photoUrl: prof.foto_url || '', // For backwards compatibility
             bio: prof.bio || '',
             status: status,
-            hireDate: prof.data_contratacao || '',
-            commissionPercentage: prof.comissao_percentual || 0,
-            userId: prof.id_usuario,
-            business_id: prof.id_negocio
+            hire_date: prof.data_contratacao || '',
+            hireDate: prof.data_contratacao || '', // For backwards compatibility
+            commission_percentage: prof.comissao_percentual || 0,
+            commissionPercentage: prof.comissao_percentual || 0, // For backwards compatibility
+            user_id: prof.id_usuario,
+            userId: prof.id_usuario, // For backwards compatibility
+            business_id: prof.id_negocio,
+            position: prof.cargo || '' // Use cargo as position
           };
         });
         
@@ -96,15 +100,15 @@ export const useProfessionalOperations = () => {
         .from('funcionarios')
         .insert([{
           nome: data.name,
-          cargo: data.role,
+          cargo: data.position || data.role || '',
           email: data.email || '',
           telefone: data.phone || '',
           especializacoes: Array.isArray(data.specialties) ? data.specialties : [],
           bio: data.bio || '',
           status: dbStatus,
-          comissao_percentual: data.commissionPercentage || 0,
+          comissao_percentual: data.commission_percentage || data.commissionPercentage || 0,
           data_contratacao: new Date().toISOString().split('T')[0],
-          foto_url: data.photoUrl || '',
+          foto_url: data.photo_url || data.photoUrl || '',
           id_negocio: businessId
         }])
         .select()
@@ -116,14 +120,19 @@ export const useProfessionalOperations = () => {
         id: newProfData.id,
         name: newProfData.nome,
         role: newProfData.cargo || '',
+        position: newProfData.cargo || '',
         email: newProfData.email || '',
         phone: newProfData.telefone || '',
         specialties: newProfData.especializacoes || [],
+        photo_url: newProfData.foto_url || '',
         photoUrl: newProfData.foto_url || '',
         bio: newProfData.bio || '',
         status: ProfessionalStatus.ACTIVE,
+        hire_date: newProfData.data_contratacao || '',
         hireDate: newProfData.data_contratacao || '',
+        commission_percentage: newProfData.comissao_percentual || 0,
         commissionPercentage: newProfData.comissao_percentual || 0,
+        user_id: newProfData.id_usuario,
         userId: newProfData.id_usuario,
         business_id: newProfData.id_negocio
       };
@@ -150,13 +159,19 @@ export const useProfessionalOperations = () => {
       const updateData: any = {};
       
       if (data.name) updateData.nome = data.name;
-      if (data.role) updateData.cargo = data.role;
+      if (data.position || data.role) updateData.cargo = data.position || data.role;
       if (data.email !== undefined) updateData.email = data.email;
       if (data.phone !== undefined) updateData.telefone = data.phone;
       if (data.specialties) updateData.especializacoes = data.specialties;
       if (data.bio !== undefined) updateData.bio = data.bio;
-      if (data.commissionPercentage !== undefined) updateData.comissao_percentual = data.commissionPercentage;
-      if (data.photoUrl !== undefined) updateData.foto_url = data.photoUrl;
+      if (data.commission_percentage !== undefined) updateData.comissao_percentual = data.commission_percentage;
+      if (data.commissionPercentage !== undefined && updateData.comissao_percentual === undefined) {
+        updateData.comissao_percentual = data.commissionPercentage;
+      }
+      if (data.photo_url !== undefined) updateData.foto_url = data.photo_url;
+      if (data.photoUrl !== undefined && updateData.foto_url === undefined) {
+        updateData.foto_url = data.photoUrl;
+      }
       
       // Convert status to database format if needed
       if (data.status) {
@@ -195,14 +210,19 @@ export const useProfessionalOperations = () => {
         id: updatedData.id,
         name: updatedData.nome,
         role: updatedData.cargo || '',
+        position: updatedData.cargo || '',
         email: updatedData.email || '',
         phone: updatedData.telefone || '',
         specialties: updatedData.especializacoes || [],
+        photo_url: updatedData.foto_url || '',
         photoUrl: updatedData.foto_url || '',
         bio: updatedData.bio || '',
         status: mappedStatus,
+        hire_date: updatedData.data_contratacao || '',
         hireDate: updatedData.data_contratacao || '',
+        commission_percentage: updatedData.comissao_percentual || 0,
         commissionPercentage: updatedData.comissao_percentual || 0,
+        user_id: updatedData.id_usuario,
         userId: updatedData.id_usuario,
         business_id: updatedData.id_negocio
       };
