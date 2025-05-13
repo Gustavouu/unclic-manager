@@ -1,124 +1,163 @@
 
-import React, { useState } from "react";
-import { CalendarDateRangePicker } from "@/components/appointments/calendar/CalendarDateRangePicker";
-import { AppointmentsList } from "@/components/appointments/AppointmentsList";
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { CalendarIcon, List, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, Calendar, List } from "lucide-react";
-import { AppointmentDialog } from "@/components/appointments/AppointmentDialog";
-import { useToast } from "@/components/ui/use-toast";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { addDays } from "date-fns";
-import { AppointmentsCalendarView } from "@/components/appointments/calendar/AppointmentsCalendarView";
-import { AppointmentType } from "@/components/appointments/calendar/types";
-import { AppointmentStatus } from "@/hooks/appointments/types";
+import { AppointmentCalendar } from "@/components/appointments/AppointmentCalendar";
+import { AppointmentsList } from "@/components/appointments/AppointmentsList";
+import { NewAppointmentDialog } from "@/components/appointments/NewAppointmentDialog";
+import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
+import { AppointmentStats } from "@/components/appointments/AppointmentStats";
+import { Calendar, Grid3X3 } from "lucide-react";
+import { useRouteCalendarView } from "@/hooks/useRouteCalendarView";
+import { CalendarViewType } from "@/components/appointments/calendar/types";
+import { useAppointments } from "@/hooks/appointments/useAppointments";
+import { AppointmentType } from "@/hooks/appointments/types";
+import { toast } from "sonner";
 
 const AppointmentsPage = () => {
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "calendar">("calendar");
-  const { toast } = useToast();
+  const [view, setView] = useState<"calendar" | "list">("calendar");
+  const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
+  const { calendarView, updateUrlView } = useRouteCalendarView();
   
-  // For demo purposes
-  const sampleAppointments: AppointmentType[] = [
-    {
-      id: "1",
-      clientName: "João Silva",
-      serviceName: "Corte de Cabelo",
-      serviceType: "haircut",
-      date: new Date(),
-      duration: 30,
-      price: 50,
-      status: "agendado" as AppointmentStatus,
-    },
-    {
-      id: "2",
-      clientName: "Maria Oliveira",
-      serviceName: "Hidratação",
-      serviceType: "treatment",
-      date: addDays(new Date(), 1),
-      duration: 60,
-      price: 120,
-      status: "confirmado" as AppointmentStatus,
-    },
-  ];
+  // Use the appointments hook to get data from the database
+  const { 
+    appointments, 
+    isLoading, 
+    error,
+    fetchAppointments,
+    createAppointment,
+    updateAppointment,
+    deleteAppointment
+  } = useAppointments();
 
-  const handleNewAppointment = () => {
-    setIsDialogOpen(true);
+  useEffect(() => {
+    // Load appointments when the component mounts
+    fetchAppointments();
+  }, [fetchAppointments]);
+
+  // Handle error state
+  useEffect(() => {
+    if (error) {
+      toast.error("Erro ao carregar agendamentos", {
+        description: error.message
+      });
+    }
+  }, [error]);
+
+  const handleAppointmentCreated = () => {
+    // Refresh the appointments list
+    fetchAppointments();
+    setShowNewAppointmentDialog(false);
+    toast.success("Agendamento criado com sucesso!");
   };
 
-  const handleAppointmentCreated = (appointmentData: any) => {
-    toast({
-      title: "Agendamento criado",
-      description: `Agendamento para ${appointmentData.clientName} criado com sucesso.`,
-    });
-    setIsDialogOpen(false);
+  const handleAppointmentUpdated = () => {
+    // Refresh the appointments list
+    fetchAppointments();
+    toast.success("Agendamento atualizado com sucesso!");
   };
 
-  const formattedDate = date
-    ? format(date, "MMMM yyyy", { locale: ptBR })
-    : "";
+  const handleAppointmentDeleted = async (id: string) => {
+    try {
+      await deleteAppointment(id);
+      toast.success("Agendamento excluído com sucesso!");
+    } catch (error: any) {
+      toast.error("Erro ao excluir agendamento", {
+        description: error.message
+      });
+    }
+  };
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Agendamentos</h1>
-          <p className="text-muted-foreground">
-            Gerencie todos os seus agendamentos em um só lugar
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Tabs
-            value={viewMode}
-            onValueChange={(value) => setViewMode(value as "list" | "calendar")}
-            className="hidden md:flex"
+    <OnboardingProvider>
+      <div className="space-y-4 p-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
+          <h1 className="text-2xl font-semibold">Gerenciamento de Agendamentos</h1>
+          <Button 
+            onClick={() => setShowNewAppointmentDialog(true)}
+            className="gap-2 bg-green-600 hover:bg-green-700 w-full sm:w-auto"
           >
-            <TabsList>
-              <TabsTrigger value="calendar" className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                <span className="hidden sm:inline">Calendário</span>
-              </TabsTrigger>
-              <TabsTrigger value="list" className="flex items-center gap-1">
-                <List className="h-4 w-4" />
-                <span className="hidden sm:inline">Lista</span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <Button onClick={handleNewAppointment} className="ml-2">
-            <PlusCircle className="mr-2 h-4 w-4" />
+            <CalendarPlus size={16} />
             Novo Agendamento
           </Button>
         </div>
-      </div>
+        
+        {/* Stats cards row */}
+        <AppointmentStats appointments={appointments} isLoading={isLoading} />
 
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-medium capitalize">{formattedDate}</h2>
-        <CalendarDateRangePicker date={date} setDate={setDate} />
-      </div>
+        <Card className="border shadow-sm overflow-hidden">
+          <Tabs 
+            defaultValue="calendar" 
+            className="w-full"
+            onValueChange={(value) => setView(value as "calendar" | "list")}
+          >
+            <div className="flex justify-between items-center p-3 border-b bg-white">
+              <TabsList className="bg-slate-100">
+                <TabsTrigger value="calendar" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                  <CalendarIcon size={16} />
+                  <span>Calendário</span>
+                </TabsTrigger>
+                <TabsTrigger value="list" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                  <List size={16} />
+                  <span>Lista</span>
+                </TabsTrigger>
+              </TabsList>
+              
+              {view === "calendar" && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`h-9 ${calendarView === 'month' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
+                    onClick={() => updateUrlView('month')}
+                  >
+                    <Grid3X3 size={16} className="mr-1" />
+                    Mensal
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`h-9 ${calendarView === 'week' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
+                    onClick={() => updateUrlView('week')}
+                  >
+                    <Calendar size={16} className="mr-1" />
+                    Semanal
+                  </Button>
+                </div>
+              )}
+            </div>
+            
+            <TabsContent value="calendar" className="mt-0 p-0">
+              <AppointmentCalendar 
+                initialView={calendarView} 
+                appointments={appointments}
+                isLoading={isLoading}
+                onAppointmentUpdate={handleAppointmentUpdated}
+                onAppointmentDelete={handleAppointmentDeleted}
+              />
+            </TabsContent>
+            
+            <TabsContent value="list" className="mt-0 p-4 bg-white">
+              <AppointmentsList 
+                appointments={appointments}
+                isLoading={isLoading}
+                onAppointmentUpdate={handleAppointmentUpdated}
+                onAppointmentDelete={handleAppointmentDeleted}
+              />
+            </TabsContent>
+          </Tabs>
+        </Card>
 
-      <div className="bg-white rounded-md shadow">
-        {viewMode === "list" ? (
-          <AppointmentsList 
-            appointments={sampleAppointments}
-            isLoading={false}
-          />
-        ) : (
-          <AppointmentsCalendarView 
-            appointments={sampleAppointments}
-            date={date || new Date()}
-            onDateChange={setDate}
-          />
-        )}
+        <NewAppointmentDialog 
+          open={showNewAppointmentDialog}
+          onOpenChange={setShowNewAppointmentDialog}
+          onAppointmentCreated={handleAppointmentCreated}
+          createAppointment={createAppointment}
+        />
       </div>
-
-      <AppointmentDialog 
-        open={isDialogOpen} 
-        onOpenChange={setIsDialogOpen}
-        onAppointmentCreated={handleAppointmentCreated}
-      />
-    </div>
+    </OnboardingProvider>
   );
 };
 

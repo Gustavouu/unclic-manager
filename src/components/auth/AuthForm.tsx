@@ -9,8 +9,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff } from "lucide-react";
-import { showErrorToast } from "@/utils/formUtils";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 // Define form schema with Zod
 const loginSchema = z.object({
@@ -44,9 +47,12 @@ export const AuthForm = ({
   onRegister, 
   isLoading = false 
 }: AuthFormProps) => {
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState<"login" | "register">(initialTab);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn, signUp } = useAuthContext();
   
   // Initialize the login form
   const loginForm = useForm<LoginFormValues>({
@@ -70,31 +76,49 @@ export const AuthForm = ({
 
   // Handle login form submission
   const handleLogin = async (values: LoginFormValues) => {
+    setError(null);
+    setLoading(true);
+    
     try {
       if (onLogin) {
         await onLogin(values.email, values.password);
       } else {
-        console.log("Login credentials:", values);
-        // Simulate successful login
+        await signIn(values.email, values.password);
         navigate("/dashboard");
       }
     } catch (error: any) {
-      showErrorToast(error.message || "Falha ao fazer login");
+      setError(error.message || "Falha ao fazer login");
+      toast.error("Falha ao fazer login", {
+        description: error.message || "Verifique suas credenciais e tente novamente"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   // Handle register form submission
   const handleRegister = async (values: RegisterFormValues) => {
+    setError(null);
+    setLoading(true);
+    
     try {
       if (onRegister) {
         await onRegister(values.name, values.email, values.password);
       } else {
-        console.log("Registration data:", values);
-        // Simulate successful registration
+        const userData = { name: values.name };
+        await signUp(values.email, values.password, userData);
+        toast.success("Conta criada com sucesso!", {
+          description: "Você já pode fazer login"
+        });
         setActiveTab("login");
       }
     } catch (error: any) {
-      showErrorToast(error.message || "Falha ao registrar");
+      setError(error.message || "Falha ao registrar");
+      toast.error("Falha ao registrar", {
+        description: error.message || "Tente novamente mais tarde"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -109,6 +133,13 @@ export const AuthForm = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "register")}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
@@ -125,7 +156,7 @@ export const AuthForm = ({
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="email@exemplo.com" {...field} />
+                        <Input placeholder="email@exemplo.com" {...field} disabled={loading || isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -144,6 +175,7 @@ export const AuthForm = ({
                             type={showPassword ? "text" : "password"} 
                             placeholder="••••••••" 
                             {...field} 
+                            disabled={loading || isLoading} 
                           />
                           <button 
                             type="button"
@@ -159,14 +191,25 @@ export const AuthForm = ({
                   )}
                 />
                 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Entrando..." : "Entrar"}
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={loading || isLoading}
+                >
+                  {(loading || isLoading) ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Entrando...
+                    </>
+                  ) : (
+                    "Entrar"
+                  )}
                 </Button>
               </form>
             </Form>
             
             <div className="mt-4 text-center">
-              <Button variant="link" onClick={() => navigate("/reset-password")}>
+              <Button variant="link" onClick={() => navigate("/esqueci-senha")}>
                 Esqueceu sua senha?
               </Button>
             </div>
@@ -182,7 +225,7 @@ export const AuthForm = ({
                     <FormItem>
                       <FormLabel>Nome</FormLabel>
                       <FormControl>
-                        <Input placeholder="Seu nome completo" {...field} />
+                        <Input placeholder="Seu nome" {...field} disabled={loading || isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -196,7 +239,7 @@ export const AuthForm = ({
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="email@exemplo.com" {...field} />
+                        <Input placeholder="email@exemplo.com" {...field} disabled={loading || isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -215,6 +258,7 @@ export const AuthForm = ({
                             type={showPassword ? "text" : "password"} 
                             placeholder="••••••••" 
                             {...field} 
+                            disabled={loading || isLoading} 
                           />
                           <button 
                             type="button"
@@ -241,6 +285,7 @@ export const AuthForm = ({
                           type={showPassword ? "text" : "password"} 
                           placeholder="••••••••" 
                           {...field} 
+                          disabled={loading || isLoading} 
                         />
                       </FormControl>
                       <FormMessage />
@@ -248,21 +293,25 @@ export const AuthForm = ({
                   )}
                 />
                 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Criando conta..." : "Criar Conta"}
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={loading || isLoading}
+                >
+                  {(loading || isLoading) ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Registrando...
+                    </>
+                  ) : (
+                    "Registrar"
+                  )}
                 </Button>
               </form>
             </Form>
           </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-muted-foreground">
-          {activeTab === "login" 
-            ? "Ao entrar, você concorda com nossos termos de serviço e política de privacidade."
-            : "Ao se cadastrar, você concorda com nossos termos de serviço e política de privacidade."}
-        </p>
-      </CardFooter>
     </Card>
   );
 };
