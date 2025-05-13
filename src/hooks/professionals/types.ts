@@ -1,7 +1,7 @@
 
 export * from "../../components/professionals/multiselect/types";
 
-export type ProfessionalStatus = 'active' | 'inactive';
+export type ProfessionalStatus = 'active' | 'inactive' | 'vacation' | 'leave';
 
 export interface Professional {
   id: string;
@@ -18,6 +18,9 @@ export interface Professional {
   updatedAt?: string;
   appointmentsCount?: number;
   revenueGenerated?: number;
+  // Add the missing properties that are used in the codebase
+  hireDate?: string;
+  userId?: string;
 }
 
 export type ProfessionalCreateForm = Omit<
