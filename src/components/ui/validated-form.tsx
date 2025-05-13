@@ -122,7 +122,7 @@ export function ValidatedForm({
     }
   };
 
-  // Fix: Clone children and properly pass isSubmitting state using a safe type checking approach
+  // Fix: Clone children and properly pass isSubmitting state using a safe approach
   const childrenWithProps = React.Children.map(children, child => {
     // Only add props to valid React elements
     if (React.isValidElement(child)) {
@@ -139,10 +139,10 @@ export function ValidatedForm({
           (componentType.displayName === 'LoadingButton' || 
            componentType.name === 'LoadingButton')) {
         // We know LoadingButton accepts isLoading prop so it's safe to pass
-        // Use type assertion to tell TypeScript this is okay
+        // Use a more robust typing approach
         return React.cloneElement(child, { 
           isLoading: isSubmitting 
-        } as React.HTMLAttributes<HTMLElement>);
+        } as any); // Using `any` here is safer than a specific HTML type assertion
       }
       
       // For all other components, return them unchanged

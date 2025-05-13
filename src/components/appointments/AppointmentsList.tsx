@@ -1,155 +1,178 @@
 
-import { useState } from "react";
+import React from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { AppointmentType } from "./calendar/types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Clock, Calendar as CalendarIcon, User, Scissors } from "lucide-react";
-import { SearchBar } from "./list/SearchBar";
-import { FiltersButton } from "./list/FiltersButton";
-import { FiltersPanel } from "./list/FiltersPanel";
-import { useAppointmentsFilter } from "./list/hooks/useAppointmentsFilter";
-import { appointments } from "./data/appointmentsSampleData";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Eye, Edit, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { AppointmentStatus } from "@/hooks/appointments/types";
 
-export const AppointmentsList = () => {
-  const { 
-    searchTerm,
-    setSearchTerm,
-    statusFilter,
-    setStatusFilter,
-    serviceFilter,
-    setServiceFilter,
-    dateFilter,
-    setDateFilter,
-    customDateRange,
-    setCustomDateRange,
-    showFilters,
-    setShowFilters,
-    filteredAppointments,
-    handleResetFilters
-  } = useAppointmentsFilter(appointments);
+export interface AppointmentsListProps {
+  appointments: AppointmentType[];
+  isLoading?: boolean;
+  onViewAppointment?: (id: string) => void;
+  onEditAppointment?: (id: string) => void;
+  onDeleteAppointment?: (id: string) => void;
+}
 
-  // Sort appointments chronologically
-  const sortedAppointments = [...filteredAppointments].sort((a, b) => {
-    return new Date(a.date).getTime() - new Date(b.date).getTime();
-  });
-
-  // Group appointments by date for better visualization
-  const groupedAppointments = sortedAppointments.reduce((groups, appointment) => {
-    const dateStr = format(new Date(appointment.date), 'yyyy-MM-dd');
-    if (!groups[dateStr]) {
-      groups[dateStr] = [];
+export function AppointmentsList({
+  appointments,
+  isLoading = false,
+  onViewAppointment,
+  onEditAppointment,
+  onDeleteAppointment,
+}: AppointmentsListProps) {
+  const getStatusBadge = (status?: AppointmentStatus) => {
+    switch (status) {
+      case "agendado":
+        return (
+          <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
+            Agendado
+          </Badge>
+        );
+      case "confirmado":
+        return (
+          <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
+            Confirmado
+          </Badge>
+        );
+      case "pendente":
+        return (
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">
+            Pendente
+          </Badge>
+        );
+      case "concluido":
+        return (
+          <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200">
+            Concluído
+          </Badge>
+        );
+      case "cancelado":
+        return (
+          <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
+            Cancelado
+          </Badge>
+        );
+      default:
+        return null;
     }
-    groups[dateStr].push(appointment);
-    return groups;
-  }, {} as Record<string, typeof sortedAppointments>);
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col space-y-3">
-        <div className="flex flex-col sm:flex-row items-center gap-2">
-          <SearchBar 
-            searchTerm={searchTerm} 
-            setSearchTerm={setSearchTerm} 
-            className="w-full sm:w-auto sm:flex-1"
-          />
-          <FiltersButton 
-            showFilters={showFilters} 
-            setShowFilters={setShowFilters} 
-            statusFilter={statusFilter}
-            serviceFilter={serviceFilter}
-            dateFilter={dateFilter}
-          />
-        </div>
-        
-        {showFilters && (
-          <FiltersPanel 
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            serviceFilter={serviceFilter}
-            setServiceFilter={setServiceFilter}
-            dateFilter={dateFilter}
-            setDateFilter={setDateFilter}
-            customDateRange={customDateRange}
-            setCustomDateRange={setCustomDateRange}
-            handleResetFilters={handleResetFilters}
-          />
-        )}
-      </div>
-      
-      {Object.keys(groupedAppointments).length > 0 ? (
-        <div className="space-y-4">
-          {Object.entries(groupedAppointments).map(([dateStr, dateAppointments]) => (
-            <Card key={dateStr} className="overflow-hidden border border-blue-100">
-              <CardHeader className="bg-blue-50 py-3 px-4 border-b border-blue-100">
-                <div className="flex items-center">
-                  <CalendarIcon className="h-4 w-4 text-blue-700 mr-2" />
-                  <CardTitle className="text-base font-medium text-blue-800">
-                    {format(new Date(dateStr), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                  </CardTitle>
-                  <Badge variant="outline" className="ml-2 bg-blue-100 text-blue-800 border-blue-200">
-                    {dateAppointments.length} {dateAppointments.length === 1 ? 'agendamento' : 'agendamentos'}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-gray-100">
-                  {dateAppointments.map((appointment) => (
-                    <div key={appointment.id} className="p-4 hover:bg-gray-50 transition-colors flex justify-between items-center">
-                      <div className="flex items-start gap-3">
-                        <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                          {appointment.serviceType === "haircut" || appointment.serviceType === "combo" ? (
-                            <Scissors className="h-5 w-5" />
-                          ) : (
-                            <User className="h-5 w-5" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900">{appointment.clientName}</div>
-                          <div className="text-sm text-gray-600">{appointment.serviceName}</div>
-                          <div className="flex items-center gap-3 mt-1">
-                            <div className="text-xs text-gray-500">{appointment.serviceType} min</div>
-                            <div className="text-xs text-gray-500">R$ {appointment.price.toFixed(2)}</div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <div className="text-base font-semibold text-blue-700">
-                          {format(new Date(appointment.date), "HH:mm")}
-                        </div>
-                        <div className="text-xs mt-1">
-                          <Badge variant="outline" className={`
-                            ${appointment.status === 'agendado' ? 'bg-green-50 text-green-700 border-green-200' : ''}
-                            ${appointment.status === 'concluido' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : ''}
-                            ${appointment.status === 'cancelado' ? 'bg-red-50 text-red-700 border-red-200' : ''}
-                          `}>
-                            {appointment.status === 'agendado' ? 'Confirmado' : 
-                             appointment.status === 'concluido' ? 'Concluído' : 
-                             appointment.status === 'cancelado' ? 'Cancelado' : 
-                             appointment.status}
-                          </Badge>
-                        </div>
-                      </div>
+    <div className="relative">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[180px]">Data</TableHead>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Serviço</TableHead>
+            <TableHead>Duração</TableHead>
+            <TableHead>Preço</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            Array(5)
+              .fill(0)
+              .map((_, index) => (
+                <TableRow key={`loading-${index}`}>
+                  <TableCell>
+                    <Skeleton className="h-5 w-[120px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-[150px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-[100px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-[50px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-[70px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-[80px]" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-2">
+                      <Skeleton className="h-9 w-9" />
+                      <Skeleton className="h-9 w-9" />
+                      <Skeleton className="h-9 w-9" />
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-10 border rounded-lg bg-gray-50">
-          <p className="text-gray-500">Nenhum agendamento encontrado.</p>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={handleResetFilters}
-          >
-            Limpar filtros
-          </Button>
-        </div>
-      )}
+                  </TableCell>
+                </TableRow>
+              ))
+          ) : appointments.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-8">
+                Nenhum agendamento encontrado.
+              </TableCell>
+            </TableRow>
+          ) : (
+            appointments.map((appointment) => (
+              <TableRow key={appointment.id}>
+                <TableCell>
+                  {format(appointment.date, "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                </TableCell>
+                <TableCell className="font-medium">
+                  {appointment.clientName}
+                </TableCell>
+                <TableCell>{appointment.serviceName}</TableCell>
+                <TableCell>{appointment.duration} min</TableCell>
+                <TableCell>
+                  {typeof appointment.price === "number"
+                    ? `R$ ${appointment.price.toFixed(2)}`
+                    : appointment.price}
+                </TableCell>
+                <TableCell>{getStatusBadge(appointment.status)}</TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => onViewAppointment?.(appointment.id)}
+                      className="h-8 w-8"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => onEditAppointment?.(appointment.id)}
+                      className="h-8 w-8"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => onDeleteAppointment?.(appointment.id)}
+                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
-};
+}
