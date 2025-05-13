@@ -114,7 +114,7 @@ const Clients = () => {
                 <div className="flex-1">
                   <ClientsTable 
                     clients={filteredClients} 
-                    isLoading={isLoading} 
+                    isLoading={loading} 
                     showFiltersButton
                     onToggleFilters={toggleFilters}
                   />
@@ -135,7 +135,7 @@ const Clients = () => {
                 <div className="flex-1">
                   <ClientsTable 
                     clients={clientsForActiveTab} 
-                    isLoading={isLoading} 
+                    isLoading={loading} 
                     showFiltersButton
                     onToggleFilters={toggleFilters}
                   />
@@ -156,7 +156,7 @@ const Clients = () => {
                 <div className="flex-1">
                   <ClientsTable 
                     clients={clientsForActiveTab} 
-                    isLoading={isLoading} 
+                    isLoading={loading} 
                     showFiltersButton
                     onToggleFilters={toggleFilters}
                   />
