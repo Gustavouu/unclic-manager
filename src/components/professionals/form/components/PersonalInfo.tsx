@@ -4,10 +4,10 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescripti
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
-import { ProfessionalCreateForm } from "@/hooks/professionals/types";
+import { ProfessionalFormData } from "@/hooks/professionals/types";
 
 interface PersonalInfoProps {
-  form: UseFormReturn<ProfessionalCreateForm>;
+  form: UseFormReturn<ProfessionalFormData>;
 }
 
 export const PersonalInfo = ({ form }: PersonalInfoProps) => {

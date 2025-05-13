@@ -31,31 +31,31 @@ export const ProfessionalsGrid = ({
           <CardContent className="p-0">
             <div className="relative">
               <div className="absolute top-2 right-2 z-10">
-                <ProfessionalStatusBadge status={professional.status} />
+                <ProfessionalStatusBadge status={professional.status || 'ACTIVE'} />
               </div>
               
               <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-24"></div>
               
               <div className="flex flex-col items-center -mt-12 px-4 pb-4">
                 <Avatar className="h-24 w-24 border-4 border-white">
-                  <AvatarImage src={professional.photoUrl} alt={professional.name} />
+                  <AvatarImage src={professional.photoUrl || professional.photo_url || professional.foto_url || professional.avatar} alt={professional.name} />
                   <AvatarFallback className="bg-blue-100 text-blue-700 text-xl">
                     {getInitials(professional.name)}
                   </AvatarFallback>
                 </Avatar>
                 
                 <h3 className="mt-4 text-lg font-medium text-center">{professional.name}</h3>
-                <p className="text-sm text-gray-500 text-center">{professional.role}</p>
+                <p className="text-sm text-gray-500 text-center">{professional.role || professional.position || professional.cargo || ''}</p>
                 
                 <div className="mt-2 flex flex-wrap justify-center gap-1">
-                  {professional.specialties.slice(0, 2).map((specialty, i) => (
+                  {(professional.specialties || []).slice(0, 2).map((specialty, i) => (
                     <span key={i} className="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">
                       {specialty}
                     </span>
                   ))}
-                  {professional.specialties.length > 2 && (
+                  {(professional.specialties || []).length > 2 && (
                     <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
-                      +{professional.specialties.length - 2}
+                      +{(professional.specialties || []).length - 2}
                     </span>
                   )}
                 </div>

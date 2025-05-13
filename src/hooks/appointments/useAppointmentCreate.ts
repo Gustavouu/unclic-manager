@@ -1,10 +1,18 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addMinutes } from "date-fns";
 import { toast } from "sonner";
 import { Appointment, AppointmentStatus } from "./types";
 import { useTenant } from "@/contexts/TenantContext";
+
+const STATUS_MAPPING: Record<string, string> = {
+  'scheduled': 'agendado',
+  'confirmed': 'confirmado',
+  'completed': 'concluido',
+  'cancelled': 'cancelado',
+  'no_show': 'nao_compareceu',
+  'rescheduled': 'reagendado'
+};
 
 export const useAppointmentCreate = (setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>) => {
   const [isCreating, setIsCreating] = useState(false);

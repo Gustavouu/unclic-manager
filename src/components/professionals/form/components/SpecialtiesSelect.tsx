@@ -2,12 +2,12 @@
 import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MultiSelect, Option } from "@/components/professionals/MultiSelect";
+import { MultiSelect, Option } from "@/components/professionals/multiselect/ProfessionalsMultiSelect";
 import { UseFormReturn } from "react-hook-form";
-import { ProfessionalCreateForm } from "@/hooks/professionals/types";
+import { ProfessionalFormData } from "@/hooks/professionals/types";
 
 interface SpecialtiesSelectProps {
-  form: UseFormReturn<ProfessionalCreateForm>;
+  form: UseFormReturn<ProfessionalFormData>;
   specialties: string[];
 }
 

@@ -1,97 +1,80 @@
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Professional } from "@/hooks/professionals/types";
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Professional } from "@/hooks/professionals/types";
+import { toast } from 'sonner';
 
 interface DeleteProfessionalDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onSuccess?: () => void;
   professional: Professional;
 }
 
-export const DeleteProfessionalDialog = ({
-  open,
-  onOpenChange,
+export const DeleteProfessionalDialog = ({ 
+  open: controlledOpen, 
+  onOpenChange: setControlledOpen,
+  onSuccess,
   professional
 }: DeleteProfessionalDialogProps) => {
+  const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { removeProfessional } = useProfessionals();
-
-  const handleClose = () => {
-    if (!isDeleting) {
-      onOpenChange(false);
-    }
-  };
-
+  const { deleteProfessional } = useProfessionals();
+  
+  const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : open;
+  const setIsOpen = isControlled ? setControlledOpen : setOpen;
+  
   const handleDelete = async () => {
     if (!professional?.id) return;
     
+    setIsDeleting(true);
     try {
-      setIsDeleting(true);
-      await removeProfessional(professional.id);
-      toast.success("Colaborador removido com sucesso!");
-      onOpenChange(false);
+      await deleteProfessional(professional.id);
+      setIsOpen(false);
+      toast.success("Profissional excluído com sucesso!");
+      if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Error removing professional:", error);
-      toast.error("Não foi possível remover o colaborador.");
+      console.error("Error deleting professional:", error);
+      toast.error("Erro ao excluir profissional");
     } finally {
       setIsDeleting(false);
     }
   };
-
+  
+  if (!professional) return null;
+  
   return (
-    <Dialog
-      open={open}
-      onOpenChange={handleClose}
-    >
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-xl">Remover Colaborador</DialogTitle>
-        </DialogHeader>
-        
-        <DialogDescription className="py-4">
-          Tem certeza que deseja remover <strong>{professional?.name}</strong> da lista de colaboradores? 
-          Esta ação não pode ser desfeita.
-        </DialogDescription>
-        
-        <DialogFooter className="gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClose}
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta ação não pode ser desfeita. Isto irá remover o profissional <strong>{professional.name}</strong> permanentemente.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleDelete} 
             disabled={isDeleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Cancelar
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isDeleting}
-          >
-            {isDeleting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Removendo...
-              </>
-            ) : (
-              "Remover Colaborador"
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            {isDeleting ? "Excluindo..." : "Excluir"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };

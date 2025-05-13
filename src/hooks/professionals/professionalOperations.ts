@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { Professional, ProfessionalCreateForm, ProfessionalStatus, PROFESSIONAL_STATUS } from "./types";
@@ -35,13 +36,16 @@ export const useProfessionalOperations = () => {
           let status: ProfessionalStatus;
           switch(prof.status) {
             case 'active':
+            case 'ativo':
               status = ProfessionalStatus.ACTIVE;
               break;
             case 'inactive':
+            case 'inativo':
               status = ProfessionalStatus.INACTIVE;
               break;
             case 'vacation':
             case 'leave':
+            case 'ferias':
               status = ProfessionalStatus.ON_LEAVE;
               break;
             default:
@@ -51,22 +55,22 @@ export const useProfessionalOperations = () => {
           return {
             id: prof.id,
             name: prof.nome,
+            position: prof.cargo || '',
             role: prof.cargo || '',
             email: prof.email || '',
             phone: prof.telefone || '',
             specialties: prof.especializacoes || [],
+            photoUrl: prof.foto_url || '',
             photo_url: prof.foto_url || '',
-            photoUrl: prof.foto_url || '', // For backwards compatibility
             bio: prof.bio || '',
             status: status,
             hire_date: prof.data_contratacao || '',
-            hireDate: prof.data_contratacao || '', // For backwards compatibility
+            hireDate: prof.data_contratacao || '',
             commission_percentage: prof.comissao_percentual || 0,
-            commissionPercentage: prof.comissao_percentual || 0, // For backwards compatibility
+            commissionPercentage: prof.comissao_percentual || 0,
             user_id: prof.id_usuario,
-            userId: prof.id_usuario, // For backwards compatibility
-            business_id: prof.id_negocio,
-            position: prof.cargo || '' // Use cargo as position
+            userId: prof.id_usuario,
+            business_id: prof.id_negocio
           };
         });
         
@@ -193,13 +197,16 @@ export const useProfessionalOperations = () => {
       let mappedStatus: ProfessionalStatus;
       switch(updatedData.status) {
         case 'active':
+        case 'ativo':
           mappedStatus = ProfessionalStatus.ACTIVE;
           break;
         case 'inactive':
+        case 'inativo':
           mappedStatus = ProfessionalStatus.INACTIVE;
           break;
         case 'vacation':
         case 'leave':
+        case 'ferias':
           mappedStatus = ProfessionalStatus.ON_LEAVE;
           break;
         default:
@@ -232,7 +239,7 @@ export const useProfessionalOperations = () => {
       );
       
       toast.success("Colaborador atualizado com sucesso!");
-      return true;
+      return updatedProfessional;
     } catch (error) {
       console.error("Erro ao atualizar profissional:", error);
       toast.error("Erro ao atualizar colaborador");
@@ -303,6 +310,11 @@ export const useProfessionalOperations = () => {
       setIsLoading(false);
     }
   };
+  
+  // Helper function to get a professional by id
+  const getProfessionalById = (id: string): Professional | undefined => {
+    return professionals.find(p => p.id === id);
+  };
 
   return {
     professionals,
@@ -310,6 +322,13 @@ export const useProfessionalOperations = () => {
     addProfessional,
     updateProfessional,
     updateProfessionalStatus,
-    removeProfessional
+    removeProfessional,
+    getProfessionalById,
+    // For backward compatibility with the hooks/professionals/useProfessionals.ts
+    fetchProfessionals: async () => {},
+    createProfessional: addProfessional,
+    deleteProfessional: removeProfessional,
+    error: null,
+    specialties: Array.from(new Set(professionals.flatMap(p => p.specialties || [])))
   };
 };

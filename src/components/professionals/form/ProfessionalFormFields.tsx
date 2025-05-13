@@ -1,12 +1,12 @@
 
 import { UseFormReturn } from "react-hook-form";
-import { ProfessionalCreateForm } from "@/hooks/professionals/types";
+import { ProfessionalFormData } from "@/hooks/professionals/types";
 import { ImageUpload } from "./components/ImageUpload";
 import { PersonalInfo } from "./components/PersonalInfo";
 import { SpecialtiesSelect } from "./components/SpecialtiesSelect";
 
 interface ProfessionalFormFieldsProps {
-  form: UseFormReturn<ProfessionalCreateForm>;
+  form: UseFormReturn<ProfessionalFormData>;
   specialties: string[];
   editMode?: boolean;
   initialPhotoUrl?: string;

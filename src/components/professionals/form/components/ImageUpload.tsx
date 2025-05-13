@@ -6,10 +6,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UseFormReturn } from "react-hook-form";
-import { ProfessionalCreateForm } from "@/hooks/professionals/types";
+import { ProfessionalFormData } from "@/hooks/professionals/types";
 
 interface ImageUploadProps {
-  form: UseFormReturn<ProfessionalCreateForm>;
+  form: UseFormReturn<ProfessionalFormData>;
   initialPhotoUrl?: string;
   name: string;
 }

@@ -67,14 +67,14 @@ export const ProfessionalsTable = ({
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    {professional.specialties?.slice(0, 2).map((specialty, index) => (
+                    {(professional.specialties || []).slice(0, 2).map((specialty, index) => (
                       <span key={index} className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full">
                         {specialty}
                       </span>
                     ))}
-                    {professional.specialties && professional.specialties.length > 2 && (
+                    {(professional.specialties || []).length > 2 && (
                       <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full">
-                        +{professional.specialties.length - 2}
+                        +{(professional.specialties || []).length - 2}
                       </span>
                     )}
                   </div>
@@ -82,7 +82,7 @@ export const ProfessionalsTable = ({
                 <TableCell>{professional.email}</TableCell>
                 <TableCell>{professional.phone}</TableCell>
                 <TableCell>
-                  <ProfessionalStatusBadge status={professional.status} />
+                  <ProfessionalStatusBadge status={professional.status || 'ACTIVE'} />
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">

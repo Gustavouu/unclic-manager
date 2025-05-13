@@ -32,6 +32,11 @@ export interface Professional {
   criado_em?: string | Date;
   updatedAt?: string | Date;
   atualizado_em?: string | Date;
+  // Backward compatibility fields
+  role?: string;
+  photoUrl?: string;
+  status?: ProfessionalStatus;
+  commissionPercentage?: number;
 }
 
 export type ProfessionalFormData = {
@@ -44,4 +49,33 @@ export type ProfessionalFormData = {
   commission_percentage?: number;
   avatar?: string;
   isActive?: boolean;
+  status?: ProfessionalStatus;
+  role?: string; // For backwards compatibility
+  photo_url?: string;
+  photoUrl?: string; // For backwards compatibility
+  commissionPercentage?: number; // For backwards compatibility
+};
+
+export type ProfessionalCreateForm = ProfessionalFormData;
+
+export enum ProfessionalStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  ON_LEAVE = 'ON_LEAVE'
+}
+
+export const STATUS_MAPPING = {
+  'active': ProfessionalStatus.ACTIVE,
+  'inactive': ProfessionalStatus.INACTIVE,
+  'vacation': ProfessionalStatus.ON_LEAVE,
+  'leave': ProfessionalStatus.ON_LEAVE,
+  'ativo': ProfessionalStatus.ACTIVE,
+  'inativo': ProfessionalStatus.INACTIVE,
+  'ferias': ProfessionalStatus.ON_LEAVE
+};
+
+export const PROFESSIONAL_STATUS = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  ON_LEAVE: 'vacation'
 };

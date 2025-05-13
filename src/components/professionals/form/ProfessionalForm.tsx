@@ -5,7 +5,7 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
-import { ProfessionalCreateForm, Professional } from "@/hooks/professionals/types";
+import { Professional, ProfessionalFormData } from "@/hooks/professionals/types";
 import { ProfessionalFormFields } from "./ProfessionalFormFields";
 import { professionalFormSchema } from "../schemas/professionalFormSchema";
 import { Loader2 } from "lucide-react";
@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 export interface ProfessionalFormProps {
   onClose: () => void;
-  onSubmit: (data: ProfessionalCreateForm) => Promise<void>;
+  onSubmit: (data: ProfessionalFormData) => Promise<void>;
   professional?: Professional; // For editing
   editMode?: boolean;
   isSubmitting?: boolean;
@@ -30,7 +30,7 @@ export const ProfessionalForm = ({
   // Get professionals data and ensure specialties is properly initialized
   const { specialties = [] } = useProfessionals();
   
-  const form = useForm<ProfessionalCreateForm>({
+  const form = useForm<ProfessionalFormData>({
     resolver: zodResolver(professionalFormSchema),
     defaultValues: {
       name: professional?.name || "",
@@ -43,7 +43,7 @@ export const ProfessionalForm = ({
     },
   });
 
-  const handleSubmit = async (data: ProfessionalCreateForm) => {
+  const handleSubmit = async (data: ProfessionalFormData) => {
     if (isSubmitting) return;
     
     try {
