@@ -17,7 +17,7 @@ export interface Client {
   valor_total_gasto?: number;
   total_agendamentos?: number;
   status?: 'active' | 'inactive';
-  criado_em?: string;
+  criado_em: string;
   cidade?: string;
   estado?: string;
   notas?: string;

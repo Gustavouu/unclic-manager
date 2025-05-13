@@ -1,3 +1,4 @@
+
 import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useEffect } from "react";
@@ -21,7 +22,7 @@ import { useAppointmentConflicts } from "@/hooks/appointments/useAppointmentConf
 import { v4 as uuidv4 } from "uuid";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { Appointment, AppointmentStatus } from "@/hooks/appointments/types";
+import { AppointmentStatus } from "@/hooks/appointments/types";
 
 type AppointmentFormProps = {
   onClose: () => void;

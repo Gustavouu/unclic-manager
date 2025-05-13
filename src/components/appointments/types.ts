@@ -1,5 +1,5 @@
 
-export type AppointmentStatus = "agendado" | "confirmado" | "pendente" | "concluido" | "cancelado";
+export type AppointmentStatus = "agendado" | "confirmado" | "pendente" | "concluido" | "cancelado" | "faltou";
 export type ServiceType = "all" | "haircut" | "barber" | "combo" | "treatment";
 export type DateFilter = "all" | "today" | "tomorrow" | "thisWeek" | "custom";
 export type CalendarViewType = "month" | "week" | "day";
@@ -16,8 +16,8 @@ export interface Appointment {
   notes?: string;
   paymentMethod?: string;
   serviceId?: string;
-  clientId: string; // Changed from optional to required
-  professionalId?: string;
+  clientId: string;
+  professionalId: string;
   businessId?: string;
   service?: {
     price: number;
@@ -25,7 +25,7 @@ export interface Appointment {
   additionalServices?: Array<{
     price: number;
   }>;
-  notifications?: { // Added notifications field
+  notifications?: {
     sendConfirmation: boolean;
     sendReminder: boolean;
   };

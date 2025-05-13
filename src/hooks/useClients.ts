@@ -10,7 +10,12 @@ import { Client, ClientFormData } from '@/types/client';
 export type { Client } from '@/types/client';
 
 export const useClients = (onClientCreated?: (client: Client) => void) => {
-  const { clients, isLoading, error: fetchError, filterClients } = useClientsList();
+  const { 
+    clients, 
+    isLoading, 
+    error: fetchError, 
+    filterClients 
+  } = useClientsList();
   
   const { 
     createClient, 

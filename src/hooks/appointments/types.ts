@@ -6,7 +6,8 @@ export type AppointmentStatus =
   | "confirmado" 
   | "pendente" 
   | "concluido" 
-  | "cancelado";
+  | "cancelado"
+  | "faltou";
 
 export interface Appointment {
   id: string;
@@ -16,7 +17,7 @@ export interface Appointment {
   serviceId?: string;
   serviceName: string;
   serviceType: string;
-  professionalId?: string;
+  professionalId: string;
   professionalName?: string;
   duration: number;
   price: number;
@@ -24,7 +25,7 @@ export interface Appointment {
   notes?: string;
   paymentMethod?: string;
   confirmed?: boolean;
-  notifications?: { // Added notifications property
+  notifications?: {
     sendConfirmation: boolean;
     sendReminder: boolean;
   };
@@ -51,7 +52,7 @@ export interface UpdatedAppointmentData {
   notes?: string;
   paymentMethod?: string;
   confirmed?: boolean;
-  notifications?: { // Added notifications property
+  notifications?: {
     sendConfirmation: boolean;
     sendReminder: boolean;
   };
@@ -70,7 +71,7 @@ export interface CreateAppointmentData {
   serviceId?: string;
   serviceName: string;
   serviceType: string;
-  professionalId?: string;
+  professionalId: string;
   professionalName?: string;
   duration: number;
   price: number;

@@ -3,25 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { toast } from "sonner";
-
-export interface Client {
-  id: string;
-  nome: string;
-  email?: string;
-  telefone?: string;
-  data_nascimento?: string;
-  genero?: string;
-  endereco?: string;
-  cidade?: string;
-  estado?: string;
-  cep?: string;
-  notas?: string;
-  preferencias?: Record<string, any>;
-  ultima_visita?: string;
-  valor_total_gasto?: number;
-  criado_em: string;
-  status?: 'active' | 'inactive';
-}
+import { Client } from "@/types/client";
 
 export const useClientsList = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -44,8 +26,10 @@ export const useClientsList = () => {
       if (error) throw error;
       
       // Add a calculated status field based on some business logic
+      // and map properties to align with the Client interface
       const clientsWithStatus = (data || []).map(client => ({
         ...client,
+        name: client.nome, // Add name field to match with Client interface
         status: client.ultima_visita ? 'active' : 'inactive'
       })) as Client[];
       
@@ -57,6 +41,20 @@ export const useClientsList = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  // Add the missing filterClients method
+  const filterClients = (searchTerm: string): Client[] => {
+    if (!searchTerm) return clients;
+    
+    const lowercasedTerm = searchTerm.toLowerCase();
+    
+    return clients.filter(client => 
+      client.nome?.toLowerCase().includes(lowercasedTerm) ||
+      client.email?.toLowerCase().includes(lowercasedTerm) ||
+      client.telefone?.toLowerCase().includes(lowercasedTerm) ||
+      client.cidade?.toLowerCase().includes(lowercasedTerm)
+    );
   };
   
   const addClient = async (client: Omit<Client, 'id' | 'criado_em' | 'status'>) => {
@@ -79,6 +77,7 @@ export const useClientsList = () => {
       
       const newClient = {
         ...data,
+        name: data.nome, // Add name field to match Client interface
         status: 'active'
       } as Client;
       
@@ -95,7 +94,7 @@ export const useClientsList = () => {
   const updateClient = async (id: string, updates: Partial<Client>) => {
     try {
       // Remove calculated fields
-      const { status, ...clientUpdates } = updates;
+      const { status, name, ...clientUpdates } = updates;
       
       const { error } = await supabase
         .from('clientes')
@@ -145,6 +144,7 @@ export const useClientsList = () => {
     error,
     fetchClients,
     addClient,
-    updateClient
+    updateClient,
+    filterClients
   };
 };

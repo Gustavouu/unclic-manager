@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
-import { Appointment, AppointmentStatus } from "@/hooks/appointments/types";
+import { Appointment } from "@/hooks/appointments/types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { appointmentFormSchema } from "../schemas/appointmentFormSchema";
@@ -36,7 +36,7 @@ export function AppointmentStepperForm({
       time: "09:00",
       serviceId: "",
       professionalId: "",
-      status: "agendado" as AppointmentStatus,
+      status: "agendado",
       notes: "",
       paymentMethod: "local",
       notifications: {
@@ -91,7 +91,7 @@ export function AppointmentStepperForm({
       const [hours, minutes] = data.time.split(':').map(Number);
       appointmentDate.setHours(hours, minutes, 0, 0);
       
-      const appointmentData: Omit<Appointment, "id"> = {
+      const appointmentData = {
         clientId: preselectedClientId,
         clientName: preselectedClientName || "Cliente",
         serviceId: data.serviceId,

@@ -1,7 +1,7 @@
 
 import * as z from "zod";
 import { addMinutes, isBefore, isAfter, startOfDay, addDays } from "date-fns";
-import { AppointmentStatus } from "../types";
+import { AppointmentStatus } from "@/hooks/appointments/types";
 
 // Configurações (podem vir do banco de dados)
 const DIAS_MAXIMOS_FUTURO = 30;
@@ -32,7 +32,7 @@ export const appointmentFormSchema = z.object({
     required_error: "Selecione um horário",
   }).regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Horário inválido"),
   notes: z.string().optional(),
-  status: z.enum(["agendado", "confirmado", "cancelado", "concluido", "pendente"] as const, {
+  status: z.enum(["agendado", "confirmado", "cancelado", "concluido", "pendente", "faltou"] as const, {
     required_error: "Selecione um status",
   }),
   paymentMethod: z.enum(["local", "pix", "credit_card", "debit_card", "transfer"], {

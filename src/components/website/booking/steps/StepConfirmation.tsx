@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,6 @@ import { ptBR } from "date-fns/locale";
 import { Loader2, CalendarCheck } from "lucide-react";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { toast } from "sonner";
-import { AppointmentStatus } from "@/hooks/appointments/types";
 
 interface StepConfirmationProps {
   bookingData: BookingData;
@@ -47,7 +45,7 @@ export function StepConfirmation({ bookingData, onComplete }: StepConfirmationPr
         clientName: bookingData.clientName || "Cliente não identificado",
         serviceName: bookingData.serviceName,
         date: appointmentDate,
-        status: "agendado" as AppointmentStatus,
+        status: "agendado",
         price: bookingData.servicePrice,
         serviceType: "servico", 
         duration: bookingData.serviceDuration,

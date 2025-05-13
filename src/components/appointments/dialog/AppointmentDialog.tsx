@@ -45,11 +45,11 @@ export function AppointmentDialog({
   const [activeTab, setActiveTab] = useState<string>("details");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   
-  const { updateAppointment, deleteAppointment } = useAppointments();
+  const { updateAppointmentStatus, updateAppointment, deleteAppointment } = useAppointments();
   
   const handleStatusChange = async (newStatus: AppointmentStatus) => {
     try {
-      await updateAppointment(appointment.id, { status: newStatus });
+      await updateAppointmentStatus(appointment.id, newStatus);
       toast.success(`Status alterado para ${newStatus}`);
     } catch (error) {
       toast.error("Erro ao atualizar status");
