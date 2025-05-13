@@ -7,7 +7,16 @@ export const useProfessionals = () => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [specialties, setSpecialties] = useState<string[]>([
+    'Corte Masculino', 
+    'Corte Feminino', 
+    'Barba', 
+    'Coloração', 
+    'Tratamentos', 
+    'Penteados'
+  ]);
 
+  // Fetch professionals from API
   const fetchProfessionals = useCallback(async () => {
     setLoading(true);
     try {
@@ -24,7 +33,8 @@ export const useProfessionals = () => {
             specialties: ['Corte Masculino', 'Barba'],
             status: ProfessionalStatus.ACTIVE,
             commissionPercentage: 50,
-            role: 'Barbeiro'
+            role: 'Barbeiro',
+            hireDate: '2022-01-01',
           },
           {
             id: '2',
@@ -36,7 +46,8 @@ export const useProfessionals = () => {
             specialties: ['Coloração', 'Tratamentos'],
             status: ProfessionalStatus.ACTIVE,
             commissionPercentage: 45,
-            role: 'Cabeleireira'
+            role: 'Cabeleireira',
+            hireDate: '2021-06-15',
           },
           {
             id: '3',
@@ -48,7 +59,8 @@ export const useProfessionals = () => {
             specialties: ['Corte Masculino', 'Penteados'],
             status: ProfessionalStatus.INACTIVE,
             commissionPercentage: 40,
-            role: 'Barbeiro'
+            role: 'Barbeiro',
+            hireDate: '2020-11-20',
           }
         ];
         setProfessionals(mockProfessionals);
@@ -67,7 +79,7 @@ export const useProfessionals = () => {
       const newProfessional: Professional = {
         ...professional,
         id: uuidv4(),
-        status: ProfessionalStatus.ACTIVE
+        status: professional.status || ProfessionalStatus.ACTIVE
       };
       
       setProfessionals(prev => [...prev, newProfessional]);
@@ -125,6 +137,7 @@ export const useProfessionals = () => {
     addProfessional,
     updateProfessional,
     removeProfessional,
-    getProfessionalById
+    getProfessionalById,
+    specialties // Add specialties to the return object
   };
 };

@@ -15,6 +15,7 @@ export interface FormFieldProps {
   type?: string;
   onBlur?: () => void;
   onFocus?: () => void;
+  touched?: boolean; // Adding touched property
 }
 
 export const FormField: React.FC<FormFieldProps> = ({
@@ -29,6 +30,7 @@ export const FormField: React.FC<FormFieldProps> = ({
   type = "text",
   onBlur,
   onFocus,
+  touched,
 }) => {
   return (
     <div className="space-y-1.5">
@@ -47,7 +49,7 @@ export const FormField: React.FC<FormFieldProps> = ({
         <Input
           id={id}
           className={`${startIcon ? "pl-10" : ""} ${
-            error ? "border-red-300 focus-visible:ring-red-500" : ""
+            error && touched ? "border-red-300 focus-visible:ring-red-500" : ""
           }`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -59,7 +61,7 @@ export const FormField: React.FC<FormFieldProps> = ({
         />
       </div>
       
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && touched && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );
 };

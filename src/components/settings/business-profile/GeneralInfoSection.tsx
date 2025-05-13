@@ -19,8 +19,7 @@ interface GeneralInfoSectionProps {
 export const GeneralInfoSection = ({ 
   updateField, 
   getFieldValue, 
-  getFieldError, 
-  hasFieldBeenTouched 
+  getFieldError
 }: GeneralInfoSectionProps) => {
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
 
@@ -63,8 +62,7 @@ export const GeneralInfoSection = ({
         label="Nome do Negócio"
         value={getFieldValue("businessName")}
         onChange={(value) => updateField("businessName", value)}
-        error={getFieldError("businessName")}
-        touched={hasFieldBeenTouched("businessName")}
+        error={getFieldError("businessName") || ""}
         required
       />
       
@@ -74,13 +72,12 @@ export const GeneralInfoSection = ({
         type="email"
         value={getFieldValue("businessEmail")}
         onChange={(value) => updateField("businessEmail", value)}
-        error={getFieldError("businessEmail")}
-        touched={hasFieldBeenTouched("businessEmail")}
+        error={getFieldError("businessEmail") || ""}
         required
       />
       
       <div className="space-y-2">
-        <Label htmlFor="business-phone" className={hasFieldBeenTouched("businessPhone") && getFieldError("businessPhone") ? "text-destructive" : ""}>
+        <Label htmlFor="business-phone" className={getFieldError("businessPhone") ? "text-destructive" : ""}>
           Telefone<span className="text-destructive ml-1">*</span>
         </Label>
         <Input 
@@ -89,9 +86,9 @@ export const GeneralInfoSection = ({
           value={getFieldValue("businessPhone")}
           onChange={handlePhoneChange}
           placeholder="(00) 00000-0000"
-          className={hasFieldBeenTouched("businessPhone") && getFieldError("businessPhone") ? "border-destructive" : ""}
+          className={getFieldError("businessPhone") ? "border-destructive" : ""}
         />
-        {getFieldError("businessPhone") && hasFieldBeenTouched("businessPhone") && (
+        {getFieldError("businessPhone") && (
           <p className="text-sm font-medium text-destructive">{getFieldError("businessPhone")}</p>
         )}
       </div>
@@ -116,7 +113,7 @@ export const GeneralInfoSection = ({
             <MapPin className="h-4 w-4" />
           </Button>
         </div>
-        {getFieldError("businessAddress") && hasFieldBeenTouched("businessAddress") && (
+        {getFieldError("businessAddress") && (
           <p className="text-sm font-medium text-destructive">{getFieldError("businessAddress")}</p>
         )}
       </div>

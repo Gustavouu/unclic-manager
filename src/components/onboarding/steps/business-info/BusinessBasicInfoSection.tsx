@@ -27,7 +27,6 @@ export const BusinessBasicInfoSection: React.FC = () => {
         value={businessData.name || ""}
         onChange={(value) => handleChange("name", value)}
         error={!businessData.name ? "O nome do estabelecimento é obrigatório" : ""}
-        touched={true}
         required
       />
       
@@ -37,8 +36,7 @@ export const BusinessBasicInfoSection: React.FC = () => {
         type="email"
         value={businessData.email || ""}
         onChange={(value) => handleChange("email", value)}
-        error={validateEmail(businessData.email)}
-        touched={true}
+        error={validateEmail(businessData.email || "")}
         required
       />
       
@@ -48,8 +46,7 @@ export const BusinessBasicInfoSection: React.FC = () => {
         type="tel"
         value={businessData.phone || ""}
         onChange={handlePhoneChange}
-        error={validatePhone(businessData.phone)}
-        touched={true}
+        error={validatePhone(businessData.phone || "")}
         required
       />
     </div>

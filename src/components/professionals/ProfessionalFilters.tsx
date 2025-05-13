@@ -77,20 +77,20 @@ export const ProfessionalFilters = ({
                 Todos
               </DropdownMenuItem>
               <DropdownMenuItem 
-                className={filters.status === PROFESSIONAL_STATUS.ACTIVE ? "bg-accent" : ""}
-                onClick={() => handleStatusFilter(PROFESSIONAL_STATUS.ACTIVE)}
+                className={filters.status === ProfessionalStatus.ACTIVE ? "bg-accent" : ""}
+                onClick={() => handleStatusFilter(ProfessionalStatus.ACTIVE)}
               >
                 Ativos
               </DropdownMenuItem>
               <DropdownMenuItem 
-                className={filters.status === PROFESSIONAL_STATUS.ON_LEAVE ? "bg-accent" : ""}
-                onClick={() => handleStatusFilter(PROFESSIONAL_STATUS.ON_LEAVE)}
+                className={filters.status === ProfessionalStatus.ON_LEAVE ? "bg-accent" : ""}
+                onClick={() => handleStatusFilter(ProfessionalStatus.ON_LEAVE)}
               >
                 Ausentes
               </DropdownMenuItem>
               <DropdownMenuItem 
-                className={filters.status === PROFESSIONAL_STATUS.INACTIVE ? "bg-accent" : ""}
-                onClick={() => handleStatusFilter(PROFESSIONAL_STATUS.INACTIVE)}
+                className={filters.status === ProfessionalStatus.INACTIVE ? "bg-accent" : ""}
+                onClick={() => handleStatusFilter(ProfessionalStatus.INACTIVE)}
               >
                 Inativos
               </DropdownMenuItem>

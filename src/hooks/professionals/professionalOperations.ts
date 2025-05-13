@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from '@/integrations/supabase/client';
-import { Professional, ProfessionalCreateForm, ProfessionalStatus, PROFESSIONAL_STATUS, STATUS_MAPPING } from "./types";
+import { Professional, ProfessionalCreateForm, ProfessionalStatus, PROFESSIONAL_STATUS } from "./types";
 import { useTenant } from "@/contexts/TenantContext";
 import { toast } from 'sonner';
 
@@ -35,17 +36,17 @@ export const useProfessionalOperations = () => {
           let status: ProfessionalStatus;
           switch(prof.status) {
             case 'active':
-              status = PROFESSIONAL_STATUS.ACTIVE;
+              status = ProfessionalStatus.ACTIVE;
               break;
             case 'inactive':
-              status = PROFESSIONAL_STATUS.INACTIVE;
+              status = ProfessionalStatus.INACTIVE;
               break;
             case 'vacation':
             case 'leave':
-              status = PROFESSIONAL_STATUS.ON_LEAVE;
+              status = ProfessionalStatus.ON_LEAVE;
               break;
             default:
-              status = PROFESSIONAL_STATUS.ACTIVE;
+              status = ProfessionalStatus.ACTIVE;
           }
           
           return {
@@ -88,8 +89,8 @@ export const useProfessionalOperations = () => {
       
       // Map status to database format if needed
       let dbStatus = 'active';
-      if (data.status === PROFESSIONAL_STATUS.INACTIVE) dbStatus = 'inactive';
-      else if (data.status === PROFESSIONAL_STATUS.ON_LEAVE) dbStatus = 'vacation';
+      if (data.status === ProfessionalStatus.INACTIVE) dbStatus = 'inactive';
+      else if (data.status === ProfessionalStatus.ON_LEAVE) dbStatus = 'vacation';
       
       const { data: newProfData, error } = await supabase
         .from('funcionarios')
@@ -120,7 +121,7 @@ export const useProfessionalOperations = () => {
         specialties: newProfData.especializacoes || [],
         photoUrl: newProfData.foto_url || '',
         bio: newProfData.bio || '',
-        status: PROFESSIONAL_STATUS.ACTIVE,
+        status: ProfessionalStatus.ACTIVE,
         hireDate: newProfData.data_contratacao || '',
         commissionPercentage: newProfData.comissao_percentual || 0,
         userId: newProfData.id_usuario,
@@ -159,9 +160,9 @@ export const useProfessionalOperations = () => {
       
       // Convert status to database format if needed
       if (data.status) {
-        if (data.status === PROFESSIONAL_STATUS.ACTIVE) updateData.status = 'active';
-        else if (data.status === PROFESSIONAL_STATUS.INACTIVE) updateData.status = 'inactive';
-        else if (data.status === PROFESSIONAL_STATUS.ON_LEAVE) updateData.status = 'vacation';
+        if (data.status === ProfessionalStatus.ACTIVE) updateData.status = 'active';
+        else if (data.status === ProfessionalStatus.INACTIVE) updateData.status = 'inactive';
+        else if (data.status === ProfessionalStatus.ON_LEAVE) updateData.status = 'vacation';
       }
       
       const { data: updatedData, error } = await supabase
@@ -177,17 +178,17 @@ export const useProfessionalOperations = () => {
       let mappedStatus: ProfessionalStatus;
       switch(updatedData.status) {
         case 'active':
-          mappedStatus = PROFESSIONAL_STATUS.ACTIVE;
+          mappedStatus = ProfessionalStatus.ACTIVE;
           break;
         case 'inactive':
-          mappedStatus = PROFESSIONAL_STATUS.INACTIVE;
+          mappedStatus = ProfessionalStatus.INACTIVE;
           break;
         case 'vacation':
         case 'leave':
-          mappedStatus = PROFESSIONAL_STATUS.ON_LEAVE;
+          mappedStatus = ProfessionalStatus.ON_LEAVE;
           break;
         default:
-          mappedStatus = PROFESSIONAL_STATUS.ACTIVE;
+          mappedStatus = ProfessionalStatus.ACTIVE;
       }
       
       const updatedProfessional: Professional = {
@@ -228,9 +229,9 @@ export const useProfessionalOperations = () => {
     try {
       // Convert to database status format
       let dbStatus: string;
-      if (status === PROFESSIONAL_STATUS.ACTIVE) dbStatus = 'active';
-      else if (status === PROFESSIONAL_STATUS.INACTIVE) dbStatus = 'inactive';
-      else if (status === PROFESSIONAL_STATUS.ON_LEAVE) dbStatus = 'vacation';
+      if (status === ProfessionalStatus.ACTIVE) dbStatus = 'active';
+      else if (status === ProfessionalStatus.INACTIVE) dbStatus = 'inactive';
+      else if (status === ProfessionalStatus.ON_LEAVE) dbStatus = 'vacation';
       else dbStatus = 'active';
       
       const { error } = await supabase
@@ -269,7 +270,7 @@ export const useProfessionalOperations = () => {
       if (error) throw error;
       
       setProfessionals(prev => 
-        prev.map(p => p.id === id ? { ...p, status: PROFESSIONAL_STATUS.INACTIVE } : p)
+        prev.map(p => p.id === id ? { ...p, status: ProfessionalStatus.INACTIVE } : p)
       );
       
       toast.success("Colaborador removido com sucesso!");

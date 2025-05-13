@@ -1,35 +1,45 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { FormField } from "@/components/ui/form-field";
-import { ImageUpload } from "@/components/common/ImageUpload";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { Separator } from "@/components/ui/separator";
-import { Label } from "@/components/ui/label";
-import { Image, Upload } from "lucide-react";
 
 export const BusinessMediaSection = () => {
   const { businessData, updateBusinessData } = useOnboarding();
-  
-  const handleLogoChange = (file: File | null, logoUrl: string | null) => {
-    updateBusinessData({ 
-      logo: file,
-      logoName: file ? file.name : null,
-      logoUrl: logoUrl
-    });
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
+
+  const handleLogoUpload = (file: File) => {
+    if (file) {
+      setLogoUploading(true);
+      const logoUrl = URL.createObjectURL(file);
+      updateBusinessData({
+        logo: file,
+        logoUrl,
+        logoName: file.name
+      });
+      setLogoUploading(false);
+    }
   };
-  
-  const handleBannerChange = (file: File | null, bannerUrl: string | null) => {
-    updateBusinessData({ 
-      banner: file,
-      bannerName: file ? file.name : null,
-      bannerUrl: bannerUrl
-    });
+
+  const handleBannerUpload = (file: File) => {
+    if (file) {
+      setBannerUploading(true);
+      const bannerUrl = URL.createObjectURL(file);
+      updateBusinessData({
+        banner: file,
+        bannerUrl,
+        bannerName: file.name
+      });
+      setBannerUploading(false);
+    }
   };
 
   const handleWebsiteChange = (value: string) => {
     updateBusinessData({ website: value });
   };
-  
+
   const handleSocialMediaChange = (platform: string, value: string) => {
     updateBusinessData({
       socialMedia: {
@@ -45,43 +55,23 @@ export const BusinessMediaSection = () => {
       
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="w-full sm:w-1/2">
-          <Label htmlFor="logo-upload">Logo do Estabelecimento</Label>
-          
-          <div className="mt-2">
-            <ImageUpload
-              id="logo-upload"
-              imageUrl={businessData.logoUrl || null}
-              onImageChange={handleLogoChange}
-              icon={<Image className="w-8 h-8 text-muted-foreground mb-2" />}
-              label="Clique para adicionar"
-              width="w-32"
-              height="h-32"
-            />
-          </div>
-          
-          <p className="text-xs text-muted-foreground mt-1">
-            Formatos recomendados: PNG, JPG. Tamanho máximo: 2MB
-          </p>
+          <div className="mb-2">Logo</div>
+          <ImageUpload
+            value={businessData.logoUrl}
+            onChange={handleLogoUpload}
+            loading={logoUploading}
+            className="h-40 w-full"
+          />
         </div>
+        
         <div className="w-full sm:w-1/2">
-          <Label htmlFor="banner-upload">Banner do Estabelecimento</Label>
-          
-          <div className="mt-2">
-            <ImageUpload
-              id="banner-upload"
-              imageUrl={businessData.bannerUrl || null}
-              onImageChange={handleBannerChange}
-              icon={<Upload className="w-8 h-8 text-muted-foreground mb-2" />}
-              label="Clique para adicionar um banner"
-              subLabel="Dimensões recomendadas: 1200x300px"
-              width="w-full"
-              height="h-40"
-            />
-          </div>
-          
-          <p className="text-xs text-muted-foreground mt-1">
-            O banner será exibido na parte superior da página do seu estabelecimento
-          </p>
+          <div className="mb-2">Banner</div>
+          <ImageUpload
+            value={businessData.bannerUrl}
+            onChange={handleBannerUpload}
+            loading={bannerUploading}
+            className="h-40 w-full aspect-[2/1]"
+          />
         </div>
       </div>
       
@@ -102,6 +92,7 @@ export const BusinessMediaSection = () => {
           value={businessData.socialMedia?.instagram || ""}
           onChange={(value) => handleSocialMediaChange("instagram", value)}
           placeholder="@seuinstagram"
+          startIcon="instagram"
         />
         
         <FormField
@@ -110,6 +101,7 @@ export const BusinessMediaSection = () => {
           value={businessData.socialMedia?.facebook || ""}
           onChange={(value) => handleSocialMediaChange("facebook", value)}
           placeholder="facebook.com/seunegocio"
+          startIcon="facebook"
         />
       </div>
     </div>

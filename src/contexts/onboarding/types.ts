@@ -1,3 +1,4 @@
+
 // Types for the onboarding context
 
 // Business data types
@@ -5,22 +6,23 @@ export interface BusinessData {
   name: string;
   email: string;
   phone: string;
-  description?: string;  // Added optional description
+  description?: string;
   logo?: File | null;
-  logoUrl?: string;  
-  logoName?: string;  
-  logoData?: string;  
+  logoUrl?: string;
+  logoName?: string;
+  logoData?: string;
   banner?: File | null;
-  bannerUrl?: string;  
-  bannerName?: string;  
-  bannerData?: string;  
-  cep: string;
-  address: string;
-  number: string;
-  neighborhood: string;
-  city: string;
-  state: string;
-  website?: string;  
+  bannerUrl?: string;
+  bannerName?: string;
+  bannerData?: string;
+  zipCode?: string;
+  address?: string;
+  addressNumber?: string;
+  addressComplement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  website?: string;
   socialMedia?: {
     facebook?: string;
     instagram?: string;

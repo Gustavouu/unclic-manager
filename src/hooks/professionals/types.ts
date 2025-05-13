@@ -10,10 +10,14 @@ export interface Professional {
   status: ProfessionalStatus;
   commissionPercentage?: number;
   role?: string;
+  hireDate?: string; // Added to fix errors
+  userId?: string; // Added to fix errors
+  business_id?: string; // Added to fix errors
 }
 
-export type ProfessionalCreateForm = Omit<Professional, 'id' | 'status'> & {
+export type ProfessionalCreateForm = Omit<Professional, 'id'> & {
   role?: string;
+  status?: ProfessionalStatus; // Added status to the create form
 };
 
 export enum ProfessionalStatus {
@@ -23,9 +27,9 @@ export enum ProfessionalStatus {
 }
 
 export const PROFESSIONAL_STATUS = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  ON_LEAVE: 'ON_LEAVE'
+  ACTIVE: ProfessionalStatus.ACTIVE,
+  INACTIVE: ProfessionalStatus.INACTIVE,
+  ON_LEAVE: ProfessionalStatus.ON_LEAVE
 } as const;
 
 export type ProfessionalStatusType = keyof typeof PROFESSIONAL_STATUS;

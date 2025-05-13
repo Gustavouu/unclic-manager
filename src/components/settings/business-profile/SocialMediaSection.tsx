@@ -12,8 +12,7 @@ interface SocialMediaSectionProps {
 export const SocialMediaSection = ({
   updateField,
   getFieldValue,
-  getFieldError,
-  hasFieldBeenTouched
+  getFieldError
 }: SocialMediaSectionProps) => {
   return (
     <div className="space-y-4">
@@ -29,8 +28,7 @@ export const SocialMediaSection = ({
           placeholder="https://www.facebook.com/seunegocio"
           value={getFieldValue("facebookLink")}
           onChange={(value) => updateField("facebookLink", value)}
-          error={getFieldError("facebookLink")}
-          touched={hasFieldBeenTouched("facebookLink")}
+          error={getFieldError("facebookLink") || ""}
         />
         
         <FormField
@@ -40,8 +38,7 @@ export const SocialMediaSection = ({
           placeholder="https://www.instagram.com/seunegocio"
           value={getFieldValue("instagramLink")}
           onChange={(value) => updateField("instagramLink", value)}
-          error={getFieldError("instagramLink")}
-          touched={hasFieldBeenTouched("instagramLink")}
+          error={getFieldError("instagramLink") || ""}
         />
         
         <FormField
@@ -51,8 +48,7 @@ export const SocialMediaSection = ({
           placeholder="https://www.linkedin.com/company/seunegocio"
           value={getFieldValue("linkedinLink")}
           onChange={(value) => updateField("linkedinLink", value)}
-          error={getFieldError("linkedinLink")}
-          touched={hasFieldBeenTouched("linkedinLink")}
+          error={getFieldError("linkedinLink") || ""}
         />
         
         <FormField
@@ -62,8 +58,7 @@ export const SocialMediaSection = ({
           placeholder="https://twitter.com/seunegocio"
           value={getFieldValue("twitterLink")}
           onChange={(value) => updateField("twitterLink", value)}
-          error={getFieldError("twitterLink")}
-          touched={hasFieldBeenTouched("twitterLink")}
+          error={getFieldError("twitterLink") || ""}
         />
       </div>
     </div>
