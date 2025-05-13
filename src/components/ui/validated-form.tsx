@@ -123,18 +123,26 @@ export function ValidatedForm({
     }
   };
 
+  // Fix: Clone children and properly pass isSubmitting state
+  const childrenWithProps = React.Children.map(children, child => {
+    // Only add props to valid React elements
+    if (React.isValidElement(child)) {
+      // Don't pass isSubmitting to DOM elements like input
+      if (typeof child.type === 'string') {
+        return child;
+      }
+      // Only pass to components (functions/classes)
+      return React.cloneElement(child, { isSubmitting });
+    }
+    return child;
+  });
+
   return (
     <form {...props} onSubmit={handleSubmit} className={cn('relative', className)}>
       {/* Hidden CSRF token field */}
       <input type="hidden" name="csrf_token" value={csrfToken} />
       
-      {/* Pass isSubmitting state to children */}
-      {React.Children.map(children, child => {
-        if (React.isValidElement(child)) {
-          return React.cloneElement(child as React.ReactElement<any>, { isSubmitting });
-        }
-        return child;
-      })}
+      {childrenWithProps}
     </form>
   );
 }

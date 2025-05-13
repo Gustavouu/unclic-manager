@@ -10,7 +10,6 @@ import { AsyncFeedback } from "@/components/ui/async-feedback";
 import { LogIn, Lock, Mail, UserPlus, AlertTriangle } from "lucide-react";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import { handleApiError } from "@/utils/errorHandler";
-import { sanitizeInput } from "@/utils/sanitize";
 import { ValidatedForm } from "@/components/ui/validated-form";
 import { z } from "zod";
 import { generateNonce } from "@/utils/securityHeaders";
