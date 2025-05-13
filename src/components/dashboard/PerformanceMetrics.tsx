@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { DashboardStats } from "@/hooks/dashboard/useDashboardData";
+import { DashboardStats } from "@/types/dashboard";
 
 interface PerformanceMetricsProps {
   stats: DashboardStats;

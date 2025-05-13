@@ -1,8 +1,7 @@
-
 import React from "react";
 import { Users, CalendarClock, DollarSign, Scissors } from "lucide-react";
 import { StatsCard } from "@/components/common/StatsCard";
-import { DashboardStats } from "@/hooks/dashboard/useDashboardData";
+import { DashboardStats } from "@/types/dashboard";
 import { formatCurrency } from "@/lib/format";
 import { FilterPeriod } from "@/types/dashboard";
 

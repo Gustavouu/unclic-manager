@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUp, ArrowDown, TrendingUp, AlertCircle, Award, Users } from "lucide-react";
-import { DashboardStats } from "@/hooks/dashboard/useDashboardData";
+import { DashboardStats } from "@/types/dashboard";
 
 interface DashboardInsightsProps {
   stats: DashboardStats;

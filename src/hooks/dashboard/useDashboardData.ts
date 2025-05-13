@@ -1,9 +1,10 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { FilterPeriod, DashboardStats } from '@/types/dashboard';
 import { useTenant } from '@/contexts/TenantContext';
+
+export { DashboardStats }; // Export DashboardStats from the hook
 
 export const useDashboardData = (period: FilterPeriod = 'month') => {
   const [stats, setStats] = useState<DashboardStats>({
