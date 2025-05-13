@@ -15,6 +15,7 @@ try {
   // We could show an error screen here, but for now we'll just log the error
 }
 
+// Wrap the app in the necessary providers
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <BrowserRouter>

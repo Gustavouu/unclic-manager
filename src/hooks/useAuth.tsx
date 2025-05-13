@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+
+import { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -15,25 +16,15 @@ interface AuthContextProps {
   updatePassword: (newPassword: string) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextProps>({
-  user: null,
-  session: null,
-  loading: true,
-  signIn: async () => {},
-  signUp: async () => {},
-  signOut: async () => {},
-  updateProfile: async () => {},
-  resetPassword: async () => {},
-  updatePassword: async () => {},
-});
-
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+// Use this hook to access auth functionality
+export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Set up auth state listener
   useEffect(() => {
+    // First set up the auth state listener
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, sessionData) => {
         setSession(sessionData);
@@ -42,7 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // Get initial session
+    // Then get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -241,23 +232,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        signIn,
-        signUp,
-        signOut,
-        updateProfile,
-        resetPassword,
-        updatePassword
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return {
+    user,
+    session,
+    loading,
+    signIn,
+    signUp,
+    signOut,
+    updateProfile,
+    resetPassword,
+    updatePassword
+  };
 };
 
-export const useAuth = () => useContext(AuthContext);
+// Export the hook directly
+export default useAuth;

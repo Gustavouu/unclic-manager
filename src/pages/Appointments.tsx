@@ -12,11 +12,24 @@ import { AppointmentStats } from "@/components/appointments/AppointmentStats";
 import { Calendar, Grid3X3 } from "lucide-react";
 import { useRouteCalendarView } from "@/hooks/useRouteCalendarView";
 import { CalendarViewType } from "@/components/appointments/calendar/types";
+import { AppointmentType } from "@/components/appointments/calendar/types";
 
 const Appointments = () => {
   const [view, setView] = useState<"calendar" | "list">("calendar");
   const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
   const { calendarView, updateUrlView } = useRouteCalendarView();
+  const [appointments, setAppointments] = useState<AppointmentType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Fetch appointments data
+  useEffect(() => {
+    // Simulating API call to fetch appointments
+    setTimeout(() => {
+      // This would be replaced with actual API call
+      setAppointments([]);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
 
   return (
     <OnboardingProvider>
@@ -82,7 +95,7 @@ const Appointments = () => {
             </TabsContent>
             
             <TabsContent value="list" className="mt-0 p-4 bg-white">
-              <AppointmentsList />
+              <AppointmentsList appointments={appointments} isLoading={isLoading} />
             </TabsContent>
           </Tabs>
         </Card>
