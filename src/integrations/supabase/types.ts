@@ -701,61 +701,94 @@ export type Database = {
           atualizado_em: string | null
           aviso_minimo_agendamento: number | null
           banner_url: string | null
+          bloquear_clientes_faltantes: boolean | null
           configuracoes_gateway_pagamento: Json | null
+          confirmacao_manual_agendamentos: boolean | null
           cores_primarias: string | null
           cores_secundarias: string | null
           criado_em: string | null
           dias_maximos_antecedencia: number | null
+          enviar_confirmacao_email: boolean | null
+          enviar_lembretes: boolean | null
           fallback_humano_habilitado: boolean | null
           ia_habilitada: boolean | null
           id: string
           id_negocio: string
           limite_fila_remota: number | null
           logo_url: string | null
+          mensagem_cancelamento: string | null
+          mensagem_pos_atendimento: boolean | null
           pagamento_antecipado_obrigatorio: boolean | null
+          permite_agendamentos_simultaneos: boolean | null
           permite_fila_remota: boolean | null
           permite_gorjetas: boolean | null
           politica_cancelamento: string | null
+          politica_cancelamento_horas: number | null
+          taxa_nao_comparecimento: number | null
+          tempo_lembrete_horas: number | null
+          tempo_mensagem_pos_horas: number | null
         }
         Insert: {
           atualizado_em?: string | null
           aviso_minimo_agendamento?: number | null
           banner_url?: string | null
+          bloquear_clientes_faltantes?: boolean | null
           configuracoes_gateway_pagamento?: Json | null
+          confirmacao_manual_agendamentos?: boolean | null
           cores_primarias?: string | null
           cores_secundarias?: string | null
           criado_em?: string | null
           dias_maximos_antecedencia?: number | null
+          enviar_confirmacao_email?: boolean | null
+          enviar_lembretes?: boolean | null
           fallback_humano_habilitado?: boolean | null
           ia_habilitada?: boolean | null
           id?: string
           id_negocio: string
           limite_fila_remota?: number | null
           logo_url?: string | null
+          mensagem_cancelamento?: string | null
+          mensagem_pos_atendimento?: boolean | null
           pagamento_antecipado_obrigatorio?: boolean | null
+          permite_agendamentos_simultaneos?: boolean | null
           permite_fila_remota?: boolean | null
           permite_gorjetas?: boolean | null
           politica_cancelamento?: string | null
+          politica_cancelamento_horas?: number | null
+          taxa_nao_comparecimento?: number | null
+          tempo_lembrete_horas?: number | null
+          tempo_mensagem_pos_horas?: number | null
         }
         Update: {
           atualizado_em?: string | null
           aviso_minimo_agendamento?: number | null
           banner_url?: string | null
+          bloquear_clientes_faltantes?: boolean | null
           configuracoes_gateway_pagamento?: Json | null
+          confirmacao_manual_agendamentos?: boolean | null
           cores_primarias?: string | null
           cores_secundarias?: string | null
           criado_em?: string | null
           dias_maximos_antecedencia?: number | null
+          enviar_confirmacao_email?: boolean | null
+          enviar_lembretes?: boolean | null
           fallback_humano_habilitado?: boolean | null
           ia_habilitada?: boolean | null
           id?: string
           id_negocio?: string
           limite_fila_remota?: number | null
           logo_url?: string | null
+          mensagem_cancelamento?: string | null
+          mensagem_pos_atendimento?: boolean | null
           pagamento_antecipado_obrigatorio?: boolean | null
+          permite_agendamentos_simultaneos?: boolean | null
           permite_fila_remota?: boolean | null
           permite_gorjetas?: boolean | null
           politica_cancelamento?: string | null
+          politica_cancelamento_horas?: number | null
+          taxa_nao_comparecimento?: number | null
+          tempo_lembrete_horas?: number | null
+          tempo_mensagem_pos_horas?: number | null
         }
         Relationships: [
           {
@@ -3559,6 +3592,14 @@ export type Database = {
         Args: { tenant_id: string }
         Returns: boolean
       }
+      clear_tenant_context: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      get_current_tenant_context: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_tenant_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -3587,6 +3628,10 @@ export type Database = {
       set_business_status: {
         Args: { business_id: string; new_status: string }
         Returns: boolean
+      }
+      set_tenant_context: {
+        Args: { tenant_id: string }
+        Returns: undefined
       }
       usuario_tem_acesso_ao_negocio: {
         Args: { id_negocio_verificar: string }

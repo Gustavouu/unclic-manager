@@ -1,29 +1,9 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { FilterPeriod } from '@/types/dashboard';
+import { FilterPeriod, DashboardStats } from '@/types/dashboard';
 import { useTenant } from '@/contexts/TenantContext';
-
-export interface DashboardStats {
-  totalAppointments: number;
-  completedAppointments: number;
-  totalRevenue: number;
-  newClients: number;
-  popularServices: Array<{id: string, name: string, count: number}>;
-  upcomingAppointments: any[];
-  revenueData: Array<{date: string, value: number}>;
-  retentionRate: number;
-  newClientsCount: number;
-  returningClientsCount: number;
-  
-  // Added properties to fix TypeScript errors
-  clientsCount: number;
-  todayAppointments: number;
-  monthlyRevenue: number;
-  monthlyServices: number;
-  occupancyRate: number;
-  nextAppointments: any[];
-}
 
 export const useDashboardData = (period: FilterPeriod = 'month') => {
   const [stats, setStats] = useState<DashboardStats>({
@@ -37,8 +17,6 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
     retentionRate: 0,
     newClientsCount: 0,
     returningClientsCount: 0,
-    
-    // Initialize added properties
     clientsCount: 0,
     todayAppointments: 0,
     monthlyRevenue: 0,
@@ -236,7 +214,6 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           retentionRate,
           newClientsCount,
           returningClientsCount,
-          
           // Add values for the new properties
           clientsCount: newClientsCount + returningClientsCount,
           todayAppointments: upcomingAppointments.length,

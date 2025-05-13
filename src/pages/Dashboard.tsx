@@ -18,12 +18,11 @@ import { OnboardingBanner } from "@/components/dashboard/OnboardingBanner";
 import { toast } from "sonner";
 import { useTenant } from "@/contexts/TenantContext";
 
-// Define the PopularService type to match what's expected in PopularServicesWidget
 interface PopularService {
   id: string;
   name: string;
   count: number;
-  percentage: number; // Required by PopularServicesWidget
+  percentage: number;
 }
 
 const Dashboard = () => {
