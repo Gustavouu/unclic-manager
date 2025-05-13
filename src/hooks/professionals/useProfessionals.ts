@@ -1,84 +1,177 @@
 
-import { useProfessionalOperations } from "./professionalOperations";
-import { useProfessionalUtils } from "./professionalUtils";
-import { useEffect, useState, useCallback } from "react";
-import { Professional, ProfessionalCreateForm, ProfessionalStatus } from "./types";
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { 
+  Professional, 
+  ProfessionalCreateForm, 
+  UseProfessionalsOptions, 
+  UseProfessionalsReturn 
+} from './types';
+import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
+import { toast } from 'sonner';
 
-export const useProfessionals = () => {
-  const {
-    professionals: fetchedProfessionals,
-    isLoading,
-    addProfessional: addProfessionalOp,
-    updateProfessional: updateProfessionalOp,
-    updateProfessionalStatus,
-    removeProfessional: removeProfessionalOp
-  } = useProfessionalOperations();
+export function useProfessionals(options: UseProfessionalsOptions = {}): UseProfessionalsReturn {
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { businessId } = useCurrentBusiness();
   
-  // Ensure professionals is always an array
-  const safeProfessionals = Array.isArray(fetchedProfessionals) 
-    ? fetchedProfessionals 
-    : [] as Professional[];
-  
-  // Add a local state to track changes
-  const [trackedProfessionals, setTrackedProfessionals] = useState<Professional[]>(safeProfessionals);
-  
-  // Sync professionals when they change
+  // Use the tenant ID from options if provided, otherwise use current business ID
+  const effectiveTenantId = options.tenantIdOverride || businessId;
+
+  const fetchProfessionals = useCallback(async () => {
+    if (!effectiveTenantId) {
+      console.log('No business ID available, skipping professionals fetch');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('Fetching professionals for tenant ID:', effectiveTenantId);
+      
+      // Query professionals table with security enforcement
+      const { data, error: fetchError } = await supabase
+        .from('professionals')
+        .select(`
+          *,
+          professional_services(serviceId)
+        `)
+        .eq('tenantId', effectiveTenantId)
+        .eq('isActive', true);
+        
+      if (fetchError) throw fetchError;
+      
+      console.log('Professionals fetched:', data);
+      
+      const formattedProfessionals = data?.map(item => ({
+        id: item.id,
+        name: item.name,
+        email: item.email,
+        phone: item.phone,
+        bio: item.bio,
+        avatar: item.avatar,
+        status: item.status || 'active',
+        establishmentId: item.establishmentId,
+        tenantId: item.tenantId,
+        services: item.professional_services?.map((ps: any) => ps.serviceId) || [],
+        workingHours: item.workingHours,
+        isActive: item.isActive,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        userId: item.userId,
+      })) || [];
+      
+      setProfessionals(formattedProfessionals);
+    } catch (err: any) {
+      console.error('Error fetching professionals:', err);
+      setError(err);
+      
+      // Only show toast if this is a user-facing operation
+      if (!options.secureMode) {
+        toast.error('Erro ao carregar profissionais');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [effectiveTenantId, options.secureMode]);
+
   useEffect(() => {
-    console.log("Updating professionals in useProfessionals:", safeProfessionals);
-    setTrackedProfessionals(safeProfessionals);
-  }, [safeProfessionals]);
-  
-  const { specialties, getProfessionalById } = useProfessionalUtils(trackedProfessionals);
-  
-  // Wrap the operations to ensure state is updated correctly
-  const handleAddProfessional = useCallback(async (data: ProfessionalCreateForm) => {
-    try {
-      const result = await addProfessionalOp(data);
-      return result;
-    } catch (error) {
-      console.error("Error in useProfessionals.handleAddProfessional:", error);
-      throw error;
-    }
-  }, [addProfessionalOp]);
+    fetchProfessionals();
+  }, [fetchProfessionals]);
 
-  const handleUpdateProfessional = useCallback(async (id: string, data: ProfessionalCreateForm) => {
-    try {
-      await updateProfessionalOp(id, data);
-      return true;
-    } catch (error) {
-      console.error("Error in useProfessionals.handleUpdateProfessional:", error);
-      throw error;
+  const createProfessional = async (data: ProfessionalCreateForm): Promise<Professional | null> => {
+    if (!effectiveTenantId) {
+      toast.error('Nenhum negócio selecionado');
+      return null;
     }
-  }, [updateProfessionalOp]);
 
-  const handleUpdateStatus = useCallback(async (id: string, status: ProfessionalStatus) => {
     try {
-      await updateProfessionalStatus(id, status);
-      return true;
-    } catch (error) {
-      console.error("Error in useProfessionals.handleUpdateStatus:", error);
-      throw error;
-    }
-  }, [updateProfessionalStatus]);
+      // Always ensure tenant ID is set properly
+      const professionalData = {
+        ...data,
+        tenantId: effectiveTenantId,
+      };
 
-  const handleRemoveProfessional = useCallback(async (id: string) => {
-    try {
-      await removeProfessionalOp(id);
-      return true;
-    } catch (error) {
-      console.error("Error in useProfessionals.handleRemoveProfessional:", error);
-      throw error;
+      const { data: newProfessional, error: createError } = await supabase
+        .from('professionals')
+        .insert(professionalData)
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      setProfessionals(prev => [...prev, newProfessional]);
+      toast.success('Profissional criado com sucesso');
+      
+      return newProfessional;
+    } catch (err: any) {
+      console.error('Error creating professional:', err);
+      toast.error('Erro ao criar profissional');
+      return null;
     }
-  }, [removeProfessionalOp]);
-  
-  return {
-    professionals: trackedProfessionals,
-    isLoading,
-    specialties,
-    getProfessionalById,
-    addProfessional: handleAddProfessional,
-    updateProfessional: handleUpdateProfessional,
-    updateProfessionalStatus: handleUpdateStatus,
-    removeProfessional: handleRemoveProfessional
   };
-};
+
+  const updateProfessional = async (id: string, data: Partial<Professional>): Promise<boolean> => {
+    try {
+      // Never allow changing the tenant ID in updates
+      const { tenantId, ...updateData } = data;
+      
+      const { error: updateError } = await supabase
+        .from('professionals')
+        .update(updateData)
+        .eq('id', id)
+        .eq('tenantId', effectiveTenantId); // Security check
+      
+      if (updateError) throw updateError;
+      
+      setProfessionals(prev => 
+        prev.map(p => p.id === id ? { ...p, ...updateData } : p)
+      );
+      
+      toast.success('Profissional atualizado com sucesso');
+      return true;
+    } catch (err: any) {
+      console.error('Error updating professional:', err);
+      toast.error('Erro ao atualizar profissional');
+      return false;
+    }
+  };
+
+  const deleteProfessional = async (id: string): Promise<boolean> => {
+    try {
+      const { error: deleteError } = await supabase
+        .from('professionals')
+        .delete()
+        .eq('id', id)
+        .eq('tenantId', effectiveTenantId); // Security check
+      
+      if (deleteError) throw deleteError;
+      
+      setProfessionals(prev => prev.filter(p => p.id !== id));
+      toast.success('Profissional removido com sucesso');
+      return true;
+    } catch (err: any) {
+      console.error('Error deleting professional:', err);
+      toast.error('Erro ao remover profissional');
+      return false;
+    }
+  };
+
+  const getProfessionalById = (id: string): Professional | undefined => {
+    return professionals.find(p => p.id === id);
+  };
+
+  return {
+    professionals,
+    loading,
+    error,
+    refetch: fetchProfessionals,
+    createProfessional,
+    updateProfessional,
+    deleteProfessional,
+    getProfessionalById
+  };
+}

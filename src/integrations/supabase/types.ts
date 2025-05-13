@@ -385,6 +385,42 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          operation: string
+          record_id: string
+          table_name: string
+          tenant_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          operation: string
+          record_id: string
+          table_name: string
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          operation?: string
+          record_id?: string
+          table_name?: string
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       campanhas_marketing: {
         Row: {
           atualizado_em: string | null
@@ -3608,6 +3644,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_tenant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_permission: {
         Args: { permission_name: string }
         Returns: boolean
@@ -3632,6 +3672,22 @@ export type Database = {
       set_tenant_context: {
         Args: { tenant_id: string }
         Returns: undefined
+      }
+      user_belongs_to_tenant: {
+        Args: { tenant_id: string }
+        Returns: boolean
+      }
+      user_has_permission_on_resource: {
+        Args: { resource_name: string }
+        Returns: boolean
+      }
+      user_has_role: {
+        Args: { role_name: string }
+        Returns: boolean
+      }
+      user_is_admin_for_tenant: {
+        Args: { tenant_id: string }
+        Returns: boolean
       }
       usuario_tem_acesso_ao_negocio: {
         Args: { id_negocio_verificar: string }
