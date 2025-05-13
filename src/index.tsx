@@ -3,8 +3,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
-import { AuthProvider } from './hooks/useAuth';
 import { LoadingProvider } from './contexts/LoadingContext';
+import { AuthProvider } from './contexts/AuthContext';
 import './index.css';
 import { initializeEnv } from './lib/env';
 

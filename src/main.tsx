@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 import { SessionProvider } from "./contexts/SessionContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import { initializeEnv } from "./lib/env";
 
 // Initialize environment validation
@@ -20,7 +21,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <BrowserRouter>
       <SessionProvider>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </SessionProvider>
     </BrowserRouter>
   </React.StrictMode>
