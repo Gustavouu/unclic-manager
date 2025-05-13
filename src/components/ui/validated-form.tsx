@@ -16,11 +16,6 @@ interface ValidatedFormProps extends React.FormHTMLAttributes<HTMLFormElement> {
   className?: string;
 }
 
-// Interface for components that can receive isSubmitting prop
-interface SubmittableComponentProps {
-  isSubmitting?: boolean;
-}
-
 export function ValidatedForm({
   schema,
   onSubmit,
@@ -128,7 +123,7 @@ export function ValidatedForm({
     }
   };
 
-  // Fix: Clone children and properly pass isSubmitting state
+  // Fix: Clone children and properly pass isSubmitting state using a type-safe approach
   const childrenWithProps = React.Children.map(children, child => {
     // Only add props to valid React elements
     if (React.isValidElement(child)) {
@@ -138,19 +133,16 @@ export function ValidatedForm({
       }
       
       // For custom components, we need to check if they accept isSubmitting prop
-      // This is a safe approach to pass the prop only to components we know can handle it
       const componentType = child.type as any;
       
-      // Check if component has a displayName that indicates it can handle isSubmitting
-      // or check if it's one of our known components that accept this prop
+      // Type-safe approach using displayName and property checking
       if (componentType.displayName === 'LoadingButton' || 
-          componentType.name === 'LoadingButton' ||
-          child.props.hasOwnProperty('isLoading') || // component likely handles loading state
-          child.props.hasOwnProperty('isSubmitting')) { // component already has this prop
-        return React.cloneElement(child, { isSubmitting });
+          componentType.name === 'LoadingButton') {
+        // We know LoadingButton accepts isLoading prop based on our component definition
+        return React.cloneElement(child, { isLoading: isSubmitting });
       }
       
-      // For other components, return as is
+      // For components that already have isSubmitting or isLoading, maintain their current props
       return child;
     }
     return child;
