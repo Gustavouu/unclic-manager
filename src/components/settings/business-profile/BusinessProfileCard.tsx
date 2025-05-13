@@ -47,6 +47,14 @@ export const BusinessProfileCard = () => {
         return;
       }
       
+      // Preparar dados de redes sociais
+      const socialMedia = {
+        facebook: formProps.getFieldValue("facebookLink"),
+        instagram: formProps.getFieldValue("instagramLink"),
+        linkedin: formProps.getFieldValue("linkedinLink"),
+        twitter: formProps.getFieldValue("twitterLink")
+      };
+      
       // Atualizar os dados do negócio no Supabase
       const { error } = await supabase
         .from("negocios")
@@ -69,12 +77,16 @@ export const BusinessProfileCard = () => {
       const { error: configError } = await supabase
         .from("configuracoes_negocio")
         .update({
+          website_url: businessWebsite,
+          social_media: socialMedia,
           atualizado_em: new Date()
         })
         .eq("id_negocio", businessId);
         
       if (configError) {
         console.error("Erro ao atualizar configurações:", configError);
+        toast.error("Erro ao salvar configurações adicionais");
+        return;
       }
       
       toast.success("Perfil atualizado com sucesso");
