@@ -1,4 +1,3 @@
-
 import React, { useState, FormEvent } from 'react';
 import { z } from 'zod';
 import { sanitizeFormData } from '@/utils/sanitize';
@@ -123,26 +122,30 @@ export function ValidatedForm({
     }
   };
 
-  // Fix: Clone children and properly pass isSubmitting state using a type-safe approach
+  // Fix: Clone children and properly pass isSubmitting state using a safe type checking approach
   const childrenWithProps = React.Children.map(children, child => {
     // Only add props to valid React elements
     if (React.isValidElement(child)) {
-      // Don't pass isSubmitting to DOM elements like input, div, etc.
+      // Don't pass props to DOM elements like input, div, etc.
       if (typeof child.type === 'string') {
         return child;
       }
       
-      // For custom components, we need to check if they accept isSubmitting prop
+      // For custom components, we need to be careful with type checking
       const componentType = child.type as any;
       
-      // Type-safe approach using displayName and property checking
-      if (componentType.displayName === 'LoadingButton' || 
-          componentType.name === 'LoadingButton') {
-        // We know LoadingButton accepts isLoading prop based on our component definition
-        return React.cloneElement(child, { isLoading: isSubmitting });
+      // Check if this is specifically a LoadingButton component by checking displayName
+      if (componentType && 
+          (componentType.displayName === 'LoadingButton' || 
+           componentType.name === 'LoadingButton')) {
+        // We know LoadingButton accepts isLoading prop so it's safe to pass
+        // Use type assertion to tell TypeScript this is okay
+        return React.cloneElement(child, { 
+          isLoading: isSubmitting 
+        } as React.HTMLAttributes<HTMLElement>);
       }
       
-      // For components that already have isSubmitting or isLoading, maintain their current props
+      // For all other components, return them unchanged
       return child;
     }
     return child;
