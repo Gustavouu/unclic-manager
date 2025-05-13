@@ -99,7 +99,16 @@ export function ServicesTab() {
         await updateService(editingService.id, data);
         toast.success("Serviço atualizado com sucesso");
       } else {
-        await createService(data);
+        // Map the form data to the structure that createService expects
+        const serviceData = {
+          nome: data.nome,
+          name: data.nome, // Set name equal to nome to satisfy the type
+          preco: data.preco,
+          duracao: data.duracao,
+          descricao: data.descricao,
+          ativo: true // Set default active status
+        };
+        await createService(serviceData);
         toast.success("Serviço adicionado com sucesso");
       }
       setShowAddService(false);
