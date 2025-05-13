@@ -1,46 +1,66 @@
 
-import React, { useState, useEffect } from 'react';
-import { Option, MultiSelectProps } from './types';
-import { cn } from '@/lib/utils';
-import { Check, ChevronsUpDown, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useState, useEffect } from 'react';
+import { useProfessionals } from '@/hooks/professionals/useProfessionals';
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
 
-export const MultiSelect: React.FC<MultiSelectProps> = ({
-  options,
-  selected,
+export interface ProfessionalsMultiSelectProps {
+  selectedIds: string[];
+  onChange: (selectedIds: string[]) => void;
+  placeholder?: string;
+  disabled?: boolean;
+}
+
+export function ProfessionalsMultiSelect({ 
+  selectedIds,
   onChange,
-  placeholder = "Selecione itens...",
-  className,
-  emptyMessage = "Nenhuma opção encontrada.",
-  disabled = false,
-}) => {
+  placeholder = "Selecionar profissionais...",
+  disabled = false
+}: ProfessionalsMultiSelectProps) {
   const [open, setOpen] = useState(false);
-  const [selectedValues, setSelectedValues] = useState<Option[]>(selected || []);
+  const { professionals, loading } = useProfessionals({ activeOnly: true });
+  
+  // Find a professional by ID
+  const findProfessional = (id: string) => {
+    return professionals.find(p => p.id === id);
+  };
 
-  useEffect(() => {
-    setSelectedValues(selected || []);
-  }, [selected]);
-
-  const handleSelect = (value: string) => {
-    const optionItem = options.find(option => option.value === value);
-    if (!optionItem) return;
-
-    const newSelectedValues = selectedValues.some(item => item.value === value)
-      ? selectedValues.filter(item => item.value !== value)
-      : [...selectedValues, optionItem];
+  // Toggle selection of a professional
+  const toggleProfessional = (id: string) => {
+    const isSelected = selectedIds.includes(id);
     
-    setSelectedValues(newSelectedValues);
-    onChange(newSelectedValues);
+    if (isSelected) {
+      onChange(selectedIds.filter(selectedId => selectedId !== id));
+    } else {
+      onChange([...selectedIds, id]);
+    }
   };
 
-  const handleRemove = (value: string) => {
-    const newSelectedValues = selectedValues.filter(item => item.value !== value);
-    setSelectedValues(newSelectedValues);
-    onChange(newSelectedValues);
+  // Remove a professional from selection
+  const removeProfessional = (id: string) => {
+    onChange(selectedIds.filter(selectedId => selectedId !== id));
   };
+  
+  // Selected professionals with their full data
+  const selectedProfessionals = selectedIds
+    .map(id => findProfessional(id))
+    .filter(p => p !== undefined);
 
   return (
     <div className="space-y-2">
@@ -51,72 +71,72 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full justify-between",
-              selectedValues.length > 0 ? "h-full" : "h-10",
-              className
+              "w-full justify-between h-auto min-h-10 py-2",
+              disabled && "opacity-50 cursor-not-allowed"
             )}
-            onClick={() => setOpen(!open)}
             disabled={disabled}
           >
-            {selectedValues.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {selectedValues.length <= 2 && selectedValues.map((item, i) => (
-                  <Badge
-                    key={i}
+            <div className="flex flex-wrap gap-1 mr-2">
+              {selectedProfessionals.length > 0 ? (
+                selectedProfessionals.map(prof => (
+                  <Badge 
+                    key={prof?.id} 
                     variant="secondary"
-                    className="mr-1 mb-1"
+                    className="flex items-center gap-1 rounded-md px-2 py-1"
                   >
-                    {item.label}
-                    <button
-                      className="ml-1 rounded-full outline-none"
+                    {prof?.name}
+                    <X 
+                      className="h-3 w-3 cursor-pointer" 
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleRemove(item.value);
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+                        removeProfessional(prof?.id || "");
+                      }} 
+                    />
                   </Badge>
-                ))}
-                {selectedValues.length > 2 && (
-                  <Badge variant="secondary" className="mb-1">
-                    {selectedValues.length} itens selecionados
-                  </Badge>
-                )}
-              </div>
-            ) : (
-              <span className="text-muted-foreground">{placeholder}</span>
-            )}
-            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                ))
+              ) : (
+                <span className="text-muted-foreground">{placeholder}</span>
+              )}
+            </div>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent className="w-[300px] p-0">
           <Command>
-            <CommandInput placeholder="Pesquisar..." />
-            <CommandEmpty>{emptyMessage}</CommandEmpty>
-            <CommandGroup className="max-h-64 overflow-auto">
-              {options.map(option => (
-                <CommandItem
-                  key={option.value}
-                  value={option.label}
-                  onSelect={() => handleSelect(option.value)}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      selectedValues.some(item => item.value === option.value) ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {option.label}
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            <CommandInput placeholder="Buscar profissional..." />
+            <CommandList>
+              <CommandEmpty>Nenhum profissional encontrado.</CommandEmpty>
+              <CommandGroup>
+                {loading ? (
+                  <CommandItem disabled className="flex items-center justify-center">
+                    Carregando...
+                  </CommandItem>
+                ) : (
+                  professionals.map((professional) => (
+                    <CommandItem
+                      key={professional.id}
+                      value={professional.name}
+                      onSelect={() => {
+                        toggleProfessional(professional.id);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          selectedIds.includes(professional.id) 
+                            ? "opacity-100" 
+                            : "opacity-0"
+                        )}
+                      />
+                      {professional.name}
+                    </CommandItem>
+                  ))
+                )}
+              </CommandGroup>
+            </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
     </div>
   );
-};
-
-// Re-export para compatibilidade
-export { MultiSelect as ProfessionalsMultiSelect };
+}

@@ -1,14 +1,15 @@
 
 import { createClient } from '@supabase/supabase-js';
+import { Database } from '@/integrations/supabase/database.types';
 
-// Obter variáveis de ambiente
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Get environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ztwntsmwzstvmoqgiztc.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0d250c213enN0dm1vcWdpenRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcxNzkxNDMsImV4cCI6MjA2Mjc1NTE0M30.WYYk5DVBrHj6Po6w0VSdiz4ezScu6iPfmultRIpoz_I';
 
-// Criar cliente Supabase
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create Supabase client
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-// Função para definir o contexto do tenant
+// Function to set tenant context
 export async function setTenantContext(tenantId: string) {
   try {
     await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
@@ -19,7 +20,7 @@ export async function setTenantContext(tenantId: string) {
   }
 }
 
-// Função para limpar o contexto do tenant
+// Function to clear tenant context
 export async function clearTenantContext() {
   try {
     await supabase.rpc('clear_tenant_context');
@@ -30,11 +31,11 @@ export async function clearTenantContext() {
   }
 }
 
-// Função para obter o tenant atual
+// Function to get current tenant
 export async function getCurrentTenant() {
   try {
     const { data, error } = await supabase
-      .from('tenants')
+      .from('businesses')
       .select('*')
       .single();
     
@@ -47,7 +48,7 @@ export async function getCurrentTenant() {
   }
 }
 
-// Função para obter todos os tenants do usuário atual
+// Function to get all tenants for the current user
 export async function getUserTenants() {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -57,11 +58,11 @@ export async function getUserTenants() {
     }
     
     const { data, error } = await supabase
-      .from('tenant_users')
+      .from('business_users')
       .select(`
-        tenant_id,
+        business_id,
         role,
-        tenants:tenant_id (
+        businesses:business_id (
           id,
           name,
           logo_url,
@@ -72,12 +73,12 @@ export async function getUserTenants() {
     
     if (error) throw error;
     
-    // Transformar dados para formato mais amigável
-    const tenants = data.map(item => ({
-      id: item.tenant_id,
-      name: item.tenants.name,
-      logo_url: item.tenants.logo_url,
-      slug: item.tenants.slug,
+    // Transform data to a more friendly format
+    const tenants = data?.map(item => ({
+      id: item.business_id,
+      name: (item.businesses as any)?.name,
+      logo_url: (item.businesses as any)?.logo_url,
+      slug: (item.businesses as any)?.slug,
       role: item.role
     }));
     
@@ -89,38 +90,38 @@ export async function getUserTenants() {
 }
 
 /**
- * Função para buscar dados com cache
- * @param cacheKey Chave única para o cache
- * @param fetchFunction Função que realiza a busca dos dados
- * @param ttlMinutes Tempo de vida do cache em minutos
+ * Function to fetch data with cache
+ * @param cacheKey Unique key for the cache
+ * @param fetchFunction Function that performs the data fetching
+ * @param ttlMinutes Cache time-to-live in minutes
  */
 export async function fetchWithCache<T>(
   cacheKey: string, 
   fetchFunction: () => Promise<T>, 
   ttlMinutes: number = 5
 ): Promise<T> {
-  // Verificar se há dados em cache
+  // Check if there's cached data
   const cachedData = localStorage.getItem(cacheKey);
   
   if (cachedData) {
     try {
       const { data, timestamp } = JSON.parse(cachedData);
-      const cacheAge = (Date.now() - timestamp) / (1000 * 60); // em minutos
+      const cacheAge = (Date.now() - timestamp) / (1000 * 60); // in minutes
       
-      // Se o cache ainda é válido, retornar os dados
+      // If cache is still valid, return the data
       if (cacheAge < ttlMinutes) {
         return data as T;
       }
     } catch (error) {
       console.error('Erro ao processar cache:', error);
-      // Continuar e buscar dados novos se houver erro no cache
+      // Continue and fetch new data if there's an error in the cache
     }
   }
   
-  // Buscar dados novos
+  // Fetch new data
   const data = await fetchFunction();
   
-  // Armazenar em cache
+  // Store in cache
   try {
     localStorage.setItem(cacheKey, JSON.stringify({
       data,
@@ -128,7 +129,7 @@ export async function fetchWithCache<T>(
     }));
   } catch (error) {
     console.error('Erro ao armazenar em cache:', error);
-    // Continuar mesmo se o cache falhar
+    // Continue even if caching fails
   }
   
   return data;

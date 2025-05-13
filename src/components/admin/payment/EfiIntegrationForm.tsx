@@ -15,6 +15,9 @@ interface EfiIntegrationConfig {
   webhookSecret: string;
 }
 
+// To store temporary payment integration settings until we create the proper table
+const TEMP_BUSINESS_ID = "00000000-0000-0000-0000-000000000000";
+
 export function EfiIntegrationForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [config, setConfig] = useState<EfiIntegrationConfig>({
@@ -28,20 +31,15 @@ export function EfiIntegrationForm() {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        // Try to get integrations from the transacoes table metadata
-        const { data, error } = await supabase
-          .from('transacoes')
+        // Check if we have any existing config saved
+        const { data: existingConfig } = await supabase
+          .from('business_settings')
           .select('id')
-          .eq('id_negocio', "1")
-          .limit(1);
+          .eq('business_id', TEMP_BUSINESS_ID)
+          .maybeSingle();
 
-        if (error) {
-          console.error("Error fetching integration config:", error);
-          return;
-        }
-
-        // For demonstration, we'll use hardcoded values since we don't have the actual table
-        if (data && data.length > 0) {
+        if (existingConfig) {
+          // For demonstration, we'll use hardcoded values since we're just setting up
           setConfig({
             apiKey: "EFI_SAMPLE_API_KEY",
             merchantId: "EFI_SAMPLE_MERCHANT_ID",
@@ -69,12 +67,18 @@ export function EfiIntegrationForm() {
     setIsLoading(true);
 
     try {
-      // Since we don't have the actual efi_bank_integrations table,
-      // we'll store this in a metadata field of an existing transaction
+      // Since we don't have the actual efi_bank_integrations table yet,
+      // we'll use a temp solution to save the settings
       const { error } = await supabase
-        .from('transacoes')
-        .update({ 
-          notas: JSON.stringify({
+        .from('business_settings')
+        .upsert({
+          business_id: TEMP_BUSINESS_ID,
+          primary_color: '#213858', // Default value required by the schema
+          secondary_color: '#33c3f0', // Default value required by the schema
+          cancellation_policy: 'Default policy', // Default value required by the schema
+          cancellation_message: 'Default message', // Default value required by the schema
+          // Store EFI settings as a comment in the properties field
+          notes: JSON.stringify({
             efi_integration: {
               api_key: config.apiKey,
               merchant_id: config.merchantId,
@@ -83,9 +87,7 @@ export function EfiIntegrationForm() {
               updated_at: new Date().toISOString()
             }
           })
-        })
-        .eq('id_negocio', "1")
-        .limit(1);
+        });
 
       if (error) throw error;
 

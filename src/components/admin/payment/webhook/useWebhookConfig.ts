@@ -10,6 +10,9 @@ export interface WebhookConfig {
   paymentIntegration: string;
 }
 
+// Temporary business ID for demo purposes
+const TEMP_BUSINESS_ID = "00000000-0000-0000-0000-000000000000";
+
 export const useWebhookConfig = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [config, setConfig] = useState<WebhookConfig>({
@@ -24,20 +27,20 @@ export const useWebhookConfig = () => {
     const fetchConfig = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('transacoes')
-          .select('notas')
-          .eq('id_negocio', "1")
-          .limit(1);
+        const { data: settings, error } = await supabase
+          .from('business_settings')
+          .select('*')
+          .eq('business_id', TEMP_BUSINESS_ID)
+          .maybeSingle();
 
         if (error) {
           console.error("Erro ao buscar configuração de webhook:", error);
           return;
         }
 
-        if (data && data.length > 0 && data[0].notas) {
+        if (settings && settings.notes) {
           try {
-            const notes = JSON.parse(data[0].notas);
+            const notes = JSON.parse(settings.notes as string);
             if (notes.webhook_config) {
               setConfig({
                 webhookUrl: notes.webhook_config.webhook_url || "",
@@ -68,7 +71,7 @@ export const useWebhookConfig = () => {
   };
 
   const generateSecretKey = () => {
-    // Gera uma chave aleatória de 32 caracteres
+    // Generate a random 32 character secret key
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
     const charactersLength = characters.length;
@@ -83,21 +86,27 @@ export const useWebhookConfig = () => {
     setIsLoading(true);
 
     try {
+      // Create configuration object to store
+      const webhookConfigData = {
+        webhook_config: {
+          webhook_url: config.webhookUrl,
+          secret_key: config.secretKey,
+          is_active: config.isActive,
+          payment_integration: config.paymentIntegration,
+          updated_at: new Date().toISOString()
+        }
+      };
+
       const { error } = await supabase
-        .from('transacoes')
-        .update({ 
-          notas: JSON.stringify({
-            webhook_config: {
-              webhook_url: config.webhookUrl,
-              secret_key: config.secretKey,
-              is_active: config.isActive,
-              payment_integration: config.paymentIntegration,
-              updated_at: new Date().toISOString()
-            }
-          })
-        })
-        .eq('id_negocio', "1")
-        .limit(1);
+        .from('business_settings')
+        .upsert({
+          business_id: TEMP_BUSINESS_ID,
+          primary_color: '#213858', // Default value required by the schema
+          secondary_color: '#33c3f0', // Default value required by the schema
+          cancellation_policy: 'Default policy', // Default value required by the schema
+          cancellation_message: 'Default message', // Default value required by the schema
+          notes: JSON.stringify(webhookConfigData)
+        });
 
       if (error) throw error;
 

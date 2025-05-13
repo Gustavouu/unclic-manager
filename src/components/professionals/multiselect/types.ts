@@ -1,15 +1,7 @@
 
-export type Option = {
-  label: string;
-  value: string;
-};
-
-export interface MultiSelectProps {
-  options: Option[];
-  selected: Option[];
-  onChange: (values: Option[]) => void;
+export interface ProfessionalsMultiSelectProps {
+  selectedIds: string[];
+  onChange: (selectedIds: string[]) => void;
   placeholder?: string;
-  className?: string;
-  emptyMessage?: string;
   disabled?: boolean;
 }
