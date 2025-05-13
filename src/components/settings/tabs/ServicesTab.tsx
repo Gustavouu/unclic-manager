@@ -28,7 +28,7 @@ const serviceSchema = z.object({
 type ServiceFormValues = z.infer<typeof serviceSchema>;
 
 export function ServicesTab() {
-  const { services, isLoading, error, refreshServices, addService, updateService, deleteService } = useServices();
+  const { services, isLoading, error, refreshServices, createService, updateService, deleteService } = useServices();
   const { businessId, businessNeedsSetup } = useTenant();
   
   const [showAddService, setShowAddService] = useState(false);
@@ -99,7 +99,7 @@ export function ServicesTab() {
         await updateService(editingService.id, data);
         toast.success("Serviço atualizado com sucesso");
       } else {
-        await addService(data);
+        await createService(data);
         toast.success("Serviço adicionado com sucesso");
       }
       setShowAddService(false);
