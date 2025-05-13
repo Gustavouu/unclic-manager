@@ -28,7 +28,7 @@ export const useProfessionals = (): UseProfessionalsReturn => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const { tenant } = useTenant() || { tenant: null };
+  const { currentBusiness, businessId } = useTenant() || { currentBusiness: null, businessId: null };
 
   useEffect(() => {
     const fetchProfessionals = async () => {
@@ -36,7 +36,7 @@ export const useProfessionals = (): UseProfessionalsReturn => {
         setLoading(true);
         setError(null);
         
-        if (!tenant?.id) {
+        if (!businessId) {
           setProfessionals([]);
           return;
         }
@@ -44,7 +44,7 @@ export const useProfessionals = (): UseProfessionalsReturn => {
         const { data, error: fetchError } = await supabase
           .from('professionals')
           .select('*')
-          .eq('tenantId', tenant.id);
+          .eq('tenantId', businessId);
 
         if (fetchError) throw fetchError;
         setProfessionals(data || []);
@@ -57,7 +57,7 @@ export const useProfessionals = (): UseProfessionalsReturn => {
     };
 
     fetchProfessionals();
-  }, [tenant?.id]);
+  }, [businessId]);
 
   // Create a new professional
   const handleCreateProfessional = async (professionalData: ProfessionalCreateForm): Promise<Professional> => {
@@ -67,7 +67,7 @@ export const useProfessionals = (): UseProfessionalsReturn => {
       // Prepare data for insertion
       const newProfData = {
         ...professionalData,
-        tenantId: tenant?.id,
+        tenantId: businessId,
         status: professionalData.status || PROFESSIONAL_STATUS.ACTIVE
       };
       

@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NewProfessionalDialog } from "@/components/professionals/NewProfessionalDialog";
-import { Professional } from "@/hooks/professionals/types";
+import { Professional, PROFESSIONAL_STATUS } from "@/hooks/professionals/types";
 import { EditProfessionalDialog } from "@/components/professionals/EditProfessionalDialog";
 import { DeleteProfessionalDialog } from "@/components/professionals/DeleteProfessionalDialog";
 import { ProfessionalDetailsDialog } from "@/components/professionals/ProfessionalDetailsDialog";
@@ -13,7 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatsCard } from "@/components/common/StatsCard";
 import { Users, Award, Briefcase, Calendar } from "lucide-react";
 import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
-import { PROFESSIONAL_STATUS } from '@/hooks/professionals/types';
 
 const Professionals = () => {
   const [showNewProfessionalDialog, setShowNewProfessionalDialog] = useState(false);
@@ -29,7 +29,7 @@ const Professionals = () => {
   const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'ACTIVE' | 'INACTIVE'>('all');
   const filteredProfessionals = filterStatus === 'all' 
     ? professionals
     : professionals.filter(p => p.status === filterStatus);
@@ -115,10 +115,10 @@ const Professionals = () => {
                 <TabsTrigger value="all" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                   Todos
                 </TabsTrigger>
-                <TabsTrigger value="active" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <TabsTrigger value="ACTIVE" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                   Ativos
                 </TabsTrigger>
-                <TabsTrigger value="inactive" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <TabsTrigger value="INACTIVE" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                   Inativos
                 </TabsTrigger>
               </TabsList>
@@ -143,7 +143,7 @@ const Professionals = () => {
               )}
             </TabsContent>
             
-            <TabsContent value="active" className="mt-0">
+            <TabsContent value="ACTIVE" className="mt-0">
               {isLoading ? (
                 <div className="flex justify-center py-8">Carregando profissionais...</div>
               ) : (
@@ -162,7 +162,7 @@ const Professionals = () => {
               )}
             </TabsContent>
             
-            <TabsContent value="inactive" className="mt-0">
+            <TabsContent value="INACTIVE" className="mt-0">
               {isLoading ? (
                 <div className="flex justify-center py-8">Carregando profissionais...</div>
               ) : (
