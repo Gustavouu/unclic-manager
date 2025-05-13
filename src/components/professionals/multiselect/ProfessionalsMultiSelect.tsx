@@ -29,6 +29,15 @@ interface ProfessionalsMultiSelectProps {
   allowAll?: boolean;
 }
 
+// Generic MultiSelect props
+export interface MultiSelectProps {
+  options: Option[];
+  value: Option[];
+  onChange: (value: Option[]) => void;
+  placeholder?: string;
+  emptyMessage?: string;
+}
+
 // Inner components
 const SelectedItem = ({ option, onRemove }: SelectedItemProps) => (
   <Badge 
@@ -57,6 +66,104 @@ const DropdownList = ({ isOpen, maxHeight, children }: DropdownListProps) => {
           {children}
         </ScrollArea>
       </div>
+    </div>
+  );
+};
+
+// Generic MultiSelect component that we'll export
+export const MultiSelect: React.FC<MultiSelectProps> = ({
+  options,
+  value,
+  onChange,
+  placeholder = "Select options...",
+  emptyMessage = "No options available"
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const [filteredOptions, setFilteredOptions] = useState<Option[]>([]);
+
+  // Filter options based on input value and current selection
+  useEffect(() => {
+    if (options) {
+      const filtered = options.filter(opt => 
+        opt.label.toLowerCase().includes(inputValue.toLowerCase()) &&
+        !value.some(selected => selected.value === opt.value)
+      );
+      setFilteredOptions(filtered);
+    }
+  }, [inputValue, options, value]);
+
+  const handleSelect = (option: Option) => {
+    onChange([...value, option]);
+    setInputValue("");
+  };
+
+  const handleRemove = (optionToRemove: Option) => {
+    onChange(value.filter(opt => opt.value !== optionToRemove.value));
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+    if (!isOpen) setIsOpen(true);
+  };
+
+  const handleFocus = () => {
+    setIsOpen(true);
+  };
+
+  const handleClickOutside = () => {
+    setIsOpen(false);
+    setInputValue("");
+  };
+
+  return (
+    <div className="relative">
+      <div className="flex flex-wrap items-center rounded-md border border-input px-3 py-1 text-sm shadow-sm">
+        {value.map(option => (
+          <SelectedItem
+            key={option.value}
+            option={option}
+            onRemove={() => handleRemove(option)}
+          />
+        ))}
+        
+        <Input
+          type="text"
+          className="flex-grow border-0 bg-transparent p-1 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+          placeholder={value.length > 0 ? "" : placeholder}
+          value={inputValue}
+          onChange={handleInputChange}
+          onFocus={handleFocus}
+        />
+      </div>
+
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={handleClickOutside}
+        />
+      )}
+
+      <DropdownList isOpen={isOpen} maxHeight={200}>
+        {filteredOptions.length === 0 ? (
+          <div className="px-2 py-3 text-center text-sm text-muted-foreground">
+            {emptyMessage}
+          </div>
+        ) : (
+          filteredOptions.map(option => (
+            <div
+              key={option.value}
+              className={cn(
+                "cursor-pointer px-2 py-1.5 text-sm rounded-sm",
+                "hover:bg-accent hover:text-accent-foreground"
+              )}
+              onClick={() => handleSelect(option)}
+            >
+              {option.label}
+            </div>
+          ))
+        )}
+      </DropdownList>
     </div>
   );
 };
@@ -204,3 +311,6 @@ export const ProfessionalsMultiSelect: React.FC<ProfessionalsMultiSelectProps> =
     </div>
   );
 };
+
+// Export Option type for convenience
+export { Option } from './types';

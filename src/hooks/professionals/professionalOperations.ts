@@ -1,334 +1,350 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Professional, ProfessionalCreateForm, ProfessionalStatus, PROFESSIONAL_STATUS } from "./types";
-import { useTenant } from "@/contexts/TenantContext";
+import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'sonner';
+import { 
+  Professional, 
+  ProfessionalFormData, 
+  ProfessionalStatus 
+} from './types';
 
 export const useProfessionalOperations = () => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { businessId } = useTenant() || { businessId: null };
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const { tenantId } = useTenant();
   
-  // Fetch professionals when component mounts
-  useEffect(() => {
-    const fetchProfessionals = async () => {
-      if (!businessId) {
-        console.log('No business ID available, skipping professionals fetch');
-        return;
-      }
+  // Fetch all professionals for the current tenant
+  const fetchProfessionals = useCallback(async () => {
+    if (!tenantId) {
+      console.warn('No tenant ID provided to fetch professionals');
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Try to fetch from modernized 'professionals' table first
+      let { data: modernProfessionals, error: modernError } = await supabase
+        .from('professionals')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('name');
       
-      setIsLoading(true);
-      
-      try {
-        console.log('Fetching professionals for business ID:', businessId);
-        const { data, error } = await supabase
-          .from('funcionarios')
-          .select('*')
-          .eq('id_negocio', businessId);
-        
-        if (error) {
-          throw error;
-        }
-        
-        const mappedProfessionals: Professional[] = (data || []).map(prof => {
-          // Map from legacy status to new status format
-          let status: ProfessionalStatus;
-          switch(prof.status) {
-            case 'active':
-            case 'ativo':
-              status = ProfessionalStatus.ACTIVE;
-              break;
-            case 'inactive':
-            case 'inativo':
-              status = ProfessionalStatus.INACTIVE;
-              break;
-            case 'vacation':
-            case 'leave':
-            case 'ferias':
-              status = ProfessionalStatus.ON_LEAVE;
-              break;
-            default:
-              status = ProfessionalStatus.ACTIVE;
-          }
-          
-          return {
-            id: prof.id,
-            name: prof.nome,
-            position: prof.cargo || '',
-            role: prof.cargo || '',
-            email: prof.email || '',
-            phone: prof.telefone || '',
-            specialties: prof.especializacoes || [],
-            photoUrl: prof.foto_url || '',
-            photo_url: prof.foto_url || '',
-            bio: prof.bio || '',
-            status: status,
-            hire_date: prof.data_contratacao || '',
-            hireDate: prof.data_contratacao || '',
-            commission_percentage: prof.comissao_percentual || 0,
-            commissionPercentage: prof.comissao_percentual || 0,
-            user_id: prof.id_usuario,
-            userId: prof.id_usuario,
-            business_id: prof.id_negocio
-          };
-        });
+      // If we have data from the modern table, use it
+      if (!modernError && modernProfessionals && modernProfessionals.length > 0) {
+        const mappedProfessionals = modernProfessionals.map(prof => ({
+          ...prof,
+          // Add backward compatibility fields
+          photoUrl: prof.avatar || prof.photo_url,
+          role: prof.position,
+        }));
         
         setProfessionals(mappedProfessionals);
-      } catch (error) {
-        console.error("Error fetching professionals:", error);
-        toast.error("Erro ao carregar colaboradores");
-      } finally {
-        setIsLoading(false);
+        return mappedProfessionals;
       }
-    };
-    
-    fetchProfessionals();
-  }, [businessId]);
+      
+      // If no data in the modern table, try legacy 'colaboradores' table
+      const { data: legacyProfessionals, error: legacyError } = await supabase
+        .from('colaboradores')
+        .select('*')
+        .eq('id_negocio', tenantId)
+        .order('nome');
+        
+      if (legacyError) {
+        throw legacyError;
+      }
+      
+      if (legacyProfessionals && legacyProfessionals.length > 0) {
+        // Map legacy fields to modern fields for consistency
+        const mappedProfessionals = legacyProfessionals.map(legacyProf => ({
+          id: legacyProf.id,
+          tenantId: legacyProf.id_negocio,
+          business_id: legacyProf.id_negocio,
+          id_negocio: legacyProf.id_negocio,
+          name: legacyProf.nome,
+          nome: legacyProf.nome,
+          email: legacyProf.email,
+          phone: legacyProf.telefone,
+          telefone: legacyProf.telefone,
+          bio: legacyProf.bio,
+          avatar: legacyProf.foto_url,
+          photoUrl: legacyProf.foto_url,
+          isActive: legacyProf.ativo,
+          ativo: legacyProf.ativo,
+          workingHours: legacyProf.horarios_trabalho,
+          horarios_trabalho: legacyProf.horarios_trabalho,
+          commission_percentage: legacyProf.comissao_percentual,
+          comissao_percentual: legacyProf.comissao_percentual,
+          specialties: legacyProf.especializacoes,
+          especializacoes: legacyProf.especializacoes,
+          position: legacyProf.cargo,
+          cargo: legacyProf.cargo,
+          status: legacyProf.ativo ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
+          createdAt: legacyProf.criado_em,
+          criado_em: legacyProf.criado_em,
+        }));
+        
+        setProfessionals(mappedProfessionals);
+        return mappedProfessionals;
+      }
+      
+      // If we get here, no professionals were found in either table
+      setProfessionals([]);
+      return [];
+      
+    } catch (error: any) {
+      console.error('Error fetching professionals:', error.message);
+      setError(`Error fetching professionals: ${error.message}`);
+      toast.error('Erro ao buscar colaboradores');
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tenantId]);
   
-  // Adicionar novo profissional
-  const addProfessional = async (data: ProfessionalCreateForm) => {
+  // Add a new professional
+  const addProfessional = useCallback(async (professionalData: ProfessionalFormData) => {
+    if (!tenantId) {
+      toast.error('Nenhum tenant selecionado');
+      return null;
+    }
+    
     setIsLoading(true);
     
     try {
-      if (!businessId) {
-        throw new Error("ID do negócio não disponível");
-      }
+      // Prepare the data for insertion
+      const professional: Partial<Professional> = {
+        name: professionalData.name,
+        email: professionalData.email,
+        phone: professionalData.phone,
+        bio: professionalData.bio,
+        position: professionalData.position || professionalData.role,
+        specialties: professionalData.specialties || [],
+        commission_percentage: professionalData.commission_percentage || professionalData.commissionPercentage || 0,
+        avatar: professionalData.avatar,
+        photoUrl: professionalData.photoUrl || professionalData.avatar,
+        isActive: true,
+        tenant_id: tenantId,
+        business_id: tenantId,
+        status: ProfessionalStatus.ACTIVE,
+      };
       
-      // Map status to database format if needed
-      let dbStatus = 'active';
-      if (data.status === ProfessionalStatus.INACTIVE) dbStatus = 'inactive';
-      else if (data.status === ProfessionalStatus.ON_LEAVE) dbStatus = 'vacation';
-      
-      const { data: newProfData, error } = await supabase
-        .from('funcionarios')
-        .insert([{
-          nome: data.name,
-          cargo: data.position || data.role || '',
-          email: data.email || '',
-          telefone: data.phone || '',
-          especializacoes: Array.isArray(data.specialties) ? data.specialties : [],
-          bio: data.bio || '',
-          status: dbStatus,
-          comissao_percentual: data.commission_percentage || data.commissionPercentage || 0,
-          data_contratacao: new Date().toISOString().split('T')[0],
-          foto_url: data.photo_url || data.photoUrl || '',
-          id_negocio: businessId
-        }])
+      // Insert into modern table
+      const { data, error } = await supabase
+        .from('professionals')
+        .insert([professional])
         .select()
         .single();
       
       if (error) throw error;
       
-      const newProfessional: Professional = {
-        id: newProfData.id,
-        name: newProfData.nome,
-        role: newProfData.cargo || '',
-        position: newProfData.cargo || '',
-        email: newProfData.email || '',
-        phone: newProfData.telefone || '',
-        specialties: newProfData.especializacoes || [],
-        photo_url: newProfData.foto_url || '',
-        photoUrl: newProfData.foto_url || '',
-        bio: newProfData.bio || '',
-        status: ProfessionalStatus.ACTIVE,
-        hire_date: newProfData.data_contratacao || '',
-        hireDate: newProfData.data_contratacao || '',
-        commission_percentage: newProfData.comissao_percentual || 0,
-        commissionPercentage: newProfData.comissao_percentual || 0,
-        user_id: newProfData.id_usuario,
-        userId: newProfData.id_usuario,
-        business_id: newProfData.id_negocio
-      };
+      toast.success(`Colaborador ${data.name} adicionado com sucesso!`);
       
-      // Atualizar o estado com o novo profissional
-      setProfessionals(prev => [...prev, newProfessional]);
-      toast.success("Colaborador adicionado com sucesso!");
+      // Refresh the professionals list
+      await fetchProfessionals();
       
-      return newProfessional;
-    } catch (error) {
-      console.error("Erro ao adicionar profissional:", error);
-      toast.error("Erro ao adicionar colaborador");
-      throw error;
+      return data;
+      
+    } catch (error: any) {
+      console.error('Error adding professional:', error);
+      toast.error(`Erro ao adicionar colaborador: ${error.message}`);
+      setError(error.message);
+      return null;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [tenantId, fetchProfessionals]);
   
-  // Atualizar profissional
-  const updateProfessional = async (id: string, data: Partial<Professional>) => {
+  // Update an existing professional
+  const updateProfessional = useCallback(async (id: string, professionalData: Partial<ProfessionalFormData>) => {
+    if (!tenantId) {
+      toast.error('Nenhum tenant selecionado');
+      return null;
+    }
+    
     setIsLoading(true);
     
     try {
-      const updateData: any = {};
+      // Update the professional data
+      const updates: Partial<Professional> = {
+        name: professionalData.name,
+        email: professionalData.email,
+        phone: professionalData.phone,
+        bio: professionalData.bio,
+        position: professionalData.position || professionalData.role,
+        specialties: professionalData.specialties,
+        commission_percentage: professionalData.commission_percentage || professionalData.commissionPercentage,
+        avatar: professionalData.photoUrl || professionalData.photo_url || professionalData.avatar,
+        photoUrl: professionalData.photoUrl || professionalData.photo_url || professionalData.avatar,
+        status: professionalData.status,
+        updatedAt: new Date().toISOString(),
+      };
       
-      if (data.name) updateData.nome = data.name;
-      if (data.position || data.role) updateData.cargo = data.position || data.role;
-      if (data.email !== undefined) updateData.email = data.email;
-      if (data.phone !== undefined) updateData.telefone = data.phone;
-      if (data.specialties) updateData.especializacoes = data.specialties;
-      if (data.bio !== undefined) updateData.bio = data.bio;
-      if (data.commission_percentage !== undefined) updateData.comissao_percentual = data.commission_percentage;
-      if (data.commissionPercentage !== undefined && updateData.comissao_percentual === undefined) {
-        updateData.comissao_percentual = data.commissionPercentage;
-      }
-      if (data.photo_url !== undefined) updateData.foto_url = data.photo_url;
-      if (data.photoUrl !== undefined && updateData.foto_url === undefined) {
-        updateData.foto_url = data.photoUrl;
-      }
-      
-      // Convert status to database format if needed
-      if (data.status) {
-        if (data.status === ProfessionalStatus.ACTIVE) updateData.status = 'active';
-        else if (data.status === ProfessionalStatus.INACTIVE) updateData.status = 'inactive';
-        else if (data.status === ProfessionalStatus.ON_LEAVE) updateData.status = 'vacation';
-      }
-      
-      const { data: updatedData, error } = await supabase
-        .from('funcionarios')
-        .update(updateData)
+      // First try to update in the modern table
+      const { data, error } = await supabase
+        .from('professionals')
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
       
-      if (error) throw error;
-      
-      // Convert DB status to our app status
-      let mappedStatus: ProfessionalStatus;
-      switch(updatedData.status) {
-        case 'active':
-        case 'ativo':
-          mappedStatus = ProfessionalStatus.ACTIVE;
-          break;
-        case 'inactive':
-        case 'inativo':
-          mappedStatus = ProfessionalStatus.INACTIVE;
-          break;
-        case 'vacation':
-        case 'leave':
-        case 'ferias':
-          mappedStatus = ProfessionalStatus.ON_LEAVE;
-          break;
-        default:
-          mappedStatus = ProfessionalStatus.ACTIVE;
+      if (error) {
+        // If failed, try to update in the legacy table
+        // Map to legacy field names
+        const legacyUpdates = {
+          nome: updates.name,
+          email: updates.email,
+          telefone: updates.phone,
+          bio: updates.bio,
+          cargo: updates.position,
+          especializacoes: updates.specialties,
+          comissao_percentual: updates.commission_percentage,
+          foto_url: updates.photoUrl,
+          ativo: updates.status === ProfessionalStatus.ACTIVE,
+          atualizado_em: updates.updatedAt,
+        };
+        
+        const { data: legacyData, error: legacyError } = await supabase
+          .from('colaboradores')
+          .update(legacyUpdates)
+          .eq('id', id)
+          .select()
+          .single();
+          
+        if (legacyError) throw legacyError;
+        
+        toast.success(`Colaborador ${legacyData.nome} atualizado com sucesso!`);
+        await fetchProfessionals();
+        return legacyData;
       }
       
-      const updatedProfessional: Professional = {
-        id: updatedData.id,
-        name: updatedData.nome,
-        role: updatedData.cargo || '',
-        position: updatedData.cargo || '',
-        email: updatedData.email || '',
-        phone: updatedData.telefone || '',
-        specialties: updatedData.especializacoes || [],
-        photo_url: updatedData.foto_url || '',
-        photoUrl: updatedData.foto_url || '',
-        bio: updatedData.bio || '',
-        status: mappedStatus,
-        hire_date: updatedData.data_contratacao || '',
-        hireDate: updatedData.data_contratacao || '',
-        commission_percentage: updatedData.comissao_percentual || 0,
-        commissionPercentage: updatedData.comissao_percentual || 0,
-        user_id: updatedData.id_usuario,
-        userId: updatedData.id_usuario,
-        business_id: updatedData.id_negocio
-      };
+      toast.success(`Colaborador ${data.name} atualizado com sucesso!`);
+      await fetchProfessionals();
+      return data;
       
-      setProfessionals(prev => 
-        prev.map(p => p.id === id ? updatedProfessional : p)
-      );
-      
-      toast.success("Colaborador atualizado com sucesso!");
-      return updatedProfessional;
-    } catch (error) {
-      console.error("Erro ao atualizar profissional:", error);
-      toast.error("Erro ao atualizar colaborador");
-      throw error;
+    } catch (error: any) {
+      console.error('Error updating professional:', error);
+      toast.error(`Erro ao atualizar colaborador: ${error.message}`);
+      setError(error.message);
+      return null;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [tenantId, fetchProfessionals]);
   
-  // Atualizar status do profissional
-  const updateProfessionalStatus = async (id: string, status: ProfessionalStatus) => {
+  // Update only the status of a professional
+  const updateProfessionalStatus = useCallback(async (id: string, status: ProfessionalStatus) => {
+    if (!tenantId) return null;
+    
     setIsLoading(true);
     
     try {
-      // Convert to database status format
-      let dbStatus: string;
-      if (status === ProfessionalStatus.ACTIVE) dbStatus = 'active';
-      else if (status === ProfessionalStatus.INACTIVE) dbStatus = 'inactive';
-      else if (status === ProfessionalStatus.ON_LEAVE) dbStatus = 'vacation';
-      else dbStatus = 'active';
+      // First try to update in the modern table
+      const { data, error } = await supabase
+        .from('professionals')
+        .update({ 
+          status,
+          isActive: status === ProfessionalStatus.ACTIVE,
+          updatedAt: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
       
-      const { error } = await supabase
-        .from('funcionarios')
-        .update({ status: dbStatus })
-        .eq('id', id);
+      if (error) {
+        // If failed, try to update in the legacy table
+        const { data: legacyData, error: legacyError } = await supabase
+          .from('colaboradores')
+          .update({ 
+            ativo: status === ProfessionalStatus.ACTIVE,
+            atualizado_em: new Date().toISOString()
+          })
+          .eq('id', id)
+          .select()
+          .single();
+          
+        if (legacyError) throw legacyError;
+        
+        await fetchProfessionals();
+        return legacyData;
+      }
       
-      if (error) throw error;
+      await fetchProfessionals();
+      return data;
       
-      setProfessionals(prev => 
-        prev.map(p => p.id === id ? { ...p, status } : p)
-      );
-      
-      toast.success("Status do colaborador atualizado com sucesso!");
-      return true;
-    } catch (error) {
-      console.error("Erro ao atualizar status:", error);
-      toast.error("Erro ao atualizar status do colaborador");
-      throw error;
+    } catch (error: any) {
+      console.error('Error updating professional status:', error);
+      toast.error(`Erro ao atualizar status do colaborador: ${error.message}`);
+      setError(error.message);
+      return null;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [tenantId, fetchProfessionals]);
   
-  // Remover profissional
-  const removeProfessional = async (id: string) => {
+  // Delete a professional
+  const removeProfessional = useCallback(async (id: string) => {
+    if (!tenantId) return false;
+    
     setIsLoading(true);
     
     try {
-      // We don't actually delete - just update status to inactive
+      // First try to delete from the modern table
       const { error } = await supabase
-        .from('funcionarios')
-        .update({ status: 'inactive' })
+        .from('professionals')
+        .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        // If failed, try to delete from the legacy table
+        const { error: legacyError } = await supabase
+          .from('colaboradores')
+          .delete()
+          .eq('id', id);
+          
+        if (legacyError) throw legacyError;
+      }
       
-      setProfessionals(prev => 
-        prev.map(p => p.id === id ? { ...p, status: ProfessionalStatus.INACTIVE } : p)
-      );
-      
-      toast.success("Colaborador removido com sucesso!");
+      toast.success('Colaborador excluído com sucesso!');
+      await fetchProfessionals();
       return true;
-    } catch (error) {
-      console.error("Erro ao remover profissional:", error);
-      toast.error("Erro ao remover colaborador");
-      throw error;
+      
+    } catch (error: any) {
+      console.error('Error deleting professional:', error);
+      toast.error(`Erro ao excluir colaborador: ${error.message}`);
+      setError(error.message);
+      return false;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [tenantId, fetchProfessionals]);
   
-  // Helper function to get a professional by id
-  const getProfessionalById = (id: string): Professional | undefined => {
+  // Get a professional by ID
+  const getProfessionalById = useCallback((id: string): Professional | undefined => {
     return professionals.find(p => p.id === id);
-  };
-
+  }, [professionals]);
+  
+  // Load professionals when the component mounts or tenantId changes
+  useEffect(() => {
+    if (tenantId) {
+      fetchProfessionals();
+    } else {
+      console.warn('No tenant ID available, professionals not loaded');
+    }
+  }, [tenantId, fetchProfessionals]);
+  
   return {
     professionals,
     isLoading,
+    error,
+    fetchProfessionals,
     addProfessional,
     updateProfessional,
     updateProfessionalStatus,
     removeProfessional,
-    getProfessionalById,
-    // For backward compatibility with the hooks/professionals/useProfessionals.ts
-    fetchProfessionals: async () => {},
-    createProfessional: addProfessional,
-    deleteProfessional: removeProfessional,
-    error: null,
-    specialties: Array.from(new Set(professionals.flatMap(p => p.specialties || [])))
+    getProfessionalById
   };
 };

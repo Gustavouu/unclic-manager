@@ -181,3 +181,6 @@ export function MultiSelect({
 
 // Re-export the Option type for convenience
 export type { Option } from "./multiselect/types";
+
+// Export the MultiSelect from the specialized implementation to maintain backward compatibility
+export { MultiSelect as ProfessionalsMultiSelect } from "./multiselect/ProfessionalsMultiSelect";

@@ -35,6 +35,7 @@ export interface Professional {
   // Backward compatibility fields
   role?: string;
   photoUrl?: string;
+  photo_url?: string; // Add this field to match error messages
   status?: ProfessionalStatus;
   commissionPercentage?: number;
 }
@@ -51,7 +52,7 @@ export type ProfessionalFormData = {
   isActive?: boolean;
   status?: ProfessionalStatus;
   role?: string; // For backwards compatibility
-  photo_url?: string;
+  photo_url?: string; // Add to match the error messages
   photoUrl?: string; // For backwards compatibility
   commissionPercentage?: number; // For backwards compatibility
 };
@@ -78,4 +79,21 @@ export const PROFESSIONAL_STATUS = {
   ACTIVE: 'active',
   INACTIVE: 'inactive',
   ON_LEAVE: 'vacation'
+};
+
+// Add appointment status types to fix the error in useAppointmentCreate.ts
+export enum AppointmentStatus {
+  SCHEDULED = 'scheduled',
+  CONFIRMED = 'confirmed',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  NO_SHOW = 'no_show'
+}
+
+export const APPOINTMENT_STATUS_RECORD: Record<AppointmentStatus, string> = {
+  [AppointmentStatus.SCHEDULED]: 'scheduled',
+  [AppointmentStatus.CONFIRMED]: 'confirmed',
+  [AppointmentStatus.COMPLETED]: 'completed',
+  [AppointmentStatus.CANCELLED]: 'cancelled',
+  [AppointmentStatus.NO_SHOW]: 'no_show'
 };

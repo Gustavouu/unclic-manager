@@ -39,7 +39,7 @@ export const ProfessionalForm = ({
       position: professional?.position || professional?.role || "",
       specialties: professional?.specialties || [],
       commission_percentage: professional?.commission_percentage || professional?.commissionPercentage || 0,
-      photo_url: professional?.photo_url || professional?.photoUrl || ""
+      photoUrl: professional?.photoUrl || professional?.photo_url || ""
     },
   });
 
@@ -76,7 +76,7 @@ export const ProfessionalForm = ({
           form={form} 
           specialties={specialties}
           editMode={editMode}
-          initialPhotoUrl={professional?.photo_url || professional?.photoUrl}
+          initialPhotoUrl={professional?.photoUrl || professional?.photo_url}
         />
         
         <DialogFooter className="pt-6">
