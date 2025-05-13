@@ -30,7 +30,7 @@ export const SocialMediaSection = ({
       try {
         const { data, error } = await supabase
           .from("configuracoes_negocio")
-          .select("redes_sociais")
+          .select("social_media")
           .eq("id_negocio", businessId)
           .single();
           
@@ -39,8 +39,8 @@ export const SocialMediaSection = ({
           return;
         }
         
-        if (data && data.redes_sociais) {
-          const socialMedia = data.redes_sociais;
+        if (data && data.social_media) {
+          const socialMedia = data.social_media;
           updateField("facebookLink", socialMedia.facebook || "");
           updateField("instagramLink", socialMedia.instagram || "");
           updateField("linkedinLink", socialMedia.linkedin || "");
@@ -53,6 +53,10 @@ export const SocialMediaSection = ({
     
     fetchSocialMedia();
   }, [businessId]);
+
+  const hasError = (fieldName: string) => {
+    return getFieldError(fieldName) && hasFieldBeenTouched(fieldName);
+  };
   
   return (
     <Card>
@@ -74,7 +78,7 @@ export const SocialMediaSection = ({
               onChange={(e) => updateField("facebookLink", e.target.value)}
             />
           </div>
-          {getFieldError("facebookLink") && hasFieldBeenTouched("facebookLink") && (
+          {hasError("facebookLink") && (
             <p className="text-sm text-red-500">{getFieldError("facebookLink")}</p>
           )}
         </div>
@@ -93,7 +97,7 @@ export const SocialMediaSection = ({
               onChange={(e) => updateField("instagramLink", e.target.value)}
             />
           </div>
-          {getFieldError("instagramLink") && hasFieldBeenTouched("instagramLink") && (
+          {hasError("instagramLink") && (
             <p className="text-sm text-red-500">{getFieldError("instagramLink")}</p>
           )}
         </div>

@@ -47,6 +47,10 @@ export const WebsiteSection = ({
     }
   }, [businessData]);
   
+  const hasError = (fieldName: string) => {
+    return getFieldError(fieldName) && hasFieldBeenTouched(fieldName);
+  };
+  
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -78,9 +82,9 @@ export const WebsiteSection = ({
             placeholder="https://www.seusite.com.br"
             value={getFieldValue("businessWebsite")}
             onChange={(e) => updateField("businessWebsite", e.target.value)}
-            className={getFieldError("businessWebsite") && hasFieldBeenTouched("businessWebsite") ? "border-red-500" : ""}
+            className={hasError("businessWebsite") ? "border-red-500" : ""}
           />
-          {getFieldError("businessWebsite") && hasFieldBeenTouched("businessWebsite") && (
+          {hasError("businessWebsite") && (
             <p className="text-sm text-red-500">{getFieldError("businessWebsite")}</p>
           )}
         </div>

@@ -40,6 +40,10 @@ export const GeneralInfoSection = ({
     }
   }, [businessData]);
   
+  const hasError = (fieldName: string) => {
+    return getFieldError(fieldName) && hasFieldBeenTouched(fieldName);
+  };
+  
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -55,9 +59,9 @@ export const GeneralInfoSection = ({
             placeholder="Nome da sua empresa"
             value={getFieldValue("businessName")}
             onChange={(e) => updateField("businessName", e.target.value)}
-            className={getFieldError("businessName") && hasFieldBeenTouched("businessName") ? "border-red-500" : ""}
+            className={hasError("businessName") ? "border-red-500" : ""}
           />
-          {getFieldError("businessName") && hasFieldBeenTouched("businessName") && (
+          {hasError("businessName") && (
             <p className="text-sm text-red-500">{getFieldError("businessName")}</p>
           )}
         </div>
@@ -72,9 +76,9 @@ export const GeneralInfoSection = ({
             placeholder="Email principal de contato"
             value={getFieldValue("businessEmail")}
             onChange={(e) => updateField("businessEmail", e.target.value)}
-            className={getFieldError("businessEmail") && hasFieldBeenTouched("businessEmail") ? "border-red-500" : ""}
+            className={hasError("businessEmail") ? "border-red-500" : ""}
           />
-          {getFieldError("businessEmail") && hasFieldBeenTouched("businessEmail") && (
+          {hasError("businessEmail") && (
             <p className="text-sm text-red-500">{getFieldError("businessEmail")}</p>
           )}
         </div>
@@ -88,9 +92,9 @@ export const GeneralInfoSection = ({
             placeholder="(XX) XXXXX-XXXX"
             value={getFieldValue("businessPhone")}
             onChange={(e) => updateField("businessPhone", e.target.value)}
-            className={getFieldError("businessPhone") && hasFieldBeenTouched("businessPhone") ? "border-red-500" : ""}
+            className={hasError("businessPhone") ? "border-red-500" : ""}
           />
-          {getFieldError("businessPhone") && hasFieldBeenTouched("businessPhone") && (
+          {hasError("businessPhone") && (
             <p className="text-sm text-red-500">{getFieldError("businessPhone")}</p>
           )}
         </div>
