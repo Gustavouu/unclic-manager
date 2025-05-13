@@ -5,13 +5,31 @@ import { useLocation } from "react-router-dom";
 
 interface HeaderProps {
   onMenuToggle: () => void;
+  breadcrumb?: { label: string; path?: string }[];
 }
 
-export function Header({ onMenuToggle }: HeaderProps) {
+export function Header({ onMenuToggle, breadcrumb }: HeaderProps) {
   const location = useLocation();
   
-  // Generate breadcrumbs based on the current path
+  // Generate breadcrumbs based on the current path or use provided breadcrumb
   const generateBreadcrumb = () => {
+    // If breadcrumb prop is provided, use it
+    if (breadcrumb && breadcrumb.length > 0) {
+      return (
+        <div className="flex items-center gap-1">
+          {breadcrumb.map((item, index) => (
+            <div key={index} className="flex items-center">
+              {index > 0 && <span className="text-muted-foreground mx-1">/</span>}
+              <span className={index === breadcrumb.length - 1 ? "" : "text-muted-foreground"}>
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
+    // Default breadcrumb generation based on location
     const paths = location.pathname.split('/').filter(Boolean);
     
     if (paths.length === 0) {
