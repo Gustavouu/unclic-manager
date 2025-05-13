@@ -30,7 +30,7 @@ export const PersonalInfo = ({ form }: PersonalInfoProps) => {
         
         <FormField
           control={form.control}
-          name="role"
+          name="position"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Cargo *</FormLabel>
@@ -72,7 +72,7 @@ export const PersonalInfo = ({ form }: PersonalInfoProps) => {
         
         <FormField
           control={form.control}
-          name="commissionPercentage"
+          name="commission_percentage"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Comissão (%)</FormLabel>

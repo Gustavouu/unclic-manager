@@ -12,16 +12,18 @@ export const professionalFormSchema = z.object({
     .default(ProfessionalStatus.ACTIVE),
   establishmentId: z.string().optional(),
   isActive: z.boolean().default(true),
-  role: z.string().optional().nullable(),
-  position: z.string().optional().nullable(), // Added to match database field
+  position: z.string().optional().nullable(),
   specialties: z.array(z.string()).optional(),
   commission_percentage: z.number().min(0).max(100).optional().nullable(),
-  commissionPercentage: z.number().min(0).max(100).optional().nullable(), // For backward compatibility
   photo_url: z.string().optional().nullable(),
-  photoUrl: z.string().optional().nullable(), // For backward compatibility
-  avatar: z.string().optional().nullable(),
+  hire_date: z.string().optional(),
+  
+  // For backward compatibility
+  role: z.string().optional().nullable(),
+  commissionPercentage: z.number().min(0).max(100).optional().nullable(),
+  photoUrl: z.string().optional().nullable(),
   services: z.array(z.string()).optional(),
-  hire_date: z.string().optional()
+  avatar: z.string().optional().nullable()
 });
 
 export type ProfessionalFormValues = z.infer<typeof professionalFormSchema>;

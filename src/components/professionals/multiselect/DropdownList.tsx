@@ -1,25 +1,50 @@
 
-import React from 'react';
+import { Option } from "./types";
+import { SelectableItem } from "./SelectableItem";
 
 export interface DropdownListProps {
-  maxHeight: number;
-  isOpen: boolean;
-  children: React.ReactNode;
+  open: boolean;
+  options: Option[];
+  onSelect: (option: Option) => void;
+  inputValue: string;
+  emptyMessage: string;
+  maxHeight?: number;
 }
 
-export const DropdownList = ({ children, isOpen, maxHeight }: DropdownListProps) => {
+export const DropdownList = ({ 
+  open, 
+  options, 
+  onSelect, 
+  inputValue, 
+  emptyMessage,
+  maxHeight = 200 
+}: DropdownListProps) => {
+  if (!open) return null;
+
   return (
-    <div
-      className={`
-        absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg overflow-hidden
-        ${isOpen ? 'opacity-100' : 'opacity-0 invisible'}
-        transition-all duration-200
-      `}
-      style={{ maxHeight: `${maxHeight}px` }}
+    <div 
+      className="absolute top-full left-0 right-0 mt-1 rounded-md border bg-popover shadow-md z-50"
+      style={{ maxHeight: `${maxHeight}px`, overflowY: 'auto' }}
     >
-      <div className="overflow-y-auto" style={{ maxHeight: `${maxHeight}px` }}>
-        {children}
-      </div>
+      {options.length > 0 ? (
+        <div className="py-1">
+          {options.map(option => (
+            <SelectableItem 
+              key={option.value} 
+              option={option} 
+              onSelect={() => onSelect(option)} 
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="py-6 text-center text-sm text-muted-foreground">
+          {inputValue.length > 0 ? (
+            <span>No options found</span>
+          ) : (
+            <span>{emptyMessage}</span>
+          )}
+        </div>
+      )}
     </div>
   );
 };

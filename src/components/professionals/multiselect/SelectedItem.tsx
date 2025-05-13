@@ -1,29 +1,26 @@
 
-import React from 'react';
-import { X } from 'lucide-react';
-import { Option } from './types';
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Option } from "./types";
 
 export interface SelectedItemProps {
   option: Option;
-  onRemove: (optionValue: string) => void;
+  onUnselect: (option: Option) => void;
 }
 
-export const SelectedItem = ({ option, onRemove }: SelectedItemProps) => {
+export const SelectedItem = ({ option, onUnselect }: SelectedItemProps) => {
   return (
-    <div 
-      className="flex items-center gap-1 bg-primary/10 text-primary text-sm px-2 py-1 rounded-sm"
-    >
+    <div className="flex items-center gap-1 bg-primary/10 text-primary border border-primary/30 rounded-sm px-1 py-0.5 text-xs group">
       <span>{option.label}</span>
-      <button
+      <Button
         type="button"
-        className="text-primary hover:bg-primary/20 rounded-sm"
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove(option.value);
-        }}
+        variant="ghost"
+        size="sm"
+        className="h-4 w-4 p-0 opacity-70 group-hover:opacity-100"
+        onClick={() => onUnselect(option)}
       >
-        <X className="h-3 w-3" />
-      </button>
+        <X className="h-2.5 w-2.5" />
+      </Button>
     </div>
   );
 };

@@ -32,9 +32,12 @@ export const NewProfessionalDialog = ({
   const handleSubmit = async (data: ProfessionalCreateForm) => {
     try {
       setIsSubmitting(true);
-      await addProfessional(data);
-      toast.success("Colaborador adicionado com sucesso!");
-      onOpenChange(false);
+      // Pass data to the addProfessional function which will handle the mapping internally
+      const result = await addProfessional(data);
+      if (result) {
+        toast.success("Colaborador adicionado com sucesso!");
+        onOpenChange(false);
+      }
     } catch (error) {
       console.error("Error adding professional:", error);
       toast.error("Não foi possível adicionar o colaborador.");

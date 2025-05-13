@@ -33,7 +33,7 @@ export const ImageUpload = ({ form, initialPhotoUrl = "", name }: ImageUploadPro
       reader.onloadend = () => {
         const result = reader.result as string;
         setPreviewUrl(result);
-        form.setValue("photoUrl", result, { shouldValidate: true, shouldDirty: true });
+        form.setValue("photo_url", result, { shouldValidate: true, shouldDirty: true });
       };
       reader.readAsDataURL(file);
     }
@@ -58,7 +58,7 @@ export const ImageUpload = ({ form, initialPhotoUrl = "", name }: ImageUploadPro
         
         <FormField
           control={form.control}
-          name="photoUrl"
+          name="photo_url"
           render={({ field: { value, onChange, ...field } }) => (
             <FormItem className="absolute -bottom-2 -right-2">
               <FormControl>

@@ -36,11 +36,10 @@ export const ProfessionalForm = ({
       name: professional?.name || "",
       email: professional?.email || "",
       phone: professional?.phone || "",
-      role: professional?.role || "",
-      bio: professional?.bio || "",
+      position: professional?.position || professional?.role || "",
       specialties: professional?.specialties || [],
-      commissionPercentage: professional?.commissionPercentage || 0,
-      photoUrl: professional?.photoUrl || ""
+      commission_percentage: professional?.commission_percentage || professional?.commissionPercentage || 0,
+      photo_url: professional?.photo_url || professional?.photoUrl || ""
     },
   });
 
@@ -77,7 +76,7 @@ export const ProfessionalForm = ({
           form={form} 
           specialties={specialties}
           editMode={editMode}
-          initialPhotoUrl={professional?.photoUrl}
+          initialPhotoUrl={professional?.photo_url || professional?.photoUrl}
         />
         
         <DialogFooter className="pt-6">

@@ -12,11 +12,14 @@ export type Professional = {
   commission_percentage?: number;
   isActive?: boolean;
   status?: ProfessionalStatus;
-  role?: string; // Adding role for backwards compatibility
-  photoUrl?: string; // Adding for backward compatibility
-  commissionPercentage?: number; // Adding for backward compatibility
   business_id?: string;
-  userId?: string;
+  user_id?: string;
+  
+  // Adding fields for backwards compatibility
+  role?: string; // Alias for position
+  photoUrl?: string; // Alias for photo_url
+  commissionPercentage?: number; // Alias for commission_percentage
+  userId?: string; // Alias for user_id
 };
 
 export enum ProfessionalStatus {
@@ -45,6 +48,11 @@ export type ProfessionalFormValues = {
   bio?: string;
   commission_percentage?: number;
   status?: ProfessionalStatus;
+  
+  // Adding fields for backwards compatibility
+  role?: string;
+  photoUrl?: string;
+  commissionPercentage?: number;
 };
 
 // For backward compatibility with existing code
