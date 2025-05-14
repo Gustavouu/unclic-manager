@@ -1,3 +1,4 @@
+
 // Modified to fix the errors
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,7 +91,7 @@ export const useAppointmentCreate = (setAppointments: any = null) => {
       const { data, error } = await supabase
         .from("appointments")
         .update({
-          status: AppointmentStatus.CANCELLED,
+          status: AppointmentStatus.CANCELED,
         })
         .eq("id", id)
         .select();

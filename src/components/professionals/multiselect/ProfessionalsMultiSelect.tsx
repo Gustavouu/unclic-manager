@@ -8,11 +8,12 @@ import { Option } from "./types";
 
 interface MultiSelectProps {
   options: Option[];
-  selectedValues: string[];
+  selectedValues?: string[];
   onChange: (values: string[]) => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  emptyMessage?: string;
 }
 
 export const MultiSelect = ({
@@ -21,7 +22,8 @@ export const MultiSelect = ({
   onChange,
   placeholder = "Selecione...",
   disabled = false,
-  className = ""
+  className = "",
+  emptyMessage = "Nenhuma opção disponível"
 }: MultiSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -87,7 +89,7 @@ export const MultiSelect = ({
           ))
         ) : (
           <div className="p-2 text-center text-gray-500">
-            {inputValue ? "Nenhum resultado encontrado" : "Todas opções já selecionadas"}
+            {inputValue ? "Nenhum resultado encontrado" : emptyMessage}
           </div>
         )}
       </DropdownList>

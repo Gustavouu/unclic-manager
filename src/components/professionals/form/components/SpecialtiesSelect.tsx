@@ -1,4 +1,3 @@
-
 import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,7 +31,7 @@ export const SpecialtiesSelect = ({ form, specialties = [] }: SpecialtiesSelectP
   const selectedSpecialties = React.useMemo(() => {
     const formSpecialties = form.watch("specialties") || [];
     return Array.isArray(formSpecialties) 
-      ? formSpecialties.map(specialty => ({ label: specialty, value: specialty }))
+      ? formSpecialties
       : [];
   }, [form]);
 
@@ -95,9 +94,8 @@ export const SpecialtiesSelect = ({ form, specialties = [] }: SpecialtiesSelectP
           <FormControl>
             <MultiSelect
               options={specialtyOptions}
-              selected={selectedSpecialties}
-              onChange={(selected) => {
-                const values = selected.map(option => option.value);
+              selectedValues={selectedSpecialties}
+              onChange={(values) => {
                 field.onChange(values);
               }}
               placeholder="Selecione as especializações"
