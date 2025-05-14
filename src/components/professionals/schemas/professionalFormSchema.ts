@@ -8,7 +8,7 @@ export const professionalFormSchema = z.object({
   email: z.string().email('Email inválido').optional().nullable(),
   phone: z.string().optional().nullable(),
   bio: z.string().optional().nullable(),
-  status: z.enum([ProfessionalStatus.ACTIVE, ProfessionalStatus.INACTIVE, ProfessionalStatus.ON_LEAVE])
+  status: z.nativeEnum(ProfessionalStatus)
     .default(ProfessionalStatus.ACTIVE),
   user_id: z.string().optional().nullable(),
   position: z.string().optional().nullable(),

@@ -26,7 +26,7 @@ export interface ProfessionalFiltersState {
 
 const initialFilters: ProfessionalFiltersState = {
   search: "",
-  status: 'ALL' as any,
+  status: 'ALL' as const,
   specialty: null,
 };
 

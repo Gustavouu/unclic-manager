@@ -14,29 +14,36 @@ export interface Professional {
   commission_percentage?: number;
 }
 
-export type ProfessionalStatus = 'active' | 'inactive' | 'vacation' | 'pending';
+// Define as enum for type safety and value access
+export enum ProfessionalStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  ON_LEAVE = 'vacation',
+  PENDING = 'pending'
+}
 
+// For backward compatibility
 export const PROFESSIONAL_STATUS = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-  VACATION: 'vacation',
-  PENDING: 'pending'
+  ACTIVE: ProfessionalStatus.ACTIVE,
+  INACTIVE: ProfessionalStatus.INACTIVE,
+  ON_LEAVE: ProfessionalStatus.ON_LEAVE,
+  PENDING: ProfessionalStatus.PENDING
 };
 
 export const STATUS_MAPPING = {
-  active: {
+  [ProfessionalStatus.ACTIVE]: {
     label: 'Ativo',
     color: 'green'
   },
-  inactive: {
+  [ProfessionalStatus.INACTIVE]: {
     label: 'Inativo',
     color: 'red'
   },
-  vacation: {
+  [ProfessionalStatus.ON_LEAVE]: {
     label: 'Férias',
     color: 'amber'
   },
-  pending: {
+  [ProfessionalStatus.PENDING]: {
     label: 'Pendente',
     color: 'blue'
   }
@@ -95,4 +102,6 @@ export interface ProfessionalFormData {
   business_id?: string;
   user_id?: string;
   commission_percentage?: number;
+  hire_date?: string;
+  working_hours?: any;
 }

@@ -29,7 +29,7 @@ const Professionals = () => {
   const [professionalToDelete, setProfessionalToDelete] = useState<Professional | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   
-  const [filterStatus, setFilterStatus] = useState<'all' | 'ACTIVE' | 'INACTIVE'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | ProfessionalStatus.ACTIVE | ProfessionalStatus.INACTIVE>('all');
   const filteredProfessionals = filterStatus === 'all' 
     ? professionals
     : professionals.filter(p => p.status === filterStatus);
