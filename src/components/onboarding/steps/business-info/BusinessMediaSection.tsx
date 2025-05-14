@@ -41,12 +41,12 @@ export const BusinessMediaSection: React.FC = () => {
       
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="logo_url">URL do Logo</Label>
+          <Label htmlFor="logoUrl">URL do Logo</Label>
           <Input 
-            id="logo_url"
-            name="logo_url"
+            id="logoUrl"
+            name="logoUrl"
             type="url"
-            value={businessData.logo_url || ''}
+            value={businessData.logoUrl || ''}
             onChange={handleChange}
             placeholder="https://example.com/seu-logo.png"
           />

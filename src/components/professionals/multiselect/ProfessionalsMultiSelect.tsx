@@ -1,117 +1,98 @@
 
-import React from 'react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useProfessionals } from '@/hooks/professionals';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CheckIcon, UserIcon } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { Professional } from '@/hooks/professionals/types';
-import { ProfessionalsMultiSelectProps } from './types';
+import { useState, useEffect } from "react";
+import { Professional } from "@/hooks/professionals/types";
+import { DropdownList } from "./DropdownList";
+import { SelectedItem } from "./SelectedItem";
+import { SelectableItem } from "./SelectableItem";
+import { Option } from "./types";
 
-export const ProfessionalsMultiSelect: React.FC<ProfessionalsMultiSelectProps> = ({
-  selectedProfessionals = [],
-  onSelectProfessional,
-  onRemoveProfessional,
+interface MultiSelectProps {
+  options: Option[];
+  selectedValues: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  className?: string;
+}
+
+export const MultiSelect = ({
+  options,
+  selectedValues = [],
+  onChange,
+  placeholder = "Selecione...",
   disabled = false,
-  className,
-}) => {
-  const { professionals, loading } = useProfessionals({ activeOnly: true });
-
-  if (loading) {
-    return <Skeleton className="h-10 w-full" />;
-  }
-
-  const handleSelect = (professionalId: string) => {
-    const professional = professionals.find(p => p.id === professionalId);
-    if (professional && onSelectProfessional) {
-      onSelectProfessional(professional);
-    }
+  className = ""
+}: MultiSelectProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const [selectedOptions, setSelectedOptions] = useState<Option[]>([]);
+  
+  // Initialize selected options from values
+  useEffect(() => {
+    const selected = options.filter(option => selectedValues.includes(option.value));
+    setSelectedOptions(selected);
+  }, [options, selectedValues]);
+  
+  // Filter options based on input
+  const filteredOptions = options.filter(option => {
+    const alreadySelected = selectedOptions.some(selected => selected.value === option.value);
+    const matchesInput = option.label.toLowerCase().includes(inputValue.toLowerCase());
+    return !alreadySelected && matchesInput;
+  });
+  
+  const handleSelect = (option: Option) => {
+    const newSelected = [...selectedOptions, option];
+    setSelectedOptions(newSelected);
+    onChange(newSelected.map(opt => opt.value));
+    setInputValue("");
   };
-
-  const handleRemove = (e: React.MouseEvent, professionalId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onRemoveProfessional) {
-      onRemoveProfessional(professionalId);
-    }
+  
+  const handleRemove = (option: Option) => {
+    const newSelected = selectedOptions.filter(opt => opt.value !== option.value);
+    setSelectedOptions(newSelected);
+    onChange(newSelected.map(opt => opt.value));
   };
-
-  const availableProfessionals = professionals.filter(
-    p => !selectedProfessionals.some(sp => sp.id === p.id)
-  );
-
+  
   return (
-    <div className={cn("space-y-2", className)}>
-      {selectedProfessionals.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {selectedProfessionals.map((professional) => (
-            <Badge 
-              key={professional.id} 
-              variant="secondary"
-              className="flex items-center gap-1 py-1.5"
-            >
-              {professional.photo_url ? (
-                <img 
-                  src={professional.photo_url} 
-                  alt={professional.name} 
-                  className="w-4 h-4 rounded-full"
-                />
-              ) : (
-                <UserIcon className="w-3 h-3" />
-              )}
-              {professional.name}
-              {!disabled && (
-                <button 
-                  onClick={(e) => handleRemove(e, professional.id)} 
-                  className="ml-1 hover:bg-muted rounded-full p-0.5"
-                >
-                  &times;
-                </button>
-              )}
-            </Badge>
-          ))}
-        </div>
-      )}
+    <div className={`relative w-full ${className}`}>
+      <div
+        className="flex flex-wrap gap-1 p-2 border rounded-md min-h-[38px] cursor-text"
+        onClick={() => !disabled && setIsOpen(true)}
+      >
+        {selectedOptions.map(option => (
+          <SelectedItem key={option.value} option={option} onRemove={handleRemove} />
+        ))}
+        
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onFocus={() => setIsOpen(true)}
+          onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+          placeholder={selectedOptions.length === 0 ? placeholder : ""}
+          className="flex-grow outline-none min-w-[120px]"
+          disabled={disabled}
+        />
+      </div>
       
-      {availableProfessionals.length > 0 && (
-        <Select
-          disabled={disabled || availableProfessionals.length === 0}
-          onValueChange={handleSelect}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Selecionar profissional" />
-          </SelectTrigger>
-          <SelectContent>
-            {availableProfessionals.map((professional) => (
-              <SelectItem 
-                key={professional.id} 
-                value={professional.id}
-                className="flex items-center gap-2"
-              >
-                <div className="flex items-center gap-2">
-                  {professional.photo_url ? (
-                    <img 
-                      src={professional.photo_url} 
-                      alt={professional.name} 
-                      className="w-5 h-5 rounded-full"
-                    />
-                  ) : (
-                    <UserIcon className="w-4 h-4" />
-                  )}
-                  {professional.name}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
+      <DropdownList isOpen={isOpen}>
+        {filteredOptions.length > 0 ? (
+          filteredOptions.map(option => (
+            <SelectableItem 
+              key={option.value}
+              option={option}
+              onSelect={handleSelect}
+              inputValue={inputValue}
+            />
+          ))
+        ) : (
+          <div className="p-2 text-center text-gray-500">
+            {inputValue ? "Nenhum resultado encontrado" : "Todas opções já selecionadas"}
+          </div>
+        )}
+      </DropdownList>
     </div>
   );
 };
+
+export * from "./types";

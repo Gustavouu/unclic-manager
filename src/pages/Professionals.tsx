@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NewProfessionalDialog } from "@/components/professionals/NewProfessionalDialog";
-import { Professional, PROFESSIONAL_STATUS } from "@/hooks/professionals/types";
+import { Professional, ProfessionalStatus } from "@/hooks/professionals/types";
 import { EditProfessionalDialog } from "@/components/professionals/EditProfessionalDialog";
 import { DeleteProfessionalDialog } from "@/components/professionals/DeleteProfessionalDialog";
 import { ProfessionalDetailsDialog } from "@/components/professionals/ProfessionalDetailsDialog";
@@ -17,7 +17,7 @@ import { ResponsiveGrid } from "@/components/layout/ResponsiveGrid";
 
 const Professionals = () => {
   const [showNewProfessionalDialog, setShowNewProfessionalDialog] = useState(false);
-  const { professionals, isLoading } = useProfessionals();
+  const { professionals, loading, isLoading } = useProfessionals();
   
   // States for managing dialogs
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
@@ -78,7 +78,7 @@ const Professionals = () => {
         
         <StatsCard
           title="Ativos"
-          value={professionals.filter(p => p.status === PROFESSIONAL_STATUS.ACTIVE).length.toString()}
+          value={professionals.filter(p => p.status === ProfessionalStatus.ACTIVE).length.toString()}
           icon={<Users size={18} />}
           iconColor="text-green-600 bg-green-50"
           borderColor="border-l-green-600"

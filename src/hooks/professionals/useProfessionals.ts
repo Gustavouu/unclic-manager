@@ -16,6 +16,9 @@ export const useProfessionals = (options?: {
   const activeOnly = options?.activeOnly ?? true;
   const withServices = options?.withServices ?? false;
 
+  // Memoizar quais especialidades estão disponíveis
+  const specialties = Array.from(new Set(professionals.flatMap(p => p.specialties || [])));
+
   useEffect(() => {
     const fetchProfessionals = async () => {
       if (!businessId) {
@@ -36,7 +39,7 @@ export const useProfessionals = (options?: {
             .eq('business_id', businessId);
             
           if (activeOnly) {
-            query = query.eq('status', 'active');
+            query = query.eq('status', 'ACTIVE');
           }
             
           const { data, error } = await query;
@@ -54,7 +57,7 @@ export const useProfessionals = (options?: {
         try {
           let query = supabase
             .from('funcionarios')
-            .select('id, nome as name, position as cargo, photo_url, specialties as especialidades')
+            .select('id, nome, cargo, foto_url, especialidades')
             .eq('id_negocio', businessId);
             
           if (activeOnly) {
@@ -63,12 +66,12 @@ export const useProfessionals = (options?: {
             
           const { data, error } = await query;
             
-          if (!error) {
-            const mappedData = data?.map(item => ({
+          if (!error && data) {
+            const mappedData = data.map(item => ({
               id: item.id,
-              name: item.name,
+              name: item.nome,
               position: item.cargo,
-              photo_url: item.photo_url,
+              photo_url: item.foto_url,
               specialties: item.especialidades,
               business_id: businessId
             })) || [];
@@ -96,5 +99,77 @@ export const useProfessionals = (options?: {
     fetchProfessionals();
   }, [businessId, activeOnly, withServices]);
 
-  return { professionals, loading, error };
+  // Fornece também as operações CRUD
+  const createProfessional = async (data: any) => {
+    try {
+      const { data: newProfessional, error } = await supabase
+        .from("professionals")
+        .insert([{ ...data, business_id: businessId }])
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      // Update local state
+      setProfessionals(prev => [...prev, newProfessional]);
+      
+      return newProfessional;
+    } catch (error) {
+      console.error("Error creating professional:", error);
+      throw error;
+    }
+  };
+  
+  const updateProfessional = async (id: string, data: any) => {
+    try {
+      const { data: updatedProfessional, error } = await supabase
+        .from("professionals")
+        .update(data)
+        .eq("id", id)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      // Update local state
+      setProfessionals(prev => 
+        prev.map(p => p.id === id ? updatedProfessional : p)
+      );
+      
+      return updatedProfessional;
+    } catch (error) {
+      console.error("Error updating professional:", error);
+      throw error;
+    }
+  };
+  
+  const deleteProfessional = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("professionals")
+        .delete()
+        .eq("id", id);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setProfessionals(prev => prev.filter(p => p.id !== id));
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting professional:", error);
+      throw error;
+    }
+  };
+
+  return { 
+    professionals, 
+    loading, 
+    isLoading: loading, 
+    error,
+    specialties,
+    createProfessional,
+    updateProfessional,
+    deleteProfessional
+  };
 };

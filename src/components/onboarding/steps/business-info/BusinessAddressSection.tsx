@@ -146,14 +146,13 @@ export const BusinessAddressSection: React.FC = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="complement">Complemento</Label>
+            <Label htmlFor="addressComplement">Complemento</Label>
             <Input 
-              id="complement"
-              name="complement"
-              value={businessData.complement || businessData.addressComplement || ''}
+              id="addressComplement"
+              name="addressComplement"
+              value={businessData.addressComplement || ''}
               onChange={(e) => {
                 updateBusinessData({ 
-                  complement: e.target.value,
                   addressComplement: e.target.value
                 });
               }}
