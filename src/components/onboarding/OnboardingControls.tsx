@@ -76,24 +76,30 @@ export const OnboardingControls: React.FC = () => {
         
         setStatus("idle");
         
-        const data = response.data;
-        const error = response.error;
-        
-        console.log("Resposta de verificação de slug:", { data, error });
-        
-        if (error) {
-          console.error("Error checking slug availability:", error);
-          toast.error("Erro ao verificar disponibilidade do nome");
-          return;
-        }
-        
-        if (!data.isAvailable) {
-          // Se o nome não estiver disponível, modifique-o para torná-lo único
-          const uniqueName = `${businessData.name} ${timestamp}`;
-          toast.info(`Nome modificado para '${uniqueName}' para garantir unicidade.`);
+        // Type guard to ensure the response has data and error properties
+        if (response && typeof response === 'object' && 'data' in response && 'error' in response) {
+          const data = response.data;
+          const error = response.error;
           
-          // Atualizar o nome do negócio com o nome único
-          saveProgress();
+          console.log("Resposta de verificação de slug:", { data, error });
+          
+          if (error) {
+            console.error("Error checking slug availability:", error);
+            toast.error("Erro ao verificar disponibilidade do nome");
+            return;
+          }
+          
+          if (data && typeof data === 'object' && 'isAvailable' in data && !data.isAvailable) {
+            // Se o nome não estiver disponível, modifique-o para torná-lo único
+            const uniqueName = `${businessData.name} ${timestamp}`;
+            toast.info(`Nome modificado para '${uniqueName}' para garantir unicidade.`);
+            
+            // Atualizar o nome do negócio com o nome único
+            saveProgress();
+          }
+        } else {
+          console.error("Invalid response format:", response);
+          toast.warning("Resposta inválida do servidor, mas você pode continuar.");
         }
       } catch (err) {
         console.error("Failed to check slug availability:", err);

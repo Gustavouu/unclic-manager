@@ -22,6 +22,7 @@ export const OnboardingProcessStatus: React.FC = () => {
     setCurrentStep,
     setError,
     setProcessingStep,
+    setBusinessCreated,
     services,
     staffMembers,
     hasStaff,
@@ -141,9 +142,11 @@ export const OnboardingProcessStatus: React.FC = () => {
       }
       
       // Atualizar o businessCreated
-      setBusinessCreated({
-        id: businessId
-      });
+      if (setBusinessCreated) {
+        setBusinessCreated({
+          id: businessId
+        });
+      }
     }
     
     // Verificar se o negócio existe e seu status
@@ -210,14 +213,19 @@ export const OnboardingProcessStatus: React.FC = () => {
         console.log("Resposta da edge function:", response);
         
         // Verificar resposta
-        if (!response || !response.data) {
+        if (!response || typeof response !== 'object') {
           throw new Error("Sem resposta do servidor");
         }
         
-        const { success, error: setupError } = response.data;
-        
-        if (!success) {
-          throw new Error(setupError || "Erro ao finalizar configuração");
+        // Type guard to ensure response has data property
+        if ('data' in response && response.data) {
+          const { success, error: setupError } = response.data as { success: boolean, error?: string };
+          
+          if (!success) {
+            throw new Error(setupError || "Erro ao finalizar configuração");
+          }
+        } else {
+          throw new Error("Formato de resposta inválido");
         }
       } catch (error) {
         console.error("Erro na edge function:", error);
@@ -314,6 +322,7 @@ export const OnboardingProcessStatus: React.FC = () => {
     setError, 
     setStatus, 
     setProcessingStep, 
+    setBusinessCreated,
     navigate,
     updateBusinessStatus,
     refreshBusinessData,
@@ -422,10 +431,12 @@ export const OnboardingProcessStatus: React.FC = () => {
         }
         
         // Atualizar businessCreated
-        setBusinessCreated({
-          id: businessId,
-          slug: `meu-negocio-${timestamp}`
-        });
+        if (setBusinessCreated) {
+          setBusinessCreated({
+            id: businessId,
+            slug: `meu-negocio-${timestamp}`
+          });
+        }
       }
       
       // 3. Criar associação de usuário se não existir
@@ -500,7 +511,7 @@ export const OnboardingProcessStatus: React.FC = () => {
     setStatus, 
     setProcessingStep, 
     setError, 
-    setBusinessCreated, 
+    setBusinessCreated,
     navigate,
     findUserBusinessId, 
     updateBusinessStatus, 
