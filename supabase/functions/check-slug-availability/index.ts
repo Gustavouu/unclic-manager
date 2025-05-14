@@ -17,9 +17,14 @@ serve(async (req) => {
     // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing environment variables");
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get request body
+    // Get business name from request body
     const { name } = await req.json();
 
     if (!name) {
@@ -34,36 +39,33 @@ serve(async (req) => {
         }
       );
     }
-
-    // Generate a slug from business name
+    
+    // Generate a base slug from the business name
     const baseSlug = name
       .toLowerCase()
       .replace(/\s+/g, '-')
       .replace(/[^\w-]/g, '');
     
-    // Check if the slug exists
-    const { data, error } = await supabase
+    // Check if any business with a similar slug exists
+    const { data: existingBusinesses, error } = await supabase
       .from('businesses')
       .select('slug')
-      .eq('slug', baseSlug)
-      .maybeSingle();
-      
+      .like('slug', `${baseSlug}%`);
+    
     if (error) {
-      console.error('Error checking slug availability:', error);
+      console.error("Error checking slug availability:", error);
       throw error;
     }
     
-    const isAvailable = !data;
+    const isAvailable = !existingBusinesses || existingBusinesses.length === 0;
     
     return new Response(
       JSON.stringify({ 
-        success: true, 
+        success: true,
         isAvailable,
         suggestedSlug: isAvailable ? baseSlug : `${baseSlug}-${Date.now().toString().slice(-6)}`
       }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {

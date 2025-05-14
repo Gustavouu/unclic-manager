@@ -1,19 +1,52 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Onboarding } from "@/components/onboarding/Onboarding";
 import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { Toaster } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import { Loader } from "@/components/ui/loader";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 const OnboardingPage = () => {
   const { user, loading } = useAuth();
+  const [connectionStatus, setConnectionStatus] = useState<"checking" | "connected" | "error">("checking");
   
   // Define page title
   useEffect(() => {
     document.title = "Configuração Inicial | Unclic";
   }, []);
+  
+  // Check Supabase connection
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        // Simple query to check database connection
+        const { data, error } = await supabase.from('businesses').select('id').limit(1);
+        
+        if (error && error.code === '42P01') {
+          console.error("Table 'businesses' doesn't exist:", error);
+          setConnectionStatus("error");
+        } else if (error) {
+          console.error("Database connection error:", error);
+          setConnectionStatus("error");
+        } else {
+          console.log("Successfully connected to database");
+          setConnectionStatus("connected");
+        }
+      } catch (err) {
+        console.error("Failed to connect to Supabase:", err);
+        setConnectionStatus("error");
+      }
+    };
+    
+    if (user && !loading) {
+      checkConnection();
+    }
+  }, [user, loading]);
 
   // Show loading state while checking authentication
   if (loading) {
@@ -27,6 +60,42 @@ const OnboardingPage = () => {
   // Redirect to login if not authenticated
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+  
+  // Show error if database connection failed
+  if (connectionStatus === "error") {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full space-y-4">
+          <Alert variant="destructive">
+            <AlertTitle>Erro de conexão</AlertTitle>
+            <AlertDescription className="mt-2">
+              Não foi possível conectar ao banco de dados. Por favor, tente novamente mais tarde ou entre em contato com o suporte.
+            </AlertDescription>
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => window.location.reload()}
+                className="flex items-center"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Tentar novamente
+              </Button>
+            </div>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
+  
+  // Show loading state while checking connection
+  if (connectionStatus === "checking") {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader size="lg" text="Verificando conexão com o banco de dados..." />
+      </div>
+    );
   }
 
   return (

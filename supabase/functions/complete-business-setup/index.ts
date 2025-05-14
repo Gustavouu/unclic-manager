@@ -17,16 +17,21 @@ serve(async (req) => {
     // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing environment variables");
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get request body
-    const { userId, businessId, services = [], staffMembers = [], hasStaff = false, businessHours = {} } = await req.json();
+    // Get request data
+    const { userId, businessId, services, staffMembers, hasStaff, businessHours } = await req.json();
 
-    if (!userId || !businessId) {
+    if (!businessId || !userId) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: "User ID and Business ID are required" 
+          error: "Business ID and user ID are required" 
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" }, 
@@ -34,8 +39,14 @@ serve(async (req) => {
         }
       );
     }
-
-    console.log(`Completing business setup for business ID: ${businessId}`);
+    
+    console.log("Completing business setup:", {
+      businessId,
+      userId,
+      servicesCount: services?.length || 0,
+      staffCount: staffMembers?.length || 0,
+      hasStaff
+    });
     
     // Update business status to active
     const { error: updateError } = await supabase
@@ -47,99 +58,93 @@ serve(async (req) => {
       .eq('id', businessId);
       
     if (updateError) {
-      console.error('Failed to update business status:', updateError);
+      console.error("Error updating business status:", updateError);
       throw updateError;
     }
-
-    // Create service categories if needed
-    let defaultCategoryId = null;
-    const { data: categoryData, error: categoryError } = await supabase
-      .from('service_categories')
-      .insert([{
-        business_id: businessId,
-        name: 'General Services',
-        display_order: 0
-      }])
-      .select('id')
-      .single();
-      
-    if (!categoryError && categoryData) {
-      defaultCategoryId = categoryData.id;
-    } else {
-      console.warn('Could not create default service category:', categoryError);
-    }
-
-    // Add services
+    
+    // Add services if provided
     if (services && services.length > 0) {
-      console.log(`Adding ${services.length} services`);
-      
-      const servicesData = services.map(service => ({
-        business_id: businessId,
-        name: service.name,
-        price: service.price,
-        duration: service.duration,
-        description: service.description || '',
-        category_id: defaultCategoryId,
-        is_active: true
-      }));
-      
-      const { error: servicesError } = await supabase
-        .from('services')
-        .insert(servicesData);
+      try {
+        const servicesData = services.map(service => ({
+          business_id: businessId,
+          name: service.name,
+          duration: service.duration,
+          price: service.price,
+          description: service.description || null
+        }));
         
-      if (servicesError) {
-        console.error('Failed to add services:', servicesError);
+        const { error: servicesError } = await supabase
+          .from('services')
+          .insert(servicesData);
+          
+        if (servicesError) {
+          console.error("Error adding services:", servicesError);
+          // Continue even if there's an error
+        } else {
+          console.log(`${services.length} services added successfully`);
+        }
+      } catch (error) {
+        console.error("Exception during services creation:", error);
+        // Continue even if there's an error
       }
     }
     
-    // Add staff members
-    if (hasStaff && staffMembers && staffMembers.length > 0) {
-      console.log(`Adding ${staffMembers.length} staff members`);
-      
-      const staffData = staffMembers.map(staff => ({
-        business_id: businessId,
-        name: staff.name,
-        position: staff.role,
-        email: staff.email || null,
-        phone: staff.phone || null,
-        specialties: staff.specialties || [],
-        status: 'active'
-      }));
-      
-      const { error: staffError } = await supabase
-        .from('professionals')
-        .insert(staffData);
+    // Add staff members if provided
+    if (staffMembers && staffMembers.length > 0 && hasStaff) {
+      try {
+        const staffData = staffMembers.map(staff => ({
+          business_id: businessId,
+          name: staff.name,
+          email: staff.email || null,
+          phone: staff.phone || null,
+          position: staff.position || null,
+          commission_percentage: staff.commission || 0
+        }));
         
-      if (staffError) {
-        console.error('Failed to add staff members:', staffError);
+        const { error: staffError } = await supabase
+          .from('professionals')
+          .insert(staffData);
+          
+        if (staffError) {
+          console.error("Error adding staff members:", staffError);
+          // Continue even if there's an error
+        } else {
+          console.log(`${staffMembers.length} staff members added successfully`);
+        }
+      } catch (error) {
+        console.error("Exception during staff creation:", error);
+        // Continue even if there's an error
       }
     }
     
-    // Set business hours if provided
-    if (businessHours && Object.keys(businessHours).length > 0) {
-      console.log('Setting business hours');
-      
-      // Store business hours in business_settings as JSON
-      const { error: hoursError } = await supabase
-        .from('business_settings')
-        .update({
-          working_hours: businessHours
-        })
-        .eq('business_id', businessId);
-        
-      if (hoursError) {
-        console.error('Failed to update business hours:', hoursError);
+    // Update business settings with business hours if provided
+    if (businessHours) {
+      try {
+        const { error: hoursError } = await supabase
+          .from('business_settings')
+          .update({ 
+            working_hours: businessHours,
+            updated_at: new Date().toISOString()
+          })
+          .eq('business_id', businessId);
+          
+        if (hoursError) {
+          console.error("Error updating business hours:", hoursError);
+          // Continue even if there's an error
+        } else {
+          console.log("Business hours updated successfully");
+        }
+      } catch (error) {
+        console.error("Exception during business hours update:", error);
+        // Continue even if there's an error
       }
     }
-
+    
     return new Response(
       JSON.stringify({ 
-        success: true,
-        message: "Business setup completed successfully"
+        success: true
       }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {

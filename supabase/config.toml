@@ -7,5 +7,11 @@ verify_jwt = true
 [functions.complete-business-setup]
 verify_jwt = true
 
+[functions.check-slug-availability]
+verify_jwt = true
+
 [functions.check-business-status]
+verify_jwt = true
+
+[functions.efipay-payment-handler]
 verify_jwt = true

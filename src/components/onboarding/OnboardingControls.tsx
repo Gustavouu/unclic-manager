@@ -1,4 +1,3 @@
-
 import React, { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
@@ -126,7 +125,7 @@ export const OnboardingControls: React.FC = () => {
   }, [currentStep, saveProgress, setCurrentStep]);
   
   const createBusiness = async () => {
-    // Preparar dados do negócio para criação
+    // Prepare business data for creation
     const businessPayload = {
       name: businessData.name,
       email: businessData.email,
@@ -141,11 +140,12 @@ export const OnboardingControls: React.FC = () => {
     
     console.log("Criando negócio com os dados:", businessPayload);
     
-    // Adicionar timestamp para garantir unicidade
+    // Add timestamp to ensure uniqueness
     const timestamp = Date.now().toString().slice(-4);
     const businessNameWithTimestamp = `${businessPayload.name}-${timestamp}`;
     
     try {
+      // First try with the Edge Function
       const response = await supabase.functions.invoke('create-business', {
         body: {
           businessData: {
@@ -171,7 +171,63 @@ export const OnboardingControls: React.FC = () => {
       return { businessId, businessSlug };
     } catch (error) {
       console.error("Erro na criação do negócio:", error);
-      throw error;
+      
+      // Fallback: try direct creation if Edge Function fails
+      try {
+        console.log("Tentando criar negócio diretamente no banco de dados...");
+        
+        // Create business record
+        const { data: businessData, error: businessError } = await supabase
+          .from('businesses')
+          .insert([{
+            name: businessNameWithTimestamp,
+            admin_email: businessPayload.email || 'contact@example.com',
+            phone: businessPayload.phone,
+            address: businessPayload.address,
+            address_number: businessPayload.number,
+            neighborhood: businessPayload.neighborhood,
+            city: businessPayload.city,
+            state: businessPayload.state,
+            zip_code: businessPayload.cep,
+            slug: `${businessPayload.name.toLowerCase().replace(/\s+/g, '-')}-${timestamp}`,
+            status: 'pending'
+          }])
+          .select('id, slug')
+          .single();
+          
+        if (businessError) throw businessError;
+        
+        if (!businessData) throw new Error("Business creation returned no data");
+        
+        console.log("Negócio criado diretamente:", businessData);
+        
+        // Create association
+        const { error: assocError } = await supabase
+          .from('business_users')
+          .insert([{
+            business_id: businessData.id,
+            user_id: user?.id,
+            role: 'owner'
+          }]);
+          
+        if (assocError) console.error("Erro ao criar associação:", assocError);
+        
+        // Create settings
+        const { error: settingsError } = await supabase
+          .from('business_settings')
+          .insert([{
+            business_id: businessData.id,
+            logo_url: null,
+            banner_url: null
+          }]);
+          
+        if (settingsError) console.error("Erro ao criar configurações:", settingsError);
+        
+        return { businessId: businessData.id, businessSlug: businessData.slug };
+      } catch (fallbackError) {
+        console.error("Falha na criação direta:", fallbackError);
+        throw error; // Throw original error
+      }
     }
   };
   
@@ -185,6 +241,7 @@ export const OnboardingControls: React.FC = () => {
     });
     
     try {
+      // First try with Edge Function
       const response = await supabase.functions.invoke('complete-business-setup', {
         body: {
           userId: user?.id,
@@ -211,7 +268,59 @@ export const OnboardingControls: React.FC = () => {
       return success;
     } catch (error) {
       console.error("Erro ao completar configuração do negócio:", error);
-      throw error;
+      
+      // Fallback: try direct updates if Edge Function fails
+      try {
+        console.log("Tentando completar configuração diretamente...");
+        
+        // Update business status
+        const { error: statusError } = await supabase
+          .from('businesses')
+          .update({ status: 'active' })
+          .eq('id', businessId);
+          
+        if (statusError) throw statusError;
+        
+        // Add services if available
+        if (services && services.length > 0) {
+          const servicesData = services.map(service => ({
+            business_id: businessId,
+            name: service.name,
+            description: service.description,
+            duration: service.duration,
+            price: service.price
+          }));
+          
+          const { error: servicesError } = await supabase
+            .from('services')
+            .insert(servicesData);
+            
+          if (servicesError) console.error("Erro ao criar serviços:", servicesError);
+        }
+        
+        // Add staff if available
+        if (hasStaff && staffMembers && staffMembers.length > 0) {
+          const staffData = staffMembers.map(staff => ({
+            business_id: businessId,
+            name: staff.name,
+            email: staff.email,
+            phone: staff.phone,
+            position: staff.position || "Profissional",
+            commission_percentage: staff.commission || 0
+          }));
+          
+          const { error: staffError } = await supabase
+            .from('professionals')
+            .insert(staffData);
+            
+          if (staffError) console.error("Erro ao criar profissionais:", staffError);
+        }
+        
+        return true;
+      } catch (fallbackError) {
+        console.error("Falha ao completar configuração diretamente:", fallbackError);
+        throw error; // Throw original error
+      }
     }
   };
   

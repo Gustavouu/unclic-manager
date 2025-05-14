@@ -17,10 +17,28 @@ serve(async (req) => {
     // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    
+    // Log environment information for debugging
+    console.log("Function initialization:");
+    console.log(`SUPABASE_URL: ${supabaseUrl ? "set" : "missing"}`);
+    console.log(`SUPABASE_SERVICE_ROLE_KEY: ${supabaseKey ? "set" : "missing"}`);
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing environment variables");
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get request body
-    const { businessData, userId } = await req.json();
+    const requestBody = await req.json();
+    const { businessData, userId } = requestBody;
+
+    console.log("Request received:", {
+      hasBusinessData: !!businessData,
+      hasUserId: !!userId,
+      businessDataKeys: businessData ? Object.keys(businessData) : [],
+      userIdType: typeof userId
+    });
 
     if (!businessData || !userId) {
       return new Response(
@@ -45,32 +63,61 @@ serve(async (req) => {
       userId: userId
     });
     
-    // Create business in businesses table
-    const { data, error } = await supabase
-      .from('businesses')
-      .insert([{
-        name: businessData.name,
-        admin_email: businessData.email || 'contact@example.com',
-        phone: businessData.phone,
-        address: businessData.address,
-        address_number: businessData.addressNumber || businessData.number,
-        address_complement: businessData.addressComplement,
-        neighborhood: businessData.neighborhood,
-        city: businessData.city,
-        state: businessData.state,
-        zip_code: businessData.zipCode || businessData.cep,
-        slug: slug,
-        status: 'pending'
-      }])
-      .select('id')
-      .single();
+    // Check if the businesses table exists
+    try {
+      const { data: tableCheck, error: tableError } = await supabase
+        .from('businesses')
+        .select('id')
+        .limit(1);
       
-    if (error) {
-      console.error('Error creating business:', error);
-      throw error;
+      if (tableError) {
+        console.error('Error checking businesses table:', tableError);
+        throw new Error(`Table check error: ${tableError.message}`);
+      }
+      
+      console.log('Businesses table check:', tableCheck ? 'Table exists' : 'Table not found');
+    } catch (tableCheckError) {
+      console.error('Failed to check businesses table:', tableCheckError);
+      throw new Error(`Table verification failed: ${tableCheckError.message}`);
     }
     
-    const businessId = data.id;
+    // Create business in businesses table
+    let businessResult;
+    try {
+      businessResult = await supabase
+        .from('businesses')
+        .insert([{
+          name: businessData.name,
+          admin_email: businessData.email || 'contact@example.com',
+          phone: businessData.phone,
+          address: businessData.address,
+          address_number: businessData.addressNumber || businessData.number,
+          address_complement: businessData.addressComplement,
+          neighborhood: businessData.neighborhood,
+          city: businessData.city,
+          state: businessData.state,
+          zip_code: businessData.zipCode || businessData.cep,
+          slug: slug,
+          status: 'pending'
+        }])
+        .select('id')
+        .single();
+        
+      if (businessResult.error) {
+        console.error('Error creating business:', businessResult.error);
+        throw new Error(`Business creation error: ${businessResult.error.message}`);
+      }
+    } catch (insertError) {
+      console.error('Exception during business creation:', insertError);
+      throw new Error(`Business insertion failed: ${insertError.message}`);
+    }
+    
+    if (!businessResult?.data?.id) {
+      throw new Error("Business creation succeeded but no ID was returned");
+    }
+    
+    const businessId = businessResult.data.id;
+    console.log('Business created with ID:', businessId);
     
     // Create association between business and user
     try {
@@ -82,7 +129,11 @@ serve(async (req) => {
           role: 'owner'
         }]);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating business-user association:', error);
+        throw error;
+      }
+      console.log('Business-user association created successfully');
     } catch (error) {
       console.error('Failed to create business-user association:', error);
       // Continue anyway since we've created the business
@@ -100,9 +151,11 @@ serve(async (req) => {
         
       if (error) {
         console.error('Failed to create business settings:', error);
+      } else {
+        console.log('Business settings created successfully');
       }
     } catch (error) {
-      console.error('Failed to create business settings:', error);
+      console.error('Exception during business settings creation:', error);
       // Continue anyway since we've created the business
     }
     

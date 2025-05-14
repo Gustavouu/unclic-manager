@@ -17,72 +17,75 @@ serve(async (req) => {
     // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing environment variables");
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get request body with businessId
+    // Get business ID from request body
     const { businessId } = await req.json();
 
     if (!businessId) {
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Business ID is required"
+        JSON.stringify({ 
+          success: false, 
+          error: "Business ID is required" 
         }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 400 
         }
       );
     }
-
-    console.log("Checking business status for:", businessId);
     
-    // Check business in businesses table
-    const { data: business, error: businessError } = await supabase
+    console.log("Checking business status for ID:", businessId);
+    
+    // Check if business exists in businesses table
+    const { data: business, error } = await supabase
       .from('businesses')
       .select('id, status')
       .eq('id', businessId)
       .maybeSingle();
     
-    if (businessError) {
-      console.error("Error checking business:", businessError);
+    if (error) {
+      console.error("Error checking business status:", error);
+      throw error;
     }
     
     if (business) {
+      console.log("Business found:", business);
       return new Response(
-        JSON.stringify({
+        JSON.stringify({ 
           success: true,
           exists: true,
-          status: business.status,
-          tableName: 'businesses'
+          status: business.status
         }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } else {
+      console.log("Business not found");
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          exists: false
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    
-    return new Response(
-      JSON.stringify({
-        success: true,
-        exists: false,
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      }
-    );
 
   } catch (error) {
     console.error("Error in check-business-status:", error);
     
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || "An error occurred"
+      JSON.stringify({ 
+        success: false, 
+        error: error.message || "An error occurred" 
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500
+      { 
+        headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+        status: 500 
       }
     );
   }
