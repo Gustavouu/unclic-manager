@@ -1,50 +1,45 @@
 
-import { Database } from '@/integrations/supabase/database.types';
-
-export type Professional = Database['public']['Tables']['professionals']['Row'];
-
-export type ProfessionalFormData = Omit<Professional, 'id' | 'created_at' | 'updated_at' | 'business_id'>;
-
-export type ProfessionalWithServices = Professional & {
-  services: {
-    id: string;
-    name: string;
-    duration: number;
-    price: number;
-  }[];
-};
-
-// Define a ProfessionalStatus enum
-export enum ProfessionalStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  ON_LEAVE = 'on_leave'
+export interface ProfessionalData {
+  id: string;
+  business_id: string;
+  user_id?: string | null;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  position?: string | null;
+  bio?: string | null;
+  photo_url?: string | null;
+  specialties?: string[] | null;
+  commission_percentage?: number | null;
+  hire_date?: string | null;
+  status?: string | null;
+  working_hours?: any | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Define mapping for legacy status strings
-export const STATUS_MAPPING = {
-  'active': ProfessionalStatus.ACTIVE,
-  'inactive': ProfessionalStatus.INACTIVE,
-  'on_leave': ProfessionalStatus.ON_LEAVE
-};
-
-// Define type for backward compatibility
-export const PROFESSIONAL_STATUS = ProfessionalStatus;
-
-// Add AppointmentStatus enum for use in appointment-related components
-export enum AppointmentStatus {
-  SCHEDULED = 'scheduled',
-  CONFIRMED = 'confirmed',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-  NO_SHOW = 'no_show'
+export interface UseProfessionalsResult {
+  professionals: ProfessionalData[];
+  loading: boolean;
+  error: string | null;
+  fetchProfessionals: () => Promise<void>;
+  getProfessionalById: (id: string) => ProfessionalData | undefined;
 }
 
-// Add appointment status record for mapping between enum and string values
+export const APPOINTMENT_STATUS_OPTIONS = [
+  { value: "scheduled", label: "Agendado" },
+  { value: "confirmed", label: "Confirmado" },
+  { value: "in_progress", label: "Em andamento" },
+  { value: "completed", label: "Concluído" },
+  { value: "cancelled", label: "Cancelado" },
+  { value: "no_show", label: "Não compareceu" }
+];
+
 export const APPOINTMENT_STATUS_RECORD = {
-  [AppointmentStatus.SCHEDULED]: 'scheduled',
-  [AppointmentStatus.CONFIRMED]: 'confirmed',
-  [AppointmentStatus.COMPLETED]: 'completed',
-  [AppointmentStatus.CANCELLED]: 'cancelled',
-  [AppointmentStatus.NO_SHOW]: 'no_show'
+  scheduled: "Agendado",
+  confirmed: "Confirmado",
+  in_progress: "Em andamento",
+  completed: "Concluído",
+  cancelled: "Cancelado",
+  no_show: "Não compareceu"
 };

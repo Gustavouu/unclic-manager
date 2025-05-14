@@ -52,7 +52,7 @@ export const useNeedsOnboarding = () => {
       
       // If currentBusiness is already loaded, use it
       if (currentBusiness) {
-        const needsSetup = currentBusiness.status === 'pendente';
+        const needsSetup = currentBusiness.status === 'pendente' || currentBusiness.status === 'pending';
         setNeedsOnboarding(needsSetup);
         
         // Update cache
@@ -65,21 +65,65 @@ export const useNeedsOnboarding = () => {
       
       // Otherwise fetch from API
       console.log('Fetching business status for onboarding check:', businessId);
+      
+      // Try new table structure first (businesses)
       const { data, error } = await supabase
-        .from('negocios')
-        .select('status')
+        .from('businesses')
+        .select('id, status')
         .eq('id', businessId)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error && error.code !== '42P01') { // Ignore "relation does not exist" errors
+        console.error('Error checking business status in businesses table:', error);
+      }
       
-      const needsSetup = data?.status === 'pendente';
-      setNeedsOnboarding(needsSetup);
+      if (data) {
+        // Use data from businesses table
+        const needsSetup = data.status === 'pendente' || data.status === 'pending';
+        setNeedsOnboarding(needsSetup);
+        
+        // Update cache
+        localStorage.setItem(cacheKey, String(needsSetup));
+        localStorage.setItem(cacheTimestampKey, String(Date.now()));
+        
+        setLoading(false);
+        return;
+      }
       
-      // Update cache
-      localStorage.setItem(cacheKey, String(needsSetup));
+      // Try legacy table as fallback (negocios)
+      try {
+        const { data: legacyData, error: legacyError } = await supabase
+          .from('negocios')
+          .select('id, status')
+          .eq('id', businessId)
+          .maybeSingle();
+        
+        if (legacyError && legacyError.code !== '42P01') { // Ignore "relation does not exist" errors
+          console.error('Error checking business status in negocios table:', legacyError);
+          throw legacyError;
+        }
+        
+        if (legacyData) {
+          // Use data from negocios table
+          const needsSetup = legacyData.status === 'pendente' || legacyData.status === 'pending';
+          setNeedsOnboarding(needsSetup);
+          
+          // Update cache
+          localStorage.setItem(cacheKey, String(needsSetup));
+          localStorage.setItem(cacheTimestampKey, String(Date.now()));
+          
+          setLoading(false);
+          return;
+        }
+      } catch (fallbackError) {
+        console.error('Failed to check legacy business status:', fallbackError);
+      }
+      
+      // If we get here, set a default (needs onboarding)
+      console.warn('Could not determine onboarding status, defaulting to needs onboarding');
+      setNeedsOnboarding(true);
+      localStorage.setItem(cacheKey, 'true');
       localStorage.setItem(cacheTimestampKey, String(Date.now()));
-      
     } catch (err: any) {
       console.error("Error checking onboarding status:", err);
       // Default to needing onboarding if there's an error

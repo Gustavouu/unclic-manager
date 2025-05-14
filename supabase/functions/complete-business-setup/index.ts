@@ -55,74 +55,166 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Check if user has access profile for this business already
-    console.log("Checking if user has access profile for business");
-    const { data: existingProfile, error: profileCheckError } = await supabase
-      .from('perfis_acesso')
-      .select('id')
-      .eq('id_usuario', userId)
-      .eq('id_negocio', businessId)
-      .maybeSingle();
+    // Check which tables exist in the database
+    const tablesInfo: { 
+      businesses: boolean; 
+      negocios: boolean; 
+      business_users: boolean;
+      perfis_acesso: boolean;
+      services: boolean;
+      servicos: boolean;
+      professionals: boolean;
+      funcionarios: boolean;
+    } = {
+      businesses: false,
+      negocios: false,
+      business_users: false,
+      perfis_acesso: false,
+      services: false,
+      servicos: false,
+      professionals: false,
+      funcionarios: false
+    };
     
-    if (profileCheckError) {
-      console.error("Error checking access profile:", profileCheckError);
-      // Continue anyway, as we'll create a new profile
+    // Check all tables existence
+    for (const tableName of Object.keys(tablesInfo)) {
+      try {
+        const { count, error } = await supabase
+          .from(tableName)
+          .select('*', { count: 'exact', head: true });
+          
+        if (!error) {
+          tablesInfo[tableName as keyof typeof tablesInfo] = true;
+          console.log(`Table ${tableName} exists`);
+        }
+      } catch (e) {
+        console.log(`Table ${tableName} doesn't exist or error checking it`);
+      }
     }
     
-    // If profile already exists, we'll update it instead of creating a new one
-    if (!existingProfile) {
-      console.log("Creating new access profile for user");
+    // Create business_user association if table exists
+    if (tablesInfo.business_users) {
+      console.log("Creating business_users association");
       
-      // Create access profile for the user (admin role)
-      const { error: profileError } = await supabase
-        .from('perfis_acesso')
-        .insert([{
-          id_usuario: userId,
-          id_negocio: businessId,
-          e_administrador: true,
-          acesso_agendamentos: true,
-          acesso_clientes: true,
-          acesso_financeiro: true,
-          acesso_estoque: true,
-          acesso_relatorios: true,
-          acesso_configuracoes: true,
-          acesso_marketing: true
-        }]);
-      
-      if (profileError) {
-        console.error("Error creating access profile:", profileError);
-        throw new Error(`Erro ao criar perfil de acesso: ${profileError.message}`);
-      } else {
-        console.log("Access profile created successfully");
+      const { data: existingAssociation, error: checkError } = await supabase
+        .from('business_users')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('business_id', businessId)
+        .maybeSingle();
+        
+      if (!existingAssociation && !checkError) {
+        const { error: associationError } = await supabase
+          .from('business_users')
+          .insert({
+            user_id: userId,
+            business_id: businessId,
+            role: 'owner'
+          });
+          
+        if (associationError) {
+          console.error("Error creating business_users association:", associationError);
+        } else {
+          console.log("business_users association created successfully");
+        }
+      } else if (existingAssociation) {
+        console.log("business_users association already exists");
+      } else if (checkError) {
+        console.error("Error checking business_users association:", checkError);
       }
-    } else {
-      console.log("Access profile already exists, skipping creation");
+    }
+    
+    // Create or update access profile for legacy system if table exists
+    if (tablesInfo.perfis_acesso) {
+      console.log("Checking if user has access profile for business");
+      const { data: existingProfile, error: profileCheckError } = await supabase
+        .from('perfis_acesso')
+        .select('id')
+        .eq('id_usuario', userId)
+        .eq('id_negocio', businessId)
+        .maybeSingle();
+      
+      if (profileCheckError) {
+        console.error("Error checking access profile:", profileCheckError);
+      }
+      
+      // If profile doesn't exist, create a new one
+      if (!existingProfile && !profileCheckError) {
+        console.log("Creating new access profile for user");
+        
+        const { error: profileError } = await supabase
+          .from('perfis_acesso')
+          .insert([{
+            id_usuario: userId,
+            id_negocio: businessId,
+            e_administrador: true,
+            acesso_agendamentos: true,
+            acesso_clientes: true,
+            acesso_financeiro: true,
+            acesso_estoque: true,
+            acesso_relatorios: true,
+            acesso_configuracoes: true,
+            acesso_marketing: true
+          }]);
+        
+        if (profileError) {
+          console.error("Error creating access profile:", profileError);
+        } else {
+          console.log("Access profile created successfully");
+        }
+      } else {
+        console.log("Access profile already exists, skipping creation");
+      }
     }
     
     // Create services
     if (services && services.length > 0) {
       console.log("Creating services:", services.length);
       
-      const servicesToInsert = services.map(service => ({
-        id: uuidv4(),
-        id_negocio: businessId,
-        nome: service.name,
-        descricao: service.description || null,
-        preco: service.price,
-        duracao: service.duration,
-        comissao_percentual: 0,
-        ativo: true
-      }));
+      if (tablesInfo.services) {
+        const servicesToInsert = services.map(service => ({
+          id: uuidv4(),
+          business_id: businessId,
+          name: service.name,
+          description: service.description || null,
+          price: service.price,
+          duration: service.duration,
+          commission_percentage: 0,
+          is_active: true
+        }));
+        
+        const { error: servicesError } = await supabase
+          .from('services')
+          .insert(servicesToInsert);
+        
+        if (servicesError) {
+          console.error("Error creating services in services table:", servicesError);
+        } else {
+          console.log("Services created successfully in services table");
+        }
+      }
       
-      const { error: servicesError } = await supabase
-        .from('servicos')
-        .insert(servicesToInsert);
-      
-      if (servicesError) {
-        console.error("Error creating services:", servicesError);
-        // Continue anyway, other steps might still succeed
-      } else {
-        console.log("Services created successfully");
+      if (tablesInfo.servicos) {
+        const servicosToInsert = services.map(service => ({
+          id: uuidv4(),
+          id_negocio: businessId,
+          nome: service.name,
+          descricao: service.description || null,
+          preco: service.price,
+          duracao: service.duration,
+          comissao_percentual: 0,
+          ativo: true
+        }));
+        
+        const { error: servicosError } = await supabase
+          .from('servicos')
+          .insert(servicosToInsert);
+        
+        if (servicosError) {
+          console.error("Error creating services in servicos table:", servicosError);
+        } else {
+          console.log("Services created successfully in servicos table");
+        }
       }
     } else {
       console.log("No services to create");
@@ -135,130 +227,128 @@ serve(async (req) => {
     if (hasStaff && staffMembers && staffMembers.length > 0) {
       console.log("Creating staff members:", staffMembers.length);
       
-      const staffToInsert = staffMembers.map(staff => ({
-        id: uuidv4(),
-        id_negocio: businessId,
-        nome: staff.name,
-        cargo: staff.role || "Profissional",
-        email: staff.email || null,
-        telefone: staff.phone || null,
-        especializacoes: staff.specialties || [],
-        status: "ativo"
-      }));
+      if (tablesInfo.professionals) {
+        const professionalsToInsert = staffMembers.map(staff => ({
+          id: uuidv4(),
+          business_id: businessId,
+          name: staff.name,
+          position: staff.role || "Professional",
+          email: staff.email || null,
+          phone: staff.phone || null,
+          specialties: staff.specialties || [],
+          status: "active"
+        }));
+        
+        const { error: professionalsError } = await supabase
+          .from('professionals')
+          .insert(professionalsToInsert);
+        
+        if (professionalsError) {
+          console.error("Error creating staff members in professionals table:", professionalsError);
+        } else {
+          console.log("Staff members created successfully in professionals table");
+        }
+      }
       
-      const { error: staffError } = await supabase
-        .from('funcionarios')
-        .insert(staffToInsert);
-      
-      if (staffError) {
-        console.error("Error creating staff members:", staffError);
-        // Continue anyway, other steps might still succeed
-      } else {
-        console.log("Staff members created successfully");
+      if (tablesInfo.funcionarios) {
+        const funcionariosToInsert = staffMembers.map(staff => ({
+          id: uuidv4(),
+          id_negocio: businessId,
+          nome: staff.name,
+          cargo: staff.role || "Profissional",
+          email: staff.email || null,
+          telefone: staff.phone || null,
+          especializacoes: staff.specialties || [],
+          status: "ativo"
+        }));
+        
+        const { error: funcionariosError } = await supabase
+          .from('funcionarios')
+          .insert(funcionariosToInsert);
+        
+        if (funcionariosError) {
+          console.error("Error creating staff members in funcionarios table:", funcionariosError);
+        } else {
+          console.log("Staff members created successfully in funcionarios table");
+        }
       }
     } else {
       console.log("No staff members to create");
     }
     
-    // Create business hours
-    if (businessHours) {
-      console.log("Creating business hours");
-      
-      // Map days of week to their numeric representation
-      const dayMapping: Record<string, number> = {
-        monday: 1,
-        tuesday: 2,
-        wednesday: 3,
-        thursday: 4,
-        friday: 5,
-        saturday: 6,
-        sunday: 0
-      };
-      
-      const hoursToInsert = Object.entries(businessHours)
-        .filter(([_, data]) => data.open)
-        .map(([day, data]) => ({
-          id: uuidv4(),
-          id_negocio: businessId,
-          dia_semana: dayMapping[day],
-          hora_inicio: data.openTime,
-          hora_fim: data.closeTime,
-          dia_folga: false,
-          capacidade_simultanea: 1,
-          intervalo_entre_agendamentos: 0
-        }));
-      
-      const { error: hoursError } = await supabase
-        .from('horarios_disponibilidade')
-        .insert(hoursToInsert);
-      
-      if (hoursError) {
-        console.error("Error creating business hours:", hoursError);
-        // Continue anyway, other steps might still succeed
+    // Update business status to active
+    console.log("Updating business status to active");
+    let statusUpdateSuccess = false;
+    
+    // Try new schema (businesses table) first
+    if (tablesInfo.businesses) {
+      const { error: businessesError } = await supabase
+        .from('businesses')
+        .update({ 
+          status: 'active',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', businessId);
+        
+      if (businessesError) {
+        console.error("Error updating businesses status:", businessesError);
       } else {
-        console.log("Business hours created successfully");
+        console.log("Business status updated successfully in businesses table");
+        statusUpdateSuccess = true;
       }
-    } else {
-      console.log("No business hours to create");
     }
     
-    // Update business status to active - fixing the status update issue
-    console.log("Updating business status to active");
-    
-    // CORREÇÃO: Utilizando o campo 'atualizado_em' em vez de 'updated_at'
-    const { data: updateData, error: statusError } = await supabase
-      .from('negocios')
-      .update({ 
-        status: 'ativo',
-        atualizado_em: new Date().toISOString()  // Nome correto do campo em português
-      })
-      .eq('id', businessId)
-      .select('id, status');
-    
-    if (statusError) {
-      console.error("Error updating business status:", statusError);
-      
-      // Try again with the RPC approach
-      console.log("Trying RPC status update approach");
-      const { data: rpcData, error: rpcError } = await supabase.rpc('set_business_status', {
-        business_id: businessId,
-        new_status: 'ativo'
-      });
-      
-      if (rpcError) {
-        console.error("Error in RPC status update:", rpcError);
+    // Try RPC function if it exists
+    if (!statusUpdateSuccess) {
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('set_business_status', {
+          business_id: businessId,
+          new_status: 'active'
+        });
         
-        // Last attempt: Try a simplified update without selecting
-        console.log("Trying simplified update as last resort");
-        const { error: finalAttemptError } = await supabase
-          .from('negocios')
-          .update({ 
-            status: 'ativo',
-            atualizado_em: new Date().toISOString()
-          })
-          .eq('id', businessId);
-        
-        if (finalAttemptError) {
-          console.error("All status update attempts failed:", finalAttemptError);
+        if (rpcError) {
+          console.error("Error in RPC status update:", rpcError);
         } else {
-          console.log("Business status updated via simplified update");
+          console.log("Business status updated via RPC function");
+          statusUpdateSuccess = true;
         }
-      } else {
-        console.log("Business status updated via RPC function");
+      } catch (rpcFailure) {
+        console.error("Failed to call RPC function:", rpcFailure);
       }
-    } else {
-      console.log("Business status updated successfully:", updateData);
+    }
+    
+    // Try legacy table as a last resort
+    if (!statusUpdateSuccess && tablesInfo.negocios) {
+      const { error: negociosError } = await supabase
+        .from('negocios')
+        .update({ 
+          status: 'ativo',
+          atualizado_em: new Date().toISOString()
+        })
+        .eq('id', businessId);
+        
+      if (negociosError) {
+        console.error("Error updating negocios status:", negociosError);
+      } else {
+        console.log("Business status updated successfully in negocios table");
+        statusUpdateSuccess = true;
+      }
+    }
+    
+    if (!statusUpdateSuccess) {
+      console.warn("Could not update business status in any table");
     }
     
     const executionTime = Date.now() - startTime;
-    console.log(`Business setup completed successfully! Execution time: ${executionTime}ms`);
+    console.log(`Business setup completed! Execution time: ${executionTime}ms`);
     
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: "Configuração concluída com sucesso!",
         executionTime,
-        businessId
+        businessId,
+        statusUpdated: statusUpdateSuccess
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

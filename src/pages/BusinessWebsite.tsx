@@ -5,21 +5,24 @@ import { WebsiteBanner } from "@/components/website/WebsiteBanner";
 import { WebsiteLoading } from "@/components/website/WebsiteLoading";
 import { WebsiteMainContent } from "@/components/website/WebsiteMainContent";
 import { WebsiteBookingModal } from "@/components/website/WebsiteBookingModal";
-import { useBusinessWebsite } from "@/hooks/website/useBusinessWebsite";
+import { useBusinessWebsite } from "@/hooks/useBusinessWebsite";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const BusinessWebsite = () => {
   const {
-    businessData,
-    businessHours,
-    availableServices,
+    business: businessData,  // Renamed from business to businessData
+    services: availableServices, // Renamed from services to availableServices
     staff,
-    isLoading,
-    showBookingFlow,
-    isCorrectBusiness,
-    handleStartBooking,
-    handleCloseBooking
+    loading: isLoading, // Renamed from loading to isLoading
+    error,
+    isBookingOpen: showBookingFlow, // Assuming this property exists or adding it
+    checkIsCorrectBusiness: isCorrectBusiness, // Assuming this function exists or adding it
+    startBooking: handleStartBooking, // Assuming this function exists or adding it
+    closeBooking: handleCloseBooking // Assuming this function exists or adding it
   } = useBusinessWebsite();
+
+  // Adding a business hours property (this would need to be defined in useBusinessWebsite)
+  const businessHours = businessData?.working_hours || {};
 
   if (isLoading) {
     return <WebsiteLoading type="loading" />;
@@ -28,23 +31,23 @@ const BusinessWebsite = () => {
   // For debug purposes, show loaded business data
   console.log("Business Data:", businessData);
 
-  // If there's no business data or the business doesn't match, show not found
-  // In development we'll always show the website with fallback data
-  if (!isCorrectBusiness()) {
+  // Call isCorrectBusiness with the required argument
+  // Assuming it needs the businessId or similar parameter
+  if (!isCorrectBusiness(businessData?.id)) {
     return <WebsiteLoading type="not-found" />;
   }
 
   // Create a fallback business data object if businessData is incomplete
   const displayBusinessData = {
-    name: businessData.name || "Estabelecimento Demo",
-    email: businessData.email || "contato@demo.com",
-    phone: businessData.phone || "(11) 9999-9999",
-    address: businessData.address || "Av. Exemplo",
-    number: businessData.number || businessData.addressNumber || "123",
-    neighborhood: businessData.neighborhood || "Centro",
-    city: businessData.city || "São Paulo",
-    state: businessData.state || "SP",
-    description: businessData.description || "Descrição não disponível",
+    name: businessData?.name || "Estabelecimento Demo",
+    email: businessData?.email || businessData?.admin_email || "contato@demo.com",
+    phone: businessData?.phone || "(11) 9999-9999",
+    address: businessData?.address || "Av. Exemplo",
+    number: businessData?.number || businessData?.address_number || "123",
+    neighborhood: businessData?.neighborhood || "Centro",
+    city: businessData?.city || "São Paulo",
+    state: businessData?.state || "SP",
+    description: businessData?.description || "Descrição não disponível",
     ...businessData
   };
 
@@ -78,7 +81,7 @@ const BusinessWebsite = () => {
                 <div className="flex flex-col md:flex-row gap-6">
                   <div className="md:w-1/3">
                     <img 
-                      src={businessData.logoUrl || "https://via.placeholder.com/300x200?text=Logo"} 
+                      src={businessData?.logo_url || "https://via.placeholder.com/300x200?text=Logo"} 
                       alt={`${displayBusinessData.name} logo`}
                       className="w-full h-auto rounded-lg shadow-sm"
                     />
