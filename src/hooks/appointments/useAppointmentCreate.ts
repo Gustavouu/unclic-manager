@@ -1,4 +1,3 @@
-
 // Modified to fix the errors
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,18 +85,12 @@ export const useAppointmentCreate = (setAppointments: any = null) => {
   const cancelAppointment = async (id: string) => {
     setIsLoading(true);
     setError(null);
-    
-    // Use the proper status record
-    const statusMapping = {
-      ...APPOINTMENT_STATUS_RECORD,
-      [AppointmentStatus.SCHEDULED]: "scheduled" // This fixes the TypeScript error
-    };
 
     try {
       const { data, error } = await supabase
         .from("appointments")
         .update({
-          status: statusMapping[AppointmentStatus.CANCELLED],
+          status: AppointmentStatus.CANCELLED,
         })
         .eq("id", id)
         .select();

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { AnimatePresence } from "framer-motion";
 import { WebsiteBanner } from "@/components/website/WebsiteBanner";
@@ -10,18 +9,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const BusinessWebsite = () => {
   const {
-    business: businessData,  // Renamed from business to businessData
-    services: availableServices, // Renamed from services to availableServices
+    business: businessData, 
+    services: availableServices,
     staff,
-    loading: isLoading, // Renamed from loading to isLoading
+    loading: isLoading,
     error,
-    isBookingOpen: showBookingFlow, // Assuming this property exists or adding it
-    checkIsCorrectBusiness: isCorrectBusiness, // Assuming this function exists or adding it
-    startBooking: handleStartBooking, // Assuming this function exists or adding it
-    closeBooking: handleCloseBooking // Assuming this function exists or adding it
+    isBookingOpen: showBookingFlow,
+    checkIsCorrectBusiness: isCorrectBusiness,
+    startBooking: handleStartBooking,
+    closeBooking: handleCloseBooking
   } = useBusinessWebsite();
 
-  // Adding a business hours property (this would need to be defined in useBusinessWebsite)
+  // Adding a business hours property
   const businessHours = businessData?.working_hours || {};
 
   if (isLoading) {
@@ -32,7 +31,6 @@ const BusinessWebsite = () => {
   console.log("Business Data:", businessData);
 
   // Call isCorrectBusiness with the required argument
-  // Assuming it needs the businessId or similar parameter
   if (!isCorrectBusiness(businessData?.id)) {
     return <WebsiteLoading type="not-found" />;
   }
@@ -43,7 +41,7 @@ const BusinessWebsite = () => {
     email: businessData?.email || businessData?.admin_email || "contato@demo.com",
     phone: businessData?.phone || "(11) 9999-9999",
     address: businessData?.address || "Av. Exemplo",
-    number: businessData?.number || businessData?.address_number || "123",
+    number: businessData?.address_number || businessData?.number || "123",
     neighborhood: businessData?.neighborhood || "Centro",
     city: businessData?.city || "São Paulo",
     state: businessData?.state || "SP",

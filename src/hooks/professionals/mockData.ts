@@ -10,7 +10,7 @@ export const mockProfessionals: Professional[] = [
     phone: "(11) 98765-4321",
     position: "Cabeleireiro Senior",
     bio: "Especialista em cortes masculinos com mais de 10 anos de experiência.",
-    photo_url: "/assets/professionals/joao-silva.jpg", // Fixed property name
+    photo_url: "/assets/professionals/joao-silva.jpg",
     status: ProfessionalStatus.ACTIVE,
     specialties: ["Corte Masculino", "Barba"],
     commission_percentage: 30,
