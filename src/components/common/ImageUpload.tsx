@@ -6,24 +6,18 @@ import { cn } from "@/lib/utils";
 
 interface ImageUploadProps {
   value?: string;
-  onChange: (file: File) => void;
+  onChange?: (file: File) => void;
   onRemove?: () => void;
   disabled?: boolean;
   maxSize?: number;
   aspectRatio?: "square" | "16:9" | "4:3";
   className?: string;
-  // Add the id prop
   id?: string;
-  // Add imageUrl prop as an alias for value
   imageUrl?: string | null;
-  // Add onImageChange prop as an alias for onChange
   onImageChange?: (file: File | null, imageUrl: string | null) => void;
-  // Add icon prop
   icon?: React.ReactNode;
-  // Add label and subLabel props
   label?: string;
   subLabel?: string;
-  // Add width and height props
   width?: string;
   height?: string;
 }
@@ -36,7 +30,6 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   maxSize = 5, // 5MB
   aspectRatio = "square",
   className,
-  // Initialize new props
   id,
   imageUrl = null,
   onImageChange,
@@ -73,7 +66,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         onImageChange(file, result);
       };
       reader.readAsDataURL(file);
-    } else {
+    } else if (onChange) {
       onChange(file);
     }
     
