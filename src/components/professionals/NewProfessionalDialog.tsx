@@ -6,6 +6,7 @@ import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { ProfessionalForm } from "./form/ProfessionalForm";
 import { ProfessionalFormData } from "@/hooks/professionals/types";
 import { toast } from "sonner";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface NewProfessionalDialogProps {
   open?: boolean;
@@ -23,6 +24,7 @@ export const NewProfessionalDialog = ({
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createProfessional } = useProfessionals();
+  const { currentBusiness } = useTenant();
   
   const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined;
   const isOpen = isControlled ? controlledOpen : open;
@@ -32,7 +34,13 @@ export const NewProfessionalDialog = ({
     setIsSubmitting(true);
     
     try {
-      await createProfessional(data);
+      // Add business_id from the current tenant
+      const professionalData = {
+        ...data,
+        business_id: currentBusiness?.id
+      };
+      
+      await createProfessional(professionalData);
       setIsOpen(false);
       toast.success("Profissional adicionado com sucesso!");
       if (onSuccess) onSuccess();

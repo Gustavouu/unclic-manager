@@ -30,3 +30,21 @@ export const STATUS_MAPPING = {
 
 // Define type for backward compatibility
 export const PROFESSIONAL_STATUS = ProfessionalStatus;
+
+// Add AppointmentStatus enum for use in appointment-related components
+export enum AppointmentStatus {
+  SCHEDULED = 'scheduled',
+  CONFIRMED = 'confirmed',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  NO_SHOW = 'no_show'
+}
+
+// Add appointment status record for mapping between enum and string values
+export const APPOINTMENT_STATUS_RECORD = {
+  [AppointmentStatus.SCHEDULED]: 'scheduled',
+  [AppointmentStatus.CONFIRMED]: 'confirmed',
+  [AppointmentStatus.COMPLETED]: 'completed',
+  [AppointmentStatus.CANCELLED]: 'cancelled',
+  [AppointmentStatus.NO_SHOW]: 'no_show'
+};

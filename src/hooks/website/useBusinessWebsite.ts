@@ -1,106 +1,74 @@
 
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { ServiceData as OnboardingServiceData, StaffData } from "@/contexts/onboarding/types";
-import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { useProfessionals } from "@/hooks/professionals/useProfessionals";
-import { services as mockServices } from "@/components/services/servicesData";
-import { ServiceData as ComponentServiceData } from "@/components/services/servicesData";
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-export const useBusinessWebsite = () => {
-  const { businessData, loadProgress, services, staffMembers, businessHours } = useOnboarding();
-  const { businessName } = useParams();
-  const [availableServices, setAvailableServices] = useState<OnboardingServiceData[]>([]);
-  const [staff, setStaff] = useState<StaffData[]>([]);
-  const { professionals } = useProfessionals();
-  const [isLoading, setIsLoading] = useState(true);
-  const [showBookingFlow, setShowBookingFlow] = useState(false);
-  
-  // Load onboarding data
+export const useBusinessWebsite = (slug: string) => {
+  const [loading, setLoading] = useState(true);
+  const [business, setBusiness] = useState<any>(null);
+  const [services, setServices] = useState<any[]>([]);
+  const [staff, setStaff] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    const load = async () => {
+    async function fetchBusinessData() {
+      if (!slug) return;
+
+      setLoading(true);
+      setError(null);
+
       try {
-        await loadProgress();
-      } catch (error) {
-        console.error("Erro ao carregar dados:", error);
+        // Fetch business details
+        const { data: businessData, error: businessError } = await supabase
+          .from('businesses')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+
+        if (businessError) throw businessError;
+        if (!businessData) throw new Error('Business not found');
+
+        setBusiness(businessData);
+
+        // Fetch services for this business
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('services')
+          .select('*')
+          .eq('business_id', businessData.id)
+          .eq('is_active', true)
+          .order('price');
+
+        if (servicesError) throw servicesError;
+        setServices(servicesData || []);
+
+        // Fetch staff/professionals for this business
+        const { data: staffData, error: staffError } = await supabase
+          .from('professionals')
+          .select('*')
+          .eq('business_id', businessData.id)
+          .eq('status', 'active');
+
+        if (staffError) throw staffError;
+        
+        // Add position as role for backward compatibility
+        const staffWithRole = staffData?.map(person => ({
+          ...person,
+          role: person.position // Use position as role
+        })) || [];
+        
+        setStaff(staffWithRole);
+
+      } catch (error: any) {
+        console.error('Error fetching business website data:', error);
+        setError(error.message);
+        toast.error('Error loading business information');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
-    };
-    load();
-  }, [loadProgress]);
-
-  // Set services data - use onboarding services or mock if empty
-  useEffect(() => {
-    if (services && services.length > 0) {
-      setAvailableServices(services);
-    } else {
-      // Convert mock services to the expected format
-      const convertedServices = mockServices.map(service => ({
-        id: service.id,
-        name: service.name,
-        duration: service.duration,
-        price: typeof service.price === 'string' ? parseFloat(service.price) : service.price,
-        description: service.description || ''
-      }));
-      
-      // Type assertion to handle the conversion
-      setAvailableServices(convertedServices as unknown as OnboardingServiceData[]);
     }
-  }, [services]);
 
-  // Set staff data - use onboarding staff or professionals if empty
-  useEffect(() => {
-    if (staffMembers && staffMembers.length > 0) {
-      setStaff(staffMembers);
-    } else if (professionals && professionals.length > 0) {
-      // Convert professionals to staff format
-      const convertedStaff = professionals.map(p => ({
-        id: p.id,
-        name: p.name,
-        role: p.role || "Profissional",
-        email: p.email,
-        phone: p.phone,
-        specialties: p.specialties || []
-      }));
-      setStaff(convertedStaff);
-    } else {
-      // Fallback if no staff or professionals
-      setStaff([{
-        id: "mock-staff-1",
-        name: "Profissional Demo",
-        role: "Atendente",
-        email: "demo@exemplo.com",
-        specialties: ["Corte de Cabelo", "Manicure"]
-      }]);
-    }
-  }, [staffMembers, professionals]);
+    fetchBusinessData();
+  }, [slug]);
 
-  // Modified to always return true in development environment
-  const isCorrectBusiness = () => {
-    // In development environment, always show the business website
-    // This ensures we can see the website regardless of URL/data matching
-    return true;
-  };
-
-  const handleStartBooking = () => {
-    setShowBookingFlow(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  
-  const handleCloseBooking = () => {
-    setShowBookingFlow(false);
-  };
-
-  return {
-    businessData,
-    businessHours,
-    availableServices,
-    staff,
-    isLoading,
-    showBookingFlow,
-    isCorrectBusiness,
-    handleStartBooking,
-    handleCloseBooking
-  };
+  return { business, services, staff, loading, error };
 };
