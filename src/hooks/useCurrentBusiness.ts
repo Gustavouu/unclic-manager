@@ -28,41 +28,55 @@ export const useCurrentBusiness = () => {
       if (!currentBusinessId) {
         console.log('No business ID in localStorage, fetching from database');
         
-        // Get business ID from business_users table (new schema)
-        const { data: businessUserData, error: businessUserError } = await supabase
-          .from('business_users')
-          .select('business_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-          
-        if (businessUserError) {
-          console.error('Error fetching from business_users:', businessUserError);
-          // Don't throw here, try the application_users fallback
-        }
-        
-        // If found, use it
-        if (businessUserData?.business_id) {
-          currentBusinessId = businessUserData.business_id;
-          console.log('Found business ID in business_users table:', currentBusinessId);
-        } else {
-          // Try the legacy tables as fallback
+        try {
+          // Try the business_users table first (preferred schema)
           try {
-            // Try application_users first
-            const { data: appUserData, error: appUserError } = await supabase
-              .from('application_users')
+            console.log('Checking business_users table...');
+            const { data: businessUserData, error: businessUserError } = await supabase
+              .from('business_users')
               .select('business_id')
-              .eq('id', user.id)
+              .eq('user_id', user.id)
               .maybeSingle();
               
-            if (appUserError && appUserError.code !== '42P01') { // Ignore "relation does not exist" errors
-              console.error('Error fetching from application_users:', appUserError);
+            if (businessUserError && businessUserError.code !== '42P01') { 
+              // Ignore "relation does not exist" errors as that's expected if table doesn't exist
+              console.error('Error fetching from business_users:', businessUserError);
             }
             
-            if (appUserData?.business_id) {
-              currentBusinessId = appUserData.business_id;
-              console.log('Found business ID in application_users table:', currentBusinessId);
-            } else {
-              // As last resort, try the old usuarios table
+            // If found, use it
+            if (businessUserData?.business_id) {
+              currentBusinessId = businessUserData.business_id;
+              console.log('Found business ID in business_users table:', currentBusinessId);
+            }
+          } catch (bizUserError) {
+            console.error('Error checking business_users table:', bizUserError);
+          }
+          
+          // If still not found, try legacy tables
+          if (!currentBusinessId) {
+            // Try application_users as fallback
+            try {
+              console.log('Checking application_users table...');
+              const { data: appUserData, error: appUserError } = await supabase
+                .from('application_users')
+                .select('business_id')
+                .eq('id', user.id)
+                .maybeSingle();
+                
+              if (appUserError && appUserError.code !== '42P01') { 
+                console.error('Error fetching from application_users:', appUserError);
+              }
+              
+              if (appUserData?.business_id) {
+                currentBusinessId = appUserData.business_id;
+                console.log('Found business ID in application_users table:', currentBusinessId);
+              }
+            } catch (appUserError) {
+              console.error('Error checking application_users table:', appUserError);
+            }
+            
+            // As last resort, try the old usuarios table
+            if (!currentBusinessId) {
               try {
                 console.log('Trying legacy usuarios table as last resort');
                 const { data: legacyUserData, error: legacyUserError } = await supabase
@@ -71,7 +85,7 @@ export const useCurrentBusiness = () => {
                   .eq('id', user.id)
                   .maybeSingle();
                   
-                if (legacyUserError && legacyUserError.code !== '42P01') { // Ignore "relation does not exist" errors
+                if (legacyUserError && legacyUserError.code !== '42P01') { 
                   console.error('Error fetching from usuarios:', legacyUserError);
                 }
                 
@@ -80,12 +94,12 @@ export const useCurrentBusiness = () => {
                   console.log('Found business ID in usuarios table:', currentBusinessId);
                 }
               } catch (legacyError) {
-                console.log('Legacy usuarios check failed, skipping');
+                console.log('Legacy usuarios check failed or table does not exist');
               }
             }
-          } catch (fallbackError) {
-            console.error('Error in fallback business ID checks:', fallbackError);
           }
+        } catch (fallbackError) {
+          console.error('All business ID checks failed:', fallbackError);
         }
         
         // If we found a business ID, store it for future use
@@ -102,28 +116,37 @@ export const useCurrentBusiness = () => {
       setBusinessId(currentBusinessId);
 
       if (!currentBusinessId) {
-        setError('Business ID not available');
+        // No business ID found, likely needs onboarding
         setLoading(false);
         return;
       }
 
-      // Fetch business data from businesses table (new schema)
-      const { data: businessData, error: businessError } = await supabase
-        .from('businesses')
-        .select('*')
-        .eq('id', currentBusinessId)
-        .maybeSingle();
+      // Fetch business data
+      try {
+        // Try businesses table first (preferred schema)
+        try {
+          console.log('Fetching from businesses table...');
+          const { data: businessData, error: businessError } = await supabase
+            .from('businesses')
+            .select('*')
+            .eq('id', currentBusinessId)
+            .maybeSingle();
+            
+          if (businessError && businessError.code !== '42P01') {
+            console.error('Error fetching from businesses:', businessError);
+          }
+          
+          // If we found the business data, use it
+          if (businessData) {
+            console.log('Found business data in businesses table');
+            setBusinessData(businessData);
+            setLoading(false);
+            return;
+          }
+        } catch (bizError) {
+          console.error('Error checking businesses table:', bizError);
+        }
         
-      if (businessError) {
-        console.error('Error fetching from businesses:', businessError);
-        // Don't throw here, try the negocios fallback
-      }
-      
-      // If we found the business data, use it
-      if (businessData) {
-        console.log('Found business data in businesses table');
-        setBusinessData(businessData);
-      } else {
         // Try the legacy negocios table as fallback
         try {
           console.log('Trying legacy negocios table as fallback');
@@ -133,7 +156,7 @@ export const useCurrentBusiness = () => {
             .eq('id', currentBusinessId)
             .maybeSingle();
             
-          if (legacyBusinessError && legacyBusinessError.code !== '42P01') { // Ignore "relation does not exist" errors
+          if (legacyBusinessError && legacyBusinessError.code !== '42P01') {
             console.error('Error fetching from negocios:', legacyBusinessError);
           }
           
@@ -164,22 +187,26 @@ export const useCurrentBusiness = () => {
               updated_at: legacyBusinessData.atualizado_em
             };
             setBusinessData(mappedData);
-          } else {
-            console.log('No business data found in either table');
-            setError('Business data not found');
+            setLoading(false);
+            return;
           }
         } catch (legacyError) {
-          console.error('Error in legacy business data check:', legacyError);
-          setError('Failed to retrieve business data');
+          console.error('Error checking negocios table:', legacyError);
         }
+        
+        // If we get here, we didn't find business data in any table
+        console.log('No business data found in any table');
+      } catch (dataError) {
+        console.error('Error fetching business data:', dataError);
+        setError('Failed to retrieve business data');
       }
       
-      // Make sure we keep the businessId in localStorage
+      // Make sure we keep the businessId in localStorage even if business data wasn't found
       if (currentBusinessId) {
         localStorage.setItem('currentBusinessId', currentBusinessId);
       }
     } catch (err: any) {
-      console.error('Error fetching business data:', err);
+      console.error('Error in fetchBusinessData:', err);
       setError(err.message || 'Error fetching business data');
       toast.error('Failed to load your business data.');
     } finally {
@@ -195,25 +222,65 @@ export const useCurrentBusiness = () => {
     try {
       console.log(`Attempting to update business ${id} status to ${status}`);
       
-      // First try with set_business_status RPC
-      let success = false;
-      
+      // First try with Edge Function
       try {
-        const { data, error } = await supabase
-          .rpc('set_business_status', { business_id: id, new_status: status });
-          
-        if (error) {
-          console.error('Error in set_business_status RPC:', error);
-        } else {
-          console.log('Status updated successfully via RPC');
-          success = true;
+        const response = await supabase.functions.invoke('check-business-status', {
+          body: { businessId: id }
+        });
+        
+        if (response.error) {
+          throw new Error(response.error.message);
         }
-      } catch (rpcError) {
-        console.error('Failed to call set_business_status RPC:', rpcError);
-      }
-      
-      // If RPC fails, try direct update to businesses table
-      if (!success) {
+        
+        if (!response.data || !response.data.exists) {
+          console.error('Business not found in check-business-status');
+          return false;
+        }
+        
+        // Now we know which table to update
+        const tableName = response.data.tableName;
+        
+        // Perform the update
+        if (tableName === 'businesses') {
+          const { error } = await supabase
+            .from('businesses')
+            .update({ 
+              status: status, 
+              updated_at: new Date().toISOString() 
+            })
+            .eq('id', id);
+            
+          if (error) throw error;
+        } else if (tableName === 'negocios') {
+          const { error } = await supabase
+            .from('negocios')
+            .update({ 
+              status: status, 
+              atualizado_em: new Date().toISOString() 
+            })
+            .eq('id', id);
+            
+          if (error) throw error;
+        } else {
+          throw new Error('Unknown table');
+        }
+        
+        // Update local business data if successful
+        if (businessData && id === businessData.id) {
+          setBusinessData({
+            ...businessData,
+            status: status
+          });
+        }
+        
+        return true;
+      } catch (edgeFunctionError) {
+        console.error('Edge function error:', edgeFunctionError);
+        
+        // Fallback to direct table updates if edge function fails
+        let success = false;
+        
+        // Try businesses table
         try {
           const { error: businessError } = await supabase
             .from('businesses')
@@ -223,47 +290,44 @@ export const useCurrentBusiness = () => {
             })
             .eq('id', id);
             
-          if (businessError) {
-            console.error('Error updating businesses:', businessError);
-            
-            // Try negocios table as fallback
-            try {
-              const { error: negociosError } = await supabase
-                .from('negocios')
-                .update({ 
-                  status: status, 
-                  atualizado_em: new Date().toISOString() 
-                })
-                .eq('id', id);
-                
-              if (negociosError && negociosError.code !== '42P01') { // Ignore "relation does not exist" errors
-                console.error('Error updating negocios:', negociosError);
-                throw negociosError;
-              } else if (!negociosError) {
-                console.log('Status updated successfully via negocios table');
-                success = true;
-              }
-            } catch (negociosUpdateError) {
-              console.error('Failed to update negocios status:', negociosUpdateError);
-            }
-          } else {
-            console.log('Status updated successfully via businesses table');
+          if (!businessError) {
             success = true;
+            console.log('Status updated successfully via businesses table');
           }
         } catch (updateError) {
-          console.error('Failed to update business status:', updateError);
+          console.error('Failed to update businesses table:', updateError);
         }
+        
+        // Try negocios table if businesses update failed
+        if (!success) {
+          try {
+            const { error: negociosError } = await supabase
+              .from('negocios')
+              .update({ 
+                status: status, 
+                atualizado_em: new Date().toISOString() 
+              })
+              .eq('id', id);
+              
+            if (!negociosError) {
+              success = true;
+              console.log('Status updated successfully via negocios table');
+            }
+          } catch (updateError) {
+            console.error('Failed to update negocios table:', updateError);
+          }
+        }
+        
+        // Update local business data if successful
+        if (success && businessData && id === businessData.id) {
+          setBusinessData({
+            ...businessData,
+            status: status
+          });
+        }
+        
+        return success;
       }
-      
-      // Update local business data if successful
-      if (success && businessData && id === businessData.id) {
-        setBusinessData({
-          ...businessData,
-          status: status
-        });
-      }
-      
-      return success;
     } catch (err) {
       console.error('Error updating business status:', err);
       return false;

@@ -1,21 +1,10 @@
 
+import { Professional } from "@/hooks/professionals/types";
+
 export interface ProfessionalsMultiSelectProps {
-  selectedIds: string[];
-  onChange: (selectedIds: string[]) => void;
-  placeholder?: string;
+  selectedProfessionals?: Professional[];
+  onSelectProfessional?: (professional: Professional) => void;
+  onRemoveProfessional?: (professionalId: string) => void;
   disabled?: boolean;
-}
-
-export interface Option {
-  label: string;
-  value: string;
-}
-
-export interface MultiSelectProps {
-  options: Option[];
-  selected: Option[];
-  onChange: (selected: Option[]) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  emptyMessage?: string;
+  className?: string;
 }

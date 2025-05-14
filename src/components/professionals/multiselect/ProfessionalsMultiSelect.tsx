@@ -1,236 +1,117 @@
 
-import { useState } from 'react';
-import { useProfessionals } from '@/hooks/professionals/useProfessionals';
-import { Check, ChevronsUpDown, X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import React from 'react';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useProfessionals } from '@/hooks/professionals';
+import { Skeleton } from '@/components/ui/skeleton';
+import { CheckIcon, UserIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { ProfessionalsMultiSelectProps, Option, MultiSelectProps } from './types';
+import { cn } from '@/lib/utils';
+import { Professional } from '@/hooks/professionals/types';
+import { ProfessionalsMultiSelectProps } from './types';
 
-// Professional-specific MultiSelect component
-export function ProfessionalsMultiSelect({ 
-  selectedIds,
-  onChange,
-  placeholder = "Select professionals...",
-  disabled = false
-}: ProfessionalsMultiSelectProps) {
-  const [open, setOpen] = useState(false);
-  const { professionals, isLoading } = useProfessionals({ activeOnly: true });
-  
-  // Find a professional by ID
-  const findProfessional = (id: string) => {
-    return professionals.find(p => p.id === id);
-  };
-
-  // Toggle selection of a professional
-  const toggleProfessional = (id: string) => {
-    const isSelected = selectedIds.includes(id);
-    
-    if (isSelected) {
-      onChange(selectedIds.filter(selectedId => selectedId !== id));
-    } else {
-      onChange([...selectedIds, id]);
-    }
-  };
-
-  // Remove a professional from selection
-  const removeProfessional = (id: string) => {
-    onChange(selectedIds.filter(selectedId => selectedId !== id));
-  };
-  
-  // Selected professionals with their full data
-  const selectedProfessionals = selectedIds
-    .map(id => findProfessional(id))
-    .filter(p => p !== undefined);
-
-  return (
-    <div className="space-y-2">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className={cn(
-              "w-full justify-between h-auto min-h-10 py-2",
-              disabled && "opacity-50 cursor-not-allowed"
-            )}
-            disabled={disabled}
-          >
-            <div className="flex flex-wrap gap-1 mr-2">
-              {selectedProfessionals.length > 0 ? (
-                selectedProfessionals.map(prof => (
-                  <Badge 
-                    key={prof?.id} 
-                    variant="secondary"
-                    className="flex items-center gap-1 rounded-md px-2 py-1"
-                  >
-                    {prof?.name}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeProfessional(prof?.id || "");
-                      }} 
-                    />
-                  </Badge>
-                ))
-              ) : (
-                <span className="text-muted-foreground">{placeholder}</span>
-              )}
-            </div>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0">
-          <Command>
-            <CommandInput placeholder="Search professional..." />
-            <CommandList>
-              <CommandEmpty>No professionals found.</CommandEmpty>
-              <CommandGroup>
-                {isLoading ? (
-                  <CommandItem disabled className="flex items-center justify-center">
-                    Loading...
-                  </CommandItem>
-                ) : (
-                  professionals.map((professional) => (
-                    <CommandItem
-                      key={professional.id}
-                      value={professional.name}
-                      onSelect={() => {
-                        toggleProfessional(professional.id);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          selectedIds.includes(professional.id) 
-                            ? "opacity-100" 
-                            : "opacity-0"
-                        )}
-                      />
-                      {professional.name}
-                    </CommandItem>
-                  ))
-                )}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
-
-// Generic MultiSelect component
-export function MultiSelect({
-  options,
-  selected,
-  onChange,
-  placeholder = "Select items...",
+export const ProfessionalsMultiSelect: React.FC<ProfessionalsMultiSelectProps> = ({
+  selectedProfessionals = [],
+  onSelectProfessional,
+  onRemoveProfessional,
   disabled = false,
-  emptyMessage = "No options available"
-}: MultiSelectProps) {
-  const [open, setOpen] = useState(false);
-  
-  // Toggle selection of an option
-  const toggleOption = (option: Option) => {
-    const isSelected = selected.some(item => item.value === option.value);
-    
-    if (isSelected) {
-      onChange(selected.filter(item => item.value !== option.value));
-    } else {
-      onChange([...selected, option]);
+  className,
+}) => {
+  const { professionals, loading } = useProfessionals({ activeOnly: true });
+
+  if (loading) {
+    return <Skeleton className="h-10 w-full" />;
+  }
+
+  const handleSelect = (professionalId: string) => {
+    const professional = professionals.find(p => p.id === professionalId);
+    if (professional && onSelectProfessional) {
+      onSelectProfessional(professional);
     }
   };
 
-  // Remove an option from selection
-  const removeOption = (option: Option) => {
-    onChange(selected.filter(item => item.value !== option.value));
+  const handleRemove = (e: React.MouseEvent, professionalId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onRemoveProfessional) {
+      onRemoveProfessional(professionalId);
+    }
   };
 
+  const availableProfessionals = professionals.filter(
+    p => !selectedProfessionals.some(sp => sp.id === p.id)
+  );
+
   return (
-    <div className="space-y-2">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className={cn(
-              "w-full justify-between h-auto min-h-10 py-2",
-              disabled && "opacity-50 cursor-not-allowed"
-            )}
-            disabled={disabled}
-          >
-            <div className="flex flex-wrap gap-1 mr-2">
-              {selected.length > 0 ? (
-                selected.map(option => (
-                  <Badge 
-                    key={option.value} 
-                    variant="secondary"
-                    className="flex items-center gap-1 rounded-md px-2 py-1"
-                  >
-                    {option.label}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeOption(option);
-                      }} 
-                    />
-                  </Badge>
-                ))
+    <div className={cn("space-y-2", className)}>
+      {selectedProfessionals.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedProfessionals.map((professional) => (
+            <Badge 
+              key={professional.id} 
+              variant="secondary"
+              className="flex items-center gap-1 py-1.5"
+            >
+              {professional.photo_url ? (
+                <img 
+                  src={professional.photo_url} 
+                  alt={professional.name} 
+                  className="w-4 h-4 rounded-full"
+                />
               ) : (
-                <span className="text-muted-foreground">{placeholder}</span>
+                <UserIcon className="w-3 h-3" />
               )}
-            </div>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0">
-          <Command>
-            <CommandInput placeholder="Search..." />
-            <CommandList>
-              <CommandEmpty>{emptyMessage}</CommandEmpty>
-              <CommandGroup>
-                {options.map((option) => (
-                  <CommandItem
-                    key={option.value}
-                    value={option.label}
-                    onSelect={() => {
-                      toggleOption(option);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        selected.some(item => item.value === option.value)
-                          ? "opacity-100" 
-                          : "opacity-0"
-                      )}
+              {professional.name}
+              {!disabled && (
+                <button 
+                  onClick={(e) => handleRemove(e, professional.id)} 
+                  className="ml-1 hover:bg-muted rounded-full p-0.5"
+                >
+                  &times;
+                </button>
+              )}
+            </Badge>
+          ))}
+        </div>
+      )}
+      
+      {availableProfessionals.length > 0 && (
+        <Select
+          disabled={disabled || availableProfessionals.length === 0}
+          onValueChange={handleSelect}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Selecionar profissional" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableProfessionals.map((professional) => (
+              <SelectItem 
+                key={professional.id} 
+                value={professional.id}
+                className="flex items-center gap-2"
+              >
+                <div className="flex items-center gap-2">
+                  {professional.photo_url ? (
+                    <img 
+                      src={professional.photo_url} 
+                      alt={professional.name} 
+                      className="w-5 h-5 rounded-full"
                     />
-                    {option.label}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+                  ) : (
+                    <UserIcon className="w-4 h-4" />
+                  )}
+                  {professional.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
     </div>
   );
-}
+};

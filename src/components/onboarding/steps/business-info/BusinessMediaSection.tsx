@@ -1,109 +1,122 @@
 
-import { useState } from "react";
+import React from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { FormField } from "@/components/ui/form-field";
-import { ImageUpload } from "@/components/ui/image-upload";
-import { Separator } from "@/components/ui/separator";
+import { 
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ImageIcon, Instagram, Facebook, Linkedin, Twitter } from "lucide-react";
 
-export const BusinessMediaSection = () => {
+export const BusinessMediaSection: React.FC = () => {
   const { businessData, updateBusinessData } = useOnboarding();
-  const [logoUploading, setLogoUploading] = useState(false);
-  const [bannerUploading, setBannerUploading] = useState(false);
-
-  const handleLogoUpload = (file: File) => {
-    if (file) {
-      setLogoUploading(true);
-      const logoUrl = URL.createObjectURL(file);
-      updateBusinessData({
-        logo: file,
-        logoUrl,
-        logoName: file.name
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
+    if (name.includes('social-')) {
+      const socialNetwork = name.replace('social-', '');
+      updateBusinessData({ 
+        socialMedia: { 
+          ...businessData.socialMedia,
+          [socialNetwork]: value 
+        } 
       });
-      setLogoUploading(false);
+    } else {
+      updateBusinessData({ [name]: value });
     }
   };
-
-  const handleBannerUpload = (file: File) => {
-    if (file) {
-      setBannerUploading(true);
-      const bannerUrl = URL.createObjectURL(file);
-      updateBusinessData({
-        banner: file,
-        bannerUrl,
-        bannerName: file.name
-      });
-      setBannerUploading(false);
-    }
-  };
-
-  const handleWebsiteChange = (value: string) => {
-    updateBusinessData({ website: value });
-  };
-
-  const handleSocialMediaChange = (platform: string, value: string) => {
-    updateBusinessData({
-      socialMedia: {
-        ...businessData.socialMedia,
-        [platform]: value
-      }
-    });
-  };
-
+  
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium">Mídia & Social</h3>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <ImageIcon className="h-5 w-5" /> 
+          Mídia e Redes Sociais
+        </CardTitle>
+      </CardHeader>
       
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="w-full sm:w-1/2">
-          <div className="mb-2">Logo</div>
-          <ImageUpload
-            value={businessData.logoUrl}
-            onChange={handleLogoUpload}
-            loading={logoUploading}
-            className="h-40 w-full"
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="logo_url">URL do Logo</Label>
+          <Input 
+            id="logo_url"
+            name="logo_url"
+            type="url"
+            value={businessData.logo_url || ''}
+            onChange={handleChange}
+            placeholder="https://example.com/seu-logo.png"
           />
+          <p className="text-xs text-muted-foreground">
+            URL da imagem do seu logotipo
+          </p>
         </div>
         
-        <div className="w-full sm:w-1/2">
-          <div className="mb-2">Banner</div>
-          <ImageUpload
-            value={businessData.bannerUrl}
-            onChange={handleBannerUpload}
-            loading={bannerUploading}
-            className="h-40 w-full aspect-[2/1]"
-          />
+        <div className="space-y-2">
+          <Label htmlFor="social-instagram">Instagram</Label>
+          <div className="flex items-center space-x-2">
+            <Instagram className="h-4 w-4 text-muted-foreground" />
+            <Input 
+              id="social-instagram"
+              name="social-instagram"
+              value={businessData.socialMedia?.instagram || ''}
+              onChange={handleChange}
+              placeholder="@seunegocio ou URL completa"
+              className="flex-1"
+            />
+          </div>
         </div>
-      </div>
-      
-      <Separator />
-      
-      <div className="space-y-4">
-        <FormField
-          id="business-website"
-          label="Website (opcional)"
-          value={businessData.website || ""}
-          onChange={handleWebsiteChange}
-          placeholder="https://www.seusite.com.br"
-        />
         
-        <FormField
-          id="business-instagram"
-          label="Instagram (opcional)"
-          value={businessData.socialMedia?.instagram || ""}
-          onChange={(value) => handleSocialMediaChange("instagram", value)}
-          placeholder="@seuinstagram"
-          startIcon="instagram"
-        />
+        <div className="space-y-2">
+          <Label htmlFor="social-facebook">Facebook</Label>
+          <div className="flex items-center space-x-2">
+            <Facebook className="h-4 w-4 text-muted-foreground" />
+            <Input 
+              id="social-facebook"
+              name="social-facebook"
+              value={businessData.socialMedia?.facebook || ''}
+              onChange={handleChange}
+              placeholder="URL da sua página"
+              className="flex-1"
+            />
+          </div>
+        </div>
         
-        <FormField
-          id="business-facebook"
-          label="Facebook (opcional)"
-          value={businessData.socialMedia?.facebook || ""}
-          onChange={(value) => handleSocialMediaChange("facebook", value)}
-          placeholder="facebook.com/seunegocio"
-          startIcon="facebook"
-        />
-      </div>
-    </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="social-linkedin">LinkedIn</Label>
+            <div className="flex items-center space-x-2">
+              <Linkedin className="h-4 w-4 text-muted-foreground" />
+              <Input 
+                id="social-linkedin"
+                name="social-linkedin"
+                value={businessData.socialMedia?.linkedin || ''}
+                onChange={handleChange}
+                placeholder="URL"
+                className="flex-1"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="social-twitter">Twitter</Label>
+            <div className="flex items-center space-x-2">
+              <Twitter className="h-4 w-4 text-muted-foreground" />
+              <Input 
+                id="social-twitter"
+                name="social-twitter"
+                value={businessData.socialMedia?.twitter || ''}
+                onChange={handleChange}
+                placeholder="@usuario ou URL"
+                className="flex-1"
+              />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };

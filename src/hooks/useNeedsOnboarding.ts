@@ -18,7 +18,7 @@ export const useNeedsOnboarding = () => {
 
   const refreshOnboardingStatus = useCallback(async (skipCache = false) => {
     if (!businessId) {
-      console.log('No business ID available, skipping onboarding check');
+      console.log('No business ID available, assuming onboarding is needed');
       // Se não temos ID de negócio, provavelmente precisa de onboarding
       setNeedsOnboarding(true);
       setLoading(false);
@@ -66,96 +66,117 @@ export const useNeedsOnboarding = () => {
         return;
       }
       
-      // Otherwise fetch from API
-      console.log('Fetching business status for onboarding check:', businessId);
-      
-      // Strategy 1: Try businesses table first
-      let businessStatus = null;
+      // Otherwise use our edge function to check
+      console.log('Calling edge function to check business status:', businessId);
       
       try {
-        console.log('Checking businesses table...');
-        const { data, error } = await supabase
-          .from('businesses')
-          .select('id, status')
-          .eq('id', businessId)
-          .maybeSingle();
+        const response = await supabase.functions.invoke('check-business-status', {
+          body: { businessId }
+        });
         
-        if (error) {
-          console.error('Error checking business status in businesses table:', error);
-        } else if (data) {
-          console.log('Found in businesses table:', data);
-          businessStatus = {
-            exists: true,
-            status: data.status
-          };
+        console.log('Edge function response:', response);
+        
+        if (response.error) {
+          throw new Error(response.error.message);
         }
-      } catch (err) {
-        console.error('Failed to check businesses table:', err);
-      }
-      
-      // Strategy 2: Try negocios table if not found
-      if (!businessStatus) {
-        try {
-          console.log('Checking negocios table...');
-          const { data, error } = await supabase
-            .from('negocios')
-            .select('id, status')
-            .eq('id', businessId)
-            .maybeSingle();
+        
+        if (response.data && response.data.exists) {
+          // Business exists, check its status
+          const status = response.data.status;
+          const needsSetup = status === 'pendente' || status === 'pending';
           
-          if (error) {
-            console.error('Error checking business status in negocios table:', error);
-          } else if (data) {
-            console.log('Found in negocios table:', data);
-            businessStatus = {
-              exists: true,
-              status: data.status
-            };
-          }
-        } catch (err) {
-          console.error('Failed to check negocios table:', err);
-        }
-      }
-      
-      // Strategy 3: RPC with set_business_status to verify
-      if (!businessStatus) {
-        try {
-          console.log('Trying RPC function check...');
-          const { data, error } = await supabase.rpc('get_business_status', {
-            business_id: businessId
-          });
+          setNeedsOnboarding(needsSetup);
           
-          if (error) {
-            console.error('Error using RPC to check status:', error);
-          } else if (data) {
-            console.log('Found via RPC:', data);
-            businessStatus = {
-              exists: true,
-              status: data
-            };
-          }
-        } catch (err) {
-          console.error('Failed to use RPC check:', err);
+          // Update cache
+          localStorage.setItem(cacheKey, String(needsSetup));
+          localStorage.setItem(cacheTimestampKey, String(Date.now()));
+        } else {
+          // Business doesn't exist, needs onboarding
+          console.log('Business not found, needs onboarding');
+          setNeedsOnboarding(true);
+          localStorage.setItem(cacheKey, 'true');
+          localStorage.setItem(cacheTimestampKey, String(Date.now()));
         }
-      }
-      
-      // Make a final decision based on all strategies
-      if (businessStatus && businessStatus.exists) {
-        console.log('Final business status determination:', businessStatus);
-        const status = businessStatus.status;
+      } catch (edgeError) {
+        console.error("Error calling check-business-status function:", edgeError);
         
-        // Check if business needs onboarding
-        const needsSetup = status === 'pendente' || status === 'pending';
-        setNeedsOnboarding(needsSetup);
-        
-        // Update cache
-        localStorage.setItem(cacheKey, String(needsSetup));
-        localStorage.setItem(cacheTimestampKey, String(Date.now()));
-      } else {
-        console.warn('Could not determine business status, assuming needs onboarding');
-        setNeedsOnboarding(true);
-        localStorage.setItem(cacheKey, 'true');
-        localStorage.setItem(cacheTimestampKey, String(Date.now()));
+        // Fallback to manual checking if edge function fails
+        try {
+          console.log('Falling back to manual checks...');
+          
+          // Try businesses table first
+          let businessStatus = null;
+          
+          try {
+            console.log('Checking businesses table...');
+            const { data, error } = await supabase
+              .from('businesses')
+              .select('id, status')
+              .eq('id', businessId)
+              .maybeSingle();
+            
+            if (error) {
+              // If table doesn't exist, we'll get an error
+              console.error('Error checking business status in businesses table:', error);
+            } else if (data) {
+              console.log('Found in businesses table:', data);
+              businessStatus = {
+                exists: true,
+                status: data.status
+              };
+            }
+          } catch (err) {
+            console.error('Failed to check businesses table:', err);
+          }
+          
+          // Try negocios table if not found
+          if (!businessStatus) {
+            try {
+              console.log('Checking negocios table...');
+              const { data, error } = await supabase
+                .from('negocios')
+                .select('id, status')
+                .eq('id', businessId)
+                .maybeSingle();
+              
+              if (error) {
+                // If table doesn't exist, we'll get an error
+                console.error('Error checking business status in negocios table:', error);
+              } else if (data) {
+                console.log('Found in negocios table:', data);
+                businessStatus = {
+                  exists: true,
+                  status: data.status
+                };
+              }
+            } catch (err) {
+              console.error('Failed to check negocios table:', err);
+            }
+          }
+          
+          // Make a final decision based on manual checks
+          if (businessStatus && businessStatus.exists) {
+            console.log('Final business status determination:', businessStatus);
+            const status = businessStatus.status;
+            
+            // Check if business needs onboarding
+            const needsSetup = status === 'pendente' || status === 'pending';
+            setNeedsOnboarding(needsSetup);
+            
+            // Update cache
+            localStorage.setItem(cacheKey, String(needsSetup));
+            localStorage.setItem(cacheTimestampKey, String(Date.now()));
+          } else {
+            console.warn('Could not determine business status, assuming needs onboarding');
+            setNeedsOnboarding(true);
+            localStorage.setItem(cacheKey, 'true');
+            localStorage.setItem(cacheTimestampKey, String(Date.now()));
+          }
+        } catch (manualError) {
+          console.error('Error in manual checks:', manualError);
+          // Default to needing onboarding on errors
+          setNeedsOnboarding(true);
+        }
       }
     } catch (err: any) {
       console.error("Error checking onboarding status:", err);

@@ -2,98 +2,107 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// CORS headers to allow requests from the browser
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Function to generate a unique slug based on a name
-const generateSlug = (name: string) => {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Parse request body
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     const { name } = await req.json();
     
-    // Validate name
-    if (!name || typeof name !== 'string') {
-      throw new Error("Nome inválido ou ausente");
+    if (!name) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Name is required" 
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 400 
+        }
+      );
     }
-    
-    // Create Supabase client with service role key (bypasses RLS)
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Generate slug from name
+
+    // Generate a slug from business name
     const slug = generateSlug(name);
-    
-    // Check if slug already exists
-    const { data: existingBusiness, error: slugCheckError } = await supabase
-      .from('negocios')
-      .select('id, nome')
-      .eq('slug', slug)
-      .maybeSingle();
-    
-    if (slugCheckError && slugCheckError.code !== 'PGRST116') { // PGRST116 is "no rows returned", which is good for us
-      console.error("Error checking slug:", slugCheckError);
-      throw new Error(`Erro ao verificar disponibilidade do nome: ${slugCheckError.message}`);
+    let isAvailable = true;
+
+    // Check availability in businesses table
+    try {
+      const { data: businessData, error } = await supabase
+        .from('businesses')
+        .select('slug')
+        .eq('slug', slug)
+        .maybeSingle();
+        
+      if (!error && businessData) {
+        isAvailable = false;
+      }
+    } catch (error) {
+      console.error('Error checking businesses table:', error);
     }
-    
-    // Generate slug suggestions if the slug is already taken
-    let suggestions = [];
-    if (existingBusiness) {
-      suggestions = [
-        { name: `${name} ${new Date().getFullYear()}`, slug: `${slug}-${new Date().getFullYear()}` },
-        { name: `${name} Barbershop`, slug: `${slug}-barbershop` },
-        { name: `${name} Studio`, slug: `${slug}-studio` },
-        { name: `${name} Pro`, slug: `${slug}-pro` },
-        { name: `${name} Elite`, slug: `${slug}-elite` }
-      ];
+
+    // Check availability in negocios table if still available
+    if (isAvailable) {
+      try {
+        const { data: negociosData, error } = await supabase
+          .from('negocios')
+          .select('slug')
+          .eq('slug', slug)
+          .maybeSingle();
+          
+        if (!error && negociosData) {
+          isAvailable = false;
+        }
+      } catch (error) {
+        console.error('Error checking negocios table:', error);
+      }
     }
     
     return new Response(
       JSON.stringify({ 
-        slug, 
-        isAvailable: !existingBusiness,
-        existingBusiness: existingBusiness ? { 
-          id: existingBusiness.id, 
-          name: existingBusiness.nome 
-        } : null,
-        suggestions
+        success: true,
+        slug,
+        isAvailable
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );
-    
   } catch (error) {
-    console.error("Error in check-slug-availability function:", error);
+    console.error("Error in check-slug-availability:", error);
     
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error.message || "An error occurred" 
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+        status: 500 
       }
     );
   }
 });
+
+function generateSlug(name: string): string {
+  const timestamp = Date.now().toString().slice(-6);
+  // Convert to lowercase, replace spaces with hyphens, remove special characters
+  const baseSlug = name
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]/g, '');
+    
+  return `${baseSlug}-${timestamp}`;
+}
