@@ -7,21 +7,31 @@ import { DropdownList } from './DropdownList';
 
 interface ProfessionalsMultiSelectProps {
   options: Option[];
-  selectedOptions: Option[];
-  onChange: (selectedOptions: Option[]) => void;
+  selectedOptions?: Option[];
+  selectedValues?: string[];
+  onChange: (selectedOptions: Option[] | string[]) => void;
   placeholder?: string;
   disabled?: boolean;
 }
 
 export const ProfessionalsMultiSelect = ({
   options,
-  selectedOptions,
+  selectedOptions = [],
+  selectedValues = [],
   onChange,
   placeholder = 'Selecione...',
   disabled = false
 }: ProfessionalsMultiSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Convert selectedValues array to selectedOptions if provided
+  const effectiveSelectedOptions = selectedOptions.length > 0 
+    ? selectedOptions 
+    : selectedValues.map(value => {
+        const option = options.find(opt => opt.value === value);
+        return option || { value, label: value };
+      });
 
   const toggleDropdown = () => {
     if (!disabled) {
@@ -31,17 +41,32 @@ export const ProfessionalsMultiSelect = ({
   };
 
   const handleOptionSelect = (option: Option) => {
-    const isSelected = selectedOptions.some(item => item.value === option.value);
+    const isSelected = effectiveSelectedOptions.some(item => item.value === option.value);
     
+    let newSelection: Option[];
     if (isSelected) {
-      onChange(selectedOptions.filter(item => item.value !== option.value));
+      newSelection = effectiveSelectedOptions.filter(item => item.value !== option.value);
     } else {
-      onChange([...selectedOptions, option]);
+      newSelection = [...effectiveSelectedOptions, option];
+    }
+    
+    // If the original input was string[], return string[]
+    if (selectedValues.length > 0 && selectedOptions.length === 0) {
+      onChange(newSelection.map(opt => opt.value));
+    } else {
+      onChange(newSelection);
     }
   };
 
   const handleRemoveOption = (optionValue: string) => {
-    onChange(selectedOptions.filter(item => item.value !== optionValue));
+    const newSelection = effectiveSelectedOptions.filter(item => item.value !== optionValue);
+    
+    // If the original input was string[], return string[]
+    if (selectedValues.length > 0 && selectedOptions.length === 0) {
+      onChange(newSelection.map(opt => opt.value));
+    } else {
+      onChange(newSelection);
+    }
   };
 
   const filteredOptions = options.filter(option => 
@@ -56,11 +81,11 @@ export const ProfessionalsMultiSelect = ({
         }`}
         onClick={toggleDropdown}
       >
-        {selectedOptions.length === 0 && (
+        {effectiveSelectedOptions.length === 0 && (
           <div className="text-gray-400 px-1 py-0.5">{placeholder}</div>
         )}
         
-        {selectedOptions.map(option => (
+        {effectiveSelectedOptions.map(option => (
           <SelectedItem 
             key={option.value}
             label={option.label}
@@ -73,7 +98,7 @@ export const ProfessionalsMultiSelect = ({
       {isOpen && (
         <DropdownList
           options={filteredOptions}
-          selectedValues={selectedOptions.map(o => o.value)}
+          selectedValues={effectiveSelectedOptions.map(o => o.value)}
           onSelect={handleOptionSelect}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -83,3 +108,6 @@ export const ProfessionalsMultiSelect = ({
     </div>
   );
 };
+
+// Export as MultiSelect for backward compatibility
+export const MultiSelect = ProfessionalsMultiSelect;
