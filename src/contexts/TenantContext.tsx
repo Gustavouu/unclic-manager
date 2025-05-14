@@ -8,6 +8,7 @@ interface TenantContextType {
   loading: boolean;
   error: string | null;
   updateBusinessStatus: (id: string, status: string) => Promise<boolean>;
+  updateBusinessSettings: (settings: any) => void;
   refreshBusinessData: () => Promise<void>;
 }
 
@@ -17,6 +18,7 @@ const TenantContext = createContext<TenantContextType>({
   loading: true,
   error: null,
   updateBusinessStatus: async () => false,
+  updateBusinessSettings: () => {},
   refreshBusinessData: async () => {}
 });
 
@@ -27,6 +29,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     loading, 
     error,
     updateBusinessStatus,
+    updateBusinessSettings,
     fetchBusinessData
   } = useCurrentBusiness();
 
@@ -38,6 +41,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
         loading, 
         error,
         updateBusinessStatus,
+        updateBusinessSettings,
         refreshBusinessData: fetchBusinessData
       }}
     >

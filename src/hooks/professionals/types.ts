@@ -12,6 +12,16 @@ export interface Professional {
   business_id?: string;
   user_id?: string;
   commission_percentage?: number;
+  hire_date?: string;
+  working_hours?: {
+    [day: string]: {
+      start: string;
+      end: string;
+      isAvailable: boolean;
+    };
+  };
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Define as enum for type safety and value access
