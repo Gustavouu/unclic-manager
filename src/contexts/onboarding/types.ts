@@ -1,3 +1,4 @@
+
 // Types for the onboarding context
 
 // Business data types
@@ -50,6 +51,9 @@ export interface StaffData {
   email?: string;
   phone?: string;
   specialties?: string[];
+  // Add missing properties that are used in OnboardingControls.tsx
+  position?: string;
+  commission?: number;
 }
 
 // Business hours types
