@@ -1,3 +1,4 @@
+
 import React, { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
@@ -56,7 +57,15 @@ export const OnboardingControls: React.FC = () => {
       try {
         // Gerar um nome único adicionando um timestamp se necessário
         const timestamp = Date.now().toString().slice(-4);
-        const modifiedName = `${businessData.name}`;
+        // Remover caracteres especiais e espaços para garantir um slug válido
+        const normalizedName = businessData.name.normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9\s]/gi, '')
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, '-');
+        
+        const modifiedName = `${normalizedName}-${timestamp}`;
         
         // Log da chamada para depuração
         console.log("Verificando disponibilidade do slug:", modifiedName);
@@ -142,15 +151,24 @@ export const OnboardingControls: React.FC = () => {
     
     // Add timestamp to ensure uniqueness
     const timestamp = Date.now().toString().slice(-4);
-    const businessNameWithTimestamp = `${businessPayload.name}-${timestamp}`;
+    // Normalize business name for slug
+    const normalizedName = businessData.name.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/gi, '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-');
+    
+    const businessSlug = `${normalizedName}-${timestamp}`;
     
     try {
       // First try with the Edge Function
+      console.log("Tentando criar negócio via Edge Function...");
       const response = await supabase.functions.invoke('create-business', {
         body: {
           businessData: {
             ...businessPayload,
-            name: businessNameWithTimestamp
+            slug: businessSlug
           },
           userId: user?.id
         }
@@ -162,13 +180,13 @@ export const OnboardingControls: React.FC = () => {
         throw new Error("Não foi possível obter resposta do servidor");
       }
       
-      const { success, businessId, businessSlug, error: businessError } = response.data;
+      const { success, businessId, businessSlug: responseSlug, error: businessError } = response.data;
       
       if (!success || !businessId) {
         throw new Error(businessError || "Erro ao criar negócio");
       }
       
-      return { businessId, businessSlug };
+      return { businessId, businessSlug: responseSlug };
     } catch (error) {
       console.error("Erro na criação do negócio:", error);
       
@@ -179,8 +197,8 @@ export const OnboardingControls: React.FC = () => {
         // Create business record
         const { data: businessData, error: businessError } = await supabase
           .from('businesses')
-          .insert([{
-            name: businessNameWithTimestamp,
+          .insert({
+            name: businessPayload.name,
             admin_email: businessPayload.email || 'contact@example.com',
             phone: businessPayload.phone,
             address: businessPayload.address,
@@ -189,13 +207,16 @@ export const OnboardingControls: React.FC = () => {
             city: businessPayload.city,
             state: businessPayload.state,
             zip_code: businessPayload.cep,
-            slug: `${businessPayload.name.toLowerCase().replace(/\s+/g, '-')}-${timestamp}`,
+            slug: businessSlug,
             status: 'pending'
-          }])
+          })
           .select('id, slug')
           .single();
           
-        if (businessError) throw businessError;
+        if (businessError) {
+          console.error("Erro ao criar registro do negócio:", businessError);
+          throw businessError;
+        }
         
         if (!businessData) throw new Error("Business creation returned no data");
         
@@ -204,24 +225,30 @@ export const OnboardingControls: React.FC = () => {
         // Create association
         const { error: assocError } = await supabase
           .from('business_users')
-          .insert([{
+          .insert({
             business_id: businessData.id,
             user_id: user?.id,
             role: 'owner'
-          }]);
+          });
           
-        if (assocError) console.error("Erro ao criar associação:", assocError);
+        if (assocError) {
+          console.error("Erro ao criar associação:", assocError);
+          throw assocError;
+        }
         
         // Create settings
         const { error: settingsError } = await supabase
           .from('business_settings')
-          .insert([{
+          .insert({
             business_id: businessData.id,
             logo_url: null,
             banner_url: null
-          }]);
+          });
           
-        if (settingsError) console.error("Erro ao criar configurações:", settingsError);
+        if (settingsError) {
+          console.error("Erro ao criar configurações:", settingsError);
+          throw settingsError;
+        }
         
         return { businessId: businessData.id, businessSlug: businessData.slug };
       } catch (fallbackError) {
@@ -279,7 +306,10 @@ export const OnboardingControls: React.FC = () => {
           .update({ status: 'active' })
           .eq('id', businessId);
           
-        if (statusError) throw statusError;
+        if (statusError) {
+          console.error("Erro ao atualizar status em businesses:", statusError);
+          throw statusError;
+        }
         
         // Add services if available
         if (services && services.length > 0) {
@@ -295,7 +325,10 @@ export const OnboardingControls: React.FC = () => {
             .from('services')
             .insert(servicesData);
             
-          if (servicesError) console.error("Erro ao criar serviços:", servicesError);
+          if (servicesError) {
+            console.error("Erro ao criar serviços:", servicesError);
+            throw servicesError;
+          }
         }
         
         // Add staff if available
@@ -305,7 +338,7 @@ export const OnboardingControls: React.FC = () => {
             name: staff.name,
             email: staff.email,
             phone: staff.phone,
-            position: staff.position || "Profissional",
+            position: staff.position || staff.role || "Profissional",
             commission_percentage: staff.commission || 0
           }));
           
@@ -313,13 +346,16 @@ export const OnboardingControls: React.FC = () => {
             .from('professionals')
             .insert(staffData);
             
-          if (staffError) console.error("Erro ao criar profissionais:", staffError);
+          if (staffError) {
+            console.error("Erro ao criar profissionais:", staffError);
+            throw staffError;
+          }
         }
         
         return true;
       } catch (fallbackError) {
         console.error("Falha ao completar configuração diretamente:", fallbackError);
-        throw error; // Throw original error
+        throw fallbackError;
       }
     }
   };
@@ -397,6 +433,8 @@ export const OnboardingControls: React.FC = () => {
           id: businessId,
           slug: businessSlug
         });
+        
+        toast.success("Estabelecimento criado com sucesso!");
       } catch (createError) {
         console.error("Falha ao criar negócio:", createError);
         
@@ -417,69 +455,63 @@ export const OnboardingControls: React.FC = () => {
       }
       
       // Se chegou aqui, temos um ID de negócio. Completar configuração.
-      setProcessingStep("Configurando serviços e profissionais...");
-      
-      try {
-        await completeBusinessSetup(businessId);
-      } catch (setupError) {
-        console.error("Falha ao completar configuração:", setupError);
-        
-        // Tentar atualizar manualmente o status do negócio
-        setProcessingStep("Atualizando status do negócio...");
+      if (businessId) {
+        setProcessingStep("Configurando serviços e profissionais...");
         
         try {
-          // Tentar atualizar status diretamente
-          const { error: updateError } = await supabase
-            .from('businesses')
-            .update({ 
-              status: 'active',
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', businessId);
+          await completeBusinessSetup(businessId);
+          toast.success("Serviços e profissionais configurados com sucesso!");
+        } catch (setupError) {
+          console.error("Falha ao completar configuração:", setupError);
           
-          if (updateError) {
-            console.error("Erro ao atualizar status em businesses:", updateError);
-            
-            // Tentar tabela legacy como fallback
-            const { error: legacyError } = await supabase
-              .from('negocios')
+          // Tentar atualizar manualmente o status do negócio
+          setProcessingStep("Atualizando status do negócio...");
+          
+          try {
+            // Tentar atualizar status diretamente
+            const { error: updateError } = await supabase
+              .from('businesses')
               .update({ 
-                status: 'ativo',
-                atualizado_em: new Date().toISOString()
+                status: 'active',
+                updated_at: new Date().toISOString()
               })
               .eq('id', businessId);
-              
-            if (legacyError) {
-              console.error("Erro ao atualizar status em negocios:", legacyError);
+            
+            if (updateError) {
+              console.error("Erro ao atualizar status em businesses:", updateError);
               throw new Error("Não foi possível atualizar o status do negócio");
             }
+            
+            toast.info("Status do negócio atualizado com sucesso.");
+          } catch (manualUpdateError) {
+            console.error("Erro ao atualizar manualmente:", manualUpdateError);
+            throw new Error("Configuração parcial: criamos seu negócio mas houve um erro ao finalizar a configuração.");
           }
-        } catch (manualUpdateError) {
-          console.error("Erro ao atualizar manualmente:", manualUpdateError);
-          throw new Error("Configuração parcial: criamos seu negócio mas houve um erro ao finalizar a configuração.");
         }
+        
+        // Success!
+        setStatus("success");
+        setProcessingStep("Configuração concluída com sucesso!");
+        toast.success("Estabelecimento configurado com sucesso!");
+        
+        // Clear onboarding data
+        localStorage.removeItem('unclic-manager-onboarding');
+        
+        // Refresh business data to update contexts
+        await refreshBusinessData();
+        
+        // Redirect to dashboard after a delay
+        setTimeout(() => {
+          navigate("/dashboard", { replace: true });
+        }, 2000);
+      } else {
+        throw new Error("ID do negócio não disponível após criação");
       }
-      
-      // Success!
-      setStatus("success");
-      setProcessingStep("Configuração concluída com sucesso!");
-      toast.success("Estabelecimento configurado com sucesso!");
-      
-      // Clear onboarding data
-      localStorage.removeItem('unclic-manager-onboarding');
-      
-      // Refresh business data to update contexts
-      await refreshBusinessData();
-      
-      // Redirect to dashboard after a delay
-      setTimeout(() => {
-        navigate("/dashboard", { replace: true });
-      }, 2000);
-      
     } catch (error) {
       console.error("Erro ao configurar estabelecimento:", error);
       setError(error.message || "Erro ao configurar estabelecimento");
       setStatus("error");
+      toast.error(error.message || "Erro ao configurar estabelecimento");
     }
   };
   
