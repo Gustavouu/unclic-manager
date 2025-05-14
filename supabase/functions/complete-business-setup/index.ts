@@ -20,47 +20,67 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get request body
-    const { userId, businessId, services, staffMembers, hasStaff, businessHours } = await req.json();
+    const { userId, businessId, services = [], staffMembers = [], hasStaff = false, businessHours = {} } = await req.json();
 
-    if (!businessId || !userId) {
+    if (!userId || !businessId) {
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Business ID and user ID are required"
+        JSON.stringify({ 
+          success: false, 
+          error: "User ID and Business ID are required" 
         }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 400 
         }
       );
     }
 
-    console.log("Processing business setup:", businessId);
+    console.log(`Completing business setup for business ID: ${businessId}`);
     
     // Update business status to active
     const { error: updateError } = await supabase
       .from('businesses')
-      .update({
+      .update({ 
         status: 'active',
         updated_at: new Date().toISOString()
       })
       .eq('id', businessId);
-
+      
     if (updateError) {
-      console.error("Error updating business status:", updateError);
+      console.error('Failed to update business status:', updateError);
       throw updateError;
     }
-    
-    // If there are services, insert them
+
+    // Create service categories if needed
+    let defaultCategoryId = null;
+    const { data: categoryData, error: categoryError } = await supabase
+      .from('service_categories')
+      .insert([{
+        business_id: businessId,
+        name: 'General Services',
+        display_order: 0
+      }])
+      .select('id')
+      .single();
+      
+    if (!categoryError && categoryData) {
+      defaultCategoryId = categoryData.id;
+    } else {
+      console.warn('Could not create default service category:', categoryError);
+    }
+
+    // Add services
     if (services && services.length > 0) {
-      console.log("Adding services:", services.length);
+      console.log(`Adding ${services.length} services`);
       
       const servicesData = services.map(service => ({
+        business_id: businessId,
         name: service.name,
-        duration: service.duration,
         price: service.price,
+        duration: service.duration,
         description: service.description || '',
-        business_id: businessId
+        category_id: defaultCategoryId,
+        is_active: true
       }));
       
       const { error: servicesError } = await supabase
@@ -68,72 +88,57 @@ serve(async (req) => {
         .insert(servicesData);
         
       if (servicesError) {
-        console.error("Error adding services:", servicesError);
+        console.error('Failed to add services:', servicesError);
       }
     }
     
-    // If there are staff members, insert them
+    // Add staff members
     if (hasStaff && staffMembers && staffMembers.length > 0) {
-      console.log("Adding staff members:", staffMembers.length);
+      console.log(`Adding ${staffMembers.length} staff members`);
       
-      const professionalsData = staffMembers.map(staff => ({
+      const staffData = staffMembers.map(staff => ({
+        business_id: businessId,
         name: staff.name,
-        role: staff.role,
+        position: staff.role,
         email: staff.email || null,
         phone: staff.phone || null,
         specialties: staff.specialties || [],
-        business_id: businessId
+        status: 'active'
       }));
       
       const { error: staffError } = await supabase
         .from('professionals')
-        .insert(professionalsData);
+        .insert(staffData);
         
       if (staffError) {
-        console.error("Error adding staff members:", staffError);
+        console.error('Failed to add staff members:', staffError);
       }
     }
     
-    // Ensure the user has proper permissions
-    try {
-      // Check if the user already has permissions
-      const { data: existingPermissions, error: permissionsCheckError } = await supabase
-        .from('permissions')
-        .select('id')
-        .eq('user_id', userId)
+    // Set business hours if provided
+    if (businessHours && Object.keys(businessHours).length > 0) {
+      console.log('Setting business hours');
+      
+      // Store business hours in business_settings as JSON
+      const { error: hoursError } = await supabase
+        .from('business_settings')
+        .update({
+          working_hours: businessHours
+        })
         .eq('business_id', businessId);
         
-      if (permissionsCheckError) {
-        throw permissionsCheckError;
+      if (hoursError) {
+        console.error('Failed to update business hours:', hoursError);
       }
-      
-      // If no permissions exist, create them
-      if (!existingPermissions || existingPermissions.length === 0) {
-        const { error: permissionsError } = await supabase
-          .from('permissions')
-          .insert([
-            { user_id: userId, business_id: businessId, resource: 'appointments', action: 'manage' },
-            { user_id: userId, business_id: businessId, resource: 'clients', action: 'manage' },
-            { user_id: userId, business_id: businessId, resource: 'professionals', action: 'manage' },
-            { user_id: userId, business_id: businessId, resource: 'services', action: 'manage' },
-            { user_id: userId, business_id: businessId, resource: 'settings', action: 'manage' }
-          ]);
-          
-        if (permissionsError) {
-          console.error("Error setting user permissions:", permissionsError);
-        }
-      }
-    } catch (permissionsError) {
-      console.error("Error handling permissions:", permissionsError);
     }
 
     return new Response(
-      JSON.stringify({
+      JSON.stringify({ 
         success: true,
         message: "Business setup completed successfully"
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      { 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );
 
@@ -141,13 +146,13 @@ serve(async (req) => {
     console.error("Error in complete-business-setup:", error);
     
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || "An error occurred"
+      JSON.stringify({ 
+        success: false, 
+        error: error.message || "An error occurred" 
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500
+      { 
+        headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+        status: 500 
       }
     );
   }

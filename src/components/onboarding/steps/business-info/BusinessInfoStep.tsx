@@ -3,6 +3,7 @@ import React from "react";
 import { BusinessBasicInfoSection } from "./BusinessBasicInfoSection";
 import { BusinessMediaSection } from "./BusinessMediaSection";
 import { BusinessAddressSection } from "./BusinessAddressSection";
+import { BusinessSocialMediaSection } from "./BusinessSocialMediaSection";
 import { Separator } from "@/components/ui/separator";
 
 export const BusinessInfoStep: React.FC = () => {
@@ -16,6 +17,10 @@ export const BusinessInfoStep: React.FC = () => {
       <Separator />
       
       <BusinessAddressSection />
+      
+      <Separator />
+      
+      <BusinessSocialMediaSection />
     </div>
   );
 };
