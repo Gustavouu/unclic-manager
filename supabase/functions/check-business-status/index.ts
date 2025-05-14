@@ -19,100 +19,68 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Get request body with businessId
     const { businessId } = await req.json();
 
     if (!businessId) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Business ID is required" 
+        JSON.stringify({
+          success: false,
+          error: "Business ID is required"
         }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
-          status: 400 
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400
         }
       );
     }
 
-    let businessData = null;
-    let tableName = null;
-
-    // First try businesses table
-    try {
-      const { data, error } = await supabase
-        .from('businesses')
-        .select('id, status, name, admin_email')
-        .eq('id', businessId)
-        .maybeSingle();
-        
-      if (error && error.code !== "PGRST116") {
-        console.error('Error checking businesses table:', error);
-        // Continue to try next table
-      } else if (data) {
-        businessData = data;
-        tableName = 'businesses';
-      }
-    } catch (error) {
-      console.error('Failed to check businesses table:', error);
-      // Continue to try next table
+    console.log("Checking business status for:", businessId);
+    
+    // Check business in businesses table
+    const { data: business, error: businessError } = await supabase
+      .from('businesses')
+      .select('id, status')
+      .eq('id', businessId)
+      .maybeSingle();
+    
+    if (businessError) {
+      console.error("Error checking business:", businessError);
     }
-
-    // Try negocios table if not found
-    if (!businessData) {
-      try {
-        const { data, error } = await supabase
-          .from('negocios')
-          .select('id, status, nome as name, email_admin as admin_email')
-          .eq('id', businessId)
-          .maybeSingle();
-          
-        if (error && error.code !== "PGRST116") {
-          console.error('Error checking negocios table:', error);
-        } else if (data) {
-          businessData = data;
-          tableName = 'negocios';
-        }
-      } catch (error) {
-        console.error('Failed to check negocios table:', error);
-      }
-    }
-
-    if (businessData) {
+    
+    if (business) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           success: true,
           exists: true,
-          tableName,
-          status: businessData.status,
-          businessId: businessData.id,
-          name: businessData.name,
-          adminEmail: businessData.admin_email,
+          status: business.status,
+          tableName: 'businesses'
         }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
-    } else {
-      return new Response(
-        JSON.stringify({ 
-          success: true,
-          exists: false,
-          message: "Business not found in any table" 
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       );
     }
+    
+    return new Response(
+      JSON.stringify({
+        success: true,
+        exists: false,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      }
+    );
+
   } catch (error) {
     console.error("Error in check-business-status:", error);
     
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: false,
         error: error.message || "An error occurred"
       }),
-      { 
+      {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500
       }

@@ -1,46 +1,39 @@
 
 import React from "react";
-import { Label } from "@/components/ui/label";
-import { ImageUpload } from "@/components/common/ImageUpload";
-import { Image } from "lucide-react";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { ImageIcon } from "lucide-react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 
 export const LogoUpload: React.FC = () => {
   const { businessData, updateBusinessData } = useOnboarding();
   
-  const handleLogoChange = (file: File | null, logoUrl: string | null) => {
-    // Only update if values have changed
-    const logoChanged = file !== businessData.logo;
-    const urlChanged = logoUrl !== businessData.logoUrl;
-    
-    if (logoChanged || urlChanged) {
-      updateBusinessData({ 
-        logo: file,
-        logoName: file ? file.name : null,
-        logoUrl: logoUrl
-      });
-    }
+  const handleImageChange = (file: File, logoUrl: string) => {
+    updateBusinessData({
+      logo: file,
+      logoUrl,
+      logoName: file.name,
+      logoData: logoUrl
+    });
   };
   
   return (
-    <div>
-      <Label htmlFor="logo-upload">Logo do Estabelecimento</Label>
-      
-      <div className="mt-2">
-        <ImageUpload
-          id="logo-upload"
-          imageUrl={businessData.logoUrl || null}
-          onImageChange={handleLogoChange}
-          icon={<Image className="w-8 h-8 text-muted-foreground mb-2" />}
-          label="Clique para adicionar"
-          width="w-32"
-          height="h-32"
-        />
-      </div>
-      
-      <p className="text-xs text-muted-foreground mt-1">
-        Formatos recomendados: PNG, JPG. Tamanho máximo: 2MB
-      </p>
+    <div className="flex justify-center">
+      <ImageUpload
+        id="logo-upload"
+        imageUrl={businessData.logoUrl}
+        onChange={(file) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const result = event.target?.result as string;
+            handleImageChange(file, result);
+          };
+          reader.readAsDataURL(file);
+        }}
+        icon={<ImageIcon className="h-5 w-5" />}
+        label="Logo"
+        width="150px"
+        height="150px"
+      />
     </div>
   );
 };

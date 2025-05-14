@@ -8,16 +8,35 @@ interface ImageUploadProps {
   onChange: (file: File) => void;
   className?: string;
   loading?: boolean;
+  id?: string;
+  imageUrl?: string | null;
+  onImageChange?: (file: File, imageUrl: string) => void;
+  icon?: React.ReactNode;
+  label?: string;
+  subLabel?: string;
+  width?: string;
+  height?: string;
 }
 
 export const ImageUpload: React.FC<ImageUploadProps> = ({ 
   value, 
   onChange, 
   className = "", 
-  loading = false 
+  loading = false,
+  id,
+  imageUrl = null,
+  onImageChange,
+  icon,
+  label,
+  subLabel,
+  width = "150px",
+  height = "150px"
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Use value or imageUrl (priority to value if both are provided)
+  const displayUrl = value || imageUrl || "";
   
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -36,13 +55,28 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     setDragActive(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      onChange(e.dataTransfer.files[0]);
+      handleFileChange(e.dataTransfer.files[0]);
+    }
+  };
+  
+  const handleFileChange = (file: File) => {
+    if (onImageChange) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        onImageChange(file, result);
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    if (onChange) {
+      onChange(file);
     }
   };
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      onChange(e.target.files[0]);
+      handleFileChange(e.target.files[0]);
     }
   };
   
@@ -52,8 +86,14 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     }
   };
   
+  const styles = {
+    width: width,
+    height: height,
+  };
+  
   return (
     <div
+      id={id}
       className={`relative border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer ${
         dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50"
       } ${className}`}
@@ -62,6 +102,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       onDragOver={handleDrag}
       onDrop={handleDrop}
       onClick={handleClick}
+      style={styles}
     >
       <input 
         ref={inputRef}
@@ -71,10 +112,10 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         className="hidden"
       />
       
-      {value ? (
+      {displayUrl ? (
         <div className="absolute inset-0 w-full h-full">
           <img
-            src={value}
+            src={displayUrl}
             alt="Uploaded image"
             className="w-full h-full object-cover rounded-lg"
           />
@@ -89,18 +130,25 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           ) : (
             <>
               <div className="rounded-full bg-gray-100 p-2 mb-2">
-                {value ? (
-                  <Image className="h-6 w-6 text-gray-500" />
+                {icon ? (
+                  icon
                 ) : (
                   <Upload className="h-6 w-6 text-gray-500" />
                 )}
               </div>
               <p className="text-sm font-medium text-gray-700">
-                Clique ou arraste e solte
+                {label || "Clique ou arraste e solte"}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
-                SVG, PNG ou JPG (max. 2MB)
-              </p>
+              {subLabel && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {subLabel}
+                </p>
+              )}
+              {!subLabel && (
+                <p className="text-xs text-gray-500 mt-1">
+                  SVG, PNG ou JPG (max. 2MB)
+                </p>
+              )}
             </>
           )}
         </div>

@@ -1,47 +1,40 @@
 
 import React from "react";
-import { Label } from "@/components/ui/label";
-import { ImageUpload } from "@/components/common/ImageUpload";
-import { Upload } from "lucide-react";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { CameraIcon } from "lucide-react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 
 export const BannerUpload: React.FC = () => {
   const { businessData, updateBusinessData } = useOnboarding();
   
-  const handleBannerChange = (file: File | null, bannerUrl: string | null) => {
-    // Only update if values have changed
-    const bannerChanged = file !== businessData.banner;
-    const urlChanged = bannerUrl !== businessData.bannerUrl;
-    
-    if (bannerChanged || urlChanged) {
-      updateBusinessData({ 
-        banner: file,
-        bannerName: file ? file.name : null,
-        bannerUrl: bannerUrl
-      });
-    }
+  const handleImageChange = (file: File, bannerUrl: string) => {
+    updateBusinessData({
+      banner: file,
+      bannerUrl,
+      bannerName: file.name,
+      bannerData: bannerUrl
+    });
   };
   
   return (
-    <div>
-      <Label htmlFor="banner-upload">Banner do Estabelecimento</Label>
-      
-      <div className="mt-2">
-        <ImageUpload
-          id="banner-upload"
-          imageUrl={businessData.bannerUrl || null}
-          onImageChange={handleBannerChange}
-          icon={<Upload className="w-8 h-8 text-muted-foreground mb-2" />}
-          label="Clique para adicionar um banner"
-          subLabel="Dimensões recomendadas: 1200x300px"
-          width="w-full"
-          height="h-40"
-        />
-      </div>
-      
-      <p className="text-xs text-muted-foreground mt-1">
-        O banner será exibido na parte superior da página do seu estabelecimento
-      </p>
+    <div className="w-full">
+      <ImageUpload
+        id="banner-upload"
+        imageUrl={businessData.bannerUrl}
+        onChange={(file) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const result = event.target?.result as string;
+            handleImageChange(file, result);
+          };
+          reader.readAsDataURL(file);
+        }}
+        icon={<CameraIcon className="h-5 w-5" />}
+        label="Banner do estabelecimento"
+        subLabel="Imagem que aparecerá no topo da página do seu negócio"
+        width="100%"
+        height="200px"
+      />
     </div>
   );
 };

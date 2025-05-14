@@ -38,146 +38,79 @@ serve(async (req) => {
     // Generate a slug from business name
     const slug = generateSlug(businessData.name);
     
-    // Try to create business in businesses table first
-    let businessId = null;
-    let tableName = null;
+    console.log("Creating business with data:", {
+      name: businessData.name,
+      email: businessData.email,
+      slug: slug,
+      userId: userId
+    });
     
-    try {
-      // Check if businesses table exists
-      const { error: checkError } = await supabase
-        .from('businesses')
-        .select('count(*)', { count: 'exact', head: true });
+    // Create business in businesses table
+    const { data, error } = await supabase
+      .from('businesses')
+      .insert([{
+        name: businessData.name,
+        admin_email: businessData.email || 'contact@example.com',
+        phone: businessData.phone,
+        address: businessData.address,
+        address_number: businessData.addressNumber || businessData.number,
+        address_complement: businessData.addressComplement,
+        neighborhood: businessData.neighborhood,
+        city: businessData.city,
+        state: businessData.state,
+        zip_code: businessData.zipCode || businessData.cep,
+        slug: slug,
+        status: 'pending'
+      }])
+      .select('id')
+      .single();
       
-      if (!checkError || checkError.code !== 'PGRST116') {
-        // Table exists, create business
-        const { data, error } = await supabase
-          .from('businesses')
-          .insert([{
-            name: businessData.name,
-            admin_email: businessData.email || 'contact@example.com',
-            phone: businessData.phone,
-            address: businessData.address,
-            address_number: businessData.number,
-            neighborhood: businessData.neighborhood,
-            city: businessData.city,
-            state: businessData.state,
-            zip_code: businessData.cep,
-            slug: slug,
-            status: 'pending'
-          }])
-          .select('id')
-          .single();
-          
-        if (error) throw error;
-        
-        businessId = data.id;
-        tableName = 'businesses';
-      }
-    } catch (error) {
-      console.error('Failed to create in businesses table:', error);
-      // Try negocios table as fallback
+    if (error) {
+      console.error('Error creating business:', error);
+      throw error;
     }
     
-    // If businessId is still null, try negocios table
-    if (!businessId) {
-      try {
-        // Check if negocios table exists
-        const { error: checkError } = await supabase
-          .from('negocios')
-          .select('count(*)', { count: 'exact', head: true });
-        
-        if (!checkError || checkError.code !== 'PGRST116') {
-          // Table exists, create business
-          const { data, error } = await supabase
-            .from('negocios')
-            .insert([{
-              nome: businessData.name,
-              email_admin: businessData.email || 'contact@example.com',
-              telefone: businessData.phone,
-              endereco: businessData.address,
-              numero: businessData.number,
-              bairro: businessData.neighborhood,
-              cidade: businessData.city,
-              estado: businessData.state,
-              cep: businessData.cep,
-              slug: slug,
-              status: 'pendente'
-            }])
-            .select('id')
-            .single();
-            
-          if (error) throw error;
-          
-          businessId = data.id;
-          tableName = 'negocios';
-        }
-      } catch (error) {
-        console.error('Failed to create in negocios table:', error);
-      }
-    }
-    
-    if (!businessId) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Failed to create business. Database tables might not exist." 
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
-          status: 500 
-        }
-      );
-    }
+    const businessId = data.id;
     
     // Create association between business and user
     try {
-      if (tableName === 'businesses') {
-        // Try business_users table
-        const { error: checkError } = await supabase
-          .from('business_users')
-          .select('count(*)', { count: 'exact', head: true });
+      const { error } = await supabase
+        .from('business_users')
+        .insert([{
+          business_id: businessId,
+          user_id: userId,
+          role: 'owner'
+        }]);
         
-        if (!checkError || checkError.code !== 'PGRST116') {
-          const { error } = await supabase
-            .from('business_users')
-            .insert([{
-              business_id: businessId,
-              user_id: userId,
-              role: 'owner'
-            }]);
-            
-          if (error) throw error;
-        }
-      } else if (tableName === 'negocios') {
-        // Update user record in usuarios table
-        try {
-          const { error: checkError } = await supabase
-            .from('usuarios')
-            .select('count(*)', { count: 'exact', head: true });
-          
-          if (!checkError || checkError.code !== 'PGRST116') {
-            const { error } = await supabase
-              .from('usuarios')
-              .update({ id_negocio: businessId })
-              .eq('id', userId);
-              
-            if (error) throw error;
-          }
-        } catch (updateError) {
-          console.error('Failed to update user:', updateError);
-        }
-      }
+      if (error) throw error;
     } catch (error) {
       console.error('Failed to create business-user association:', error);
+      // Continue anyway since we've created the business
+    }
+    
+    // Create default business settings
+    try {
+      const { error } = await supabase
+        .from('business_settings')
+        .insert([{
+          business_id: businessId,
+          logo_url: businessData.logoUrl,
+          banner_url: businessData.bannerUrl
+        }]);
+        
+      if (error) {
+        console.error('Failed to create business settings:', error);
+      }
+    } catch (error) {
+      console.error('Failed to create business settings:', error);
       // Continue anyway since we've created the business
     }
     
     return new Response(
       JSON.stringify({ 
         success: true, 
-        businessId, 
-        businessSlug: slug,
-        tableName
+        businessId,
+        businessSlug: slug
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 

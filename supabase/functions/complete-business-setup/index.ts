@@ -19,225 +19,135 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Get request body
     const { userId, businessId, services, staffMembers, hasStaff, businessHours } = await req.json();
 
-    if (!userId || !businessId) {
+    if (!businessId || !userId) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "User ID and Business ID are required" 
+        JSON.stringify({
+          success: false,
+          error: "Business ID and user ID are required"
         }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
-          status: 400 
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400
         }
       );
     }
 
-    // Check which table exists - businesses or negocios
-    let tableName = null;
-    
-    // Try businesses first
-    try {
-      const { data: businessExists, error } = await supabase
-        .from('businesses')
-        .select('id')
-        .eq('id', businessId)
-        .maybeSingle();
-        
-      if (!error && businessExists) {
-        tableName = 'businesses';
-      }
-    } catch (error) {
-      console.error('Error checking businesses table:', error);
-    }
-    
-    // Try negocios if businesses didn't work
-    if (!tableName) {
-      try {
-        const { data: negocioExists, error } = await supabase
-          .from('negocios')
-          .select('id')
-          .eq('id', businessId)
-          .maybeSingle();
-          
-        if (!error && negocioExists) {
-          tableName = 'negocios';
-        }
-      } catch (error) {
-        console.error('Error checking negocios table:', error);
-      }
-    }
-    
-    if (!tableName) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Business not found in any table" 
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
-          status: 404 
-        }
-      );
-    }
-    
-    // Try to create services
-    try {
-      if (services && services.length > 0) {
-        if (tableName === 'businesses') {
-          try {
-            // Check if services table exists
-            const { error: checkError } = await supabase
-              .from('services')
-              .select('count(*)', { count: 'exact', head: true });
-            
-            if (!checkError || checkError.code !== 'PGRST116') {
-              // Format service data
-              const serviceData = services.map(service => ({
-                name: service.name,
-                price: service.price,
-                duration: service.duration,
-                description: service.description || '',
-                business_id: businessId
-              }));
-              
-              // Insert services
-              await supabase.from('services').insert(serviceData);
-            }
-          } catch (error) {
-            console.error('Failed to create services:', error);
-          }
-        } else if (tableName === 'negocios') {
-          try {
-            // Check if servicos table exists
-            const { error: checkError } = await supabase
-              .from('servicos')
-              .select('count(*)', { count: 'exact', head: true });
-            
-            if (!checkError || checkError.code !== 'PGRST116') {
-              // Format service data
-              const serviceData = services.map(service => ({
-                nome: service.name,
-                preco: service.price,
-                duracao: service.duration,
-                descricao: service.description || '',
-                id_negocio: businessId
-              }));
-              
-              // Insert services
-              await supabase.from('servicos').insert(serviceData);
-            }
-          } catch (error) {
-            console.error('Failed to create services:', error);
-          }
-        }
-      }
-    } catch (serviceError) {
-      console.error('Error creating services:', serviceError);
-      // Continue even if services creation fails
-    }
-    
-    // Try to create professionals if hasStaff is true
-    if (hasStaff && staffMembers && staffMembers.length > 0) {
-      try {
-        if (tableName === 'businesses') {
-          try {
-            // Check if professionals table exists
-            const { error: checkError } = await supabase
-              .from('professionals')
-              .select('count(*)', { count: 'exact', head: true });
-            
-            if (!checkError || checkError.code !== 'PGRST116') {
-              // Format professional data
-              const professionalData = staffMembers.map(staff => ({
-                name: staff.name,
-                position: staff.position || '',
-                phone: staff.phone || '',
-                email: staff.email || '',
-                business_id: businessId
-              }));
-              
-              // Insert professionals
-              await supabase.from('professionals').insert(professionalData);
-            }
-          } catch (error) {
-            console.error('Failed to create professionals:', error);
-          }
-        } else if (tableName === 'negocios') {
-          try {
-            // Check if funcionarios table exists
-            const { error: checkError } = await supabase
-              .from('funcionarios')
-              .select('count(*)', { count: 'exact', head: true });
-            
-            if (!checkError || checkError.code !== 'PGRST116') {
-              // Format professional data
-              const professionalData = staffMembers.map(staff => ({
-                nome: staff.name,
-                cargo: staff.position || '',
-                telefone: staff.phone || '',
-                email: staff.email || '',
-                id_negocio: businessId
-              }));
-              
-              // Insert professionals
-              await supabase.from('funcionarios').insert(professionalData);
-            }
-          } catch (error) {
-            console.error('Failed to create professionals:', error);
-          }
-        }
-      } catch (staffError) {
-        console.error('Error creating staff members:', staffError);
-        // Continue even if staff creation fails
-      }
-    }
+    console.log("Processing business setup:", businessId);
     
     // Update business status to active
-    try {
-      if (tableName === 'businesses') {
-        await supabase
-          .from('businesses')
-          .update({ 
-            status: 'active',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', businessId);
-      } else if (tableName === 'negocios') {
-        await supabase
-          .from('negocios')
-          .update({ 
-            status: 'ativo',
-            atualizado_em: new Date().toISOString()
-          })
-          .eq('id', businessId);
-      }
-    } catch (statusError) {
-      console.error('Error updating business status:', statusError);
-      // Continue even if status update fails
+    const { error: updateError } = await supabase
+      .from('businesses')
+      .update({
+        status: 'active',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', businessId);
+
+    if (updateError) {
+      console.error("Error updating business status:", updateError);
+      throw updateError;
     }
     
+    // If there are services, insert them
+    if (services && services.length > 0) {
+      console.log("Adding services:", services.length);
+      
+      const servicesData = services.map(service => ({
+        name: service.name,
+        duration: service.duration,
+        price: service.price,
+        description: service.description || '',
+        business_id: businessId
+      }));
+      
+      const { error: servicesError } = await supabase
+        .from('services')
+        .insert(servicesData);
+        
+      if (servicesError) {
+        console.error("Error adding services:", servicesError);
+      }
+    }
+    
+    // If there are staff members, insert them
+    if (hasStaff && staffMembers && staffMembers.length > 0) {
+      console.log("Adding staff members:", staffMembers.length);
+      
+      const professionalsData = staffMembers.map(staff => ({
+        name: staff.name,
+        role: staff.role,
+        email: staff.email || null,
+        phone: staff.phone || null,
+        specialties: staff.specialties || [],
+        business_id: businessId
+      }));
+      
+      const { error: staffError } = await supabase
+        .from('professionals')
+        .insert(professionalsData);
+        
+      if (staffError) {
+        console.error("Error adding staff members:", staffError);
+      }
+    }
+    
+    // Ensure the user has proper permissions
+    try {
+      // Check if the user already has permissions
+      const { data: existingPermissions, error: permissionsCheckError } = await supabase
+        .from('permissions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('business_id', businessId);
+        
+      if (permissionsCheckError) {
+        throw permissionsCheckError;
+      }
+      
+      // If no permissions exist, create them
+      if (!existingPermissions || existingPermissions.length === 0) {
+        const { error: permissionsError } = await supabase
+          .from('permissions')
+          .insert([
+            { user_id: userId, business_id: businessId, resource: 'appointments', action: 'manage' },
+            { user_id: userId, business_id: businessId, resource: 'clients', action: 'manage' },
+            { user_id: userId, business_id: businessId, resource: 'professionals', action: 'manage' },
+            { user_id: userId, business_id: businessId, resource: 'services', action: 'manage' },
+            { user_id: userId, business_id: businessId, resource: 'settings', action: 'manage' }
+          ]);
+          
+        if (permissionsError) {
+          console.error("Error setting user permissions:", permissionsError);
+        }
+      }
+    } catch (permissionsError) {
+      console.error("Error handling permissions:", permissionsError);
+    }
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
-        tableName
+        message: "Business setup completed successfully"
       }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       }
     );
+
   } catch (error) {
     console.error("Error in complete-business-setup:", error);
     
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || "An error occurred" 
+      JSON.stringify({
+        success: false,
+        error: error.message || "An error occurred"
       }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" }, 
-        status: 500 
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500
       }
     );
   }

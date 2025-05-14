@@ -1,62 +1,87 @@
 
 import React from "react";
-import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 
 export const BusinessBasicInfoSection: React.FC = () => {
   const { businessData, updateBusinessData } = useOnboarding();
-
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    updateBusinessData({
+      [name]: value
+    });
+  };
+  
   return (
     <Card>
       <CardHeader>
         <CardTitle>Informações Básicas</CardTitle>
+        <CardDescription>
+          Informe os dados principais do seu negócio
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Nome do Negócio *</Label>
+          <Label htmlFor="name">Nome do Estabelecimento *</Label>
           <Input
             id="name"
-            placeholder="Ex: Barbearia Silva"
+            name="name"
             value={businessData.name || ""}
-            onChange={(e) => updateBusinessData({ name: e.target.value })}
+            onChange={handleChange}
+            placeholder="Ex: Salão Beauty Hair"
             required
           />
         </div>
-
+        
         <div className="space-y-2">
-          <Label htmlFor="email">Email de Contato *</Label>
+          <Label htmlFor="email">E-mail comercial *</Label>
           <Input
             id="email"
+            name="email"
             type="email"
-            placeholder="Ex: contato@exemplo.com"
             value={businessData.email || ""}
-            onChange={(e) => updateBusinessData({ email: e.target.value })}
+            onChange={handleChange}
+            placeholder="Ex: contato@seunegoico.com.br"
             required
           />
         </div>
-
+        
         <div className="space-y-2">
-          <Label htmlFor="phone">Telefone *</Label>
+          <Label htmlFor="phone">Telefone comercial *</Label>
           <Input
             id="phone"
-            placeholder="Ex: (11) 99999-9999"
+            name="phone"
             value={businessData.phone || ""}
-            onChange={(e) => updateBusinessData({ phone: e.target.value })}
+            onChange={handleChange}
+            placeholder="Ex: (11) 99999-9999"
             required
           />
         </div>
-
+        
         <div className="space-y-2">
-          <Label htmlFor="description">Descrição</Label>
+          <Label htmlFor="website">Site (opcional)</Label>
+          <Input
+            id="website"
+            name="website"
+            value={businessData.website || ""}
+            onChange={handleChange}
+            placeholder="Ex: www.seunegoico.com.br"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="description">Descrição (opcional)</Label>
           <Textarea
             id="description"
-            placeholder="Descreva seu negócio em poucas palavras"
+            name="description"
             value={businessData.description || ""}
-            onChange={(e) => updateBusinessData({ description: e.target.value })}
-            rows={3}
+            onChange={handleChange}
+            placeholder="Descreva brevemente o seu estabelecimento"
+            rows={4}
           />
         </div>
       </CardContent>
