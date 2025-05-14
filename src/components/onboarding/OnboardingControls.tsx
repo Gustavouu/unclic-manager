@@ -59,11 +59,27 @@ export const OnboardingControls: React.FC = () => {
         const timestamp = Date.now().toString().slice(-4);
         const modifiedName = `${businessData.name}`;
         
-        const { data, error } = await supabase.functions.invoke('check-slug-availability', {
-          body: { name: modifiedName },
-        });
+        // Log da chamada para depuração
+        console.log("Verificando disponibilidade do slug:", modifiedName);
+        
+        // Tentativa com timeout de segurança
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Tempo limite excedido ao verificar slug")), 10000)
+        );
+        
+        const response = await Promise.race([
+          supabase.functions.invoke('check-slug-availability', {
+            body: { name: modifiedName },
+          }),
+          timeoutPromise
+        ]);
         
         setStatus("idle");
+        
+        const data = response.data;
+        const error = response.error;
+        
+        console.log("Resposta de verificação de slug:", { data, error });
         
         if (error) {
           console.error("Error checking slug availability:", error);
@@ -81,9 +97,9 @@ export const OnboardingControls: React.FC = () => {
         }
       } catch (err) {
         console.error("Failed to check slug availability:", err);
-        toast.error("Erro ao verificar disponibilidade do nome");
+        toast.warning("Não foi possível verificar a disponibilidade do nome, mas você pode continuar.");
         setStatus("idle");
-        return;
+        // Permitir continuar mesmo com erro no slug
       }
     }
     
@@ -102,6 +118,134 @@ export const OnboardingControls: React.FC = () => {
       setCurrentStep(currentStep - 1);
     }
   }, [currentStep, saveProgress, setCurrentStep]);
+  
+  const createBusiness = async () => {
+    // Preparar dados do negócio para criação
+    const businessPayload = {
+      name: businessData.name,
+      email: businessData.email,
+      phone: businessData.phone,
+      address: businessData.address,
+      number: businessData.number || businessData.addressNumber,
+      neighborhood: businessData.neighborhood,
+      city: businessData.city,
+      state: businessData.state,
+      cep: businessData.cep || businessData.zipCode
+    };
+    
+    console.log("Criando negócio com os dados:", businessPayload);
+    
+    // Adicionar timestamp para garantir unicidade
+    const timestamp = Date.now().toString().slice(-4);
+    const businessNameWithTimestamp = `${businessPayload.name}-${timestamp}`;
+    
+    try {
+      const response = await supabase.functions.invoke('create-business', {
+        body: {
+          businessData: {
+            ...businessPayload,
+            name: businessNameWithTimestamp
+          },
+          userId: user?.id
+        }
+      });
+      
+      console.log("Resposta da criação do negócio:", response);
+      
+      if (!response?.data) {
+        throw new Error("Não foi possível obter resposta do servidor");
+      }
+      
+      const { success, businessId, businessSlug, error: businessError } = response.data;
+      
+      if (!success || !businessId) {
+        throw new Error(businessError || "Erro ao criar negócio");
+      }
+      
+      return { businessId, businessSlug };
+    } catch (error) {
+      console.error("Erro na criação do negócio:", error);
+      throw error;
+    }
+  };
+  
+  const completeBusinessSetup = async (businessId) => {
+    console.log("Completando configuração do negócio:", {
+      userId: user?.id,
+      businessId,
+      servicesCount: services?.length,
+      staffCount: staffMembers?.length,
+      hasStaff
+    });
+    
+    try {
+      const response = await supabase.functions.invoke('complete-business-setup', {
+        body: {
+          userId: user?.id,
+          businessId,
+          services,
+          staffMembers,
+          hasStaff,
+          businessHours
+        }
+      });
+      
+      console.log("Resposta da configuração do negócio:", response);
+      
+      if (!response?.data) {
+        throw new Error("Não foi possível obter resposta do servidor");
+      }
+      
+      const { success, error: setupError } = response.data;
+      
+      if (!success) {
+        throw new Error(setupError || "Erro ao finalizar configuração");
+      }
+      
+      return success;
+    } catch (error) {
+      console.error("Erro ao completar configuração do negócio:", error);
+      throw error;
+    }
+  };
+  
+  const verifyBusinessCreation = async (userId) => {
+    try {
+      console.log("Verificando se o negócio foi criado para o usuário:", userId);
+      
+      // Verificar associação na business_users primeiro
+      const { data: businessUserData, error: businessUserError } = await supabase
+        .from('business_users')
+        .select('business_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (!businessUserError && businessUserData?.business_id) {
+        console.log("Negócio encontrado em business_users:", businessUserData.business_id);
+        return businessUserData.business_id;
+      }
+      
+      console.log("Nenhum negócio encontrado em business_users, verificando usuarios...");
+      
+      // Tentar em usuarios como fallback
+      const { data: userData, error: userError } = await supabase
+        .from('usuarios')
+        .select('id_negocio')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (!userError && userData?.id_negocio) {
+        console.log("Negócio encontrado em usuarios:", userData.id_negocio);
+        return userData.id_negocio;
+      }
+      
+      console.log("Nenhum negócio encontrado para o usuário");
+      return null;
+    } catch (error) {
+      console.error("Erro ao verificar criação do negócio:", error);
+      return null;
+    }
+  };
   
   const handleFinish = async () => {
     if (!isComplete()) {
@@ -122,91 +266,83 @@ export const OnboardingControls: React.FC = () => {
     setProcessingStep("Iniciando criação do estabelecimento...");
     
     try {
-      // Step 1: Check slug availability one more time
-      setProcessingStep("Verificando disponibilidade do nome...");
-      
-      // Gerar um nome único adicionando um timestamp
-      const timestamp = Date.now().toString().slice(-4);
-      const uniqueName = `${businessData.name}-${timestamp}`;
-      
-      const { data: slugData, error: slugError } = await supabase.functions.invoke('check-slug-availability', {
-        body: { name: uniqueName },
-      });
-      
-      if (slugError || !slugData) {
-        throw new Error(slugError?.message || "Erro ao verificar disponibilidade do nome");
-      }
-      
-      // Se não estiver disponível, adicione um timestamp para torná-lo único
-      const finalBusinessName = (!slugData.isAvailable) ? uniqueName : businessData.name;
-      
-      // Step 2: Create business
+      // Tentar criar o negócio
       setProcessingStep("Criando seu estabelecimento...");
       
-      const businessResponse = await supabase.functions.invoke('create-business', {
-        body: {
-          businessData: {
-            name: finalBusinessName, // Use o nome potencialmente modificado
-            email: businessData.email,
-            phone: businessData.phone,
-            address: businessData.address,
-            number: businessData.number || businessData.addressNumber,
-            neighborhood: businessData.neighborhood,
-            city: businessData.city,
-            state: businessData.state,
-            cep: businessData.cep || businessData.zipCode
-          },
-          userId: user.id
+      let businessId = null;
+      let businessSlug = null;
+      
+      try {
+        const result = await createBusiness();
+        businessId = result.businessId;
+        businessSlug = result.businessSlug;
+        
+        // Store business info for next step
+        setBusinessCreated({
+          id: businessId,
+          slug: businessSlug
+        });
+      } catch (createError) {
+        console.error("Falha ao criar negócio:", createError);
+        
+        // Verificar se o negócio foi criado apesar do erro
+        setProcessingStep("Verificando se o negócio foi criado...");
+        
+        const existingBusinessId = await verifyBusinessCreation(user.id);
+        
+        if (existingBusinessId) {
+          businessId = existingBusinessId;
+          setBusinessCreated({
+            id: existingBusinessId
+          });
+          toast.warning("Negócio foi criado, mas houve problemas na comunicação.");
+        } else {
+          throw new Error("Não foi possível criar o negócio. Tente novamente.");
         }
-      });
-      
-      // Check if response data exists (timeout prevention)
-      if (!businessResponse || !businessResponse.data) {
-        throw new Error("O servidor está ocupado. Verificando se o estabelecimento foi criado...");
       }
       
-      const { success, businessId, businessSlug, needsProfileSetup, error: businessError } = businessResponse.data;
-      
-      if (!success) {
-        throw new Error(businessError || "Erro ao criar negócio");
-      }
-      
-      // Store business info for next step
-      setBusinessCreated({
-        id: businessId,
-        slug: businessSlug
-      });
-      
-      // Step 3: Complete setup with services, staff and hours
+      // Se chegou aqui, temos um ID de negócio. Completar configuração.
       setProcessingStep("Configurando serviços e profissionais...");
       
-      console.log("Calling complete-business-setup with", {
-        userId: user.id,
-        businessId: businessId,
-        servicesCount: services.length,
-        staffCount: staffMembers.length,
-        hasStaff
-      });
-      
-      const setupResponse = await supabase.functions.invoke('complete-business-setup', {
-        body: {
-          userId: user.id,
-          businessId: businessId,
-          services: services,
-          staffMembers: staffMembers,
-          hasStaff: hasStaff,
-          businessHours: businessHours
+      try {
+        await completeBusinessSetup(businessId);
+      } catch (setupError) {
+        console.error("Falha ao completar configuração:", setupError);
+        
+        // Tentar atualizar manualmente o status do negócio
+        setProcessingStep("Atualizando status do negócio...");
+        
+        try {
+          // Tentar atualizar status diretamente
+          const { error: updateError } = await supabase
+            .from('businesses')
+            .update({ 
+              status: 'active',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', businessId);
+          
+          if (updateError) {
+            console.error("Erro ao atualizar status em businesses:", updateError);
+            
+            // Tentar tabela legacy como fallback
+            const { error: legacyError } = await supabase
+              .from('negocios')
+              .update({ 
+                status: 'ativo',
+                atualizado_em: new Date().toISOString()
+              })
+              .eq('id', businessId);
+              
+            if (legacyError) {
+              console.error("Erro ao atualizar status em negocios:", legacyError);
+              throw new Error("Não foi possível atualizar o status do negócio");
+            }
+          }
+        } catch (manualUpdateError) {
+          console.error("Erro ao atualizar manualmente:", manualUpdateError);
+          throw new Error("Configuração parcial: criamos seu negócio mas houve um erro ao finalizar a configuração.");
         }
-      });
-      
-      if (!setupResponse || !setupResponse.data) {
-        throw new Error("O servidor está ocupado ao finalizar a configuração, mas seu estabelecimento foi criado.");
-      }
-      
-      const { success: setupSuccess, error: setupError } = setupResponse.data;
-      
-      if (!setupSuccess) {
-        throw new Error(setupError || "Erro ao finalizar configuração, mas seu estabelecimento foi criado.");
       }
       
       // Success!
@@ -225,89 +361,10 @@ export const OnboardingControls: React.FC = () => {
         navigate("/dashboard", { replace: true });
       }, 2000);
       
-    } catch (error: any) {
+    } catch (error) {
       console.error("Erro ao configurar estabelecimento:", error);
-      
-      // Special handling for timeout errors
-      if (error.message && (error.message.includes("ocupado") || error.message.includes("timeout"))) {
-        setProcessingStep("Verificando se o estabelecimento foi criado...");
-        
-        // Try to verify if business was created despite timeout
-        setTimeout(async () => {
-          try {
-            const { data: userData, error: userError } = await supabase
-              .from('usuarios')
-              .select('id_negocio')
-              .eq('id', user.id)
-              .maybeSingle();
-            
-            if (userError) throw userError;
-            
-            if (userData?.id_negocio) {
-              // Business exists
-              const { data: businessData, error: businessError } = await supabase
-                .from('negocios')
-                .select('id, slug')
-                .eq('id', userData.id_negocio)
-                .maybeSingle();
-                
-              if (businessError) throw businessError;
-              
-              if (businessData) {
-                // Store the business info
-                setBusinessCreated({
-                  id: businessData.id,
-                  slug: businessData.slug
-                });
-                
-                // Check if profile exists
-                const { data: accessProfile, error: profileError } = await supabase
-                  .from('perfis_acesso')
-                  .select('id')
-                  .eq('id_usuario', user.id)
-                  .eq('id_negocio', userData.id_negocio)
-                  .maybeSingle();
-                
-                if (profileError) throw profileError;
-                
-                if (accessProfile) {
-                  // Setup is already complete
-                  setStatus("success");
-                  setProcessingStep("Estabelecimento já configurado!");
-                  toast.success("Configuração concluída com sucesso!");
-                  
-                  // Clear onboarding data
-                  localStorage.removeItem('unclic-manager-onboarding');
-                  
-                  // Refresh business data to update contexts
-                  await refreshBusinessData();
-                  
-                  // Redirect to dashboard after a delay
-                  setTimeout(() => {
-                    navigate("/dashboard", { replace: true });
-                  }, 2000);
-                } else {
-                  // Business exists but setup is incomplete
-                  setError("Estabelecimento criado com sucesso, mas é necessário finalizar a configuração.");
-                  setStatus("error");
-                }
-              }
-            } else {
-              // Business wasn't created
-              setError("O estabelecimento não foi criado. Por favor, tente novamente.");
-              setStatus("error");
-            }
-          } catch (verifyError) {
-            console.error("Erro ao verificar criação do estabelecimento:", verifyError);
-            setError("Não foi possível verificar se o estabelecimento foi criado. Por favor, tente novamente.");
-            setStatus("error");
-          }
-        }, 2000);
-      } else {
-        // Regular error handling
-        setError(error.message || "Erro ao configurar estabelecimento");
-        setStatus("error");
-      }
+      setError(error.message || "Erro ao configurar estabelecimento");
+      setStatus("error");
     }
   };
   

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
@@ -20,6 +19,8 @@ export const useNeedsOnboarding = () => {
   const refreshOnboardingStatus = useCallback(async (skipCache = false) => {
     if (!businessId) {
       console.log('No business ID available, skipping onboarding check');
+      // Se não temos ID de negócio, provavelmente precisa de onboarding
+      setNeedsOnboarding(true);
       setLoading(false);
       return;
     }
@@ -52,7 +53,9 @@ export const useNeedsOnboarding = () => {
       
       // If currentBusiness is already loaded, use it
       if (currentBusiness) {
-        const needsSetup = currentBusiness.status === 'pendente' || currentBusiness.status === 'pending';
+        console.log('Using business data from context:', currentBusiness);
+        const statusValue = currentBusiness.status;
+        const needsSetup = statusValue === 'pendente' || statusValue === 'pending';
         setNeedsOnboarding(needsSetup);
         
         // Update cache
@@ -66,64 +69,94 @@ export const useNeedsOnboarding = () => {
       // Otherwise fetch from API
       console.log('Fetching business status for onboarding check:', businessId);
       
-      // Try new table structure first (businesses)
-      const { data, error } = await supabase
-        .from('businesses')
-        .select('id, status')
-        .eq('id', businessId)
-        .maybeSingle();
+      // Strategy 1: Try businesses table first
+      let businessStatus = null;
       
-      if (error && error.code !== '42P01') { // Ignore "relation does not exist" errors
-        console.error('Error checking business status in businesses table:', error);
+      try {
+        console.log('Checking businesses table...');
+        const { data, error } = await supabase
+          .from('businesses')
+          .select('id, status')
+          .eq('id', businessId)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error checking business status in businesses table:', error);
+        } else if (data) {
+          console.log('Found in businesses table:', data);
+          businessStatus = {
+            exists: true,
+            status: data.status
+          };
+        }
+      } catch (err) {
+        console.error('Failed to check businesses table:', err);
       }
       
-      if (data) {
-        // Use data from businesses table
-        const needsSetup = data.status === 'pendente' || data.status === 'pending';
+      // Strategy 2: Try negocios table if not found
+      if (!businessStatus) {
+        try {
+          console.log('Checking negocios table...');
+          const { data, error } = await supabase
+            .from('negocios')
+            .select('id, status')
+            .eq('id', businessId)
+            .maybeSingle();
+          
+          if (error) {
+            console.error('Error checking business status in negocios table:', error);
+          } else if (data) {
+            console.log('Found in negocios table:', data);
+            businessStatus = {
+              exists: true,
+              status: data.status
+            };
+          }
+        } catch (err) {
+          console.error('Failed to check negocios table:', err);
+        }
+      }
+      
+      // Strategy 3: RPC with set_business_status to verify
+      if (!businessStatus) {
+        try {
+          console.log('Trying RPC function check...');
+          const { data, error } = await supabase.rpc('get_business_status', {
+            business_id: businessId
+          });
+          
+          if (error) {
+            console.error('Error using RPC to check status:', error);
+          } else if (data) {
+            console.log('Found via RPC:', data);
+            businessStatus = {
+              exists: true,
+              status: data
+            };
+          }
+        } catch (err) {
+          console.error('Failed to use RPC check:', err);
+        }
+      }
+      
+      // Make a final decision based on all strategies
+      if (businessStatus && businessStatus.exists) {
+        console.log('Final business status determination:', businessStatus);
+        const status = businessStatus.status;
+        
+        // Check if business needs onboarding
+        const needsSetup = status === 'pendente' || status === 'pending';
         setNeedsOnboarding(needsSetup);
         
         // Update cache
         localStorage.setItem(cacheKey, String(needsSetup));
         localStorage.setItem(cacheTimestampKey, String(Date.now()));
-        
-        setLoading(false);
-        return;
+      } else {
+        console.warn('Could not determine business status, assuming needs onboarding');
+        setNeedsOnboarding(true);
+        localStorage.setItem(cacheKey, 'true');
+        localStorage.setItem(cacheTimestampKey, String(Date.now()));
       }
-      
-      // Try legacy table as fallback (negocios)
-      try {
-        const { data: legacyData, error: legacyError } = await supabase
-          .from('negocios')
-          .select('id, status')
-          .eq('id', businessId)
-          .maybeSingle();
-        
-        if (legacyError && legacyError.code !== '42P01') { // Ignore "relation does not exist" errors
-          console.error('Error checking business status in negocios table:', legacyError);
-          throw legacyError;
-        }
-        
-        if (legacyData) {
-          // Use data from negocios table
-          const needsSetup = legacyData.status === 'pendente' || legacyData.status === 'pending';
-          setNeedsOnboarding(needsSetup);
-          
-          // Update cache
-          localStorage.setItem(cacheKey, String(needsSetup));
-          localStorage.setItem(cacheTimestampKey, String(Date.now()));
-          
-          setLoading(false);
-          return;
-        }
-      } catch (fallbackError) {
-        console.error('Failed to check legacy business status:', fallbackError);
-      }
-      
-      // If we get here, set a default (needs onboarding)
-      console.warn('Could not determine onboarding status, defaulting to needs onboarding');
-      setNeedsOnboarding(true);
-      localStorage.setItem(cacheKey, 'true');
-      localStorage.setItem(cacheTimestampKey, String(Date.now()));
     } catch (err: any) {
       console.error("Error checking onboarding status:", err);
       // Default to needing onboarding if there's an error

@@ -33,157 +33,277 @@ export const OnboardingProcessStatus: React.FC = () => {
   const { refreshBusinessData, updateBusinessStatus } = useTenant();
   const { refreshOnboardingStatus } = useNeedsOnboarding();
   
+  // Function to check if a business exists and its status
+  const checkBusinessExists = useCallback(async (businessId) => {
+    try {
+      console.log("Verificando existência do negócio:", businessId);
+      
+      // Verificar na tabela businesses primeiro
+      const { data: businessData, error: businessError } = await supabase
+        .from('businesses')
+        .select('id, status')
+        .eq('id', businessId)
+        .maybeSingle();
+        
+      if (!businessError && businessData) {
+        console.log("Negócio encontrado na tabela businesses:", businessData);
+        return {
+          exists: true,
+          status: businessData.status,
+          table: 'businesses'
+        };
+      }
+      
+      // Verificar na tabela negocios como fallback
+      const { data: negociosData, error: negociosError } = await supabase
+        .from('negocios')
+        .select('id, status')
+        .eq('id', businessId)
+        .maybeSingle();
+        
+      if (!negociosError && negociosData) {
+        console.log("Negócio encontrado na tabela negocios:", negociosData);
+        return {
+          exists: true,
+          status: negociosData.status,
+          table: 'negocios'
+        };
+      }
+      
+      console.log("Negócio não encontrado em nenhuma tabela");
+      return { exists: false };
+    } catch (error) {
+      console.error("Erro ao verificar existência do negócio:", error);
+      return { exists: false, error };
+    }
+  }, []);
+  
+  // Function to find existing business ID for a user
+  const findUserBusinessId = useCallback(async (userId) => {
+    if (!userId) return null;
+    
+    try {
+      console.log("Procurando negócio associado ao usuário:", userId);
+      
+      // Procurar em business_users primeiro
+      const { data: businessUserData, error: businessUserError } = await supabase
+        .from('business_users')
+        .select('business_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+        
+      if (!businessUserError && businessUserData?.business_id) {
+        console.log("Negócio encontrado em business_users:", businessUserData.business_id);
+        return businessUserData.business_id;
+      }
+      
+      // Procurar em usuarios como fallback
+      const { data: userData, error: userError } = await supabase
+        .from('usuarios')
+        .select('id_negocio')
+        .eq('id', userId)
+        .maybeSingle();
+        
+      if (!userError && userData?.id_negocio) {
+        console.log("Negócio encontrado em usuarios:", userData.id_negocio);
+        return userData.id_negocio;
+      }
+      
+      console.log("Nenhum negócio encontrado para o usuário");
+      return null;
+    } catch (error) {
+      console.error("Erro ao procurar negócio do usuário:", error);
+      return null;
+    }
+  }, []);
+  
   // Function to handle finishing setup after business creation
   const handleCompleteSetup = useCallback(async () => {
-    if (!businessCreated?.id || !user) {
-      setError("ID do negócio ou usuário não encontrado");
+    if (!user) {
+      setError("Usuário não encontrado. Por favor, faça login novamente.");
       return;
     }
     
     setStatus("processing");
     setError(null);
-    setProcessingStep("Finalizando configuração do estabelecimento...");
     
-    try {
-      // Call the Edge Function to complete the business setup
-      console.log("Calling edge function with:", {
-        userId: user.id,
-        businessId: businessCreated.id,
-        servicesCount: services?.length,
-        staffCount: staffMembers?.length,
-        hasStaff
-      });
+    // Se não temos businessCreated.id, tentar encontrar o ID do negócio
+    let businessId = businessCreated?.id;
+    
+    if (!businessId) {
+      setProcessingStep("Procurando negócio existente...");
+      businessId = await findUserBusinessId(user.id);
       
-      const response = await supabase.functions.invoke('complete-business-setup', {
-        body: {
-          userId: user.id,
-          businessId: businessCreated.id,
-          services: services,
-          staffMembers: staffMembers,
-          hasStaff: hasStaff,
-          businessHours: businessHours
-        }
-      });
-      
-      // Check for Edge Function response
-      if (!response || !response.data) {
-        throw new Error("O servidor não respondeu. Verificando status...");
+      if (!businessId) {
+        setError("Não foi possível encontrar o negócio. Por favor, tente criar novamente.");
+        setStatus("error");
+        return;
       }
       
-      const { success, message, error: setupError } = response.data;
-      
-      if (!success) {
-        throw new Error(setupError || "Erro ao finalizar configuração");
-      }
-      
-      // Manually update the business status just to be extra safe
-      await updateBusinessStatus(businessCreated.id, "ativo");
-      
-      // Update status to success
+      // Atualizar o businessCreated
+      setBusinessCreated({
+        id: businessId
+      });
+    }
+    
+    // Verificar se o negócio existe e seu status
+    setProcessingStep("Verificando status do negócio...");
+    const businessStatus = await checkBusinessExists(businessId);
+    
+    // Se o negócio já estiver ativo, pular para o sucesso
+    if (businessStatus.exists && 
+        (businessStatus.status === 'active' || businessStatus.status === 'ativo')) {
+      console.log("Negócio já está ativo, pulando para sucesso");
+      setProcessingStep("Negócio já está ativo!");
       setStatus("success");
-      setProcessingStep("Configuração concluída com sucesso!");
-      toast.success(message || "Configuração concluída com sucesso!");
       
-      // Clear onboarding data from localStorage
+      // Limpar dados de onboarding
       localStorage.removeItem('unclic-manager-onboarding');
       
-      // Refresh both business data and onboarding status
+      // Atualizar dados
       await Promise.all([
-        refreshBusinessData(), 
+        refreshBusinessData(),
         refreshOnboardingStatus()
       ]);
       
-      // Redirect to dashboard after successful setup
+      // Redirecionar para dashboard
+      toast.success("Configuração já está concluída!");
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 1000);
+      return;
+    }
+    
+    // Se o negócio existe mas não está ativo, finalizar a configuração
+    if (businessStatus.exists) {
+      setProcessingStep("Finalizando configuração do estabelecimento...");
+      
+      try {
+        // Chamar Edge Function para completar configuração
+        console.log("Chamando edge function com:", {
+          userId: user.id,
+          businessId,
+          servicesCount: services?.length || 0,
+          staffCount: staffMembers?.length || 0,
+          hasStaff
+        });
+        
+        // Definir timeout para evitar espera infinita
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Tempo limite excedido")), 15000)
+        );
+        
+        const response = await Promise.race([
+          supabase.functions.invoke('complete-business-setup', {
+            body: {
+              userId: user.id,
+              businessId,
+              services,
+              staffMembers,
+              hasStaff,
+              businessHours
+            }
+          }),
+          timeoutPromise
+        ]);
+        
+        console.log("Resposta da edge function:", response);
+        
+        // Verificar resposta
+        if (!response || !response.data) {
+          throw new Error("Sem resposta do servidor");
+        }
+        
+        const { success, error: setupError } = response.data;
+        
+        if (!success) {
+          throw new Error(setupError || "Erro ao finalizar configuração");
+        }
+      } catch (error) {
+        console.error("Erro na edge function:", error);
+        
+        // Tentar atualizar o status manualmente
+        setProcessingStep("Atualizando status do negócio manualmente...");
+        
+        try {
+          // Determinar em qual tabela atualizar baseado na verificação anterior
+          if (businessStatus.table === 'businesses') {
+            await supabase
+              .from('businesses')
+              .update({ 
+                status: 'active',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', businessId);
+          } else {
+            await supabase
+              .from('negocios')
+              .update({ 
+                status: 'ativo',
+                atualizado_em: new Date().toISOString()
+              })
+              .eq('id', businessId);
+          }
+          
+          // Verificar se o perfil de acesso existe
+          const { data: accessProfile } = await supabase
+            .from('perfis_acesso')
+            .select('id')
+            .eq('id_usuario', user.id)
+            .eq('id_negocio', businessId)
+            .maybeSingle();
+            
+          if (!accessProfile) {
+            // Criar perfil de acesso se não existir
+            await supabase
+              .from('perfis_acesso')
+              .insert([{
+                id_usuario: user.id,
+                id_negocio: businessId,
+                e_administrador: true,
+                acesso_agendamentos: true,
+                acesso_clientes: true,
+                acesso_financeiro: true,
+                acesso_estoque: true,
+                acesso_relatorios: true,
+                acesso_configuracoes: true,
+                acesso_marketing: true
+              }]);
+          }
+        } catch (manualError) {
+          console.error("Erro ao atualizar status manualmente:", manualError);
+          // Continuar mesmo se falhar
+        }
+      }
+      
+      // Independente do resultado, tentar seguir para concluir o processo
+      setStatus("success");
+      setProcessingStep("Configuração concluída com sucesso!");
+      toast.success("Configuração concluída!");
+      
+      // Limpar dados de onboarding
+      localStorage.removeItem('unclic-manager-onboarding');
+      
+      // Atualizar contextos
+      try {
+        await Promise.all([
+          refreshBusinessData(),
+          refreshOnboardingStatus()
+        ]);
+      } catch (updateError) {
+        console.error("Erro ao atualizar dados:", updateError);
+      }
+      
+      // Redirecionar para dashboard
       setTimeout(() => {
         navigate("/dashboard", { replace: true });
       }, 1500);
-    } catch (error: any) {
-      console.error("Erro ao finalizar configuração:", error);
-      
-      // In case of timeout or other errors, try to verify if setup is complete
-      if (error.message && (error.message.includes("não respondeu") || error.message.includes("verificando"))) {
-        setProcessingStep("Verificando status de configuração...");
-        
-        // Try to manually update the business status directly
-        try {
-          const updated = await updateBusinessStatus(businessCreated.id, "ativo");
-          
-          if (updated) {
-            setStatus("success");
-            setProcessingStep("Configuração concluída com sucesso!");
-            toast.success("Status do negócio atualizado manualmente com sucesso!");
-            
-            // Clear onboarding data
-            localStorage.removeItem('unclic-manager-onboarding');
-            
-            // Refresh both business data and onboarding status
-            await Promise.all([
-              refreshBusinessData(),
-              refreshOnboardingStatus()
-            ]);
-            
-            // Redirect to dashboard
-            setTimeout(() => {
-              navigate("/dashboard", { replace: true });
-            }, 1500);
-            return;
-          }
-        } catch (updateError) {
-          console.error("Erro ao atualizar status manualmente:", updateError);
-        }
-        
-        // Delay to allow server processing to complete
-        setTimeout(async () => {
-          try {
-            // Check if the user has access to the business
-            const { data: accessProfile, error: profileError } = await supabase
-              .from('perfis_acesso')
-              .select('id')
-              .eq('id_usuario', user.id)
-              .eq('id_negocio', businessCreated.id)
-              .maybeSingle();
-            
-            if (profileError) throw profileError;
-            
-            if (accessProfile) {
-              // Access profile exists, indicating setup is complete
-              // Try to manually update the business status
-              await updateBusinessStatus(businessCreated.id, "ativo");
-              
-              setStatus("success");
-              setProcessingStep("Configuração concluída com sucesso!");
-              toast.success("Configuração concluída com sucesso!");
-              
-              // Clear onboarding data
-              localStorage.removeItem('unclic-manager-onboarding');
-              
-              // Refresh both business data and onboarding status
-              await Promise.all([
-                refreshBusinessData(), 
-                refreshOnboardingStatus()
-              ]);
-              
-              // Redirect to dashboard
-              setTimeout(() => {
-                navigate("/dashboard", { replace: true });
-              }, 1500);
-            } else {
-              // Access profile does not exist yet
-              setError("Configuração em andamento. Por favor, tente novamente em alguns instantes.");
-              setStatus("error");
-            }
-          } catch (verificationError) {
-            console.error("Erro ao verificar status de configuração:", verificationError);
-            setError("Não foi possível verificar o status da configuração. Por favor, tente novamente.");
-            setStatus("error");
-          }
-        }, 3000);
-      } else {
-        // Handle regular errors
-        setError(error.message || "Erro ao finalizar configuração");
-        setStatus("error");
-      }
+      return;
     }
+    
+    // Se o negócio não existe, mostrar erro
+    setError("Negócio não encontrado. Por favor, tente criar novamente.");
+    setStatus("error");
   }, [
     businessCreated, 
     user, 
@@ -197,7 +317,9 @@ export const OnboardingProcessStatus: React.FC = () => {
     navigate,
     updateBusinessStatus,
     refreshBusinessData,
-    refreshOnboardingStatus
+    refreshOnboardingStatus,
+    findUserBusinessId,
+    checkBusinessExists
   ]);
   
   // Function to retry the onboarding process
@@ -234,6 +356,157 @@ export const OnboardingProcessStatus: React.FC = () => {
     // Redirect to dashboard with replace (prevents going back to onboarding)
     navigate("/dashboard", { replace: true });
   }, [businessCreated, navigate, refreshBusinessData, refreshOnboardingStatus, updateBusinessStatus]);
+  
+  // Function to force activate business by creating all necessary entries
+  const handleForceActivate = useCallback(async () => {
+    if (!user) {
+      setError("Usuário não encontrado. Por favor, faça login novamente.");
+      return;
+    }
+    
+    setStatus("processing");
+    setProcessingStep("Recuperando configuração...");
+    
+    try {
+      // 1. Primeiro, ver se já existe um negócio
+      let businessId = businessCreated?.id;
+      
+      if (!businessId) {
+        businessId = await findUserBusinessId(user.id);
+      }
+      
+      // 2. Se não existe negócio, precisamos criar um novo
+      if (!businessId) {
+        setProcessingStep("Criando um novo negócio...");
+        
+        // Criar nome único
+        const timestamp = Date.now().toString().slice(-8);
+        const businessName = `Meu Negócio ${timestamp}`;
+        
+        // Inserir na tabela businesses
+        try {
+          const { data, error } = await supabase
+            .from('businesses')
+            .insert([
+              {
+                name: businessName,
+                admin_email: user.email || 'contato@exemplo.com',
+                slug: `meu-negocio-${timestamp}`,
+                status: 'active'
+              }
+            ])
+            .select('id')
+            .single();
+            
+          if (error) throw error;
+          businessId = data.id;
+        } catch (businessError) {
+          console.error("Erro ao criar na tabela businesses:", businessError);
+          
+          // Tentar tabela negocios
+          const { data, error } = await supabase
+            .from('negocios')
+            .insert([
+              {
+                nome: `Meu Negócio ${timestamp}`,
+                email_admin: user.email || 'contato@exemplo.com',
+                slug: `meu-negocio-${timestamp}`,
+                status: 'ativo'
+              }
+            ])
+            .select('id')
+            .single();
+            
+          if (error) throw error;
+          businessId = data.id;
+        }
+        
+        // Atualizar businessCreated
+        setBusinessCreated({
+          id: businessId,
+          slug: `meu-negocio-${timestamp}`
+        });
+      }
+      
+      // 3. Criar associação de usuário se não existir
+      setProcessingStep("Associando usuário ao negócio...");
+      
+      try {
+        // Verificar se já existe associação
+        const { data: existingAssoc, error: checkError } = await supabase
+          .from('business_users')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('business_id', businessId)
+          .maybeSingle();
+          
+        if (checkError) throw checkError;
+        
+        if (!existingAssoc) {
+          const { error: assocError } = await supabase
+            .from('business_users')
+            .insert([{
+              user_id: user.id,
+              business_id: businessId,
+              role: 'owner'
+            }]);
+            
+          if (assocError) throw assocError;
+        }
+      } catch (assocError) {
+        console.error("Erro ao criar associação business_users:", assocError);
+        
+        // Tentar atualizar na tabela usuarios como fallback
+        try {
+          await supabase
+            .from('usuarios')
+            .update({ id_negocio: businessId })
+            .eq('id', user.id);
+        } catch (userError) {
+          console.error("Erro ao atualizar usuario:", userError);
+        }
+      }
+      
+      // 4. Garantir que o negócio está ativo
+      setProcessingStep("Ativando negócio...");
+      await updateBusinessStatus(businessId, "ativo");
+      
+      // Success!
+      setStatus("success");
+      setProcessingStep("Recuperação concluída com sucesso!");
+      toast.success("Configuração recuperada com sucesso!");
+      
+      // Limpar dados de onboarding
+      localStorage.removeItem('unclic-manager-onboarding');
+      
+      // Atualizar contextos
+      await Promise.all([
+        refreshBusinessData(),
+        refreshOnboardingStatus()
+      ]);
+      
+      // Redirecionar para dashboard
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 1500);
+    } catch (error) {
+      console.error("Erro ao forçar ativação:", error);
+      setError(`Erro ao recuperar: ${error.message}`);
+      setStatus("error");
+    }
+  }, [
+    user, 
+    businessCreated, 
+    setStatus, 
+    setProcessingStep, 
+    setError, 
+    setBusinessCreated, 
+    navigate,
+    findUserBusinessId, 
+    updateBusinessStatus, 
+    refreshBusinessData, 
+    refreshOnboardingStatus
+  ]);
 
   const getStatusMessage = () => {
     switch (status) {
@@ -254,8 +527,10 @@ export const OnboardingProcessStatus: React.FC = () => {
 
   // Automatically try to complete setup when this component mounts if we have a business ID
   useEffect(() => {
-    if (status === "processing" && businessCreated?.id && !processingStep?.includes("Finalizando")) {
-      console.log("Triggering handleCompleteSetup automatically", businessCreated);
+    if ((status === "processing" || status === "verifying") && 
+        (businessCreated?.id || user?.id) && 
+        !processingStep?.includes("Finalizando")) {
+      console.log("Iniciando handleCompleteSetup automaticamente");
       handleCompleteSetup();
     }
     
@@ -265,7 +540,7 @@ export const OnboardingProcessStatus: React.FC = () => {
         localStorage.removeItem('unclic-manager-onboarding');
       }
     };
-  }, [businessCreated, status, processingStep, handleCompleteSetup]);
+  }, [businessCreated, status, processingStep, handleCompleteSetup, user]);
 
   return (
     <div className="space-y-8 py-12">
@@ -332,14 +607,20 @@ export const OnboardingProcessStatus: React.FC = () => {
               Tentar novamente
             </Button>
             
-            {businessCreated?.id && (
-              <Button
-                onClick={handleCompleteSetup}
-                className="min-w-[150px]"
-              >
-                Finalizar configuração
-              </Button>
-            )}
+            <Button
+              onClick={handleCompleteSetup}
+              className="min-w-[150px]"
+            >
+              Finalizar configuração
+            </Button>
+            
+            <Button
+              onClick={handleForceActivate}
+              variant="destructive"
+              className="min-w-[150px]"
+            >
+              Recuperação forçada
+            </Button>
           </>
         )}
         

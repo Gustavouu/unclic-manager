@@ -86,10 +86,50 @@ serve(async (req) => {
         if (!error) {
           tablesInfo[tableName as keyof typeof tablesInfo] = true;
           console.log(`Table ${tableName} exists`);
+        } else {
+          console.log(`Error checking table ${tableName}:`, error);
         }
       } catch (e) {
-        console.log(`Table ${tableName} doesn't exist or error checking it`);
+        console.log(`Table ${tableName} doesn't exist or error checking it:`, e);
       }
+    }
+    
+    // Double check if the business exists
+    console.log("Verifying business exists...");
+    let businessExists = false;
+    let businessTable = '';
+    
+    if (tablesInfo.businesses) {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('id', businessId)
+        .maybeSingle();
+      
+      if (!error && data) {
+        businessExists = true;
+        businessTable = 'businesses';
+        console.log("Business found in businesses table");
+      }
+    }
+    
+    if (!businessExists && tablesInfo.negocios) {
+      const { data, error } = await supabase
+        .from('negocios')
+        .select('id')
+        .eq('id', businessId)
+        .maybeSingle();
+      
+      if (!error && data) {
+        businessExists = true;
+        businessTable = 'negocios';
+        console.log("Business found in negocios table");
+      }
+    }
+    
+    if (!businessExists) {
+      console.error("Business not found in any table");
+      throw new Error("Negócio não encontrado");
     }
     
     // Create business_user association if table exists
@@ -279,9 +319,12 @@ serve(async (req) => {
     // Update business status to active
     console.log("Updating business status to active");
     let statusUpdateSuccess = false;
+
+    // Log the business table we're going to update
+    console.log(`Updating business status in ${businessTable} table`);
     
-    // Try new schema (businesses table) first
-    if (tablesInfo.businesses) {
+    // Try direct update based on table detected earlier
+    if (businessTable === 'businesses') {
       const { error: businessesError } = await supabase
         .from('businesses')
         .update({ 
@@ -296,11 +339,27 @@ serve(async (req) => {
         console.log("Business status updated successfully in businesses table");
         statusUpdateSuccess = true;
       }
+    } else if (businessTable === 'negocios') {
+      const { error: negociosError } = await supabase
+        .from('negocios')
+        .update({ 
+          status: 'ativo',
+          atualizado_em: new Date().toISOString()
+        })
+        .eq('id', businessId);
+        
+      if (negociosError) {
+        console.error("Error updating negocios status:", negociosError);
+      } else {
+        console.log("Business status updated successfully in negocios table");
+        statusUpdateSuccess = true;
+      }
     }
     
-    // Try RPC function if it exists
+    // If direct update failed, try RPC function
     if (!statusUpdateSuccess) {
       try {
+        console.log("Trying RPC method to update status");
         const { data: rpcData, error: rpcError } = await supabase.rpc('set_business_status', {
           business_id: businessId,
           new_status: 'active'
@@ -317,21 +376,44 @@ serve(async (req) => {
       }
     }
     
-    // Try legacy table as a last resort
-    if (!statusUpdateSuccess && tablesInfo.negocios) {
-      const { error: negociosError } = await supabase
-        .from('negocios')
-        .update({ 
-          status: 'ativo',
-          atualizado_em: new Date().toISOString()
-        })
-        .eq('id', businessId);
-        
-      if (negociosError) {
-        console.error("Error updating negocios status:", negociosError);
-      } else {
-        console.log("Business status updated successfully in negocios table");
-        statusUpdateSuccess = true;
+    // Try fallback methods if both previous methods failed
+    if (!statusUpdateSuccess) {
+      console.log("Previous update methods failed, trying fallbacks");
+      
+      // Try businesses table as fallback
+      if (tablesInfo.businesses && businessTable !== 'businesses') {
+        const { error: businessesError } = await supabase
+          .from('businesses')
+          .update({ 
+            status: 'active',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', businessId);
+          
+        if (businessesError) {
+          console.error("Fallback: Error updating businesses status:", businessesError);
+        } else {
+          console.log("Fallback: Business status updated successfully in businesses table");
+          statusUpdateSuccess = true;
+        }
+      }
+      
+      // Try negocios table as a last resort
+      if (!statusUpdateSuccess && tablesInfo.negocios && businessTable !== 'negocios') {
+        const { error: negociosError } = await supabase
+          .from('negocios')
+          .update({ 
+            status: 'ativo',
+            atualizado_em: new Date().toISOString()
+          })
+          .eq('id', businessId);
+          
+        if (negociosError) {
+          console.error("Fallback: Error updating negocios status:", negociosError);
+        } else {
+          console.log("Fallback: Business status updated successfully in negocios table");
+          statusUpdateSuccess = true;
+        }
       }
     }
     

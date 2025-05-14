@@ -38,6 +38,14 @@ serve(async (req) => {
     // Parse request body
     const { businessData, userId } = await req.json();
     
+    // Validar dados do negócio
+    if (!businessData || !businessData.name) {
+      throw new Error("Dados do negócio inválidos ou ausentes");
+    }
+    
+    // Log complete received data for debugging
+    console.log("Received business data:", businessData);
+    
     // Validate userId format and existence
     if (!userId || typeof userId !== 'string' || !userId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
       console.error("Invalid user ID format:", userId);
@@ -47,6 +55,11 @@ serve(async (req) => {
     // Create Supabase client with service role key (bypasses RLS)
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Configurações do Supabase não encontradas");
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     console.log("Received request to create business with valid user ID:", userId);
@@ -62,6 +75,31 @@ serve(async (req) => {
     
     console.log("Auth user verified:", authUser.user.email);
     
+    // Check which tables exist in the database
+    console.log("Verifying which tables exist in the database");
+    let tablesInfo = {
+      businesses: false,
+      negocios: false,
+      business_users: false
+    };
+    
+    for (const tableName of Object.keys(tablesInfo)) {
+      try {
+        const { count, error } = await supabase
+          .from(tableName)
+          .select('*', { count: 'exact', head: true });
+          
+        if (!error) {
+          tablesInfo[tableName as keyof typeof tablesInfo] = true;
+          console.log(`Table ${tableName} exists`);
+        } else {
+          console.log(`Error checking table ${tableName}:`, error);
+        }
+      } catch (e) {
+        console.log(`Table ${tableName} doesn't exist or error checking it:`, e);
+      }
+    }
+    
     // Generate and verify unique slug for the business
     let businessSlug = generateUniqueSlug(businessData.name);
     let attempt = 0;
@@ -69,186 +107,186 @@ serve(async (req) => {
     
     // Try to find a unique slug (max 5 attempts)
     while (!isSlugUnique && attempt < 5) {
-      // Check if slug already exists in businesses table
-      const { data: existingBusinessNew, error: slugCheckErrorNew } = await supabase
-        .from('businesses')
-        .select('id')
-        .eq('slug', businessSlug)
-        .maybeSingle();
+      let slugExists = false;
       
-      // Only check negocios if needed and if it exists
-      let existingBusinessOld = null;
-      let slugCheckErrorOld = null;
-      
-      try {
-        const response = await supabase
-          .from('negocios')
-          .select('id')
-          .eq('slug', businessSlug)
-          .maybeSingle();
+      // Check in businesses table if it exists
+      if (tablesInfo.businesses) {
+        try {
+          console.log(`Checking if slug '${businessSlug}' exists in businesses table`);
+          const { data, error } = await supabase
+            .from('businesses')
+            .select('id')
+            .eq('slug', businessSlug)
+            .maybeSingle();
           
-        existingBusinessOld = response.data;
-        slugCheckErrorOld = response.error;
-      } catch (error) {
-        // Table might not exist, ignore this error
-        console.log("Error checking slug in negocios table (might not exist):", error);
+          if (error) {
+            console.error("Error checking businesses table:", error);
+          } else if (data) {
+            console.log("Slug exists in businesses table");
+            slugExists = true;
+          }
+        } catch (error) {
+          console.error("Failed to check businesses table:", error);
+        }
       }
       
-      if (
-        (slugCheckErrorNew && slugCheckErrorNew.code === 'PGRST116') &&
-        (!existingBusinessOld || (slugCheckErrorOld && slugCheckErrorOld.code === 'PGRST116'))
-      ) {
-        // PGRST116 means no rows returned, so slug is unique
-        isSlugUnique = true;
-      } else if (
-        (!slugCheckErrorNew && existingBusinessNew) || 
-        (!slugCheckErrorOld && existingBusinessOld)
-      ) {
-        // Slug exists in either table, try a new one with a numeric suffix
+      // Check in negocios table if it exists
+      if (tablesInfo.negocios && !slugExists) {
+        try {
+          console.log(`Checking if slug '${businessSlug}' exists in negocios table`);
+          const { data, error } = await supabase
+            .from('negocios')
+            .select('id')
+            .eq('slug', businessSlug)
+            .maybeSingle();
+          
+          if (error) {
+            console.error("Error checking negocios table:", error);
+          } else if (data) {
+            console.log("Slug exists in negocios table");
+            slugExists = true;
+          }
+        } catch (error) {
+          console.error("Failed to check negocios table:", error);
+        }
+      }
+      
+      if (slugExists) {
+        // Slug exists, try a new one with a numeric suffix
         attempt++;
         businessSlug = generateUniqueSlug(businessData.name, attempt);
-      } else if (slugCheckErrorNew && slugCheckErrorNew.code !== 'PGRST116') {
-        // Some other error occurred with businesses table
-        console.error("Error checking slug uniqueness in businesses:", slugCheckErrorNew);
-        throw new Error(`Error checking slug uniqueness: ${slugCheckErrorNew.message}`);
+        console.log(`Slug exists, trying new slug: ${businessSlug}`);
       } else {
-        // No error and no business found, which means slug is unique
+        // Slug is unique
         isSlugUnique = true;
+        console.log(`Slug '${businessSlug}' is unique`);
       }
     }
     
     if (!isSlugUnique) {
+      console.error("Could not generate a unique slug after 5 attempts");
       throw new Error("Não foi possível gerar um slug único para o nome do estabelecimento. Por favor, tente um nome diferente.");
     }
     
-    // Create the business record with the unique slug in the businesses table
-    console.log("Creating business record in businesses table with slug:", businessSlug);
+    // Create the business record with the unique slug
+    console.log(`Creating business with slug '${businessSlug}'`);
     
     let businessId: string | null = null;
     
-    try {
-      const { data: businessRecord, error: businessError } = await supabase
-        .from('businesses')
-        .insert([
-          {
-            name: businessData.name,
-            admin_email: businessData.email,
-            phone: businessData.phone,
-            address: businessData.address,
-            address_number: businessData.number,
-            neighborhood: businessData.neighborhood,
-            city: businessData.city,
-            state: businessData.state,
-            zip_code: businessData.cep || businessData.zipCode,
-            slug: businessSlug,
-            status: 'pending'
-          }
-        ])
-        .select('id')
-        .single();
-      
-      if (businessError) {
-        console.error("Error creating business in businesses table:", businessError);
+    // Try to create in businesses table if it exists
+    if (tablesInfo.businesses) {
+      try {
+        console.log("Creating business in businesses table");
+        const { data, error } = await supabase
+          .from('businesses')
+          .insert([
+            {
+              name: businessData.name,
+              admin_email: businessData.email,
+              phone: businessData.phone,
+              address: businessData.address,
+              address_number: businessData.number || businessData.addressNumber,
+              neighborhood: businessData.neighborhood,
+              city: businessData.city,
+              state: businessData.state,
+              zip_code: businessData.cep || businessData.zipCode,
+              slug: businessSlug,
+              status: 'pending'
+            }
+          ])
+          .select('id')
+          .single();
         
-        // Check specifically for duplicate slug error
-        if (businessError.code === '23505' && businessError.message.includes('slug')) {
-          throw new Error("O nome do estabelecimento já está em uso. Por favor, escolha um nome diferente.");
+        if (error) {
+          console.error("Error creating business in businesses table:", error);
+        } else if (data) {
+          businessId = data.id;
+          console.log("Business created successfully in businesses table. ID:", businessId);
         }
-        
-        // If the error is related to the businesses table not existing, try legacy table
-        if (businessError.code === '42P01') {
-          console.log("businesses table doesn't exist, trying negocios table instead");
-          
-          // Try to create in legacy negocios table
-          const { data: legacyRecord, error: legacyError } = await supabase
-            .from('negocios')
-            .insert([
-              {
-                nome: businessData.name,
-                email_admin: businessData.email,
-                telefone: businessData.phone,
-                endereco: businessData.address,
-                numero: businessData.number,
-                bairro: businessData.neighborhood,
-                cidade: businessData.city,
-                estado: businessData.state,
-                cep: businessData.cep || businessData.zipCode,
-                slug: businessSlug,
-                status: 'pendente'
-              }
-            ])
-            .select('id')
-            .single();
-            
-          if (legacyError) {
-            console.error("Error creating business in negocios table:", legacyError);
-            throw new Error(`Erro ao criar negócio: ${legacyError.message}`);
-          }
-          
-          if (!legacyRecord) {
-            throw new Error("Não foi possível obter o ID do estabelecimento criado");
-          }
-          
-          businessId = legacyRecord.id;
-          console.log("Business created successfully in negocios table. ID:", businessId);
-        } else {
-          throw new Error(`Erro ao criar negócio: ${businessError.message}`);
-        }
-      } else if (!businessRecord) {
-        throw new Error("Não foi possível obter o ID do estabelecimento criado");
-      } else {
-        businessId = businessRecord.id;
-        console.log("Business created successfully in businesses table. ID:", businessId);
+      } catch (error) {
+        console.error("Failed to create in businesses table:", error);
       }
-      
-    } catch (error) {
-      console.error("Error creating business record:", error);
-      throw error;
+    }
+    
+    // Try to create in negocios table if businesses failed or doesn't exist
+    if (!businessId && tablesInfo.negocios) {
+      try {
+        console.log("Creating business in negocios table");
+        const { data, error } = await supabase
+          .from('negocios')
+          .insert([
+            {
+              nome: businessData.name,
+              email_admin: businessData.email,
+              telefone: businessData.phone,
+              endereco: businessData.address,
+              numero: businessData.number || businessData.addressNumber,
+              bairro: businessData.neighborhood,
+              cidade: businessData.city,
+              estado: businessData.state,
+              cep: businessData.cep || businessData.zipCode,
+              slug: businessSlug,
+              status: 'pendente'
+            }
+          ])
+          .select('id')
+          .single();
+        
+        if (error) {
+          console.error("Error creating business in negocios table:", error);
+        } else if (data) {
+          businessId = data.id;
+          console.log("Business created successfully in negocios table. ID:", businessId);
+        }
+      } catch (error) {
+        console.error("Failed to create in negocios table:", error);
+      }
     }
     
     if (!businessId) {
-      throw new Error("Falha ao criar o estabelecimento: ID não foi gerado");
+      console.error("Failed to create business in any table");
+      throw new Error("Falha ao criar o estabelecimento: não foi possível criar registro");
     }
     
-    // Create association between user and business in business_users table
-    console.log("Creating business_users association");
-    
-    try {
-      const { error: associationError } = await supabase
-        .from('business_users')
-        .insert([
-          {
-            user_id: userId,
-            business_id: businessId,
-            role: 'owner'
-          }
-        ]);
+    // Create association between user and business
+    if (tablesInfo.business_users) {
+      try {
+        console.log("Creating business_users association");
+        const { error } = await supabase
+          .from('business_users')
+          .insert([
+            {
+              user_id: userId,
+              business_id: businessId,
+              role: 'owner'
+            }
+          ]);
         
-      if (associationError && associationError.code !== '42P01') {
-        console.error("Error creating business_users association:", associationError);
-        // Don't throw here, try the legacy approach
-      } else if (!associationError) {
-        console.log("business_users association created successfully");
+        if (error) {
+          console.error("Error creating business_users association:", error);
+        } else {
+          console.log("business_users association created successfully");
+        }
+      } catch (error) {
+        console.error("Failed to create business_users association:", error);
       }
-    } catch (businessUserError) {
-      console.error("Error trying to create business_users association:", businessUserError);
-      // Continue despite error
     }
     
-    // As fallback, try to update user in usuarios table if it exists
+    // Update user in usuarios table if it exists (legacy)
     try {
-      const { error: userError } = await supabase
+      console.log("Updating user in usuarios table");
+      const { error } = await supabase
         .from('usuarios')
         .update({ id_negocio: businessId })
         .eq('id', userId);
       
-      if (userError && userError.code !== '42P01') {
-        console.error("Error updating user profile in usuarios:", userError);
-      } else if (!userError) {
-        console.log("User profile updated with business ID in usuarios table");
+      if (error && error.code !== '42P01') {
+        console.error("Error updating user in usuarios table:", error);
+      } else if (!error) {
+        console.log("User updated successfully in usuarios table");
       }
     } catch (error) {
-      console.error("Error trying to update user in usuarios:", error);
+      console.error("Failed to update user in usuarios table:", error);
     }
     
     // Function execution summary
@@ -276,7 +314,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error.message || "Erro desconhecido na criação do negócio"
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

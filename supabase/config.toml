@@ -1,1 +1,11 @@
+
 project_id = "ztwntsmwzstvmoqgiztc"
+
+[functions.check-business-status]
+verify_jwt = true
+
+[functions.complete-business-setup]
+verify_jwt = true
+
+[functions.create-business]
+verify_jwt = true
