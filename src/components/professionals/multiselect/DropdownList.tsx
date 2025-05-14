@@ -1,39 +1,72 @@
 
-import React from "react";
-import { Option } from "./types";
+import React, { useRef, useEffect } from 'react';
+import { SelectableItem } from './SelectableItem';
+import { Option } from './types';
+import { Search } from 'lucide-react';
 
-export interface DropdownListProps {
-  children?: React.ReactNode;
-  maxHeight?: number;
-  isOpen: boolean;
-  
-  // Add the additional props that are being passed from MultiSelect.tsx
-  open?: boolean;
-  options?: Option[];
-  onSelect?: (selectedOption: Option) => void;
-  inputValue?: string;
-  emptyMessage?: string;
+interface DropdownListProps {
+  options: Option[];
+  selectedValues: string[];
+  onSelect: (option: Option) => void;
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+  onClose: () => void;
 }
 
-export const DropdownList = ({ 
-  children,
-  maxHeight = 200,
-  isOpen,
-  open, // Backward compatibility
-  options, // May be used in future versions
-  onSelect, // May be used in future versions
-  inputValue, // May be used in future versions
-  emptyMessage // May be used in future versions
+export const DropdownList = ({
+  options,
+  selectedValues,
+  onSelect,
+  searchTerm,
+  onSearchChange,
+  onClose
 }: DropdownListProps) => {
-  // Use either isOpen or open for backward compatibility
-  if (!isOpen && !open) return null;
-
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [onClose]);
+  
   return (
     <div 
-      className="absolute top-full left-0 right-0 mt-1 rounded-md border bg-popover shadow-md z-50"
-      style={{ maxHeight: `${maxHeight}px`, overflowY: 'auto' }}
+      ref={dropdownRef}
+      className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
     >
-      {children}
+      <div className="sticky top-0 bg-white p-2 border-b">
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <input
+            type="text"
+            className="w-full pl-8 pr-2 py-1 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="Buscar..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+        </div>
+      </div>
+      
+      <div className="py-1">
+        {options.length === 0 ? (
+          <div className="text-gray-500 text-sm px-3 py-2">Nenhum resultado encontrado</div>
+        ) : (
+          options.map(option => (
+            <SelectableItem
+              key={option.value}
+              label={option.label}
+              isSelected={selectedValues.includes(option.value)}
+              onClick={() => onSelect(option)}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 };

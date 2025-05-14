@@ -1,60 +1,29 @@
 
-import * as React from "react";
-import { Check } from "lucide-react";
-import { CommandItem } from "@/components/ui/command";
-import { Option } from "./types";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { Check } from 'lucide-react';
 
 interface SelectableItemProps {
-  option: Option;
-  onSelect: (option: Option) => void;
-  inputValue?: string;
+  label: string;
+  isSelected: boolean;
+  onClick: () => void;
 }
 
-export const SelectableItem = React.memo(({ 
-  option, 
-  onSelect,
-  inputValue = ""
-}: SelectableItemProps) => {
-  // Highlight matching text when filtering
-  const highlightLabel = () => {
-    if (!inputValue.trim()) return <span>{option.label}</span>;
-    
-    const lowerLabel = option.label.toLowerCase();
-    const lowerInput = inputValue.toLowerCase();
-    const index = lowerLabel.indexOf(lowerInput);
-    
-    if (index === -1) return <span>{option.label}</span>;
-    
-    return (
-      <span>
-        {option.label.slice(0, index)}
-        <span className="font-semibold bg-blue-100 rounded-sm px-0.5">
-          {option.label.slice(index, index + inputValue.length)}
-        </span>
-        {option.label.slice(index + inputValue.length)}
-      </span>
-    );
-  };
-
+export const SelectableItem = ({ label, isSelected, onClick }: SelectableItemProps) => {
   return (
-    <CommandItem
-      key={option.value}
-      onMouseDown={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      onSelect={() => onSelect(option)}
-      className="cursor-pointer flex items-center justify-between hover:bg-slate-100"
-      value={option.value}
+    <div
+      className={`px-3 py-1.5 flex items-center cursor-pointer hover:bg-gray-100 ${
+        isSelected ? 'bg-gray-50' : ''
+      }`}
+      onClick={onClick}
     >
-      {highlightLabel()}
-      <Check className={cn(
-        "h-4 w-4 opacity-0 transition-opacity duration-200",
-        "group-data-[selected]:opacity-100"
-      )} />
-    </CommandItem>
+      <div className="mr-2 flex-shrink-0">
+        <div className={`w-4 h-4 border rounded flex items-center justify-center ${
+          isSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+        }`}>
+          {isSelected && <Check className="h-3 w-3 text-white" />}
+        </div>
+      </div>
+      <div className="truncate">{label}</div>
+    </div>
   );
-});
-
-SelectableItem.displayName = "SelectableItem";
+};

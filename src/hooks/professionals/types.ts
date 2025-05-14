@@ -1,3 +1,4 @@
+
 export interface Professional {
   id: string;
   name: string;
@@ -41,7 +42,16 @@ export const STATUS_MAPPING = {
   }
 };
 
+// Define and export AppointmentStatus type and constants
 export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+
+export const APPOINTMENT_STATUS = {
+  SCHEDULED: 'scheduled',
+  CONFIRMED: 'confirmed',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
+  NO_SHOW: 'no_show'
+};
 
 export const APPOINTMENT_STATUS_RECORD = {
   scheduled: {
@@ -69,4 +79,20 @@ export const APPOINTMENT_STATUS_RECORD = {
 export interface Option {
   value: string;
   label: string;
+}
+
+// Add ProfessionalFormData interface that is missing but referenced in other files
+export interface ProfessionalFormData {
+  id?: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  position?: string;
+  photo_url?: string;
+  bio?: string;
+  specialties?: string[];
+  status: ProfessionalStatus;
+  business_id?: string;
+  user_id?: string;
+  commission_percentage?: number;
 }

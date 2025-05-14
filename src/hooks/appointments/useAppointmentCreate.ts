@@ -4,8 +4,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { toast } from "sonner";
-// Import AppointmentStatus enum from professionals/types.ts
-import { AppointmentStatus, APPOINTMENT_STATUS_RECORD } from "@/hooks/professionals/types";
+// Import AppointmentStatus constants from professionals/types.ts
+import { APPOINTMENT_STATUS } from "@/hooks/professionals/types";
 
 export const useAppointmentCreate = (setAppointments: any = null) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -91,7 +91,7 @@ export const useAppointmentCreate = (setAppointments: any = null) => {
       const { data, error } = await supabase
         .from("appointments")
         .update({
-          status: AppointmentStatus.CANCELED,
+          status: APPOINTMENT_STATUS.CANCELLED,
         })
         .eq("id", id)
         .select();
