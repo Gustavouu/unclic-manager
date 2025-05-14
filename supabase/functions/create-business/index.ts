@@ -14,20 +14,19 @@ serve(async (req) => {
   }
 
   try {
-    // Create Supabase client
+    // Create Supabase client with service role key for admin access
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
-    // Log environment information for debugging
     console.log("Function initialization:");
     console.log(`SUPABASE_URL: ${supabaseUrl ? "set" : "missing"}`);
-    console.log(`SUPABASE_SERVICE_ROLE_KEY: ${supabaseKey ? "set" : "missing"}`);
+    console.log(`SUPABASE_SERVICE_ROLE_KEY: ${supabaseServiceKey ? "set" : "missing"}`);
     
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Missing environment variables");
     }
     
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get request body
     const requestBody = await req.json();
@@ -54,37 +53,38 @@ serve(async (req) => {
     }
 
     // Generate a slug from business name
-    const slug = generateSlug(businessData.name);
+    const timestamp = Date.now().toString().slice(-6);
+    // Convert to lowercase, replace spaces with hyphens, remove special characters
+    const baseSlug = businessData.name
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]/g, '');
+      
+    const slug = `${baseSlug}-${timestamp}`;
     
     console.log("Creating business with data:", {
       name: businessData.name,
       email: businessData.email,
-      slug: slug,
-      userId: userId
+      slug,
+      userId
     });
     
-    // Check if the businesses table exists
     try {
-      const { data: tableCheck, error: tableError } = await supabase
+      // First check if the businesses table exists by running a simple query
+      const { data: tableExists, error: tableCheckError } = await supabase
         .from('businesses')
         .select('id')
         .limit(1);
-      
-      if (tableError) {
-        console.error('Error checking businesses table:', tableError);
-        throw new Error(`Table check error: ${tableError.message}`);
+        
+      if (tableCheckError && tableCheckError.code !== 'PGRST116') {
+        console.error('Error checking businesses table:', tableCheckError);
+        throw new Error(`Table check error: ${tableCheckError.message}`);
       }
       
-      console.log('Businesses table check:', tableCheck ? 'Table exists' : 'Table not found');
-    } catch (tableCheckError) {
-      console.error('Failed to check businesses table:', tableCheckError);
-      throw new Error(`Table verification failed: ${tableCheckError.message}`);
-    }
-    
-    // Create business in businesses table
-    let businessResult;
-    try {
-      businessResult = await supabase
+      console.log("Businesses table check result:", tableExists !== null);
+      
+      // Create business in businesses table
+      const { data: businessData, error: businessError } = await supabase
         .from('businesses')
         .insert([{
           name: businessData.name,
@@ -98,30 +98,25 @@ serve(async (req) => {
           state: businessData.state,
           zip_code: businessData.zipCode || businessData.cep,
           slug: slug,
-          status: 'pending'
+          status: 'active' // Changed from 'pending' to 'active' to skip further setup
         }])
-        .select('id')
+        .select('id, slug')
         .single();
         
-      if (businessResult.error) {
-        console.error('Error creating business:', businessResult.error);
-        throw new Error(`Business creation error: ${businessResult.error.message}`);
+      if (businessError) {
+        console.error('Error creating business:', businessError);
+        throw businessError;
       }
-    } catch (insertError) {
-      console.error('Exception during business creation:', insertError);
-      throw new Error(`Business insertion failed: ${insertError.message}`);
-    }
-    
-    if (!businessResult?.data?.id) {
-      throw new Error("Business creation succeeded but no ID was returned");
-    }
-    
-    const businessId = businessResult.data.id;
-    console.log('Business created with ID:', businessId);
-    
-    // Create association between business and user
-    try {
-      const { error } = await supabase
+      
+      if (!businessData?.id) {
+        throw new Error("Business creation succeeded but no ID was returned");
+      }
+      
+      const businessId = businessData.id;
+      console.log('Business created with ID:', businessId);
+      
+      // Create association between business and user
+      const { error: userError } = await supabase
         .from('business_users')
         .insert([{
           business_id: businessId,
@@ -129,19 +124,15 @@ serve(async (req) => {
           role: 'owner'
         }]);
         
-      if (error) {
-        console.error('Error creating business-user association:', error);
-        throw error;
+      if (userError) {
+        console.error('Error creating business-user association:', userError);
+        // Don't throw here, we'll still return success if the business was created
+      } else {
+        console.log('Business-user association created successfully');
       }
-      console.log('Business-user association created successfully');
-    } catch (error) {
-      console.error('Failed to create business-user association:', error);
-      // Continue anyway since we've created the business
-    }
-    
-    // Create default business settings
-    try {
-      const { error } = await supabase
+      
+      // Create default business settings
+      const { error: settingsError } = await supabase
         .from('business_settings')
         .insert([{
           business_id: businessId,
@@ -149,34 +140,45 @@ serve(async (req) => {
           banner_url: businessData.bannerUrl
         }]);
         
-      if (error) {
-        console.error('Failed to create business settings:', error);
+      if (settingsError) {
+        console.error('Failed to create business settings:', settingsError);
       } else {
         console.log('Business settings created successfully');
       }
-    } catch (error) {
-      console.error('Exception during business settings creation:', error);
-      // Continue anyway since we've created the business
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          businessId,
+          businessSlug: slug
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+      
+    } catch (dbError) {
+      console.error("Database operation error:", dbError);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Database error: ${dbError.message || dbError}` 
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 500 
+        }
+      );
     }
-    
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        businessId,
-        businessSlug: slug
-      }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
-      }
-    );
 
   } catch (error) {
-    console.error("Error in create-business:", error);
+    console.error("Unhandled error in create-business:", error);
     
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || "An error occurred" 
+        error: error.message || "An unexpected error occurred" 
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" }, 
@@ -185,14 +187,3 @@ serve(async (req) => {
     );
   }
 });
-
-function generateSlug(name: string): string {
-  const timestamp = Date.now().toString().slice(-6);
-  // Convert to lowercase, replace spaces with hyphens, remove special characters
-  const baseSlug = name
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]/g, '');
-    
-  return `${baseSlug}-${timestamp}`;
-}

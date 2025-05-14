@@ -10,10 +10,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const OnboardingPage = () => {
   const { user, loading } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<"checking" | "connected" | "error">("checking");
+  const [retryCount, setRetryCount] = useState(0);
   
   // Define page title
   useEffect(() => {
@@ -30,9 +32,11 @@ const OnboardingPage = () => {
         if (error && error.code === '42P01') {
           console.error("Table 'businesses' doesn't exist:", error);
           setConnectionStatus("error");
+          toast.error("A tabela 'businesses' não existe no banco de dados");
         } else if (error) {
           console.error("Database connection error:", error);
           setConnectionStatus("error");
+          toast.error(`Erro ao conectar ao banco de dados: ${error.message}`);
         } else {
           console.log("Successfully connected to database");
           setConnectionStatus("connected");
@@ -40,13 +44,14 @@ const OnboardingPage = () => {
       } catch (err) {
         console.error("Failed to connect to Supabase:", err);
         setConnectionStatus("error");
+        toast.error("Falha ao conectar ao Supabase");
       }
     };
     
     if (user && !loading) {
       checkConnection();
     }
-  }, [user, loading]);
+  }, [user, loading, retryCount]);
 
   // Show loading state while checking authentication
   if (loading) {
@@ -76,7 +81,10 @@ const OnboardingPage = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  setConnectionStatus("checking");
+                  setRetryCount(prev => prev + 1);
+                }}
                 className="flex items-center"
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
