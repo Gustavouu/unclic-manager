@@ -18,7 +18,7 @@ export function ReportsHeader({ dateRange, onDateRangeChange }: ReportsHeaderPro
       </div>
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-4 sm:mt-0">
-        <Select value={dateRange} onValueChange={onDateRangeChange}>
+        <Select value={dateRange || "last7days"} onValueChange={onDateRangeChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Selecionar período" />
           </SelectTrigger>

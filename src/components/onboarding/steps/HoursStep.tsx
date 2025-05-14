@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -64,7 +65,7 @@ export const HoursStep: React.FC = () => {
                         Abertura
                       </Label>
                       <Select
-                        value={businessHours[day.key].openTime}
+                        value={businessHours[day.key].openTime || "09:00"}
                         onValueChange={(value) => handleTimeChange(day.key, 'openTime', value)}
                         disabled={!businessHours[day.key].open}
                       >
@@ -86,7 +87,7 @@ export const HoursStep: React.FC = () => {
                         Fechamento
                       </Label>
                       <Select
-                        value={businessHours[day.key].closeTime}
+                        value={businessHours[day.key].closeTime || "18:00"}
                         onValueChange={(value) => handleTimeChange(day.key, 'closeTime', value)}
                         disabled={!businessHours[day.key].open}
                       >

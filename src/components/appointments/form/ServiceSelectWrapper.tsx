@@ -81,11 +81,17 @@ const ServiceSelectWrapper = ({ form, availableServices }: ServiceSelectWrapperP
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {services.map((service) => (
-                <SelectItem key={service.id} value={service.id}>
-                  {service.nome} - {service.duracao}min - R${service.preco}
+              {services.length > 0 ? (
+                services.map((service) => (
+                  <SelectItem key={service.id} value={service.id}>
+                    {service.nome} - {service.duracao}min - R${service.preco}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="loading" disabled>
+                  {loading ? "Carregando serviços..." : "Nenhum serviço encontrado"}
                 </SelectItem>
-              ))}
+              )}
             </SelectContent>
           </Select>
           {selectedService && (

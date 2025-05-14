@@ -36,7 +36,7 @@ export const PaymentMethodSelect = ({
           <FormControl>
             <Select
               onValueChange={field.onChange}
-              defaultValue={field.value}
+              defaultValue={field.value || PAYMENT_METHODS[0].value}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione a forma de pagamento" />

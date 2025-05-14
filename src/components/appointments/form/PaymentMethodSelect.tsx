@@ -1,3 +1,4 @@
+
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
@@ -15,7 +16,7 @@ export const PaymentMethodSelect = ({ form }: PaymentMethodSelectProps) => {
       render={({ field }) => (
         <FormItem>
           <FormLabel>Forma de Pagamento</FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <Select onValueChange={field.onChange} defaultValue={field.value || "local"}>
             <FormControl>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione a forma de pagamento" />
@@ -34,4 +35,4 @@ export const PaymentMethodSelect = ({ form }: PaymentMethodSelectProps) => {
       )}
     />
   );
-}; 
+};

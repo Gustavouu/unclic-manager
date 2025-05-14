@@ -123,7 +123,7 @@ export function ClientsFilters({ clients, onFilteredClientsChange }: ClientsFilt
               <SelectValue placeholder="Todas as cidades" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas as cidades</SelectItem>
+              <SelectItem value="all_cities">Todas as cidades</SelectItem>
               {cities.map((city) => (
                 <SelectItem key={city} value={city || "unknown"}>
                   {city || "Sem cidade"}

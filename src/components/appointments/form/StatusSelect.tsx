@@ -1,3 +1,4 @@
+
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
@@ -15,7 +16,7 @@ export const StatusSelect = ({ form }: StatusSelectProps) => {
       render={({ field }) => (
         <FormItem>
           <FormLabel>Status</FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <Select onValueChange={field.onChange} defaultValue={field.value || "agendado"}>
             <FormControl>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o status" />
@@ -34,4 +35,4 @@ export const StatusSelect = ({ form }: StatusSelectProps) => {
       )}
     />
   );
-}; 
+};

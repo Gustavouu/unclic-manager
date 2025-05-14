@@ -55,18 +55,28 @@ const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelec
               className="bg-muted"
             />
           ) : (
-            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading || disabled}>
+            <Select 
+              onValueChange={field.onChange} 
+              defaultValue={field.value} 
+              disabled={loading || disabled}
+            >
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder={loading ? "Carregando clientes..." : "Selecione um cliente"} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.nome} {client.telefone ? `(${client.telefone})` : ''}
+                {clients.length > 0 ? (
+                  clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.nome} {client.telefone ? `(${client.telefone})` : ''}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no_clients" disabled>
+                    {loading ? "Carregando clientes..." : "Nenhum cliente encontrado"}
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           )}
