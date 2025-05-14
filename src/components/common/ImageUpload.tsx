@@ -1,124 +1,132 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { revokeFilePreview } from "@/contexts/onboarding/utils/fileUtils";
+import { Upload, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ImageUploadProps {
-  imageUrl: string | null;
-  onImageChange: (file: File | null, previewUrl: string | null) => void;
-  imageName?: string;
-  height?: string;
-  width?: string;
-  icon: React.ReactNode;
-  label: string;
-  subLabel?: string;
-  id: string;
+  value?: string;
+  onChange: (file: File) => void;
+  onRemove?: () => void;
+  disabled?: boolean;
+  maxSize?: number;
+  aspectRatio?: "square" | "16:9" | "4:3";
   className?: string;
 }
 
 export const ImageUpload: React.FC<ImageUploadProps> = ({
-  imageUrl,
-  onImageChange,
-  height = "h-32",
-  width = "w-32",
-  icon,
-  label,
-  subLabel,
-  id,
-  className = "",
+  value,
+  onChange,
+  onRemove,
+  disabled = false,
+  maxSize = 5, // 5MB
+  aspectRatio = "square",
+  className,
 }) => {
-  const [preview, setPreview] = useState<string | null>(imageUrl);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Only update preview if imageUrl prop changes and is different from current preview
-  useEffect(() => {
-    if (imageUrl !== preview) {
-      setPreview(imageUrl);
-    }
-  }, [imageUrl, preview]);
-  
-  // Cleanup preview URL when component unmounts or preview changes
-  useEffect(() => {
-    return () => {
-      if (preview && preview.startsWith('blob:') && preview !== imageUrl) {
-        revokeFilePreview(preview);
-      }
-    };
-  }, [preview, imageUrl]);
+  const handleClick = () => {
+    if (disabled) return;
+    inputRef.current?.click();
+  };
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] || null;
-    
-    // Clean up old preview URL if it exists and is different from imageUrl
-    if (preview && preview.startsWith('blob:') && preview !== imageUrl) {
-      revokeFilePreview(preview);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > maxSize * 1024 * 1024) {
+      alert(`O arquivo deve ter no máximo ${maxSize}MB`);
+      return;
     }
+
+    onChange(file);
     
-    if (file) {
-      // Create a new preview URL
-      const newPreviewUrl = URL.createObjectURL(file);
-      setPreview(newPreviewUrl);
-      onImageChange(file, newPreviewUrl);
-    } else {
-      setPreview(null);
-      onImageChange(null, null);
+    // Reset input value to allow selecting the same file again
+    if (inputRef.current) {
+      inputRef.current.value = "";
     }
   };
-  
-  const handleRemoveImage = () => {
-    // Clean up URL if exists and is different from imageUrl
-    if (preview && preview.startsWith('blob:') && preview !== imageUrl) {
-      revokeFilePreview(preview);
+
+  const handleRemove = () => {
+    if (disabled) return;
+    onRemove?.();
+  };
+
+  const getAspectRatioClass = () => {
+    switch (aspectRatio) {
+      case "16:9":
+        return "aspect-video";
+      case "4:3":
+        return "aspect-4/3";
+      default:
+        return "aspect-square";
     }
-    
-    setPreview(null);
-    onImageChange(null, null);
   };
 
   return (
-    <div className={className}>
-      {preview ? (
-        <div className={`relative ${width} ${height} rounded-md overflow-hidden border border-border`}>
-          <img 
-            src={preview} 
-            alt={`${label} Preview`} 
-            className="w-full h-full object-cover"
-          />
-          <Button 
-            variant="destructive" 
-            size="sm" 
-            className="absolute top-1 right-1 h-6 w-6 p-0"
-            onClick={handleRemoveImage}
-          >
-            ✕
-          </Button>
+    <div className={cn("flex flex-col items-center space-y-2", className)}>
+      <input
+        type="file"
+        ref={inputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={handleFileChange}
+        disabled={disabled}
+      />
+      
+      {!value ? (
+        <div 
+          onClick={handleClick}
+          className={cn(
+            "flex flex-col items-center justify-center border-2 border-dashed rounded-md p-4 w-full cursor-pointer hover:border-primary/70 transition-colors",
+            getAspectRatioClass(),
+            disabled && "opacity-50 cursor-not-allowed"
+          )}
+        >
+          <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+          <p className="text-sm text-center text-muted-foreground">
+            Clique para fazer upload
+            <span className="block text-xs">
+              Máximo {maxSize}MB
+            </span>
+          </p>
         </div>
       ) : (
-        <label 
-          htmlFor={id} 
-          className={`flex items-center justify-center border border-dashed border-border rounded-md p-6 ${width} ${height} cursor-pointer`}
-        >
-          <div className="flex flex-col items-center">
-            {icon}
-            <span className="text-xs text-muted-foreground text-center">
-              {label}
-            </span>
-            {subLabel && (
-              <span className="text-xs text-muted-foreground text-center">
-                {subLabel}
-              </span>
-            )}
-          </div>
-        </label>
+        <div className="relative w-full">
+          <img 
+            src={value} 
+            alt="Preview" 
+            className={cn("rounded-md object-cover w-full", getAspectRatioClass())}
+          />
+          {onRemove && (
+            <button
+              type="button"
+              onClick={handleRemove}
+              disabled={disabled}
+              className={cn(
+                "absolute top-2 right-2 bg-background rounded-full p-1 shadow hover:bg-accent transition-colors",
+                disabled && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       )}
       
-      <Input 
-        id={id} 
-        type="file" 
-        accept="image/*"
-        className="hidden" 
-        onChange={handleImageChange}
-      />
+      {value && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleClick}
+          disabled={disabled}
+          className="mt-2"
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Alterar Imagem
+        </Button>
+      )}
     </div>
   );
 };

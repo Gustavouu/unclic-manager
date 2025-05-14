@@ -1,10 +1,11 @@
+
 import React from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MultiSelect } from "@/components/professionals/multiselect/ProfessionalsMultiSelect";
-import { Option } from "@/components/professionals/multiselect/types";
 import { UseFormReturn } from "react-hook-form";
 import { ProfessionalFormData } from "@/hooks/professionals/types";
+import { Option } from "@/components/professionals/multiselect/types";
 
 interface SpecialtiesSelectProps {
   form: UseFormReturn<ProfessionalFormData>;
@@ -12,98 +13,57 @@ interface SpecialtiesSelectProps {
 }
 
 export const SpecialtiesSelect = ({ form, specialties = [] }: SpecialtiesSelectProps) => {
-  // Ensure specialties is always an array
-  const safeSpecialties = React.useMemo(() => 
-    Array.isArray(specialties) ? specialties : [], 
-    [specialties]
-  );
-  
-  // Convert string array to Option array for MultiSelect
-  const specialtyOptions = React.useMemo(() => 
-    safeSpecialties.map(specialty => ({
+  // Convert flat specialties array to Option[] format for MultiSelect
+  const specialtyOptions = React.useMemo(() => {
+    return specialties.map(specialty => ({
       label: specialty,
       value: specialty
-    })),
-    [safeSpecialties]
-  );
-
-  // Convert form specialties string[] to Option[]
+    }));
+  }, [specialties]);
+  
+  // Add common specialties if the provided list is empty
+  const finalOptions = React.useMemo(() => {
+    if (specialtyOptions.length === 0) {
+      return [
+        { label: "Corte", value: "Corte" },
+        { label: "Coloração", value: "Coloração" },
+        { label: "Manicure", value: "Manicure" },
+        { label: "Pedicure", value: "Pedicure" },
+        { label: "Depilação", value: "Depilação" },
+        { label: "Massagem", value: "Massagem" },
+        { label: "Maquiagem", value: "Maquiagem" }
+      ];
+    }
+    return specialtyOptions;
+  }, [specialtyOptions]);
+  
+  // Get currently selected specialties from form
   const selectedSpecialties = React.useMemo(() => {
     const formSpecialties = form.watch("specialties") || [];
     return Array.isArray(formSpecialties) 
       ? formSpecialties
       : [];
   }, [form]);
-
-  // For backward compatibility, keep the single-select version
-  const useSingleSelect = false; // Set to true to use single select instead of multi-select
-
-  if (useSingleSelect) {
-    return (
-      <FormField
-        control={form.control}
-        name="specialties"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Especialização *</FormLabel>
-            <Select 
-              onValueChange={(value) => field.onChange([value])}
-              value={Array.isArray(field.value) && field.value.length > 0 ? field.value[0] : "default"}
-              defaultValue="default"
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma especialização" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="default" disabled>
-                  Selecione uma especialização
-                </SelectItem>
-                {safeSpecialties.length > 0 ? (
-                  safeSpecialties.map((specialty) => (
-                    <SelectItem key={specialty} value={specialty}>
-                      {specialty}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-options" disabled>
-                    Sem especializações disponíveis
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-            <FormDescription>
-              Selecione a especialização principal deste profissional
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    );
-  }
-
-  // Use the improved MultiSelect component
+  
   return (
     <FormField
       control={form.control}
       name="specialties"
       render={({ field }) => (
-        <FormItem>
-          <FormLabel>Especializações *</FormLabel>
+        <FormItem className="w-full">
+          <FormLabel>Especializações</FormLabel>
           <FormControl>
             <MultiSelect
-              options={specialtyOptions}
+              options={finalOptions}
               selectedValues={selectedSpecialties}
               onChange={(values) => {
                 field.onChange(values);
               }}
               placeholder="Selecione as especializações"
-              emptyMessage="Sem especializações disponíveis"
             />
           </FormControl>
           <FormDescription>
-            Selecione uma ou mais especializações deste profissional
+            Selecione as especialidades deste profissional.
           </FormDescription>
           <FormMessage />
         </FormItem>

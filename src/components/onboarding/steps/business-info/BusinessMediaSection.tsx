@@ -1,119 +1,140 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { 
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { ImageIcon, Instagram, Facebook, Linkedin, Twitter } from "lucide-react";
+import { ImageUpload } from "@/components/common/ImageUpload";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 export const BusinessMediaSection: React.FC = () => {
   const { businessData, updateBusinessData } = useOnboarding();
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const [uploading, setUploading] = useState(false);
+
+  const handleLogoUpload = async (file: File) => {
+    if (!file) return;
     
-    if (name.includes('social-')) {
-      const socialNetwork = name.replace('social-', '');
-      updateBusinessData({ 
-        socialMedia: { 
-          ...businessData.socialMedia,
-          [socialNetwork]: value 
-        } 
-      });
-    } else {
-      updateBusinessData({ [name]: value });
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("O arquivo deve ter no máximo 5MB");
+      return;
+    }
+    
+    try {
+      setUploading(true);
+      
+      // Convert to base64 for storage in onboarding context
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        updateBusinessData({
+          logo: file,
+          logoUrl: reader.result as string,
+          logoName: file.name
+        });
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Erro ao fazer upload da logo:", error);
+      toast.error("Erro ao fazer upload da logo");
+      setUploading(false);
     }
   };
-  
+
+  const handleBannerUpload = async (file: File) => {
+    if (!file) return;
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("O arquivo deve ter no máximo 5MB");
+      return;
+    }
+    
+    try {
+      setUploading(true);
+      
+      // Convert to base64 for storage in onboarding context
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        updateBusinessData({
+          banner: file,
+          bannerUrl: reader.result as string,
+          bannerName: file.name
+        });
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Erro ao fazer upload do banner:", error);
+      toast.error("Erro ao fazer upload do banner");
+      setUploading(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <ImageIcon className="h-5 w-5" /> 
-          Mídia e Redes Sociais
-        </CardTitle>
+        <CardTitle>Mídias e Redes Sociais</CardTitle>
       </CardHeader>
-      
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="logoUrl">URL do Logo</Label>
-          <Input 
-            id="logoUrl"
-            name="logoUrl"
-            type="url"
-            value={businessData.logoUrl || ''}
-            onChange={handleChange}
-            placeholder="https://example.com/seu-logo.png"
+          <Label>Logo</Label>
+          <ImageUpload
+            value={businessData.logoUrl}
+            onChange={handleLogoUpload}
+            disabled={uploading}
+            maxSize={5}
           />
-          <p className="text-xs text-muted-foreground">
-            URL da imagem do seu logotipo
-          </p>
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="social-instagram">Instagram</Label>
-          <div className="flex items-center space-x-2">
-            <Instagram className="h-4 w-4 text-muted-foreground" />
-            <Input 
-              id="social-instagram"
-              name="social-instagram"
-              value={businessData.socialMedia?.instagram || ''}
-              onChange={handleChange}
-              placeholder="@seunegocio ou URL completa"
-              className="flex-1"
-            />
-          </div>
+          <Label>Banner</Label>
+          <ImageUpload
+            value={businessData.bannerUrl}
+            onChange={handleBannerUpload}
+            disabled={uploading}
+            maxSize={5}
+            aspectRatio="16:9"
+          />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="social-facebook">Facebook</Label>
-          <div className="flex items-center space-x-2">
-            <Facebook className="h-4 w-4 text-muted-foreground" />
-            <Input 
-              id="social-facebook"
-              name="social-facebook"
-              value={businessData.socialMedia?.facebook || ''}
-              onChange={handleChange}
-              placeholder="URL da sua página"
-              className="flex-1"
-            />
-          </div>
+          <Label htmlFor="website">Website</Label>
+          <Input
+            id="website"
+            placeholder="Ex: https://www.seusite.com"
+            value={businessData.website || ""}
+            onChange={(e) => updateBusinessData({ website: e.target.value })}
+          />
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="social-linkedin">LinkedIn</Label>
-            <div className="flex items-center space-x-2">
-              <Linkedin className="h-4 w-4 text-muted-foreground" />
-              <Input 
-                id="social-linkedin"
-                name="social-linkedin"
-                value={businessData.socialMedia?.linkedin || ''}
-                onChange={handleChange}
-                placeholder="URL"
-                className="flex-1"
-              />
-            </div>
+            <Label htmlFor="instagram">Instagram</Label>
+            <Input
+              id="instagram"
+              placeholder="Ex: @seunegocio"
+              value={businessData.socialMedia?.instagram || ""}
+              onChange={(e) => updateBusinessData({ 
+                socialMedia: { 
+                  ...businessData.socialMedia,
+                  instagram: e.target.value 
+                } 
+              })}
+            />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="social-twitter">Twitter</Label>
-            <div className="flex items-center space-x-2">
-              <Twitter className="h-4 w-4 text-muted-foreground" />
-              <Input 
-                id="social-twitter"
-                name="social-twitter"
-                value={businessData.socialMedia?.twitter || ''}
-                onChange={handleChange}
-                placeholder="@usuario ou URL"
-                className="flex-1"
-              />
-            </div>
+            <Label htmlFor="facebook">Facebook</Label>
+            <Input
+              id="facebook"
+              placeholder="Ex: facebook.com/seunegocio"
+              value={businessData.socialMedia?.facebook || ""}
+              onChange={(e) => updateBusinessData({ 
+                socialMedia: { 
+                  ...businessData.socialMedia,
+                  facebook: e.target.value 
+                } 
+              })}
+            />
           </div>
         </div>
       </CardContent>
