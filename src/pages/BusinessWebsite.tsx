@@ -1,3 +1,4 @@
+
 import React from "react";
 import { AnimatePresence } from "framer-motion";
 import { WebsiteBanner } from "@/components/website/WebsiteBanner";
@@ -38,10 +39,11 @@ const BusinessWebsite = () => {
   // Create a fallback business data object if businessData is incomplete
   const displayBusinessData = {
     name: businessData?.name || "Estabelecimento Demo",
-    email: businessData?.email || businessData?.admin_email || "contato@demo.com",
+    email: businessData?.admin_email || "contato@demo.com", // Use admin_email instead of email
     phone: businessData?.phone || "(11) 9999-9999",
     address: businessData?.address || "Av. Exemplo",
-    number: businessData?.address_number || businessData?.number || "123",
+    number: businessData?.address_number || "123", // Use address_number consistently
+    addressNumber: businessData?.address_number || "123", // Add addressNumber for compatibility
     neighborhood: businessData?.neighborhood || "Centro",
     city: businessData?.city || "São Paulo",
     state: businessData?.state || "SP",
