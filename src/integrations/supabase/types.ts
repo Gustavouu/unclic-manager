@@ -604,6 +604,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_user_business_access: {
+        Args: { business_id_param: string }
+        Returns: boolean
+      }
       get_user_businesses: {
         Args: { user_id: string }
         Returns: {
