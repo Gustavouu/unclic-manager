@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,7 +10,7 @@ import { AsyncFeedback } from "@/components/ui/async-feedback";
 import { LogIn, Lock, Mail, UserPlus } from "lucide-react";
 
 const Login = () => {
-  const { login, user, loading } = useAuth();
+  const { login, user, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +36,7 @@ const Login = () => {
   };
   
   // Se já estiver autenticado, redirecionar para o index que decidirá o fluxo
-  if (user && !loading) {
+  if (isAuthenticated && !loading) {
     return <Navigate to="/" replace />;
   }
   
