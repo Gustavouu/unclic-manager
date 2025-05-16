@@ -11,17 +11,15 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 const OnboardingPage = () => {
-  const { user, loading: authLoading } = useAuth();
-  const { businessId, businessData, loading: businessLoading, error: businessError } = useCurrentBusiness();
+  const { user, loading } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<"checking" | "connected" | "error">("checking");
   const [retryCount, setRetryCount] = useState(0);
   
   // Define page title
   useEffect(() => {
-    document.title = "Initial Setup | Unclic";
+    document.title = "Configuração Inicial | Unclic";
   }, []);
   
   // Check Supabase connection
@@ -31,10 +29,14 @@ const OnboardingPage = () => {
         // Simple query to check database connection
         const { data, error } = await supabase.from('businesses').select('id').limit(1);
         
-        if (error) {
+        if (error && error.code === '42P01') {
+          console.error("Table 'businesses' doesn't exist:", error);
+          setConnectionStatus("error");
+          toast.error("A tabela 'businesses' não existe no banco de dados");
+        } else if (error) {
           console.error("Database connection error:", error);
           setConnectionStatus("error");
-          toast.error(`Error connecting to database: ${error.message}`);
+          toast.error(`Erro ao conectar ao banco de dados: ${error.message}`);
         } else {
           console.log("Successfully connected to database");
           setConnectionStatus("connected");
@@ -42,20 +44,20 @@ const OnboardingPage = () => {
       } catch (err) {
         console.error("Failed to connect to Supabase:", err);
         setConnectionStatus("error");
-        toast.error("Failed to connect to Supabase");
+        toast.error("Falha ao conectar ao Supabase");
       }
     };
     
-    if (user && !authLoading) {
+    if (user && !loading) {
       checkConnection();
     }
-  }, [user, authLoading, retryCount]);
+  }, [user, loading, retryCount]);
 
   // Show loading state while checking authentication
-  if (authLoading || businessLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader size="lg" text="Loading..." />
+        <Loader size="lg" text="Carregando..." />
       </div>
     );
   }
@@ -66,14 +68,14 @@ const OnboardingPage = () => {
   }
   
   // Show error if database connection failed
-  if (connectionStatus === "error" || businessError) {
+  if (connectionStatus === "error") {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full space-y-4">
           <Alert variant="destructive">
-            <AlertTitle>Connection error</AlertTitle>
+            <AlertTitle>Erro de conexão</AlertTitle>
             <AlertDescription className="mt-2">
-              {businessError || "Could not connect to the database. Please try again later or contact support."}
+              Não foi possível conectar ao banco de dados. Por favor, tente novamente mais tarde ou entre em contato com o suporte.
             </AlertDescription>
             <div className="mt-4">
               <Button 
@@ -86,7 +88,7 @@ const OnboardingPage = () => {
                 className="flex items-center"
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Try again
+                Tentar novamente
               </Button>
             </div>
           </Alert>
@@ -99,16 +101,7 @@ const OnboardingPage = () => {
   if (connectionStatus === "checking") {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader size="lg" text="Checking database connection..." />
-      </div>
-    );
-  }
-
-  // Show loading state while waiting for business ID
-  if (!businessId) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader size="lg" text="Loading business information..." />
+        <Loader size="lg" text="Verificando conexão com o banco de dados..." />
       </div>
     );
   }

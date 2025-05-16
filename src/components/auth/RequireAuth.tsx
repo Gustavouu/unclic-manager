@@ -1,43 +1,33 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { useNeedsOnboarding } from '@/hooks/useNeedsOnboarding';
-import { Loader } from '@/components/ui/loader';
+
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { ReactNode } from "react";
+import { OnboardingRedirect } from "./OnboardingRedirect";
 
 interface RequireAuthProps {
-  children: React.ReactNode;
+  children: ReactNode;
   skipOnboardingCheck?: boolean;
 }
 
-export const RequireAuth: React.FC<RequireAuthProps> = ({ 
-  children, 
-  skipOnboardingCheck = false 
-}) => {
+export const RequireAuth = ({ children, skipOnboardingCheck = false }: RequireAuthProps) => {
   const { user, loading } = useAuth();
-  const { needsOnboarding, loading: onboardingLoading } = useNeedsOnboarding();
   const location = useLocation();
   
-  // Show loader while checking authentication status
-  if (loading || (!skipOnboardingCheck && user && onboardingLoading)) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader size="lg" text="Verificando autenticação..." />
-      </div>
-    );
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
   }
-  
-  // If not authenticated, redirect to login
+
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
-  
-  // If needs onboarding and we're not skipping the check, redirect to onboarding
-  if (!skipOnboardingCheck && needsOnboarding) {
-    return <Navigate to="/onboarding" replace />;
+
+  // If we should skip the onboarding check (for the onboarding page itself)
+  if (skipOnboardingCheck) {
+    return <>{children}</>;
   }
-  
-  // Otherwise, render the protected content
-  return <>{children}</>;
+
+  // Use the non-blocking onboarding notification approach
+  return <OnboardingRedirect>{children}</OnboardingRedirect>;
 };
 
 export default RequireAuth;

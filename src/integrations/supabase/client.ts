@@ -1,61 +1,74 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { Database } from './types';
+import { Database } from './database.types';
 
-// These values are exposed to the browser, so this is safe
-const supabaseUrl = 'https://zckwriebmvcyvrmznsgf.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpja3dyaWVibXZjeXZybXpuc2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcyNjYzOTIsImV4cCI6MjA2Mjg0MjM5Mn0.SDzW3_X1c6Aoi84ROaAmnuhmZb-qWjCghPJn7PfxbKA';
+// Try to get environment variables first, then use fallbacks for development
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ztwntsmwzstvmoqgiztc.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0d250c213enN0dm1vcWdpenRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcxNzkxNDMsImV4cCI6MjA2Mjc1NTE0M30.WYYk5DVBrHj6Po6w0VSdiz4ezScu6iPfmultRIpoz_I';
 
-// Add a simple in-memory cache for frequently accessed data
-const cache = new Map<string, { data: any; timestamp: number }>();
+// Log config
+console.log("Supabase Client Initialization:");
+console.log(`URL: ${supabaseUrl}`);
+console.log(`Key: ${supabaseKey ? "Set (length: " + supabaseKey.length + ")" : "Not Set"}`);
 
-// Cache expiration time in milliseconds (default: 5 minutes)
-const DEFAULT_CACHE_EXPIRATION = 5 * 60 * 1000;
-
-/**
- * Fetch data with caching support
- * @param cacheKey Unique key to identify the cached data
- * @param fetchFn Function that returns the data to be cached
- * @param expirationMs Cache expiration time in milliseconds (optional)
- */
-export const fetchWithCache = async <T>(
-  cacheKey: string,
-  fetchFn: () => Promise<T>,
-  expirationMs: number = DEFAULT_CACHE_EXPIRATION
-): Promise<T> => {
-  const now = Date.now();
-  const cachedData = cache.get(cacheKey);
-  
-  // Return cached data if it exists and hasn't expired
-  if (cachedData && now - cachedData.timestamp < expirationMs) {
-    return cachedData.data;
-  }
-  
-  // Fetch fresh data
-  const data = await fetchFn();
-  
-  // Store in cache
-  cache.set(cacheKey, { data, timestamp: now });
-  
-  return data;
-};
-
-/**
- * Clear the entire cache or a specific key
- * @param cacheKey Optional key to clear specific cache entry
- */
-export const clearCache = (cacheKey?: string): void => {
-  if (cacheKey) {
-    cache.delete(cacheKey);
-  } else {
-    cache.clear();
-  }
-};
-
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true
   }
 });
+
+// Cache utility for data fetching
+interface CacheItem<T> {
+  data: T;
+  timestamp: number;
+  expiry: number; // in minutes
+}
+
+const cache = new Map<string, CacheItem<any>>();
+
+export const fetchWithCache = async <T>(
+  key: string,
+  fetchFn: () => Promise<T>,
+  expiry: number = 5 // Default 5 minutes
+): Promise<T> => {
+  const now = Date.now();
+  const cachedItem = cache.get(key);
+
+  if (cachedItem && now - cachedItem.timestamp < cachedItem.expiry * 60 * 1000) {
+    return cachedItem.data;
+  }
+
+  // Fetch fresh data
+  const data = await fetchFn();
+  
+  // Store in cache
+  cache.set(key, {
+    data,
+    timestamp: now,
+    expiry
+  });
+
+  return data;
+};
+
+// Helper to check if tables exist in the database
+export const checkTableExists = async (tableName: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from(tableName)
+      .select('count(*)')
+      .limit(1);
+      
+    if (error && error.code === '42P01') {
+      console.warn(`Table '${tableName}' does not exist:`, error);
+      return false;
+    }
+    
+    return !error;
+  } catch (err) {
+    console.error(`Error checking if table '${tableName}' exists:`, err);
+    return false;
+  }
+};

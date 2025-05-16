@@ -1,43 +1,29 @@
 
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Appointment } from './types';
-import { toast } from 'sonner';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Appointment } from "./types";
 
-export const useAppointmentDelete = (setAppointments: (appointments: Appointment[]) => void) => {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  const deleteAppointment = async (id: string): Promise<boolean> => {
-    setIsDeleting(true);
-    setError(null);
-
+export const useAppointmentDelete = (
+  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
+) => {
+  const deleteAppointment = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('appointments')
+        .from('agendamentos')
         .delete()
         .eq('id', id);
-
-      if (error) {
-        throw error;
-      }
-
-      setAppointments(prev => prev.filter(appointment => appointment.id !== id));
-      toast.success('Appointment deleted successfully');
-      return true;
+      
+      if (error) throw error;
+      
+      // Remove from state
+      setAppointments(prev => prev.filter(app => app.id !== id));
+      toast.success("Agendamento excluído com sucesso!");
     } catch (err) {
-      console.error('Error deleting appointment:', err);
-      setError(err instanceof Error ? err : new Error('Failed to delete appointment'));
-      toast.error('Failed to delete appointment');
-      return false;
-    } finally {
-      setIsDeleting(false);
+      console.error("Error deleting appointment:", err);
+      toast.error("Erro ao excluir agendamento");
+      throw err;
     }
   };
 
-  return {
-    deleteAppointment,
-    isDeleting,
-    error
-  };
+  return { deleteAppointment };
 };
