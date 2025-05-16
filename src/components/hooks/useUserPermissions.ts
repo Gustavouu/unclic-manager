@@ -1,7 +1,5 @@
-
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { fetchWithCache } from '@/integrations/supabase/client';
+import { supabase, fetchWithCache } from '@/integrations/supabase/client';
 
 export type Role = 'admin' | 'manager' | 'staff';
 
