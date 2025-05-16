@@ -2,18 +2,18 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Toaster } from "sonner";
 import { AsyncFeedback } from "@/components/ui/async-feedback";
-import { Lock, Mail, User, ArrowLeft } from "lucide-react";
+import { Lock, Mail, User, ArrowLeft, Building } from "lucide-react";
 import { LoadingButton } from "@/components/ui/loading-button";
 
 const SignUp = () => {
   const { signup, user, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -45,7 +45,10 @@ const SignUp = () => {
     setErrorMessage("");
     
     try {
-      await signup(email, password, name);
+      await signup(email, password, {
+        full_name: name,
+        business_name: businessName
+      });
       
       // After signup, navigate to index which will handle the routing
       navigate("/");
@@ -91,6 +94,20 @@ const SignUp = () => {
                 placeholder="Seu nome completo"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                required
+                disabled={isSubmitting || loading}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="businessName" className="text-sm font-medium flex items-center gap-2">
+                <Building className="h-4 w-4" /> Nome do Negócio
+              </label>
+              <Input
+                id="businessName"
+                type="text"
+                placeholder="Nome do seu negócio"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
                 required
                 disabled={isSubmitting || loading}
               />

@@ -57,13 +57,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setTimeout(async () => {
             try {
               const { data, error } = await supabase
-                .from('usuarios')
-                .select('id_negocio')
-                .eq('id', session.user.id)
+                .from('business_users')
+                .select('business_id')
+                .eq('user_id', session.user.id)
                 .maybeSingle();
                 
-              if (data?.id_negocio) {
-                localStorage.setItem('currentBusinessId', data.id_negocio);
+              if (data?.business_id) {
+                localStorage.setItem('currentBusinessId', data.business_id);
               }
             } catch (err) {
               console.error("Error fetching business ID on auth state change:", err);
@@ -87,13 +87,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         try {
           const { data, error } = await supabase
-            .from('usuarios')
-            .select('id_negocio')
-            .eq('id', session.user.id)
+            .from('business_users')
+            .select('business_id')
+            .eq('user_id', session.user.id)
             .maybeSingle();
             
-          if (data?.id_negocio) {
-            localStorage.setItem('currentBusinessId', data.id_negocio);
+          if (data?.business_id) {
+            localStorage.setItem('currentBusinessId', data.business_id);
           }
         } catch (err) {
           console.error("Error fetching business ID on initialization:", err);
@@ -145,7 +145,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email,
         password,
         options: {
-          data: userMetadata, // Correctly formatted user metadata
+          data: {
+            ...userMetadata,
+            business_name: userMetadata?.business_name || userMetadata?.nome_negocio || 'Meu Negócio'
+          }
         },
       });
 
@@ -228,7 +231,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Alias methods for backward compatibility
   const login = (email: string, password: string) => signIn(email, password);
-  const signup = (email: string, password: string, name: string) => signUp(email, password, { nome_completo: name });
+  const signup = (email: string, password: string, name: string) => signUp(email, password, { full_name: name });
   const logout = () => signOut();
 
   return (

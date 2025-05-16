@@ -16,11 +16,46 @@ const OnboardingPage = () => {
   const { user, loading } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<"checking" | "connected" | "error">("checking");
   const [retryCount, setRetryCount] = useState(0);
+  const [businessId, setBusinessId] = useState<string | null>(null);
   
   // Define page title
   useEffect(() => {
     document.title = "Configuração Inicial | Unclic";
   }, []);
+  
+  // Get business ID for the user
+  useEffect(() => {
+    const getBusinessId = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('business_users')
+          .select('business_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data?.business_id) {
+          setBusinessId(data.business_id);
+          localStorage.setItem('currentBusinessId', data.business_id);
+        } else {
+          console.error("No business found for user");
+          setConnectionStatus("error");
+        }
+      } catch (err) {
+        console.error("Error fetching business ID:", err);
+        setConnectionStatus("error");
+      }
+    };
+    
+    if (user && !loading) {
+      getBusinessId();
+    }
+  }, [user, loading]);
   
   // Check Supabase connection
   useEffect(() => {
@@ -29,11 +64,7 @@ const OnboardingPage = () => {
         // Simple query to check database connection
         const { data, error } = await supabase.from('businesses').select('id').limit(1);
         
-        if (error && error.code === '42P01') {
-          console.error("Table 'businesses' doesn't exist:", error);
-          setConnectionStatus("error");
-          toast.error("A tabela 'businesses' não existe no banco de dados");
-        } else if (error) {
+        if (error) {
           console.error("Database connection error:", error);
           setConnectionStatus("error");
           toast.error(`Erro ao conectar ao banco de dados: ${error.message}`);
@@ -102,6 +133,15 @@ const OnboardingPage = () => {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <Loader size="lg" text="Verificando conexão com o banco de dados..." />
+      </div>
+    );
+  }
+
+  // Show loading state while waiting for business ID
+  if (!businessId) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader size="lg" text="Carregando informações do negócio..." />
       </div>
     );
   }

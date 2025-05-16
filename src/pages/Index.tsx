@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,12 +6,10 @@ import { Loader } from "@/components/ui/loader";
 
 const Index = () => {
   const { user, loading } = useAuth();
-  const { loading: onboardingLoading } = useNeedsOnboarding();
+  const { needsOnboarding, loading: onboardingLoading, businessId } = useNeedsOnboarding();
   
   useEffect(() => {
     document.title = "Unclic Manager";
-    
-    // No redundant refreshes here - data fetching is now centralized in TenantContext
   }, []);
   
   if (loading || (user && onboardingLoading)) {
@@ -28,7 +25,19 @@ const Index = () => {
     return <Navigate to="/login" replace />;
   }
   
-  // Even if onboarding is needed, send to dashboard instead of forcing onboarding
+  // If authenticated but no business ID, something is wrong
+  if (!businessId) {
+    console.error("No business ID found for authenticated user");
+    // Try to recover by navigating to onboarding
+    return <Navigate to="/onboarding" replace />;
+  }
+  
+  // If onboarding is needed and we have a business ID, go to onboarding
+  if (needsOnboarding && businessId) {
+    return <Navigate to="/onboarding" replace />;
+  }
+  
+  // Otherwise, redirect to dashboard
   return <Navigate to="/dashboard" replace />;
 };
 
