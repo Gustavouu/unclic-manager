@@ -9,7 +9,8 @@
     "strict": true,
     "declaration": true,
     "emitDeclarationOnly": true,
-    "noEmit": false
+    "noEmit": false,
+    "outDir": "."
   },
   "include": ["vite.config.ts"]
 }
