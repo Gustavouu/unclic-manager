@@ -6,8 +6,7 @@
     "moduleResolution": "Node",
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "noEmit": true
+    "resolveJsonModule": true
   },
   "include": ["vite.config.ts"]
 }
