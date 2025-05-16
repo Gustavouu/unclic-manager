@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchWithCache } from '@/integrations/supabase/client';
 
 export type Role = 'admin' | 'manager' | 'staff';
 
@@ -36,53 +35,34 @@ export function useUserPermissions() {
         throw new Error('Tenant não selecionado');
       }
       
-      // Tentar obter do cache primeiro
-      const cacheKey = `user_role_${user.id}_${tenantId}`;
-      const roleData = await fetchWithCache(
-        cacheKey,
-        async () => {
-          // Buscar o papel do usuário no tenant atual
-          const { data, error } = await supabase
-            .from('tenant_users')
-            .select('role')
-            .eq('tenant_id', tenantId)
-            .eq('user_id', user.id)
-            .single();
-          
-          if (error) throw error;
-          
-          return data;
-        },
-        30 // cache por 30 minutos
-      );
+      // Buscar o papel do usuário no tenant atual
+      const { data, error } = await supabase
+        .from('tenant_users')
+        .select('role')
+        .eq('tenant_id', tenantId)
+        .eq('user_id', user.id)
+        .single();
       
-      setRole(roleData.role as Role);
+      if (error) throw error;
       
-      // Buscar permissões associadas ao papel com cache
-      const permCacheKey = `user_permissions_${user.id}_${roleData.role}_${tenantId}`;
-      const permissionsData = await fetchWithCache(
-        permCacheKey,
-        async () => {
-          const { data, error } = await supabase
-            .from('role_permissions')
-            .select(`
-              permissions:permission_id (
-                id,
-                name,
-                description
-              )
-            `)
-            .eq('role_id', roleData.role)
-            .order('permissions.name');
-          
-          if (error) throw error;
-          
-          return data;
-        },
-        30 // cache por 30 minutos
-      );
+      setRole(data.role as Role);
       
-      // Extrair permissões do resultado e corrigir o tipo
+      // Buscar permissões associadas ao papel
+      const { data: permissionsData, error: permissionsError } = await supabase
+        .from('role_permissions')
+        .select(`
+          permissions:permission_id (
+            id,
+            name,
+            description
+          )
+        `)
+        .eq('role_id', data.role)
+        .order('permissions.name');
+      
+      if (permissionsError) throw permissionsError;
+      
+      // Extrair permissões do resultado
       const userPermissions = permissionsData
         .map(item => item.permissions as unknown as Permission)
         .filter(Boolean);
