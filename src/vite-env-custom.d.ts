@@ -17,7 +17,7 @@ declare module '*/vite.config.ts' {
   export default config;
 }
 
-// Additional declaration to solve reference issues with tsconfig.node.json
+// Path module declarations
 declare module 'node:path' {
   export * from 'path';
 }
