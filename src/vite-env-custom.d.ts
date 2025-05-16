@@ -17,3 +17,12 @@ declare module '*/vite.config.ts' {
   const config: UserConfig;
   export default config;
 }
+
+// Additional declaration to solve reference issues with tsconfig.node.json
+declare module 'node:path' {
+  export * from 'path';
+}
+
+declare module 'node:url' {
+  export * from 'url';
+}
