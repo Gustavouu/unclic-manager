@@ -512,6 +512,94 @@ export type Database = {
           },
         ]
       }
+      business_settings: {
+        Row: {
+          allow_online_booking: boolean | null
+          banner_url: string | null
+          business_id: string
+          created_at: string | null
+          id: string
+          logo_url: string | null
+          maximum_days_in_advance: number | null
+          minimum_notice_time: number | null
+          primary_color: string | null
+          require_advance_payment: boolean | null
+          secondary_color: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          allow_online_booking?: boolean | null
+          banner_url?: string | null
+          business_id: string
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          maximum_days_in_advance?: number | null
+          minimum_notice_time?: number | null
+          primary_color?: string | null
+          require_advance_payment?: boolean | null
+          secondary_color?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          allow_online_booking?: boolean | null
+          banner_url?: string | null
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          maximum_days_in_advance?: number | null
+          minimum_notice_time?: number | null
+          primary_color?: string | null
+          require_advance_payment?: boolean | null
+          secondary_color?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_users: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          role: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          role?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          role?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_users_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       businesses: {
         Row: {
           address: string | null
@@ -4212,6 +4300,10 @@ export type Database = {
       get_user_business_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_user_business_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
       }
       get_user_tenant_id: {
         Args: Record<PropertyKey, never>

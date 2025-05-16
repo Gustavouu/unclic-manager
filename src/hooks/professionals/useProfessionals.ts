@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
-import { Professional } from './types';
+import { Professional, ProfessionalStatus } from './types';
 
 export const useProfessionals = (options?: { 
   activeOnly?: boolean, 
@@ -16,7 +16,7 @@ export const useProfessionals = (options?: {
   const activeOnly = options?.activeOnly ?? true;
   const withServices = options?.withServices ?? false;
 
-  // Memoizar quais especialidades estão disponíveis
+  // Memoize available specialties
   const specialties = Array.from(new Set(professionals.flatMap(p => p.specialties || [])));
 
   useEffect(() => {
@@ -39,13 +39,13 @@ export const useProfessionals = (options?: {
             .eq('business_id', businessId);
             
           if (activeOnly) {
-            query = query.eq('status', 'ACTIVE');
+            query = query.eq('status', ProfessionalStatus.ACTIVE);
           }
             
           const { data, error } = await query;
             
-          if (!error) {
-            setProfessionals(data || []);
+          if (!error && data) {
+            setProfessionals(data as Professional[]);
             setLoading(false);
             return;
           }
@@ -67,13 +67,14 @@ export const useProfessionals = (options?: {
           const { data, error } = await query;
             
           if (!error && data) {
-            const mappedData = data.map(item => ({
+            const mappedData: Professional[] = data.map(item => ({
               id: item.id,
               name: item.nome,
               position: item.cargo,
               photo_url: item.foto_url,
               specialties: item.especialidades,
-              business_id: businessId
+              business_id: businessId,
+              status: ProfessionalStatus.ACTIVE
             })) || [];
             
             setProfessionals(mappedData);
@@ -99,7 +100,7 @@ export const useProfessionals = (options?: {
     fetchProfessionals();
   }, [businessId, activeOnly, withServices]);
 
-  // Fornece também as operações CRUD
+  // CRUD operations
   const createProfessional = async (data: any) => {
     try {
       const { data: newProfessional, error } = await supabase
@@ -111,7 +112,7 @@ export const useProfessionals = (options?: {
       if (error) throw error;
       
       // Update local state
-      setProfessionals(prev => [...prev, newProfessional]);
+      setProfessionals(prev => [...prev, newProfessional as Professional]);
       
       return newProfessional;
     } catch (error) {
@@ -133,7 +134,7 @@ export const useProfessionals = (options?: {
       
       // Update local state
       setProfessionals(prev => 
-        prev.map(p => p.id === id ? updatedProfessional : p)
+        prev.map(p => p.id === id ? updatedProfessional as Professional : p)
       );
       
       return updatedProfessional;
