@@ -70,62 +70,102 @@ export const AppointmentCalendar = ({ businessId }: AppointmentCalendarProps) =>
         const startDate = monthStart.toISOString().split('T')[0];
         const endDate = monthEnd.toISOString().split('T')[0];
         
-        // Buscar agendamentos do mês
-        const { data, error } = await supabase
-          .from('agendamentos')
-          .select(`
-            id,
-            data,
-            hora_inicio,
-            id_cliente(id, nome),
-            id_servico(id, nome, id_categoria)
-          `)
-          .eq('id_negocio', businessId)
-          .gte('data', startDate)
-          .lte('data', endDate);
+        // First try bookings table (new schema)
+        let data: any[] = [];
+        let error = null;
+
+        try {
+          const response = await supabase
+            .from('bookings')
+            .select(`
+              id,
+              booking_date,
+              start_time,
+              client:client_id (id, name),
+              service:service_id (id, name, type)
+            `)
+            .eq('business_id', businessId)
+            .gte('booking_date', startDate)
+            .lte('booking_date', endDate);
           
-        if (error) {
-          throw error;
+          if (!response.error && response.data && response.data.length > 0) {
+            data = response.data;
+          } else {
+            error = response.error;
+          }
+        } catch (err) {
+          console.error('Error fetching from bookings:', err);
+          error = err;
+        }
+
+        if (error || data.length === 0) {
+          // Fallback to legacy table
+          try {
+            console.log('Falling back to legacy appointments table');
+            const legacyResponse = await supabase
+              .from('appointments')
+              .select(`
+                id,
+                data,
+                hora_inicio,
+                client:client_id (id, name),
+                service:service_id (id, name)
+              `)
+              .eq('business_id', businessId)
+              .gte('data', startDate)
+              .lte('data', endDate);
+
+            if (!legacyResponse.error) {
+              data = legacyResponse.data || [];
+            }
+          } catch (legacyErr) {
+            console.error('Error fetching from legacy appointments:', legacyErr);
+          }
         }
         
         // Converter dados para o formato de AppointmentType
-        if (data) {
-          const formattedAppointments: AppointmentType[] = data.map((appointment: any) => {
-            // Criar data combinando data e hora
-            const [hours, minutes] = appointment.hora_inicio.split(':');
-            const appointmentDate = parseISO(appointment.data);
-            appointmentDate.setHours(parseInt(hours));
-            appointmentDate.setMinutes(parseInt(minutes));
-            
-            // Handle cliente nome correctly
-            let clientName = "Cliente não identificado";
-            if (appointment.id_cliente) {
-              clientName = typeof appointment.id_cliente === 'object' ? 
-                appointment.id_cliente.nome : 
-                "Cliente não identificado";
-            }
-            
-            // Handle servico nome correctly
-            let serviceName = "Serviço não identificado";
-            if (appointment.id_servico) {
-              serviceName = typeof appointment.id_servico === 'object' ? 
-                appointment.id_servico.nome : 
-                "Serviço não identificado";
-            }
-            
-            return {
-              id: appointment.id,
-              date: appointmentDate,
-              clientName: clientName,
-              serviceName: serviceName,
-              serviceType: 'all' // Mapear categoria quando disponível
-            };
-          });
+        const formattedAppointments: AppointmentType[] = data.map((appointment: any) => {
+          // Get date and time fields (handling both schemas)
+          const dateField = appointment.booking_date || appointment.data;
+          const timeField = appointment.start_time || appointment.hora_inicio;
           
-          setAppointments(formattedAppointments);
-        }
+          // Create date combining date and time
+          const [hours, minutes] = (timeField || '00:00').split(':');
+          const appointmentDate = parseISO(dateField);
+          appointmentDate.setHours(parseInt(hours));
+          appointmentDate.setMinutes(parseInt(minutes));
+          
+          // Handle client name correctly
+          let clientName = "Cliente não identificado";
+          if (appointment.client) {
+            clientName = typeof appointment.client === 'object' ? 
+              appointment.client.name || appointment.client.nome || "Cliente não identificado" : 
+              "Cliente não identificado";
+          }
+          
+          // Handle service name correctly
+          let serviceName = "Serviço não identificado";
+          let serviceType = "all";
+          if (appointment.service) {
+            if (typeof appointment.service === 'object') {
+              serviceName = appointment.service.name || appointment.service.nome || "Serviço não identificado";
+              serviceType = appointment.service.type || "all";
+            }
+          }
+          
+          return {
+            id: appointment.id,
+            date: appointmentDate,
+            clientName,
+            serviceName,
+            serviceType
+          };
+        });
+        
+        setAppointments(formattedAppointments);
       } catch (error) {
         console.error("Erro ao buscar agendamentos:", error);
+        setAppointments([]);
       } finally {
         setLoading(false);
       }

@@ -35,86 +35,82 @@ export function useUserPermissions() {
         throw new Error('Tenant não selecionado');
       }
       
-      // Try fetching from business_users table
-      let userData: any = null;
-      let userError: any = null;
+      // Try main table first
+      let roleData;
+      let roleError;
       
       try {
         const response = await supabase
-          .from('business_users')
+          .from('business_users') // Use a table that maps businesses to users
           .select('role')
           .eq('business_id', tenantId)
           .eq('user_id', user.id)
-          .maybeSingle();
+          .single();
           
-        userData = response.data;
-        userError = response.error;
+        roleData = response.data;
+        roleError = response.error;
       } catch (err) {
-        console.error("Error fetching user role:", err);
-        userError = err;
+        console.error("Error fetching from business_users:", err);
+        roleError = err;
       }
       
-      if (!userData || userError) {
-        console.log("Trying fallback user role source");
-        // Fallback to users table
+      // Try fallback if needed
+      if (roleError) {
+        console.log("Trying fallback user role lookup");
+        
         try {
-          const { data: fallbackData, error: fallbackError } = await supabase
-            .from('user_roles')
-            .select('role_id')
-            .eq('user_id', user.id)
+          const response = await supabase
+            .from('users') // Try users table
+            .select('role')
+            .eq('id', user.id)
             .maybeSingle();
             
-          if (fallbackError || !fallbackData) {
-            console.error("Error in fallback role query:", fallbackError);
-            // Default to staff role
-            setRole('staff');
-          } else {
-            // Map role_id to actual role name based on your schema
-            const roleMapping: Record<string, Role> = {
-              'admin_role': 'admin',
-              'manager_role': 'manager',
-              'staff_role': 'staff',
-            };
-            setRole(roleMapping[fallbackData.role_id] || 'staff');
-          }
-        } catch (fallbackErr) {
-          console.error("Error in fallback role query:", fallbackErr);
-          setRole('staff'); // Default role
+          roleData = response.data;
+          roleError = response.error;
+        } catch (err) {
+          console.error("Error in fallback user role lookup:", err);
+          roleError = err;
         }
+      }
+      
+      if (roleError || !roleData) {
+        console.log("No role found, using default 'staff' role");
+        setRole('staff' as Role);
       } else {
-        setRole(userData.role as Role);
+        setRole(roleData.role as Role);
       }
       
-      // Generate mock permissions based on role
-      // In a real implementation, you would fetch these from the database
-      const mockPermissions: Permission[] = [
-        { id: '1', name: 'view_appointments', description: 'View appointments' },
-        { id: '2', name: 'create_appointments', description: 'Create appointments' },
-      ];
-      
-      // Add more permissions for higher roles
-      if (role === 'manager' || role === 'admin') {
-        mockPermissions.push(
-          { id: '3', name: 'edit_services', description: 'Edit services' },
-          { id: '4', name: 'manage_staff', description: 'Manage staff' }
-        );
+      // Try permissions lookup
+      try {
+        // Example: fetch permissions for the role from a permissions table or role-based system
+        // This is a placeholder - adjust according to your schema
+        const perms: Permission[] = [
+          { id: '1', name: 'appointments.view', description: 'View appointments' },
+          { id: '2', name: 'appointments.create', description: 'Create appointments' },
+          { id: '3', name: 'clients.view', description: 'View clients' },
+          { id: '4', name: 'clients.create', description: 'Create clients' }
+        ];
+        
+        if (roleData?.role === 'admin' || roleData?.role === 'manager') {
+          perms.push(
+            { id: '5', name: 'services.manage', description: 'Manage services' },
+            { id: '6', name: 'staff.manage', description: 'Manage staff' },
+            { id: '7', name: 'settings.access', description: 'Access settings' }
+          );
+        }
+        
+        setPermissions(perms);
+      } catch (permError: any) {
+        console.error('Error fetching permissions:', permError);
+        setError(permError.message);
       }
-      
-      if (role === 'admin') {
-        mockPermissions.push(
-          { id: '5', name: 'manage_business', description: 'Manage business' },
-          { id: '6', name: 'view_analytics', description: 'View analytics' }
-        );
-      }
-      
-      setPermissions(mockPermissions);
     } catch (error: any) {
       console.error('Erro ao buscar papel e permissões do usuário:', error);
       setError(error.message);
     } finally {
       setIsLoading(false);
     }
-  }, [role]);
+  }, []);
 
   // Verifica se o usuário tem uma permissão específica
   const hasPermission = useCallback((permissionName: string): boolean => {

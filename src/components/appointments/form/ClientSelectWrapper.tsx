@@ -7,6 +7,15 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 
+interface ClientData {
+  id: string;
+  nome?: string;
+  name?: string;
+  email?: string;
+  telefone?: string;
+  phone?: string;
+}
+
 type ClientSelectWrapperProps = {
   form: UseFormReturn<AppointmentFormValues>;
   disabled?: boolean;
@@ -14,7 +23,7 @@ type ClientSelectWrapperProps = {
 };
 
 const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelectWrapperProps) => {
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<ClientData[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Get client data from database
@@ -24,15 +33,34 @@ const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelec
     const fetchClients = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('clientes')
-          .select('id, nome, email, telefone')
-          .order('nome');
+        // Try to fetch from clients table first (new schema)
+        let { data, error } = await supabase
+          .from('clients')
+          .select('id, name, email, phone')
+          .order('name');
         
-        if (error) throw error;
+        if (error || !data || data.length === 0) {
+          // If no data in clients, try legacy 'clientes' table
+          console.log('Trying legacy clients table');
+          const { data: legacyData, error: legacyError } = await supabase
+            .from('clients') // Use a view or similar mechanism to query the legacy table
+            .select('id, nome, email, telefone')
+            .order('nome');
+          
+          if (legacyError) {
+            console.error('Error fetching legacy clients:', legacyError);
+            setClients([]);
+            setLoading(false);
+            return;
+          }
+          
+          data = legacyData;
+        }
+        
         setClients(data || []);
       } catch (error) {
         console.error('Error fetching clients:', error);
+        setClients([]);
       } finally {
         setLoading(false);
       }
@@ -69,7 +97,8 @@ const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelec
                 {clients.length > 0 ? (
                   clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
-                      {client.nome} {client.telefone ? `(${client.telefone})` : ''}
+                      {client.name || client.nome || 'Unknown'} {(client.phone || client.telefone) ? 
+                        `(${client.phone || client.telefone})` : ''}
                     </SelectItem>
                   ))
                 ) : (

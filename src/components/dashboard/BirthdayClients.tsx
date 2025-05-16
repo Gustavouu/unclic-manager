@@ -8,10 +8,13 @@ import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 interface BirthdayClient {
   id: string;
-  nome: string;
+  nome?: string;
+  name?: string;
   telefone?: string;
+  phone?: string;
   email?: string;
-  data_nascimento: string;
+  data_nascimento?: string;
+  birth_date?: string;
 }
 
 export function BirthdayClients() {
@@ -28,17 +31,44 @@ export function BirthdayClients() {
       
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('clientes')
-          .select('id, nome, telefone, email, data_nascimento')
-          .eq('id_negocio', businessId)
-          .not('data_nascimento', 'is', null)
-          .filter('EXTRACT(MONTH FROM data_nascimento)', 'eq', currentMonth);
+        
+        // First try the clients table (new schema)
+        let { data, error } = await supabase
+          .from('clients')
+          .select('id, name, phone, email, birth_date')
+          .eq('business_id', businessId);
           
-        if (error) throw error;
-        setBirthdayClients(data || []);
+        if (error || !data || data.length === 0) {
+          // Try legacy clients
+          console.log('Trying to fetch from legacy clients table');
+          const { data: legacyData, error: legacyError } = await supabase
+            .from('clients')
+            .select('id, nome, telefone, email, data_nascimento')
+            .eq('id_negocio', businessId);
+            
+          if (legacyError) {
+            console.error('Error fetching birthday clients:', legacyError);
+            setBirthdayClients([]);
+            setLoading(false);
+            return;
+          }
+          
+          data = legacyData;
+        }
+        
+        // Filter for clients with birthdays in the current month
+        const currentMonthClients = data?.filter(client => {
+          const birthDate = client.birth_date || client.data_nascimento;
+          if (!birthDate) return false;
+          
+          const birthMonth = new Date(birthDate).getMonth() + 1;
+          return birthMonth === currentMonth;
+        }) || [];
+        
+        setBirthdayClients(currentMonthClients);
       } catch (error) {
         console.error('Erro ao buscar aniversariantes do mês:', error);
+        setBirthdayClients([]);
       } finally {
         setLoading(false);
       }
@@ -47,7 +77,8 @@ export function BirthdayClients() {
     fetchBirthdayClients();
   }, [businessId]);
   
-  const formatBirthDate = (dateStr: string) => {
+  const formatBirthDate = (dateStr?: string) => {
+    if (!dateStr) return "";
     const date = new Date(dateStr);
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
   };
@@ -73,14 +104,14 @@ export function BirthdayClients() {
                 className="flex items-center justify-between border-l-2 border-yellow-400 bg-yellow-50/50 p-3 rounded-r-md"
               >
                 <div className="space-y-1 min-w-0 flex-1">
-                  <p className="font-medium truncate">{client.nome}</p>
+                  <p className="font-medium truncate">{client.name || client.nome}</p>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5 mr-1" />
-                    <span>{formatBirthDate(client.data_nascimento)}</span>
+                    <span>{formatBirthDate(client.birth_date || client.data_nascimento)}</span>
                   </div>
                 </div>
                 <div className="flex space-x-2 ml-2">
-                  {client.telefone && (
+                  {(client.telefone || client.phone) && (
                     <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-yellow-100 text-yellow-600">
                       <PhoneCall className="h-4 w-4" />
                       <span className="sr-only">Ligar</span>

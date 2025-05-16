@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { BusinessSettings } from "@/types/database";
 
 export interface WebhookConfig {
   webhookUrl: string;
@@ -38,15 +39,20 @@ export const useWebhookConfig = () => {
           return;
         }
 
+        // Check if settings exist and has a notes property that can be parsed
         if (settings && settings.notes) {
           try {
-            const notes = JSON.parse(settings.notes as string);
-            if (notes.webhook_config) {
+            // Parse the notes as JSON
+            const notesObj = typeof settings.notes === 'string' 
+              ? JSON.parse(settings.notes) 
+              : settings.notes;
+              
+            if (notesObj.webhook_config) {
               setConfig({
-                webhookUrl: notes.webhook_config.webhook_url || "",
-                secretKey: notes.webhook_config.secret_key || "",
-                isActive: notes.webhook_config.is_active || false,
-                paymentIntegration: notes.webhook_config.payment_integration || "padrao"
+                webhookUrl: notesObj.webhook_config.webhook_url || "",
+                secretKey: notesObj.webhook_config.secret_key || "",
+                isActive: notesObj.webhook_config.is_active || false,
+                paymentIntegration: notesObj.webhook_config.payment_integration || "padrao"
               });
             }
           } catch (parseError) {
@@ -97,15 +103,18 @@ export const useWebhookConfig = () => {
         }
       };
 
+      // Convert to JSON string if needed
+      const notesValue = JSON.stringify(webhookConfigData);
+
       const { error } = await supabase
         .from('business_settings')
         .upsert({
           business_id: TEMP_BUSINESS_ID,
           primary_color: '#213858', // Default value required by the schema
           secondary_color: '#33c3f0', // Default value required by the schema
-          cancellation_policy: 'Default policy', // Default value required by the schema
-          cancellation_message: 'Default message', // Default value required by the schema
-          notes: JSON.stringify(webhookConfigData)
+          notes: notesValue
+        }, {
+          onConflict: 'business_id'
         });
 
       if (error) throw error;

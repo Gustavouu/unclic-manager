@@ -57,44 +57,88 @@ export function TransactionsTable({
       try {
         setLoading(true);
         
-        let query = supabase
-          .from('transacoes')
-          .select(`
-            id,
-            tipo,
-            valor,
-            metodo_pagamento,
-            status,
-            descricao,
-            criado_em,
-            data_pagamento,
-            cliente:id_cliente (
-              nome
-            )
-          `)
-          .eq('id_negocio', businessId)
-          .order('criado_em', { ascending: false });
+        // First try modern table (financial_transactions)
+        let data: any[] = [];
         
-        if (filterType !== "all") {
-          query = query.eq('tipo', filterType);
+        try {
+          const response = await supabase
+            .from('financial_transactions')
+            .select(`
+              id,
+              type as tipo,
+              amount as valor,
+              paymentMethod as metodo_pagamento,
+              status,
+              description as descricao,
+              createdAt as criado_em,
+              paymentDate as data_pagamento,
+              customer:customerId (
+                name as nome
+              )
+            `)
+            .eq('tenantId', businessId);
+            
+          if (!response.error && response.data && response.data.length > 0) {
+            data = response.data;
+          }
+        } catch (error) {
+          console.error("Error fetching from financial_transactions:", error);
         }
         
-        // Filtro por período
+        // If no data, try legacy table
+        if (data.length === 0) {
+          try {
+            console.log("Trying legacy transactions table");
+            const { data: legacyData, error: legacyError } = await supabase
+              .from('transactions')
+              .select(`
+                id,
+                type as tipo,
+                amount as valor,
+                payment_method as metodo_pagamento,
+                status,
+                description as descricao,
+                created_at as criado_em,
+                payment_date as data_pagamento,
+                client:client_id (
+                  name as nome
+                )
+              `)
+              .eq('business_id', businessId);
+              
+            if (!legacyError && legacyData && legacyData.length > 0) {
+              data = legacyData;
+            }
+          } catch (legacyError) {
+            console.error("Error fetching from transactions:", legacyError);
+          }
+        }
+        
+        // Filter by type if needed
+        if (filterType !== "all") {
+          data = data.filter(item => 
+            (item.tipo === filterType) || 
+            (filterType === "receita" && item.tipo === "INCOME") ||
+            (filterType === "despesa" && item.tipo === "EXPENSE")
+          );
+        }
+        
+        // Filter by period
         if (period === "7days") {
           const sevenDaysAgo = new Date();
           sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          query = query.gte('criado_em', sevenDaysAgo.toISOString());
+          data = data.filter(item => new Date(item.criado_em) >= sevenDaysAgo);
         } else if (period === "30days") {
           const thirtyDaysAgo = new Date();
           thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          query = query.gte('criado_em', thirtyDaysAgo.toISOString());
+          data = data.filter(item => new Date(item.criado_em) >= thirtyDaysAgo);
         } else if (period === "90days") {
           const ninetyDaysAgo = new Date();
           ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-          query = query.gte('criado_em', ninetyDaysAgo.toISOString());
+          data = data.filter(item => new Date(item.criado_em) >= ninetyDaysAgo);
         }
         
-        // Filtro por data específica
+        // Filter by specific date
         if (searchDate) {
           const startOfDay = new Date(searchDate);
           startOfDay.setHours(0, 0, 0, 0);
@@ -102,23 +146,21 @@ export function TransactionsTable({
           const endOfDay = new Date(searchDate);
           endOfDay.setHours(23, 59, 59, 999);
           
-          query = query
-            .gte('criado_em', startOfDay.toISOString())
-            .lte('criado_em', endOfDay.toISOString());
+          data = data.filter(item => {
+            const itemDate = new Date(item.criado_em);
+            return itemDate >= startOfDay && itemDate <= endOfDay;
+          });
         }
         
-        // Busca por texto (descrição ou valor)
+        // Text search
         if (searchQuery) {
-          query = query.ilike('descricao', `%${searchQuery}%`);
-        }
-        
-        const { data, error } = await query.limit(50);
-
-        if (error) throw error;
-        
-        if (!data) {
-          setTransactions([]);
-          return;
+          const query = searchQuery.toLowerCase();
+          data = data.filter(item => 
+            (item.descricao && item.descricao.toLowerCase().includes(query)) ||
+            (item.customer_name && item.customer_name.toLowerCase().includes(query)) ||
+            (item.customer && item.customer.nome && item.customer.nome.toLowerCase().includes(query)) ||
+            (item.client && item.client.nome && item.client.nome.toLowerCase().includes(query))
+          );
         }
 
         // Process the data to ensure it matches our Transaction interface
@@ -127,18 +169,18 @@ export function TransactionsTable({
           let customerName = "Cliente não identificado";
           let cliente: { nome: string } | undefined = undefined;
           
-          if (item.cliente) {
-            if (typeof item.cliente === 'object' && item.cliente !== null) {
-              if ('nome' in item.cliente) {
-                // If cliente is a single object with nome
-                customerName = (item.cliente as any).nome || "Cliente não identificado";
+          if (item.customer) {
+            if (typeof item.customer === 'object' && item.customer !== null) {
+              if ('nome' in item.customer) {
+                customerName = item.customer.nome || "Cliente não identificado";
                 cliente = { nome: customerName };
-              } else if (Array.isArray(item.cliente) && item.cliente.length > 0 && item.cliente[0] !== null) {
-                // If cliente is an array
-                if (typeof item.cliente[0] === 'object' && 'nome' in item.cliente[0]) {
-                  customerName = (item.cliente[0] as any).nome || "Cliente não identificado";
-                  cliente = { nome: customerName };
-                }
+              }
+            }
+          } else if (item.client) {
+            if (typeof item.client === 'object' && item.client !== null) {
+              if ('nome' in item.client) {
+                customerName = item.client.nome || "Cliente não identificado";
+                cliente = { nome: customerName };
               }
             }
           }
@@ -160,6 +202,7 @@ export function TransactionsTable({
         setTransactions(processedData);
       } catch (error) {
         console.error("Erro ao buscar transações:", error);
+        setTransactions([]);
       } finally {
         setLoading(false);
       }
@@ -192,13 +235,14 @@ export function TransactionsTable({
   };
 
   // Lógica de paginação
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentTransactions = transactions.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(transactions.length / itemsPerPage);
+  const currentTransactions = transactions.slice(
+    (currentPage - 1) * itemsPerPage, 
+    currentPage * itemsPerPage
+  );
 
   const renderPagination = () => {
-    if (transactions.length <= itemsPerPage) return null;
+    if (!transactions || transactions.length <= itemsPerPage) return null;
     
     return (
       <div className="flex justify-center gap-2 mt-4">
@@ -260,7 +304,7 @@ export function TransactionsTable({
           <TableBody>
             {isLoading || loading ? (
               renderSkeletonRows()
-            ) : currentTransactions.length > 0 ? (
+            ) : currentTransactions && currentTransactions.length > 0 ? (
               currentTransactions.map((transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell>
@@ -270,13 +314,13 @@ export function TransactionsTable({
                     {transaction.descricao || "—"}
                   </TableCell>
                   <TableCell>
-                    {transaction.cliente?.nome || "Cliente não identificado"}
+                    {transaction.cliente?.nome || transaction.customer_name || "Cliente não identificado"}
                   </TableCell>
                   <TableCell>
                     {getPaymentMethodLabel(transaction.metodo_pagamento)}
                   </TableCell>
-                  <TableCell className={transaction.tipo === "receita" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-                    {transaction.tipo === "despesa" ? "- " : ""}{formatCurrency(transaction.valor)}
+                  <TableCell className={transaction.tipo === "receita" || transaction.tipo === "INCOME" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                    {transaction.tipo === "despesa" || transaction.tipo === "EXPENSE" ? "- " : ""}{formatCurrency(transaction.valor)}
                   </TableCell>
                   <TableCell>
                     <PaymentStatusBadge status={transaction.status as any} />

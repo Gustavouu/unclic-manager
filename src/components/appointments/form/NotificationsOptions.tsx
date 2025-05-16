@@ -14,6 +14,12 @@ export type NotificationsOptionsProps = {
   form: UseFormReturn<AppointmentFormValues>;
 };
 
+interface NotificationSettingsData {
+  id: string;
+  email_enabled: boolean;
+  sms_enabled: boolean;
+}
+
 export const NotificationsOptions = ({ form }: NotificationsOptionsProps) => {
   const [notificationsDisabled, setNotificationsDisabled] = useState(false);
   const { businessId } = useCurrentBusiness();
@@ -23,16 +29,25 @@ export const NotificationsOptions = ({ form }: NotificationsOptionsProps) => {
       if (!businessId) return;
       
       try {
+        // Try to read from a settings table or similar
+        // This is a placeholder - adjust according to your actual schema
         const { data, error } = await supabase
-          .from('notification_settings')
-          .select('email_enabled, sms_enabled')
-          .eq('id_negocio', businessId)
+          .from('business_settings') // Use an existing table that has notification settings
+          .select('*')
+          .eq('business_id', businessId)
           .maybeSingle();
           
         if (error) throw error;
         
         if (data) {
-          setNotificationsDisabled(!data.email_enabled && !data.sms_enabled);
+          // Extract notification settings from business settings
+          // Adjust this part based on how your notification settings are stored
+          const notesObj = typeof data.notes === 'string' && data.notes ? JSON.parse(data.notes) : {};
+          const notificationSettings = notesObj.notification_settings || {};
+          
+          setNotificationsDisabled(
+            !notificationSettings.email_enabled && !notificationSettings.sms_enabled
+          );
         }
       } catch (error) {
         console.error('Error checking notification settings:', error);

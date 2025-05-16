@@ -6,10 +6,20 @@ import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+interface Professional {
+  id: string;
+  nome?: string;
+  name?: string;
+  cargo?: string;
+  position?: string;
+  especializacoes?: string[];
+  specialties?: string[];
+}
+
 interface ProfessionalSelectWrapperProps {
   form: UseFormReturn<AppointmentFormValues>;
   serviceId?: string;
-  availableStaff?: any[];
+  availableStaff?: Professional[];
 }
 
 const ProfessionalSelectWrapper = ({ 
@@ -17,9 +27,9 @@ const ProfessionalSelectWrapper = ({
   serviceId,
   availableStaff 
 }: ProfessionalSelectWrapperProps) => {
-  const [professionals, setProfessionals] = useState<any[]>([]);
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filteredProfessionals, setFilteredProfessionals] = useState<any[]>([]);
+  const [filteredProfessionals, setFilteredProfessionals] = useState<Professional[]>([]);
 
   // Use provided staff or fetch from the database
   useEffect(() => {
@@ -31,12 +41,29 @@ const ProfessionalSelectWrapper = ({
     const fetchProfessionals = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('funcionarios')
-          .select('id, nome, cargo, especializacoes')
-          .eq('status', 'ativo');
+        // First try professionals table (new schema)
+        let { data, error } = await supabase
+          .from('professionals')
+          .select('id, name, position, specialties')
+          .eq('isActive', true);
         
-        if (error) throw error;
+        if (error || !data || data.length === 0) {
+          // Try legacy table
+          console.log('Trying legacy professionals table');
+          const { data: legacyData, error: legacyError } = await supabase
+            .from('employees')
+            .select('id, name, position, specialties')
+            .eq('status', 'active');
+            
+          if (legacyError) {
+            console.error('Error fetching from employees:', legacyError);
+            setLoading(false);
+            return;
+          }
+          
+          data = legacyData;
+        }
+        
         setProfessionals(data || []);
       } catch (error) {
         console.error('Error fetching professionals:', error);
@@ -58,20 +85,35 @@ const ProfessionalSelectWrapper = ({
     // Get service name to match with specializations
     const getServiceName = async () => {
       try {
-        const { data } = await supabase
-          .from('servicos')
-          .select('nome')
+        // Try new services table
+        const { data, error } = await supabase
+          .from('services')
+          .select('name')
           .eq('id', serviceId)
           .single();
 
+        if (error || !data) {
+          // Try legacy services table
+          const { data: legacyData, error: legacyError } = await supabase
+            .from('services_v2')
+            .select('name')
+            .eq('id', serviceId)
+            .single();
+            
+          if (legacyError) {
+            console.error('Error getting service name:', legacyError);
+            setFilteredProfessionals(professionals);
+            return;
+          }
+          
+          if (legacyData) {
+            filterProfessionalsByService(legacyData.name);
+            return;
+          }
+        }
+
         if (data) {
-          // Filter professionals who can provide this service
-          const filtered = professionals.filter(prof => 
-            !prof.especializacoes || 
-            prof.especializacoes.length === 0 || 
-            prof.especializacoes.includes(data.nome)
-          );
-          setFilteredProfessionals(filtered);
+          filterProfessionalsByService(data.name);
         } else {
           setFilteredProfessionals(professionals);
         }
@@ -79,6 +121,19 @@ const ProfessionalSelectWrapper = ({
         console.error('Error getting service:', error);
         setFilteredProfessionals(professionals);
       }
+    };
+
+    const filterProfessionalsByService = (serviceName: string) => {
+      // Filter professionals who can provide this service
+      const filtered = professionals.filter(prof => {
+        const specializations = prof.specialties || prof.especializacoes;
+        return (
+          !specializations || 
+          specializations.length === 0 || 
+          specializations.includes(serviceName)
+        );
+      });
+      setFilteredProfessionals(filtered);
     };
 
     // Only run if we have a serviceId and professionals
@@ -108,7 +163,8 @@ const ProfessionalSelectWrapper = ({
               <SelectContent>
                 {filteredProfessionals.map((professional) => (
                   <SelectItem key={professional.id} value={professional.id}>
-                    {professional.nome} {professional.cargo ? `(${professional.cargo})` : ''}
+                    {professional.name || professional.nome || "Unknown"} {(professional.position || professional.cargo) ? 
+                      `(${professional.position || professional.cargo})` : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
