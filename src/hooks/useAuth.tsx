@@ -8,34 +8,34 @@ interface AuthContextProps {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: any) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   
   // Alias methods for backward compatibility
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextProps>({
   user: null,
   session: null,
   loading: true,
+  isAuthenticated: false,
   signIn: async () => {},
   signUp: async () => {},
   signOut: async () => {},
   updateProfile: async () => {},
+  resetPassword: async () => {},
   
   // Default values for alias methods
   login: async () => {},
   signup: async () => {},
   logout: async () => {},
-  resetPassword: async () => {},
-  isAuthenticated: false,
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -240,6 +240,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         session,
         loading,
+        isAuthenticated: !!user,
         signIn,
         signUp,
         signOut,
@@ -249,7 +250,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signup,
         logout,
         resetPassword,
-        isAuthenticated: !!user
       }}
     >
       {children}

@@ -2,59 +2,41 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Toaster } from "sonner";
 import { AsyncFeedback } from "@/components/ui/async-feedback";
-import { Lock, Mail, User, ArrowLeft, Building } from "lucide-react";
-import { LoadingButton } from "@/components/ui/loading-button";
+import { LogIn, Mail, Lock, User } from "lucide-react";
 
 const SignUp = () => {
   const { signup, user, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+  const [fullName, setFullName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   
-  const validatePassword = () => {
-    if (password !== confirmPassword) {
-      setPasswordError("As senhas não conferem");
-      return false;
-    }
-    if (password.length < 6) {
-      setPasswordError("A senha deve ter pelo menos 6 caracteres");
-      return false;
-    }
-    setPasswordError("");
-    return true;
-  };
-  
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validatePassword()) {
-      return;
-    }
-    
     setIsSubmitting(true);
     setErrorMessage("");
     
+    if (password !== confirmPassword) {
+      setErrorMessage("As senhas não coincidem");
+      setIsSubmitting(false);
+      return;
+    }
+    
     try {
-      await signup(email, password, {
-        full_name: name,
-        business_name: businessName
-      });
+      await signup(email, password, fullName);
       
-      // After signup, navigate to index which will handle the routing
+      // Let Index component handle the routing based on onboarding status
       navigate("/");
     } catch (error: any) {
-      console.error("Erro no cadastro:", error);
-      setErrorMessage(error.message || "Erro ao criar conta. Tente novamente.");
+      console.error("Erro de cadastro:", error);
+      setErrorMessage(error.message || "Falha no cadastro. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -66,9 +48,8 @@ const SignUp = () => {
   }
   
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-      <Toaster position="top-right" />
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+      <Card className="w-full max-w-md overflow-hidden transition-all duration-300 shadow-lg hover:shadow-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Unclic Manager</CardTitle>
           <CardDescription>Crie sua conta para começar</CardDescription>
@@ -77,7 +58,7 @@ const SignUp = () => {
           {errorMessage && (
             <AsyncFeedback 
               status="error" 
-              message="Erro no cadastro" 
+              message="Erro de cadastro" 
               description={errorMessage}
               className="mb-4"
             />
@@ -85,31 +66,18 @@ const SignUp = () => {
           
           <form onSubmit={handleSignUp} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
-                <User className="h-4 w-4" /> Nome
+              <label htmlFor="fullName" className="text-sm font-medium flex items-center gap-2">
+                <User className="h-4 w-4" /> Nome Completo
               </label>
               <Input
-                id="name"
+                id="fullName"
                 type="text"
                 placeholder="Seu nome completo"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
                 required
                 disabled={isSubmitting || loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="businessName" className="text-sm font-medium flex items-center gap-2">
-                <Building className="h-4 w-4" /> Nome do Negócio
-              </label>
-              <Input
-                id="businessName"
-                type="text"
-                placeholder="Nome do seu negócio"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                required
-                disabled={isSubmitting || loading}
+                className="transition-all duration-200"
               />
             </div>
             <div className="space-y-2">
@@ -124,6 +92,7 @@ const SignUp = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isSubmitting || loading}
+                className="transition-all duration-200"
               />
             </div>
             <div className="space-y-2">
@@ -138,11 +107,12 @@ const SignUp = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isSubmitting || loading}
+                className="transition-all duration-200"
               />
             </div>
             <div className="space-y-2">
               <label htmlFor="confirmPassword" className="text-sm font-medium flex items-center gap-2">
-                <Lock className="h-4 w-4" /> Confirmar senha
+                <Lock className="h-4 w-4" /> Confirmar Senha
               </label>
               <Input
                 id="confirmPassword"
@@ -152,17 +122,16 @@ const SignUp = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 disabled={isSubmitting || loading}
+                className="transition-all duration-200"
               />
-              {passwordError && (
-                <p className="text-sm text-red-600">{passwordError}</p>
-              )}
             </div>
             <LoadingButton 
               type="submit" 
               className="w-full" 
               isLoading={isSubmitting || loading}
+              icon={<LogIn className="h-4 w-4" />}
             >
-              Criar conta
+              Cadastrar
             </LoadingButton>
           </form>
         </CardContent>
@@ -173,8 +142,8 @@ const SignUp = () => {
               onClick={() => navigate("/login")}
               className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 flex items-center gap-1 mx-auto mt-1"
             >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar para login
+              <LogIn className="h-4 w-4" />
+              Entrar
             </button>
           </div>
         </CardFooter>

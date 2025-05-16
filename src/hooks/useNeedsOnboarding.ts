@@ -1,150 +1,74 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useCurrentBusiness } from './useCurrentBusiness';
 
-export const useNeedsOnboarding = () => {
-  const [needsOnboarding, setNeedsOnboarding] = useState(false);
-  const [loading, setLoading] = useState(true);
+export function useNeedsOnboarding() {
+  const { businessId, businessData, loading: businessLoading } = useCurrentBusiness();
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [onboardingViewed, setOnboardingViewed] = useState<boolean>(
-    localStorage.getItem('onboarding-viewed') === 'true'
-  );
-  const [businessId, setBusinessId] = useState<string | null>(
-    localStorage.getItem('currentBusinessId')
-  );
-
-  const markOnboardingAsViewed = useCallback(() => {
-    localStorage.setItem('onboarding-viewed', 'true');
-    setOnboardingViewed(true);
-  }, []);
-
-  const refreshOnboardingStatus = useCallback(async (skipCache = false) => {
-    // Get the current business ID from localStorage
-    const currentBusinessId = localStorage.getItem('currentBusinessId');
-    setBusinessId(currentBusinessId);
-    
-    if (!currentBusinessId) {
-      console.log('No business ID available, assuming onboarding is needed');
-      // If we don't have a business ID, we probably need onboarding
-      setNeedsOnboarding(true);
-      setLoading(false);
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Check cache first unless skipCache is true
-      const cacheKey = `business-${currentBusinessId}-onboarding`;
-      const cacheTimestampKey = `${cacheKey}-timestamp`;
-      
-      if (!skipCache) {
-        const cachedStatus = localStorage.getItem(cacheKey);
-        const cachedTimestamp = localStorage.getItem(cacheTimestampKey);
-        
-        // Use cache if less than 5 minutes old
-        if (cachedStatus && cachedTimestamp) {
-          const timestamp = parseInt(cachedTimestamp);
-          const now = Date.now();
-          const fiveMinutes = 5 * 60 * 1000;
-          
-          if (now - timestamp < fiveMinutes) {
-            setNeedsOnboarding(cachedStatus === 'true');
-            setLoading(false);
-            return;
-          }
-        }
-      }
-      
-      try {
-        // Fetch business status
-        const { data, error } = await supabase
-          .from('businesses')
-          .select('status')
-          .eq('id', currentBusinessId)
-          .maybeSingle();
-        
-        if (error) {
-          throw new Error(error.message);
-        }
-
-        if (data) {
-          // Business exists, check its status
-          const status = data.status;
-          const needsSetup = status === 'pending';
-          
-          setNeedsOnboarding(needsSetup);
-          
-          // Check if any onboarding steps are completed
-          if (needsSetup) {
-            const { data: steps } = await supabase
-              .from('onboarding_progress')
-              .select('step, completed')
-              .eq('business_id', currentBusinessId);
-              
-            // If all onboarding steps are completed, we don't need onboarding
-            if (steps && steps.length > 0) {
-              const allCompleted = steps.every(step => step.completed);
-              if (allCompleted) {
-                // Update business status to active
-                await supabase
-                  .from('businesses')
-                  .update({ status: 'active' })
-                  .eq('id', currentBusinessId);
-                  
-                setNeedsOnboarding(false);
-              }
-            }
-          }
-          
-          // Update cache
-          localStorage.setItem(cacheKey, String(needsSetup));
-          localStorage.setItem(cacheTimestampKey, String(Date.now()));
-        } else {
-          // Business doesn't exist, needs onboarding
-          console.log('Business not found, needs onboarding');
-          setNeedsOnboarding(true);
-          localStorage.setItem(cacheKey, 'true');
-          localStorage.setItem(cacheTimestampKey, String(Date.now()));
-        }
-      } catch (err: any) {
-        console.error("Error checking business status:", err);
-        // Default to needing onboarding on errors
-        setNeedsOnboarding(true);
-        setError(err.message || 'Error checking onboarding status');
-      }
-    } catch (err: any) {
-      console.error("Error checking onboarding status:", err);
-      // Default to needing onboarding if there's an error
-      setNeedsOnboarding(true);
-      setError(err.message || 'Error checking onboarding status');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
-    // Check if user is authenticated before proceeding
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        refreshOnboardingStatus();
-      } else {
+    const checkOnboardingStatus = async () => {
+      if (!businessId) {
+        setNeedsOnboarding(true);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        
+        // First check the business status
+        if (businessData && businessData.status === 'active') {
+          setNeedsOnboarding(false);
+          setLoading(false);
+          return;
+        }
+        
+        // Then check if all required onboarding steps are completed
+        const { data, error } = await supabase
+          .from('onboarding_progress')
+          .select('step, completed')
+          .eq('business_id', businessId);
+          
+        if (error) throw error;
+        
+        // If we don't have any onboarding records or not all steps are completed,
+        // the user needs onboarding
+        if (!data || data.length === 0) {
+          setNeedsOnboarding(true);
+        } else {
+          // Check if all required steps are completed
+          const requiredSteps = ['business_info', 'services', 'staff'];
+          const completedSteps = data
+            .filter(step => step.completed)
+            .map(step => step.step);
+            
+          const allRequiredStepsCompleted = requiredSteps.every(
+            step => completedSteps.includes(step)
+          );
+          
+          setNeedsOnboarding(!allRequiredStepsCompleted);
+        }
+      } catch (err: any) {
+        console.error("Error checking onboarding status:", err);
+        setError(err.message);
+      } finally {
         setLoading(false);
       }
     };
-    
-    checkAuth();
-  }, [refreshOnboardingStatus]);
 
-  return { 
-    needsOnboarding, 
-    loading, 
-    error, 
-    onboardingViewed, 
-    markOnboardingAsViewed,
-    refreshOnboardingStatus,
+    if (!businessLoading) {
+      checkOnboardingStatus();
+    }
+  }, [businessId, businessData, businessLoading]);
+
+  return {
+    needsOnboarding,
+    loading,
+    error,
     businessId
   };
-};
+}
