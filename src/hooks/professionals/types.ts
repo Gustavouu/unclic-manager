@@ -1,7 +1,20 @@
 
-export type ProfessionalStatus = 'active' | 'inactive' | 'on_vacation' | 'on_leave';
+export enum ProfessionalStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  ON_LEAVE = 'on_leave',
+  ON_VACATION = 'on_vacation'
+}
 
-export interface Professional {
+// For backward compatibility with string-based status
+export const STATUS_MAPPING = {
+  active: ProfessionalStatus.ACTIVE,
+  inactive: ProfessionalStatus.INACTIVE,
+  on_leave: ProfessionalStatus.ON_LEAVE,
+  on_vacation: ProfessionalStatus.ON_VACATION,
+};
+
+export type Professional = {
   id: string;
   business_id: string;
   user_id?: string | null;
