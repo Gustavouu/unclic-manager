@@ -9,13 +9,239 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      business_settings: {
+        Row: {
+          allow_same_day_appointments: boolean
+          allow_weekend_appointments: boolean
+          appointment_duration: number
+          break_duration: number
+          business_id: string
+          created_at: string | null
+          id: string
+          notification_settings: Json
+          updated_at: string | null
+          working_hours: Json
+        }
+        Insert: {
+          allow_same_day_appointments?: boolean
+          allow_weekend_appointments?: boolean
+          appointment_duration?: number
+          break_duration?: number
+          business_id: string
+          created_at?: string | null
+          id?: string
+          notification_settings?: Json
+          updated_at?: string | null
+          working_hours?: Json
+        }
+        Update: {
+          allow_same_day_appointments?: boolean
+          allow_weekend_appointments?: boolean
+          appointment_duration?: number
+          break_duration?: number
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          notification_settings?: Json
+          updated_at?: string | null
+          working_hours?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_users: {
+        Row: {
+          business_id: string
+          created_at: string | null
+          id: string
+          role: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string | null
+          id?: string
+          role: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string | null
+          id?: string
+          role?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_users_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      businesses: {
+        Row: {
+          address: string | null
+          address_complement: string | null
+          address_number: string | null
+          admin_email: string | null
+          city: string | null
+          created_at: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          neighborhood: string | null
+          phone: string | null
+          slug: string | null
+          state: string | null
+          status: string
+          updated_at: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          address_complement?: string | null
+          address_number?: string | null
+          admin_email?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          neighborhood?: string | null
+          phone?: string | null
+          slug?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          address_complement?: string | null
+          address_number?: string | null
+          admin_email?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          neighborhood?: string | null
+          phone?: string | null
+          slug?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string | null
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
+      onboarding_progress: {
+        Row: {
+          business_id: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string | null
+          data: Json | null
+          id: string
+          step: string
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          step: string
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          step?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_progress_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_businesses: {
+        Args: { user_id: string }
+        Returns: {
+          address: string | null
+          address_complement: string | null
+          address_number: string | null
+          admin_email: string | null
+          city: string | null
+          created_at: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          neighborhood: string | null
+          phone: string | null
+          slug: string | null
+          state: string | null
+          status: string
+          updated_at: string | null
+          zip_code: string | null
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
