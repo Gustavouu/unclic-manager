@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Save, Rocket } from "lucide-react";
@@ -9,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { MetricsDashboard } from '@/components/monitoring/MetricsDashboard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("business-profile");
@@ -84,7 +85,20 @@ const Settings = () => {
 
         <Card className="border shadow-sm overflow-hidden">
           <CardContent className="p-0">
-            <SettingsTabs activeTab={activeTab} onTabChange={handleTabChange} />
+            <Tabs defaultValue="general">
+              <TabsList>
+                <TabsTrigger value="general">Geral</TabsTrigger>
+                <TabsTrigger value="metrics">Métricas</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="general">
+                <SettingsTabs activeTab={activeTab} onTabChange={handleTabChange} />
+              </TabsContent>
+              
+              <TabsContent value="metrics">
+                <MetricsDashboard />
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
         
