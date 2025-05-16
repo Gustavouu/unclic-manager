@@ -6,6 +6,14 @@ export enum ProfessionalStatus {
   ON_LEAVE = 'on_leave'
 }
 
+// Map legacy status values to the new ProfessionalStatus enum
+export const STATUS_MAPPING = {
+  'active': ProfessionalStatus.ACTIVE,
+  'inactive': ProfessionalStatus.INACTIVE,
+  'on_vacation': ProfessionalStatus.ON_VACATION,
+  'on_leave': ProfessionalStatus.ON_LEAVE
+};
+
 export interface Professional {
   id: string;
   business_id: string;
