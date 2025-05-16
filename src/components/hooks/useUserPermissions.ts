@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase, fetchWithCache } from '@/integrations/supabase/client';
 
@@ -51,7 +52,7 @@ export function useUserPermissions() {
           
           return data;
         },
-        30 // cache por 30 minutos
+        30 * 60 * 1000 // cache por 30 minutos
       );
       
       setRole(roleData.role as Role);
@@ -77,7 +78,7 @@ export function useUserPermissions() {
           
           return data;
         },
-        30 // cache por 30 minutos
+        30 * 60 * 1000 // cache por 30 minutos
       );
       
       // Extrair permissões do resultado e corrigir o tipo
