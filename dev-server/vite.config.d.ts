@@ -1,5 +1,3 @@
 
-import { UserConfig } from 'vite';
-
-declare const config: UserConfig;
-export default config;
+declare const _default: import("vite").UserConfigExport;
+export default _default;

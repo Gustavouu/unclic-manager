@@ -6,7 +6,7 @@ import { ThemeProvider } from './providers/ThemeProvider';
 import { CacheProvider } from './providers/CacheProvider';
 import { ProtectedRoute } from './components/ui/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
-import Login from './pages/Login';
+import Login from './pages/auth/Login'; // Updated path to correct location
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
 import OnboardingPage from './pages/Onboarding';
