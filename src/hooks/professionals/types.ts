@@ -14,7 +14,7 @@ export interface Professional {
   specialties?: string[] | null;
   commission_percentage?: number | null;
   hire_date?: string | null;
-  status?: string | null;
+  status?: ProfessionalStatus | null;
   working_hours?: Record<string, any> | null;
   created_at?: string;
   updated_at?: string;

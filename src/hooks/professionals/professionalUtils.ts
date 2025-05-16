@@ -1,33 +1,69 @@
 
-import { useMemo } from "react";
-import { Professional, ProfessionalStatus, PROFESSIONAL_STATUS } from "./types";
+import { Professional, ProfessionalFormData } from './types';
+import { supabase } from '@/integrations/supabase/client';
 
-export const useProfessionalUtils = (professionals: Professional[] = []) => {
-  const specialties = useMemo(() => {
-    // Extract all unique specialties from professionals
-    const allSpecialties = professionals.flatMap(p => p.specialties || []);
-    return [...new Set(allSpecialties)].sort();
-  }, [professionals]);
-  
-  const getAvailableProfessionalsBySpecialty = (specialty: string) => {
-    return professionals.filter(
-      p => p.status === PROFESSIONAL_STATUS.ACTIVE && p.specialties && p.specialties.includes(specialty)
-    );
-  };
-  
-  const getProfessionalById = (id: string) => {
-    return professionals.find(p => p.id === id);
-  };
-  
-  const getProfessionalsByStatus = (status: ProfessionalStatus | 'all') => {
-    if (status === 'all') return professionals;
-    return professionals.filter(p => p.status === status);
-  };
-  
-  return {
-    specialties,
-    getAvailableProfessionalsBySpecialty,
-    getProfessionalById,
-    getProfessionalsByStatus
-  };
-};
+export async function fetchProfessionals(businessId: string): Promise<Professional[]> {
+  const { data, error } = await supabase
+    .from('professionals')
+    .select('*')
+    .eq('business_id', businessId);
+
+  if (error) {
+    console.error('Error fetching professionals:', error);
+    throw error;
+  }
+
+  return data || [];
+}
+
+export async function createProfessional(
+  businessId: string, 
+  professionalData: ProfessionalFormData
+): Promise<Professional> {
+  const { data, error } = await supabase
+    .from('professionals')
+    .insert([{ 
+      business_id: businessId,
+      ...professionalData 
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating professional:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function updateProfessional(
+  professionalId: string, 
+  updates: Partial<ProfessionalFormData>
+): Promise<Professional> {
+  const { data, error } = await supabase
+    .from('professionals')
+    .update(updates)
+    .eq('id', professionalId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating professional:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function deleteProfessional(professionalId: string): Promise<void> {
+  const { error } = await supabase
+    .from('professionals')
+    .delete()
+    .eq('id', professionalId);
+
+  if (error) {
+    console.error('Error deleting professional:', error);
+    throw error;
+  }
+}
