@@ -1,175 +1,256 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { useTenant } from '@/contexts/TenantContext';
-import { Professional } from './types';
+import { Professional, ProfessionalFormData, ProfessionalStatus } from './types';
 
-export const useProfessionals = (options?: { 
-  activeOnly?: boolean, 
-  withServices?: boolean 
-}) => {
+export const useProfessionals = () => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const { businessId } = useTenant();
   
-  const activeOnly = options?.activeOnly ?? true;
-  const withServices = options?.withServices ?? false;
-
-  // Memoizar quais especialidades estão disponíveis
-  const specialties = Array.from(new Set(professionals.flatMap(p => p.specialties || [])));
-
-  useEffect(() => {
-    const fetchProfessionals = async () => {
-      if (!businessId) {
-        setLoading(false);
-        setProfessionals([]);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Try professionals table first (new schema)
-        try {
-          let query = supabase
-            .from('professionals')
-            .select('*')
-            .eq('business_id', businessId);
-            
-          if (activeOnly) {
-            query = query.eq('status', 'ACTIVE');
-          }
-            
-          const { data, error } = await query;
-            
-          if (!error) {
-            setProfessionals(data || []);
-            setLoading(false);
-            return;
-          }
-        } catch (profError) {
-          console.error('Error fetching professionals:', profError);
-        }
-        
-        // Try funcionarios table (legacy schema)
-        try {
-          let query = supabase
-            .from('funcionarios')
-            .select('id, nome, cargo, foto_url, especialidades')
-            .eq('id_negocio', businessId);
-            
-          if (activeOnly) {
-            query = query.eq('status', 'ativo');
-          }
-            
-          const { data, error } = await query;
-            
-          if (!error && data) {
-            const mappedData = data.map(item => ({
-              id: item.id,
-              name: item.nome,
-              position: item.cargo,
-              photo_url: item.foto_url,
-              specialties: item.especialidades,
-              business_id: businessId
-            })) || [];
-            
-            setProfessionals(mappedData);
-            setLoading(false);
-            return;
-          }
-        } catch (funcError) {
-          console.error('Error fetching funcionarios:', funcError);
-        }
-        
-        // If both tables failed, return empty array
-        setProfessionals([]);
-        
-      } catch (err: any) {
-        console.error('Error in useProfessionals:', err);
-        setError(err.message || 'Failed to fetch professionals');
-        setProfessionals([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfessionals();
-  }, [businessId, activeOnly, withServices]);
-
-  // Fornece também as operações CRUD
-  const createProfessional = async (data: any) => {
+  const fetchProfessionals = async () => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      const { data: newProfessional, error } = await supabase
-        .from("professionals")
-        .insert([{ ...data, business_id: businessId }])
-        .select()
-        .single();
-        
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from('professionals')
+        .select('*')
+        .eq('business_id', businessId);
       
-      // Update local state
-      setProfessionals(prev => [...prev, newProfessional]);
+      if (error) {
+        throw error;
+      }
       
-      return newProfessional;
-    } catch (error) {
-      console.error("Error creating professional:", error);
-      throw error;
+      setProfessionals(data || []);
+      return data;
+    } catch (err) {
+      console.error('Error fetching professionals:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch professionals'));
+      return [];
+    } finally {
+      setIsLoading(false);
     }
   };
   
-  const updateProfessional = async (id: string, data: any) => {
+  const fetchProfessionalById = async (id: string): Promise<Professional | null> => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      const { data: updatedProfessional, error } = await supabase
-        .from("professionals")
-        .update(data)
-        .eq("id", id)
-        .select()
+      const { data, error } = await supabase
+        .from('professionals')
+        .select('*')
+        .eq('business_id', businessId)
+        .eq('id', id)
         .single();
-        
-      if (error) throw error;
       
-      // Update local state
-      setProfessionals(prev => 
-        prev.map(p => p.id === id ? updatedProfessional : p)
-      );
+      if (error) {
+        throw error;
+      }
       
-      return updatedProfessional;
-    } catch (error) {
-      console.error("Error updating professional:", error);
-      throw error;
+      return data;
+    } catch (err) {
+      console.error('Error fetching professional:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch professional'));
+      return null;
+    } finally {
+      setIsLoading(false);
     }
   };
   
-  const deleteProfessional = async (id: string) => {
+  const createProfessional = async (professionalData: ProfessionalFormData): Promise<Professional | null> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('professionals')
+        .insert([
+          {
+            ...professionalData,
+            business_id: businessId,
+            status: professionalData.status || ProfessionalStatus.ACTIVE
+          }
+        ])
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      setProfessionals(prev => [...prev, data]);
+      toast.success('Profissional criado com sucesso');
+      return data;
+    } catch (err) {
+      console.error('Error creating professional:', err);
+      setError(err instanceof Error ? err : new Error('Failed to create professional'));
+      toast.error('Erro ao criar profissional');
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const updateProfessional = async (id: string, updates: Partial<ProfessionalFormData>): Promise<Professional | null> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('professionals')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      setProfessionals(prev => prev.map(professional => 
+        professional.id === id ? data : professional
+      ));
+      toast.success('Profissional atualizado com sucesso');
+      return data;
+    } catch (err) {
+      console.error('Error updating professional:', err);
+      setError(err instanceof Error ? err : new Error('Failed to update professional'));
+      toast.error('Erro ao atualizar profissional');
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const updateProfessionalStatus = async (id: string, status: ProfessionalStatus): Promise<Professional | null> => {
+    return updateProfessional(id, { status });
+  };
+  
+  const deleteProfessional = async (id: string): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
       const { error } = await supabase
-        .from("professionals")
+        .from('professionals')
         .delete()
-        .eq("id", id);
-        
-      if (error) throw error;
+        .eq('id', id);
       
-      // Update local state
-      setProfessionals(prev => prev.filter(p => p.id !== id));
+      if (error) {
+        throw error;
+      }
       
+      setProfessionals(prev => prev.filter(professional => professional.id !== id));
+      toast.success('Profissional removido com sucesso');
       return true;
-    } catch (error) {
-      console.error("Error deleting professional:", error);
-      throw error;
+    } catch (err) {
+      console.error('Error deleting professional:', err);
+      setError(err instanceof Error ? err : new Error('Failed to delete professional'));
+      toast.error('Erro ao remover profissional');
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  return { 
-    professionals, 
-    loading, 
-    isLoading: loading, 
+  
+  const assignServiceToProfessional = async (professionalId: string, serviceId: string): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase
+        .from('professional_services')
+        .insert([
+          {
+            professional_id: professionalId,
+            service_id: serviceId
+          }
+        ]);
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success('Serviço atribuído com sucesso');
+      return true;
+    } catch (err) {
+      console.error('Error assigning service:', err);
+      setError(err instanceof Error ? err : new Error('Failed to assign service'));
+      toast.error('Erro ao atribuir serviço');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const removeServiceFromProfessional = async (professionalId: string, serviceId: string): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase
+        .from('professional_services')
+        .delete()
+        .eq('professional_id', professionalId)
+        .eq('service_id', serviceId);
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success('Serviço removido com sucesso');
+      return true;
+    } catch (err) {
+      console.error('Error removing service:', err);
+      setError(err instanceof Error ? err : new Error('Failed to remove service'));
+      toast.error('Erro ao remover serviço');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const getProfessionalServices = async (professionalId: string): Promise<any[]> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('professional_services')
+        .select('service_id, services(*)')
+        .eq('professional_id', professionalId);
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data || [];
+    } catch (err) {
+      console.error('Error fetching professional services:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch professional services'));
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  return {
+    professionals,
+    isLoading,
     error,
-    specialties,
+    fetchProfessionals,
+    fetchProfessionalById,
     createProfessional,
     updateProfessional,
-    deleteProfessional
+    updateProfessionalStatus,
+    deleteProfessional,
+    assignServiceToProfessional,
+    removeServiceFromProfessional,
+    getProfessionalServices
   };
 };

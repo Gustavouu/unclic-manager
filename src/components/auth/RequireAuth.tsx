@@ -1,33 +1,43 @@
-
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { ReactNode } from "react";
-import { OnboardingRedirect } from "./OnboardingRedirect";
+import React from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useNeedsOnboarding } from '@/hooks/useNeedsOnboarding';
+import { Loader } from '@/components/ui/loader';
 
 interface RequireAuthProps {
-  children: ReactNode;
+  children: React.ReactNode;
   skipOnboardingCheck?: boolean;
 }
 
-export const RequireAuth = ({ children, skipOnboardingCheck = false }: RequireAuthProps) => {
+export const RequireAuth: React.FC<RequireAuthProps> = ({ 
+  children, 
+  skipOnboardingCheck = false 
+}) => {
   const { user, loading } = useAuth();
+  const { needsOnboarding, loading: onboardingLoading } = useNeedsOnboarding();
   const location = useLocation();
   
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+  // Show loader while checking authentication status
+  if (loading || (!skipOnboardingCheck && user && onboardingLoading)) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader size="lg" text="Verificando autenticação..." />
+      </div>
+    );
   }
-
+  
+  // If not authenticated, redirect to login
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
-
-  // If we should skip the onboarding check (for the onboarding page itself)
-  if (skipOnboardingCheck) {
-    return <>{children}</>;
+  
+  // If needs onboarding and we're not skipping the check, redirect to onboarding
+  if (!skipOnboardingCheck && needsOnboarding) {
+    return <Navigate to="/onboarding" replace />;
   }
-
-  // Use the non-blocking onboarding notification approach
-  return <OnboardingRedirect>{children}</OnboardingRedirect>;
+  
+  // Otherwise, render the protected content
+  return <>{children}</>;
 };
 
 export default RequireAuth;
