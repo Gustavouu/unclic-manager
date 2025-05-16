@@ -1,165 +1,99 @@
 
-// Modified to fix the errors
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useTenant } from "@/contexts/TenantContext";
-import { toast } from "sonner";
-// Import AppointmentStatus constants from professionals/types.ts
-import { APPOINTMENT_STATUS } from "@/hooks/professionals/types";
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Appointment, CreateAppointmentData, AppointmentStatus } from './types';
+import { toast } from 'sonner';
 
-export const useAppointmentCreate = (setAppointments: any = null) => {
+export const useAppointmentCreate = (setAppointments: (appointments: Appointment[]) => void) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const { currentBusiness } = useTenant();
-  const tenantId = currentBusiness?.id;
+  const [error, setError] = useState<Error | null>(null);
 
-  const createAppointment = async (formData: any) => {
+  const createAppointment = async (
+    businessId: string,
+    appointmentData: CreateAppointmentData
+  ): Promise<Appointment | null> => {
     setIsLoading(true);
     setError(null);
-
+    
     try {
       const { data, error } = await supabase
-        .from("appointments")
-        .insert([
-          {
-            ...formData,
-            tenant_id: tenantId,
-          },
-        ])
-        .select();
-
-      if (error) {
-        throw error;
-      }
-
-      toast.success("Seu agendamento foi criado com sucesso.");
-      
-      // Update the appointments list if setAppointments was provided
-      if (setAppointments && Array.isArray(data)) {
-        setAppointments((prev: any) => [...prev, ...data]);
-      }
-      
-      return data;
-    } catch (error: any) {
-      setError(error);
-      toast.error(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateAppointment = async (id: string, formData: any) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { data, error } = await supabase
-        .from("appointments")
-        .update({
-          ...formData,
+        .from('appointments')
+        .insert({
+          business_id: businessId,
+          ...appointmentData,
+          created_by: (await supabase.auth.getUser()).data.user?.id
         })
-        .eq("id", id)
-        .select();
+        .select('*')
+        .single();
 
       if (error) {
         throw error;
       }
 
-      toast.success("Seu agendamento foi atualizado com sucesso.");
-      
-      // Update the appointments list if setAppointments was provided
-      if (setAppointments && Array.isArray(data) && data.length > 0) {
-        setAppointments((prev: any) => 
-          prev.map((item: any) => item.id === id ? data[0] : item)
-        );
-      }
-      
+      setAppointments(prev => [...prev, data]);
+      toast.success('Appointment created successfully');
       return data;
-    } catch (error: any) {
-      setError(error);
-      toast.error(error.message);
+    } catch (err) {
+      console.error('Error creating appointment:', err);
+      setError(err instanceof Error ? err : new Error('Failed to create appointment'));
+      toast.error('Failed to create appointment');
+      return null;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const cancelAppointment = async (id: string) => {
+  const updateAppointment = async (
+    id: string,
+    updates: Partial<CreateAppointmentData>
+  ): Promise<Appointment | null> => {
     setIsLoading(true);
     setError(null);
-
+    
     try {
       const { data, error } = await supabase
-        .from("appointments")
+        .from('appointments')
         .update({
-          status: APPOINTMENT_STATUS.CANCELLED,
+          ...updates,
+          updated_by: (await supabase.auth.getUser()).data.user?.id
         })
-        .eq("id", id)
-        .select();
+        .eq('id', id)
+        .select('*')
+        .single();
 
       if (error) {
         throw error;
       }
 
-      toast.success("Seu agendamento foi cancelado com sucesso.");
+      setAppointments(prev => 
+        prev.map(appointment => 
+          appointment.id === id ? data : appointment
+        )
+      );
       
-      // Update the appointments list if setAppointments was provided
-      if (setAppointments && Array.isArray(data) && data.length > 0) {
-        setAppointments((prev: any) => 
-          prev.map((item: any) => item.id === id ? data[0] : item)
-        );
-      }
-      
+      toast.success('Appointment updated successfully');
       return data;
-    } catch (error: any) {
-      setError(error);
-      toast.error(error.message);
+    } catch (err) {
+      console.error('Error updating appointment:', err);
+      setError(err instanceof Error ? err : new Error('Failed to update appointment'));
+      toast.error('Failed to update appointment');
+      return null;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const rescheduleAppointment = async (id: string, newDate: any, newStartTime: any) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { data, error } = await supabase
-        .from("appointments")
-        .update({
-          date: newDate,
-          start_time: newStartTime,
-        })
-        .eq("id", id)
-        .select();
-
-      if (error) {
-        throw error;
-      }
-
-      toast.success("Seu agendamento foi reagendado com sucesso.");
-      
-      // Update the appointments list if setAppointments was provided
-      if (setAppointments && Array.isArray(data) && data.length > 0) {
-        setAppointments((prev: any) => 
-          prev.map((item: any) => item.id === id ? data[0] : item)
-        );
-      }
-      
-      return data;
-    } catch (error: any) {
-      setError(error);
-      toast.error(error.message);
-    } finally {
-      setIsLoading(false);
-    }
+  const cancelAppointment = async (id: string): Promise<boolean> => {
+    return updateAppointment(id, { status: 'cancelled' as AppointmentStatus })
+      .then(result => !!result)
+      .catch(() => false);
   };
 
-  return {
-    createAppointment,
-    updateAppointment,
-    cancelAppointment,
-    rescheduleAppointment,
-    isLoading,
-    error,
+  return { 
+    createAppointment, 
+    updateAppointment, 
+    cancelAppointment, 
+    isLoading, 
+    error 
   };
 };

@@ -1,77 +1,48 @@
 
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Appointment, AppointmentStatus, UpdatedAppointmentData } from "./types";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Appointment, UpdatedAppointmentData } from './types';
+import { toast } from 'sonner';
 
-export function useAppointmentUpdate(
-  setAppointments: React.Dispatch<React.SetStateAction<Appointment[]>>
-) {
+export const useAppointmentUpdate = (setAppointments: (appointments: Appointment[]) => void) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const updateAppointment = async (id: string, data: UpdatedAppointmentData): Promise<void> => {
+  const updateAppointment = async (
+    id: string,
+    updates: UpdatedAppointmentData
+  ): Promise<Appointment | null> => {
     setIsUpdating(true);
     setError(null);
 
     try {
-      // Update in Supabase
-      const { error: supabaseError } = await supabase
-        .from("agendamentos")
+      const { data, error } = await supabase
+        .from('appointments')
         .update({
-          data: data.date?.toISOString(),
-          cliente_id: data.clientId,
-          cliente_nome: data.clientName,
-          servico_id: data.serviceId,
-          servico_nome: data.serviceName,
-          tipo_servico: data.serviceType,
-          profissional_id: data.professionalId,
-          profissional_nome: data.professionalName,
-          duracao: data.duration,
-          preco: data.price,
-          status: data.status,
-          notas: data.notes,
-          metodo_pagamento: data.paymentMethod,
-          confirmado: data.confirmed,
-          servicos_adicionais: data.additionalServices
+          ...updates,
+          updated_by: (await supabase.auth.getUser()).data.user?.id
         })
-        .eq("id", id);
+        .eq('id', id)
+        .select('*')
+        .single();
 
-      if (supabaseError) throw supabaseError;
+      if (error) {
+        throw error;
+      }
 
-      // Update local state
-      setAppointments((prevAppointments) =>
-        prevAppointments.map((appointment) => {
-          if (appointment.id === id) {
-            return {
-              ...appointment,
-              ...(data.date && { date: data.date }),
-              ...(data.clientName && { clientName: data.clientName }),
-              ...(data.clientId && { clientId: data.clientId }),
-              ...(data.serviceId && { serviceId: data.serviceId }),
-              ...(data.serviceName && { serviceName: data.serviceName }),
-              ...(data.serviceType && { serviceType: data.serviceType }),
-              ...(data.professionalId && { professionalId: data.professionalId }),
-              ...(data.professionalName && { professionalName: data.professionalName }),
-              ...(data.duration !== undefined && { duration: data.duration }),
-              ...(data.price !== undefined && { price: data.price }),
-              ...(data.status && { status: data.status as AppointmentStatus }),
-              ...(data.notes !== undefined && { notes: data.notes }),
-              ...(data.paymentMethod !== undefined && { paymentMethod: data.paymentMethod }),
-              ...(data.confirmed !== undefined && { confirmed: data.confirmed }),
-              ...(data.additionalServices && { additionalServices: data.additionalServices })
-            };
-          }
-          return appointment;
-        })
+      setAppointments(prev => 
+        prev.map(appointment => 
+          appointment.id === id ? data : appointment
+        )
       );
 
-      toast.success("Agendamento atualizado com sucesso!");
+      toast.success('Appointment updated successfully');
+      return data;
     } catch (err) {
-      const error = err as Error;
-      console.error("Error updating appointment:", error);
-      setError(error);
-      toast.error(`Erro ao atualizar agendamento: ${error.message}`);
+      console.error('Error updating appointment:', err);
+      setError(err instanceof Error ? err : new Error('Failed to update appointment'));
+      toast.error('Failed to update appointment');
+      return null;
     } finally {
       setIsUpdating(false);
     }
@@ -82,4 +53,4 @@ export function useAppointmentUpdate(
     isUpdating,
     error
   };
-}
+};
