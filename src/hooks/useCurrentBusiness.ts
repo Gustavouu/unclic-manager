@@ -1,29 +1,81 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase, fetchWithCache } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
-export const useCurrentBusiness = () => {
-  const [businessId, setBusinessId] = useState<string | null>(null);
-  const [businessData, setBusinessData] = useState<any>(null);
+export interface Business {
+  id: string;
+  name: string;
+  status: string;
+  logo_url?: string;
+  admin_email?: string;
+  settings?: any;
+}
+
+export interface UseCurrentBusinessResult {
+  businessId: string | null;
+  businessData: Business | null;
+  loading: boolean;
+  error: string | null;
+  updateBusinessStatus: (id: string, status: string) => Promise<boolean>;
+  updateBusinessSettings: (settings: any) => Promise<void>;
+  fetchBusinessData: () => Promise<void>;
+  setCurrentBusiness: (id: string) => Promise<boolean>;
+}
+
+export function useCurrentBusiness(): UseCurrentBusinessResult {
+  const [businessId, setBusinessId] = useState<string | null>(
+    localStorage.getItem('currentBusinessId')
+  );
+  const [businessData, setBusinessData] = useState<Business | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  const fetchBusinessData = async () => {
+  const setCurrentBusiness = async (id: string): Promise<boolean> => {
+    try {
+      // Call the Supabase function to set the current business in the session
+      const { data, error } = await supabase.rpc('set_current_business', {
+        business_id: id
+      });
+
+      if (error) throw error;
+
+      // Update local state and storage
+      setBusinessId(id);
+      localStorage.setItem('currentBusinessId', id);
+      
+      return true;
+    } catch (error: any) {
+      console.error('Error setting current business:', error);
+      return false;
+    }
+  };
+
+  const fetchBusinessData = useCallback(async () => {
     if (!businessId) return;
     
     try {
       setLoading(true);
       
-      // Fetch business data
-      const { data: business, error: businessError } = await supabase
-        .from('businesses')
-        .select('*, business_settings(*)')
-        .eq('id', businessId)
-        .single();
-      
-      if (businessError) throw businessError;
+      // Try to get from cache first
+      const cacheKey = `business_data_${businessId}`;
+      const business = await fetchWithCache(
+        cacheKey,
+        async () => {
+          // Fetch business data
+          const { data, error } = await supabase
+            .from('businesses')
+            .select('*, business_settings(*)')
+            .eq('id', businessId)
+            .single();
+          
+          if (error) throw error;
+          
+          return data;
+        },
+        5 * 60 * 1000 // cache for 5 minutes
+      );
       
       // Transform data to include settings
       const transformedData = {
@@ -38,7 +90,7 @@ export const useCurrentBusiness = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [businessId]);
 
   const updateBusinessSettings = async (settings: any) => {
     if (!businessId) return;
@@ -53,13 +105,13 @@ export const useCurrentBusiness = () => {
       if (updateError) throw updateError;
       
       // Update local state
-      setBusinessData(prev => ({
+      setBusinessData(prev => prev ? {
         ...prev,
         settings: {
           ...prev.settings,
           ...settings
         }
-      }));
+      } : null);
       
     } catch (error: any) {
       console.error('Error updating business settings:', error);
@@ -77,10 +129,10 @@ export const useCurrentBusiness = () => {
       if (error) throw error;
       
       // Update local state
-      setBusinessData(prev => ({
+      setBusinessData(prev => prev ? {
         ...prev,
         status
-      }));
+      } : null);
       
       return true;
     } catch (error) {
@@ -99,22 +151,30 @@ export const useCurrentBusiness = () => {
       try {
         setLoading(true);
         
-        // Get the user's current business from business_users table
-        const { data: businessUser, error: businessUserError } = await supabase
-          .from('business_users')
-          .select('business_id')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (businessUserError && businessUserError.code !== 'PGRST116') {
-          throw businessUserError;
-        }
-        
-        if (businessUser?.business_id) {
-          setBusinessId(businessUser.business_id);
+        if (!businessId) {
+          // Get the user's current business from business_users table
+          const { data: businessUser, error: businessUserError } = await supabase
+            .from('business_users')
+            .select('business_id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (businessUserError && businessUserError.code !== 'PGRST116') {
+            throw businessUserError;
+          }
+          
+          if (businessUser?.business_id) {
+            setBusinessId(businessUser.business_id);
+            localStorage.setItem('currentBusinessId', businessUser.business_id);
+            // Set current business in the session
+            await setCurrentBusiness(businessUser.business_id);
+          }
         } else {
-          setLoading(false);
+          // Set current business in the session if businessId exists
+          await setCurrentBusiness(businessId);
         }
+        
+        setLoading(false);
       } catch (error: any) {
         console.error('Error getting current business:', error);
         setError(error.message);
@@ -123,13 +183,13 @@ export const useCurrentBusiness = () => {
     };
     
     getCurrentBusiness();
-  }, [user]);
+  }, [user, businessId]);
   
   useEffect(() => {
     if (businessId) {
       fetchBusinessData();
     }
-  }, [businessId]);
+  }, [businessId, fetchBusinessData]);
   
   return { 
     businessId, 
@@ -138,6 +198,7 @@ export const useCurrentBusiness = () => {
     error,
     updateBusinessStatus,
     updateBusinessSettings,
-    fetchBusinessData
+    fetchBusinessData,
+    setCurrentBusiness
   };
-};
+}

@@ -11,51 +11,18 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 const OnboardingPage = () => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { businessId, businessData, loading: businessLoading, error: businessError } = useCurrentBusiness();
   const [connectionStatus, setConnectionStatus] = useState<"checking" | "connected" | "error">("checking");
   const [retryCount, setRetryCount] = useState(0);
-  const [businessId, setBusinessId] = useState<string | null>(null);
   
   // Define page title
   useEffect(() => {
-    document.title = "Configuração Inicial | Unclic";
+    document.title = "Initial Setup | Unclic";
   }, []);
-  
-  // Get business ID for the user
-  useEffect(() => {
-    const getBusinessId = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('business_users')
-          .select('business_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-          
-        if (error) {
-          throw error;
-        }
-        
-        if (data?.business_id) {
-          setBusinessId(data.business_id);
-          localStorage.setItem('currentBusinessId', data.business_id);
-        } else {
-          console.error("No business found for user");
-          setConnectionStatus("error");
-        }
-      } catch (err) {
-        console.error("Error fetching business ID:", err);
-        setConnectionStatus("error");
-      }
-    };
-    
-    if (user && !loading) {
-      getBusinessId();
-    }
-  }, [user, loading]);
   
   // Check Supabase connection
   useEffect(() => {
@@ -67,7 +34,7 @@ const OnboardingPage = () => {
         if (error) {
           console.error("Database connection error:", error);
           setConnectionStatus("error");
-          toast.error(`Erro ao conectar ao banco de dados: ${error.message}`);
+          toast.error(`Error connecting to database: ${error.message}`);
         } else {
           console.log("Successfully connected to database");
           setConnectionStatus("connected");
@@ -75,20 +42,20 @@ const OnboardingPage = () => {
       } catch (err) {
         console.error("Failed to connect to Supabase:", err);
         setConnectionStatus("error");
-        toast.error("Falha ao conectar ao Supabase");
+        toast.error("Failed to connect to Supabase");
       }
     };
     
-    if (user && !loading) {
+    if (user && !authLoading) {
       checkConnection();
     }
-  }, [user, loading, retryCount]);
+  }, [user, authLoading, retryCount]);
 
   // Show loading state while checking authentication
-  if (loading) {
+  if (authLoading || businessLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader size="lg" text="Carregando..." />
+        <Loader size="lg" text="Loading..." />
       </div>
     );
   }
@@ -99,14 +66,14 @@ const OnboardingPage = () => {
   }
   
   // Show error if database connection failed
-  if (connectionStatus === "error") {
+  if (connectionStatus === "error" || businessError) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full space-y-4">
           <Alert variant="destructive">
-            <AlertTitle>Erro de conexão</AlertTitle>
+            <AlertTitle>Connection error</AlertTitle>
             <AlertDescription className="mt-2">
-              Não foi possível conectar ao banco de dados. Por favor, tente novamente mais tarde ou entre em contato com o suporte.
+              {businessError || "Could not connect to the database. Please try again later or contact support."}
             </AlertDescription>
             <div className="mt-4">
               <Button 
@@ -119,7 +86,7 @@ const OnboardingPage = () => {
                 className="flex items-center"
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Tentar novamente
+                Try again
               </Button>
             </div>
           </Alert>
@@ -132,7 +99,7 @@ const OnboardingPage = () => {
   if (connectionStatus === "checking") {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader size="lg" text="Verificando conexão com o banco de dados..." />
+        <Loader size="lg" text="Checking database connection..." />
       </div>
     );
   }
@@ -141,7 +108,7 @@ const OnboardingPage = () => {
   if (!businessId) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader size="lg" text="Carregando informações do negócio..." />
+        <Loader size="lg" text="Loading business information..." />
       </div>
     );
   }

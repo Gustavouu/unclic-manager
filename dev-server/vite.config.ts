@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 // https://vitejs.dev/config/
-const config = defineConfig({
+export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
@@ -12,5 +12,3 @@ const config = defineConfig({
     },
   },
 });
-
-export default config;
