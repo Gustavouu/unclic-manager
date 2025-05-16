@@ -1,117 +1,46 @@
 
+export type ProfessionalStatus = 'active' | 'inactive' | 'on_vacation' | 'on_leave';
+
 export interface Professional {
   id: string;
+  business_id: string;
+  user_id?: string | null;
   name: string;
-  email?: string;
-  phone?: string;
-  position?: string;
-  photo_url?: string;
-  bio?: string;
-  specialties?: string[];
-  status?: ProfessionalStatus;
-  business_id?: string;
-  user_id?: string;
-  commission_percentage?: number;
-  hire_date?: string;
-  working_hours?: {
-    [day: string]: {
-      start: string;
-      end: string;
-      isAvailable: boolean;
-    };
-  };
+  email?: string | null;
+  phone?: string | null;
+  position?: string | null;
+  bio?: string | null;
+  photo_url?: string | null;
+  specialties?: string[] | null;
+  commission_percentage?: number | null;
+  hire_date?: string | null;
+  status?: string | null;
+  working_hours?: Record<string, any> | null;
   created_at?: string;
   updated_at?: string;
 }
 
-// Define as enum for type safety and value access
-export enum ProfessionalStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  ON_LEAVE = 'vacation',
-  PENDING = 'pending'
-}
-
-// For backward compatibility
-export const PROFESSIONAL_STATUS = {
-  ACTIVE: ProfessionalStatus.ACTIVE,
-  INACTIVE: ProfessionalStatus.INACTIVE,
-  ON_LEAVE: ProfessionalStatus.ON_LEAVE,
-  PENDING: ProfessionalStatus.PENDING
-};
-
-export const STATUS_MAPPING = {
-  [ProfessionalStatus.ACTIVE]: {
-    label: 'Ativo',
-    color: 'green'
-  },
-  [ProfessionalStatus.INACTIVE]: {
-    label: 'Inativo',
-    color: 'red'
-  },
-  [ProfessionalStatus.ON_LEAVE]: {
-    label: 'Férias',
-    color: 'amber'
-  },
-  [ProfessionalStatus.PENDING]: {
-    label: 'Pendente',
-    color: 'blue'
-  }
-};
-
-// Define and export AppointmentStatus type and constants
-export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
-
-export const APPOINTMENT_STATUS = {
-  SCHEDULED: 'scheduled',
-  CONFIRMED: 'confirmed',
-  COMPLETED: 'completed',
-  CANCELLED: 'cancelled',
-  NO_SHOW: 'no_show'
-};
-
-export const APPOINTMENT_STATUS_RECORD = {
-  scheduled: {
-    label: 'Agendado',
-    color: 'blue'
-  },
-  confirmed: {
-    label: 'Confirmado',
-    color: 'green'
-  },
-  completed: {
-    label: 'Concluído',
-    color: 'green'
-  },
-  cancelled: {
-    label: 'Cancelado',
-    color: 'red'
-  },
-  no_show: {
-    label: 'Não compareceu',
-    color: 'amber'
-  }
-};
-
-export interface Option {
-  value: string;
-  label: string;
-}
-
-// Add ProfessionalFormData interface that is missing but referenced in other files
 export interface ProfessionalFormData {
-  id?: string;
   name: string;
   email?: string;
   phone?: string;
   position?: string;
-  photo_url?: string;
   bio?: string;
+  photo_url?: string;
   specialties?: string[];
-  status: ProfessionalStatus;
-  business_id?: string;
-  user_id?: string;
   commission_percentage?: number;
   hire_date?: string;
-  working_hours?: any;
+  status?: ProfessionalStatus;
+  working_hours?: Record<string, any>;
+}
+
+export interface ProfessionalSchedule {
+  id: string;
+  professional_id: string;
+  day_of_week: number; // 0-6 (Sunday-Saturday)
+  start_time: string;
+  end_time: string;
+  is_working_day: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
