@@ -28,12 +28,12 @@ export function useNeedsOnboarding() {
         }
         
         // Then check if all required onboarding steps are completed
-        const { data, error } = await supabase
+        const { data, error: supabaseError } = await supabase
           .from('onboarding_progress')
           .select('step, completed')
           .eq('business_id', businessId);
           
-        if (error) throw error;
+        if (supabaseError) throw supabaseError;
         
         // If we don't have any onboarding records or not all steps are completed,
         // the user needs onboarding
