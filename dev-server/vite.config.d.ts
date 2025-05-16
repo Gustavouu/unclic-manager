@@ -1,3 +1,4 @@
 
-declare const _default: import("vite").UserConfigExport;
+import { UserConfigExport } from 'vite';
+declare const _default: UserConfigExport;
 export default _default;
