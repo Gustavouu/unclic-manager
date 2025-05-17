@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServicesTable } from "@/components/services/ServicesTable";
 import { StatsCard } from "@/components/common/StatsCard";
 import { services as initialServices, ServiceData } from "@/components/services/servicesData";
-import { useUserPermissions } from "@/components/hooks/useUserPermissions";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { LoadingState } from "@/hooks/use-loading-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Scissors, Calendar, BadgeDollarSign, Bookmark } from "lucide-react";
@@ -19,7 +19,7 @@ const Services = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<string>('all');
-  const { canAccess } = useUserPermissions();
+  const { userRoles, permissions, isAdmin } = useUserPermissions();
 
   useEffect(() => {
     // Simular chamada à API
@@ -111,7 +111,13 @@ const Services = () => {
     setFilteredServices(applyFilters(services, searchQuery, value));
   };
 
-  const canManageServices = canAccess(['services.manage']);
+  // Check if user can manage services
+  const hasServicesManagePermission = () => {
+    if (isAdmin) return true;
+    return permissions.some(permission => permission.name === 'services.manage');
+  };
+
+  const canManageServices = hasServicesManagePermission();
 
   // Calculate statistics for the cards
   const totalServices = services.length;
