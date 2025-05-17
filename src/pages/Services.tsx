@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ServicesTable } from "@/components/services/ServicesTable";
@@ -120,9 +121,15 @@ const Services = () => {
   const totalDuration = services.reduce((sum, service) => sum + (service.duration || 0), 0);
   const averageDuration = services.length ? Math.round(totalDuration / services.length) : 0;
   
-  // Calculate total estimated revenue
+  // Calculate total estimated revenue - Fix the issue here
   const totalRevenue = services.reduce((sum, service) => {
-    let price = typeof service.price === 'string' ? parseFloat(service.price) : service.price;
+    // Ensure price is a number
+    let price = 0;
+    if (typeof service.price === 'string') {
+      price = parseFloat(service.price);
+    } else if (typeof service.price === 'number') {
+      price = service.price;
+    }
     return sum + (isNaN(price) ? 0 : price);
   }, 0);
 
@@ -148,7 +155,7 @@ const Services = () => {
           icon={<Bookmark size={18} />}
           iconColor="text-green-600 bg-green-50"
           borderColor="border-l-green-600"
-          description={`${Math.round((activeServices / totalServices) * 100) || 0}% do total`}
+          description={totalServices > 0 ? `${Math.round((activeServices / totalServices) * 100) || 0}% do total` : "0% do total"}
         />
         
         <StatsCard

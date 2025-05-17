@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, DollarSign, Edit, Trash2 } from "lucide-react";
-import { ServiceData } from "@/contexts/OnboardingContext";
+import { ServiceData } from "@/contexts/onboarding/types";
 
 interface ServiceCardProps {
   service: ServiceData;
@@ -34,20 +34,25 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onEdit, onRem
     }).format(price);
   };
   
+  // Ensure we have valid data to render
+  const serviceName = service.name || 'Serviço';
+  const serviceDuration = typeof service.duration === 'number' ? service.duration : 0;
+  const servicePrice = typeof service.price === 'number' ? service.price : 0;
+  
   return (
     <Card className="h-full flex flex-col">
       <CardContent className="pt-6 flex-grow">
-        <h3 className="font-medium text-lg mb-2">{service.name}</h3>
+        <h3 className="font-medium text-lg mb-2">{serviceName}</h3>
         
         <div className="space-y-2">
           <div className="flex items-center text-muted-foreground">
             <Clock className="h-4 w-4 mr-2" />
-            <span>{formatDuration(service.duration)}</span>
+            <span>{formatDuration(serviceDuration)}</span>
           </div>
           
           <div className="flex items-center text-muted-foreground">
             <DollarSign className="h-4 w-4 mr-2" />
-            <span>{formatPrice(service.price)}</span>
+            <span>{formatPrice(servicePrice)}</span>
           </div>
         </div>
         

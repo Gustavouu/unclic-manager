@@ -72,6 +72,19 @@ export function WebsiteBookingFlow({
     }
   };
   
+  // Safely transform services data for StepService component
+  const transformedServices = services.map(service => ({
+    id: service.id || "",
+    name: service.name || service.nome || "",
+    description: service.description || service.descricao || "",
+    price: typeof service.price !== 'undefined' ? service.price : 
+           typeof service.preco !== 'undefined' ? service.preco : 0,
+    duration: typeof service.duration !== 'undefined' ? service.duration : 
+              typeof service.duracao !== 'undefined' ? service.duracao : 30,
+    category: service.category || "",
+    isActive: service.isActive ?? service.ativo ?? true,
+  }));
+  
   return (
     <div className="py-6 relative">
       <CloseButton onClick={closeFlow} />
@@ -88,7 +101,7 @@ export function WebsiteBookingFlow({
               bookingData={bookingData}
               updateBookingData={updateBookingData}
               nextStep={handleNextStep}
-              services={services}
+              services={transformedServices}
             />
           )}
           
