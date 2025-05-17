@@ -48,26 +48,27 @@ const ProfessionalSelectWrapper = ({
           .eq('isActive', true);
         
         if (newError || !newData || newData.length === 0) {
-          // Try legacy table
+          // Try legacy table using try-catch to handle non-existent tables
           console.log('Trying legacy professionals table');
-          const { data: legacyData, error: legacyError } = await supabase
-            .from('funcionarios')
-            .select('id, nome, cargo, especializacoes')
-            .eq('status', 'ativo');
-            
-          if (legacyError) {
-            console.error('Error fetching from legacy professionals:', legacyError);
-          } else if (legacyData && legacyData.length > 0) {
-            // Map legacy data to expected format
-            const mappedData: Professional[] = legacyData.map(prof => ({
-              id: prof.id,
-              nome: prof.nome,
-              cargo: prof.cargo,
-              especializacoes: prof.especializacoes
-            }));
-            setProfessionals(mappedData);
-          } else {
-            setProfessionals([]);
+          try {
+            const { data: legacyData, error: legacyError } = await supabase
+              .from('funcionarios')
+              .select('id, nome, cargo, especializacoes');
+              
+            if (!legacyError && legacyData && legacyData.length > 0) {
+              // Map legacy data to expected format
+              const mappedData: Professional[] = legacyData.map(prof => ({
+                id: prof.id,
+                nome: prof.nome,
+                cargo: prof.cargo,
+                especializacoes: prof.especializacoes
+              }));
+              setProfessionals(mappedData);
+              setLoading(false);
+              return;
+            }
+          } catch (err) {
+            console.error("Error checking legacy tables:", err);
           }
         } else {
           // Map new data to expected format
@@ -108,26 +109,25 @@ const ProfessionalSelectWrapper = ({
           .single();
 
         if (error || !data) {
-          // Try legacy services table
-          const { data: legacyData, error: legacyError } = await supabase
-            .from('servicos')
-            .select('nome')
-            .eq('id', serviceId)
-            .single();
-            
-          if (legacyError) {
-            console.error('Error getting service name:', legacyError);
-            setFilteredProfessionals(professionals);
-            return;
+          try {
+            // Try legacy services table
+            const { data: legacyData, error: legacyError } = await supabase
+              .from('servicos')
+              .select('nome')
+              .eq('id', serviceId)
+              .single();
+              
+            if (!legacyError && legacyData) {
+              filterProfessionalsByService(legacyData.nome);
+              return;
+            }
+          } catch (err) {
+            console.error("Error fetching from legacy services:", err);
           }
           
-          if (legacyData) {
-            filterProfessionalsByService(legacyData.nome);
-            return;
-          }
-        }
-
-        if (data) {
+          // If we get here, we couldn't find the service
+          setFilteredProfessionals(professionals);
+        } else if (data) {
           filterProfessionalsByService(data.name);
         } else {
           setFilteredProfessionals(professionals);

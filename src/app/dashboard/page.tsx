@@ -76,7 +76,13 @@ export default function DashboardPage() {
           } else {
             console.log("Onboarding verification result:", verificationResult);
             
-            if (verificationResult && verificationResult.success === true) {
+            // Check if verification was successful and onboarding is complete
+            const isSuccess = typeof verificationResult === 'object' && 
+                              verificationResult !== null && 
+                              'success' in verificationResult && 
+                              verificationResult.success === true;
+            
+            if (isSuccess) {
               // Set business status to active
               await updateBusinessStatus(businessId, 'active');
               setShowOnboardingBanner(false);

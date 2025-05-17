@@ -42,24 +42,35 @@ const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelec
         if (newError || !newData || newData.length === 0) {
           // If no data in clients, try legacy 'clientes' table
           console.log('Trying legacy clients table');
-          const { data: legacyData, error: legacyError } = await supabase
-            .from('clientes')
-            .select('id, nome, email, telefone')
-            .order('nome');
           
-          if (legacyError) {
-            console.error('Error fetching legacy clients:', legacyError);
-          } else if (legacyData && legacyData.length > 0) {
-            // Map legacy data to match expected format
-            const mappedData: ClientData[] = legacyData.map(client => ({
-              id: client.id,
-              nome: client.nome,
-              email: client.email,
-              telefone: client.telefone
-            }));
-            setClients(mappedData);
-          } else {
-            setClients([]);
+          // Use try-catch to handle tables that might not exist
+          try {
+            const { data: legacyData, error: legacyError } = await supabase
+              .from('negocios') // Just to check if table exists
+              .select('id')
+              .limit(1);
+              
+            if (!legacyError) {
+              // If we can query negocios table, we might have clientes table too
+              const { data: clientesData, error: clientesError } = await supabase
+                .from('clientes')
+                .select('id, nome, email, telefone');
+              
+              if (!clientesError && clientesData && clientesData.length > 0) {
+                // Map legacy data to match expected format
+                const mappedData: ClientData[] = clientesData.map(client => ({
+                  id: client.id,
+                  nome: client.nome,
+                  email: client.email,
+                  telefone: client.telefone
+                }));
+                setClients(mappedData);
+                setLoading(false);
+                return;
+              }
+            }
+          } catch (err) {
+            console.error("Error checking legacy tables:", err);
           }
         } else {
           // Map new data to match expected format
@@ -71,8 +82,8 @@ const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelec
           }));
           setClients(mappedData);
         }
-      } catch (error) {
-        console.error('Error fetching clients:', error);
+      } catch (err: any) {
+        console.error('Error fetching clients:', err);
         setClients([]);
       } finally {
         setLoading(false);

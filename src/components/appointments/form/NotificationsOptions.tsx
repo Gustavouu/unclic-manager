@@ -27,7 +27,7 @@ const NotificationOptions = ({ businessId }: NotificationOptionsProps) => {
       
       setLoading(true);
       try {
-        // Try to get from notification_settings table first
+        // Try to get from business_settings table first
         let { data, error } = await supabase
           .from('business_settings')
           .select('*')
@@ -60,24 +60,11 @@ const NotificationOptions = ({ businessId }: NotificationOptionsProps) => {
           }
         }
 
-        // If we get here, we didn't find settings, try fallback table
-        ({ data, error } = await supabase
-          .from('notification_settings')
-          .select('*')
-          .eq('id_negocio', businessId)
-          .maybeSingle());
-
-        if (error) {
-          console.error('Error fetching legacy notification settings:', error);
-          return;
-        }
-
-        if (data) {
-          setSettings({
-            email_enabled: data.email_enabled,
-            sms_enabled: data.sms_enabled
-          });
-        }
+        // Default settings if nothing found
+        setSettings({
+          email_enabled: true,
+          sms_enabled: false
+        });
       } catch (err) {
         console.error('Error in notification settings fetch:', err);
       } finally {
@@ -96,39 +83,33 @@ const NotificationOptions = ({ businessId }: NotificationOptionsProps) => {
     }));
 
     try {
-      // First try to update notification_settings table
-      const { error } = await supabase
+      // First check if business_settings exists
+      const { data, error } = await supabase
         .from('business_settings')
         .select('*')
         .eq('business_id', businessId)
         .maybeSingle();
       
       if (error) {
-        // If business_settings doesn't exist, try updating the legacy table
-        const { error: legacyError } = await supabase
-          .from('notification_settings')
-          .upsert({
-            id_negocio: businessId,
-            [setting]: value
-          }, { onConflict: 'id_negocio' });
-          
-        if (legacyError) {
-          console.error('Failed to update notification settings:', legacyError);
-          // Revert UI change on error
-          setSettings(prev => ({
-            ...prev,
-            [setting]: !value
-          }));
+        console.error('Error checking business settings:', error);
+        // Revert UI change on error
+        setSettings(prev => ({
+          ...prev,
+          [setting]: !value
+        }));
+        return;
+      }
+      
+      // Prepare notification settings object
+      const notificationSettings = {
+        notification_settings: {
+          ...settings,
+          [setting]: value
         }
-      } else {
-        // Business settings exists, update the notes field
-        const notificationSettings = {
-          notification_settings: {
-            ...settings,
-            [setting]: value
-          }
-        };
-        
+      };
+      
+      if (data) {
+        // If business settings exists, update the notes field
         const { error: updateError } = await supabase
           .from('business_settings')
           .update({
@@ -138,6 +119,29 @@ const NotificationOptions = ({ businessId }: NotificationOptionsProps) => {
           
         if (updateError) {
           console.error('Failed to update notification settings:', updateError);
+          // Revert UI change on error
+          setSettings(prev => ({
+            ...prev,
+            [setting]: !value
+          }));
+        }
+      } else {
+        // If business settings doesn't exist, create it
+        const { error: insertError } = await supabase
+          .from('business_settings')
+          .insert({
+            business_id: businessId, 
+            notes: JSON.stringify(notificationSettings),
+            primary_color: '#213858',
+            secondary_color: '#33c3f0',
+            allow_online_booking: true,
+            require_advance_payment: false,
+            minimum_notice_time: 30,
+            maximum_days_in_advance: 30
+          });
+          
+        if (insertError) {
+          console.error('Failed to create notification settings:', insertError);
           // Revert UI change on error
           setSettings(prev => ({
             ...prev,

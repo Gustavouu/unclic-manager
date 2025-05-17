@@ -1,176 +1,86 @@
 
-import { Form } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { appointmentFormSchema, AppointmentFormValues } from "../schemas/appointmentFormSchema";
-import { DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { ClientSelect } from "./ClientSelect";
-import { ServiceSelect } from "./ServiceSelect";
-import { ProfessionalSelect } from "./ProfessionalSelect";
-import { DateTimeSelect } from "./DateTimeSelect";
-import { NotesField } from "./NotesField";
-import { StatusSelect } from "./StatusSelect";
-import { NotificationsOptions } from "./NotificationsOptions";
-import { clients } from "../data/appointmentMockData";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { toast } from "sonner";
-import { useAppointments } from "@/hooks/appointments/useAppointments";
-import { useAppointmentConflicts } from "@/hooks/appointments/useAppointmentConflicts";
-import { v4 as uuidv4 } from "uuid";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { AppointmentStatus } from "@/hooks/appointments/types";
+import React from 'react';
+import { UseFormReturn } from 'react-hook-form';
+import { AppointmentFormValues } from '../schemas/appointmentFormSchema';
+import DateTimeSelectWrapper from './DateTimeSelectWrapper';
+import ServiceSelectWrapper from './ServiceSelectWrapper';
+import ProfessionalSelectWrapper from './ProfessionalSelectWrapper';
+import ClientSelectWrapper from './ClientSelectWrapper';
+import { Button } from '@/components/ui/button';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import NotificationOptions from './NotificationsOptions';
+import { useTenant } from '@/contexts/TenantContext';
 
-type AppointmentFormProps = {
-  onClose: () => void;
-};
+interface AppointmentFormProps {
+  form: UseFormReturn<AppointmentFormValues>;
+  onSubmit: (values: AppointmentFormValues) => void;
+  isSubmitting?: boolean;
+  className?: string;
+}
 
-export const AppointmentForm = ({ onClose }: AppointmentFormProps) => {
-  const [selectedService, setSelectedService] = useState<{
-    id: string;
-    name: string;
-    duration: number;
-    price: number;
-  } | null>(null);
-
-  const { appointments, createAppointment, fetchAppointments } = useAppointments();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
+const AppointmentForm = ({ form, onSubmit, isSubmitting = false, className }: AppointmentFormProps) => {
+  const { businessId } = useTenant();
   
-  const appointmentsForConflict = appointments;
-  const { validateAppointmentTime } = useAppointmentConflicts(appointmentsForConflict);
-
-  const form = useForm<AppointmentFormValues>({
-    resolver: zodResolver(appointmentFormSchema),
-    defaultValues: {
-      notes: "",
-      status: "agendado" as AppointmentStatus,
-      notifications: {
-        sendConfirmation: true,
-        sendReminder: true,
-      },
-    },
-  });
-
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === 'date' || name === 'time' || name === 'professionalId') {
-        setValidationError(null);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
-
-  const onSubmit = async (values: AppointmentFormValues) => {
-    try {
-      setIsSubmitting(true);
-      
-      const appointmentDate = new Date(values.date);
-      const [hours, minutes] = values.time.split(':').map(Number);
-      appointmentDate.setHours(hours, minutes, 0, 0);
-      
-      const client = clients.find(c => c.id === values.clientId);
-      
-      const serviceId = values.serviceId || uuidv4();
-      const clientId = values.clientId || uuidv4();
-      const professionalId = values.professionalId || uuidv4();
-      
-      const validationResult = validateAppointmentTime({
-        date: appointmentDate,
-        duration: selectedService?.duration || 60,
-        professionalId: professionalId
-      });
-      
-      if (!validationResult.valid) {
-        setValidationError(validationResult.reason || "Horário inválido para agendamento.");
-        setIsSubmitting(false);
-        return;
-      }
-      
-      console.log("Creating appointment with form values:", {
-        ...values,
-        appointmentDate,
-        serviceId,
-        clientId,
-        professionalId
-      });
-      
-      await createAppointment({
-        clientName: client?.name || "Cliente não identificado",
-        serviceName: selectedService?.name || "Serviço não identificado",
-        date: appointmentDate,
-        status: values.status,
-        price: selectedService?.price || 0,
-        serviceType: "haircut",
-        duration: selectedService?.duration || 60,
-        notes: values.notes,
-        clientId: clientId,
-        serviceId: serviceId,
-        professionalId: professionalId,
-        paymentMethod: values.paymentMethod || "local",
-        notifications: {
-          sendConfirmation: values.notifications?.sendConfirmation ?? true,
-          sendReminder: values.notifications?.sendReminder ?? true
-        }
-      });
-      
-      fetchAppointments();
-      onClose();
-      form.reset();
-      
-      toast.success("Agendamento criado com sucesso!", {
-        description: `Cliente: ${client?.name}, 
-                     Data: ${format(appointmentDate, "d 'de' MMMM", { locale: ptBR })} às ${values.time}`,
-      });
-      
-      if (values.notifications?.sendConfirmation) {
-        toast.info("Enviando confirmação para o cliente...");
-      }
-    } catch (error) {
-      console.error("Error creating appointment:", error);
-      toast.error("Erro ao criar agendamento. Tente novamente.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <ClientSelect form={form} />
-        <ServiceSelect 
-          form={form} 
-          selectedService={selectedService} 
-          setSelectedService={setSelectedService} 
-        />
-        <ProfessionalSelect form={form} />
-        <DateTimeSelect form={form} />
-        <StatusSelect form={form} />
-        <NotesField form={form} />
-        <NotificationsOptions form={form} />
+    <form onSubmit={form.handleSubmit(onSubmit)} className={cn("space-y-6", className)}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Service Selection */}
+        <ServiceSelectWrapper form={form} />
         
-        {validationError && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Erro de validação</AlertTitle>
-            <AlertDescription>
-              {validationError}
-            </AlertDescription>
-          </Alert>
+        {/* Professional Selection */}
+        <ProfessionalSelectWrapper 
+          form={form}
+          serviceId={form.watch('serviceId')}
+        />
+        
+        {/* Client Selection */}
+        <ClientSelectWrapper form={form} />
+        
+        {/* Date and Time Selection */}
+        <DateTimeSelectWrapper 
+          form={form}
+          serviceId={form.watch('serviceId')}
+          professionalId={form.watch('professionalId')}
+        />
+      </div>
+      
+      {/* Notes */}
+      <FormField
+        control={form.control}
+        name="notes"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Observações</FormLabel>
+            <FormControl>
+              <Textarea 
+                placeholder="Adicione observações importantes sobre o agendamento..." 
+                className="resize-none"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )}
-
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Agendando..." : "Agendar"}
-          </Button>
-        </DialogFooter>
-      </form>
-    </Form>
+      />
+      
+      {/* Notification Options */}
+      <div>
+        <h3 className="text-sm font-medium mb-2">Notificações</h3>
+        {businessId && <NotificationOptions businessId={businessId} />}
+      </div>
+      
+      <div className="flex justify-end">
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Salvando..." : "Salvar Agendamento"}
+        </Button>
+      </div>
+    </form>
   );
 };
+
+export default AppointmentForm;
