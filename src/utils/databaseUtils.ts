@@ -61,3 +61,23 @@ export const transformDatabaseResponse = <T, R>(
   
   return data.map(transformFn);
 };
+
+/**
+ * Safely parse JSON string to object
+ * @param jsonString The JSON string to parse
+ * @param defaultValue The default value to return if parsing fails
+ * @returns The parsed object or the default value
+ */
+export const safeJsonParse = <T>(jsonString: string | object, defaultValue: T): T => {
+  // If it's already an object, just return it
+  if (typeof jsonString !== 'string') {
+    return jsonString as unknown as T;
+  }
+  
+  try {
+    return JSON.parse(jsonString) as T;
+  } catch (error) {
+    console.error('Error parsing JSON:', error);
+    return defaultValue;
+  }
+};
