@@ -4326,17 +4326,10 @@ export type Database = {
         Returns: undefined
       }
       obter_metricas_periodo: {
-        Args: { p_tenant_id: string; p_data_inicio: string; p_data_fim: string }
-        Returns: {
-          data_referencia: string
-          total_agendamentos: number
-          total_vendas: number
-          ticket_medio: number
-          taxa_cancelamento: number
-          novos_clientes: number
-          servicos_populares: Json
-          horarios_pico: Json
-        }[]
+        Args:
+          | { business_id_param: string; periodo?: string }
+          | { p_tenant_id: string; p_data_inicio: string; p_data_fim: string }
+        Returns: Json
       }
       set_business_status: {
         Args: { business_id: string; new_status: string }
@@ -4365,6 +4358,10 @@ export type Database = {
       usuario_tem_acesso_ao_negocio: {
         Args: { id_negocio_verificar: string }
         Returns: boolean
+      }
+      verificar_completar_onboarding: {
+        Args: { business_id_param: string }
+        Returns: Json
       }
     }
     Enums: {

@@ -26,7 +26,7 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss })
       try {
         setIsVerifying(true);
 
-        // First, try to use the new RPC function
+        // Use our new RPC function to check onboarding status
         const { data: verificationResult, error: verificationError } = await supabase
           .rpc('verificar_completar_onboarding', {
             business_id_param: businessId
@@ -49,13 +49,18 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss })
             setNeedsOnboarding(businessData?.status !== 'active');
           }
         } else {
-          // Use the verification result
-          setNeedsOnboarding(!verificationResult?.onboarding_complete);
-          
-          if (verificationResult?.onboarding_complete) {
-            console.log('Onboarding is complete');
+          // Use the verification result - now with the correct property access
+          if (verificationResult && typeof verificationResult === 'object') {
+            setNeedsOnboarding(!verificationResult.onboarding_complete);
+            
+            if (verificationResult.onboarding_complete) {
+              console.log('Onboarding is complete');
+            } else {
+              console.log('Onboarding is incomplete, missing steps:', verificationResult.missing_steps);
+            }
           } else {
-            console.log('Onboarding is incomplete, missing steps:', verificationResult?.missing_steps);
+            console.log('Unexpected verification result format:', verificationResult);
+            setNeedsOnboarding(true);
           }
         }
       } catch (error) {

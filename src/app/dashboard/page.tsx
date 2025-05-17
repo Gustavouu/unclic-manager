@@ -52,7 +52,7 @@ export default function DashboardPage() {
       }
 
       try {
-        // Verify and complete onboarding
+        // Verify and complete onboarding using our new RPC function
         const { data: verificationResult, error: verificationError } = await supabase
           .rpc('verificar_completar_onboarding', {
             business_id_param: businessId
@@ -63,8 +63,8 @@ export default function DashboardPage() {
         } else {
           console.log("Verificação de onboarding:", verificationResult);
           
-          // If onboarding is complete, hide the banner
-          if (verificationResult?.onboarding_complete) {
+          // If onboarding is complete, hide the banner - type check the result first
+          if (verificationResult && typeof verificationResult === 'object' && verificationResult.onboarding_complete === true) {
             setShowOnboardingBanner(false);
           }
         }
