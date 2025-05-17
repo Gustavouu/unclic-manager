@@ -1,160 +1,191 @@
 
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
-import { useState, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown, PlusCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
-import { tableExists, safeDataExtract } from "@/utils/databaseUtils";
+import { useTenant } from "@/contexts/TenantContext";
+import { useMemo } from "react";
+import { toast } from "sonner";
+import { normalizeClientData, tableExists } from "@/utils/databaseUtils";
 
-export interface ClientData {
-  id: string;
-  nome?: string;
-  name?: string;
-  email?: string;
-  telefone?: string;
-  phone?: string;
+export interface ClientSelectWrapperProps {
+  form: UseFormReturn<AppointmentFormValues>;
+  onNewClient?: () => void;
 }
 
-type ClientSelectWrapperProps = {
-  form: UseFormReturn<AppointmentFormValues>;
-  disabled?: boolean;
-  clientName?: string;
-};
-
-const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelectWrapperProps) => {
-  const [clients, setClients] = useState<ClientData[]>([]);
+export default function ClientSelectWrapper({ form, onNewClient }: ClientSelectWrapperProps) {
+  const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // Get client data from database
+  const [open, setOpen] = useState(false);
+  const { businessId } = useTenant();
+  
+  // Buscar clientes do banco de dados
   useEffect(() => {
-    if (disabled) return; // Skip fetching if client is already selected
-
     const fetchClients = async () => {
+      if (!businessId) return;
+      
       setLoading(true);
       try {
-        // Try to fetch from clients table first (new schema)
-        let clientsData: ClientData[] = [];
-        let hasData = false;
+        console.log('Fetching clients for business ID:', businessId);
+        let clientsData;
         
-        try {
-          const response = await supabase
+        // Primeiro tenta tabela clients
+        const hasClientsTable = await tableExists('clients');
+        
+        if (hasClientsTable) {
+          console.log('Trying clients table');
+          const { data, error } = await supabase
             .from('clients')
-            .select('id, name, email, phone')
-            .order('name');
-          
-          const data = safeDataExtract(response);
-          
-          if (data && data.length > 0) {
-            // Map new data to match expected format
-            clientsData = data.map(client => ({
-              id: client.id,
-              name: client.name,
-              email: client.email,
-              phone: client.phone
-            }));
-            setClients(clientsData);
-            setLoading(false);
-            hasData = true;
-            return;
-          }
-        } catch (err) {
-          console.error("Error fetching from clients table:", err);
-        }
-        
-        // If no data in clients, try old clientes table
-        if (!hasData) {
-          try {
-            // First check if the table exists
-            const clientesExists = await tableExists('clientes');
-              
-            if (clientesExists) {
-              // Table exists, try to query it
-              const response = await supabase
-                .from('clientes')
-                .select('id, nome, email, telefone');
-              
-              const clientesData = safeDataExtract(response);
-              
-              if (clientesData && clientesData.length > 0) {
-                // Map legacy data to match expected format
-                clientsData = clientesData.map(client => ({
-                  id: client.id,
-                  nome: client.nome,
-                  email: client.email,
-                  telefone: client.telefone
-                }));
-                setClients(clientsData);
-                hasData = true;
-              }
-            }
-          } catch (err) {
-            console.error("Error checking legacy tables:", err);
+            .select('*')
+            .eq('business_id', businessId);
+            
+          if (error) {
+            console.error('Error fetching clients:', error);
+          } else if (data && data.length > 0) {
+            console.log('Found clients in clients table:', data.length);
+            clientsData = data.map(normalizeClientData);
           }
         }
         
-        // If we still have no data, set empty array
-        if (!hasData) {
+        // Se não encontrou na tabela clients, tenta na tabela clientes
+        if (!clientsData) {
+          console.log('Trying clientes table');
+          const { data, error } = await supabase
+            .from('clientes')
+            .select('*')
+            .eq('id_negocio', businessId);
+            
+          if (error) {
+            console.error('Error fetching from clientes table:', error);
+          } else if (data && data.length > 0) {
+            console.log('Found clients in clientes table:', data.length);
+            clientsData = data.map(normalizeClientData);
+          }
+        }
+        
+        if (clientsData && clientsData.length > 0) {
+          setClients(clientsData);
+        } else {
+          console.log('No clients found in any table');
           setClients([]);
         }
-        
-      } catch (err: any) {
-        console.error('Error fetching clients:', err);
-        setClients([]);
+      } catch (error) {
+        console.error('Error fetching clients:', error);
+        toast.error('Erro ao carregar clientes');
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchClients();
-  }, [disabled]);
-
+  }, [businessId]);
+  
+  const clientsOptions = useMemo(() => {
+    return clients.map(client => ({
+      value: client.id,
+      label: client.name || client.nome,
+      details: `${client.email || ''} · ${client.phone || client.telefone || ''}`
+    }));
+  }, [clients]);
+  
   return (
     <FormField
       control={form.control}
       name="clientId"
       render={({ field }) => (
-        <FormItem>
+        <FormItem className="flex flex-col">
           <FormLabel>Cliente</FormLabel>
-          {disabled ? (
-            <Input 
-              value={clientName || 'Cliente selecionado'} 
-              disabled 
-              className="bg-muted"
-            />
-          ) : (
-            <Select 
-              onValueChange={field.onChange} 
-              defaultValue={field.value} 
-              disabled={loading || disabled}
-            >
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
               <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder={loading ? "Carregando clientes..." : "Selecione um cliente"} />
-                </SelectTrigger>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className={cn(
+                    "justify-between w-full font-normal",
+                    !field.value && "text-muted-foreground"
+                  )}
+                  onClick={() => setOpen(!open)}
+                >
+                  {field.value ? 
+                    clientsOptions.find(client => client.value === field.value)?.label || "Selecione um cliente" : 
+                    "Selecione um cliente"
+                  }
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
               </FormControl>
-              <SelectContent>
-                {clients.length > 0 ? (
-                  clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name || client.nome || 'Unknown'} {(client.phone || client.telefone) ? 
-                        `(${client.phone || client.telefone})` : ''}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no_clients" disabled>
-                    {loading ? "Carregando clientes..." : "Nenhum cliente encontrado"}
-                  </SelectItem>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-[calc(var(--popover-width))]" style={{"--popover-width": "var(--radix-popover-trigger-width)"}}>
+              <Command>
+                <CommandInput placeholder="Buscar cliente..." className="h-9" />
+                <CommandEmpty>
+                  Nenhum cliente encontrado.
+                  {onNewClient && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full mt-2 flex items-center gap-1 justify-center"
+                      onClick={() => {
+                        setOpen(false);
+                        onNewClient();
+                      }}
+                    >
+                      <PlusCircle className="h-4 w-4 mr-1" />
+                      Novo Cliente
+                    </Button>
+                  )}
+                </CommandEmpty>
+                <CommandGroup className="max-h-[200px] overflow-y-auto">
+                  {clientsOptions.map((client) => (
+                    <CommandItem
+                      key={client.value}
+                      value={`${client.label} ${client.details}`}
+                      onSelect={() => {
+                        form.setValue("clientId", client.value);
+                        setOpen(false);
+                      }}
+                      className="flex items-center justify-between"
+                    >
+                      <div>
+                        <span>{client.label}</span>
+                        <p className="text-xs text-muted-foreground">{client.details}</p>
+                      </div>
+                      
+                      {field.value === client.value && (
+                        <Check className="h-4 w-4 text-primary" />
+                      )}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+                {onNewClient && (
+                  <div className="p-1 border-t">
+                    <Button
+                      variant="ghost"
+                      size="sm" 
+                      className="w-full flex items-center gap-1 justify-center"
+                      onClick={() => {
+                        setOpen(false);
+                        onNewClient();
+                      }}
+                    >
+                      <PlusCircle className="h-4 w-4 mr-1" />
+                      Novo Cliente
+                    </Button>
+                  </div>
                 )}
-              </SelectContent>
-            </Select>
-          )}
+              </Command>
+            </PopoverContent>
+          </Popover>
           <FormMessage />
         </FormItem>
       )}
     />
   );
-};
-
-export default ClientSelectWrapper;
+}

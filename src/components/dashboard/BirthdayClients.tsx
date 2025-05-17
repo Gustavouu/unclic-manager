@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
-import { tableExists, safeDataExtract } from '@/utils/databaseUtils';
+import { tableExists, safeDataExtract, normalizeClientData } from '@/utils/databaseUtils';
 
 interface ClientWithBirthday {
   id: string;
@@ -46,9 +46,9 @@ export function BirthdayClients() {
             const data = safeDataExtract(response);
               
             if (data && data.length > 0) {
-              foundClients = data as ClientWithBirthday[];
+              foundClients = data.map(normalizeClientData) as ClientWithBirthday[];
               hasData = true;
-              processClients(foundClients, 'birth_date', 'name', 'photo_url');
+              processClients(foundClients, 'birth_date');
             }
           }
         } catch (err) {
@@ -69,7 +69,8 @@ export function BirthdayClients() {
               const legacyData = safeDataExtract(response);
                 
               if (legacyData && legacyData.length > 0) {
-                processClients(legacyData as ClientWithBirthday[], 'data_nascimento', 'nome', 'foto_url');
+                const normalizedData = legacyData.map(normalizeClientData) as ClientWithBirthday[];
+                processClients(normalizedData, 'birth_date');
                 hasData = true;
               }
             }
@@ -92,9 +93,7 @@ export function BirthdayClients() {
 
     const processClients = (
       data: ClientWithBirthday[], 
-      birthDateField: 'birth_date' | 'data_nascimento', 
-      nameField: 'name' | 'nome',
-      photoField: 'photo_url' | 'foto_url'
+      birthDateField: 'birth_date' | 'data_nascimento'
     ) => {
       const today = new Date();
       const currentMonth = today.getMonth();
@@ -103,7 +102,8 @@ export function BirthdayClients() {
       // Filter clients with birthdays in the next 30 days
       const clientsWithBirthdays = data
         .filter(client => {
-          const birthDateValue = client[birthDateField];
+          // Use either birth_date or data_nascimento field
+          const birthDateValue = client[birthDateField] || client.data_nascimento || client.birth_date;
           if (!birthDateValue) return false;
           
           const birthDate = new Date(birthDateValue);

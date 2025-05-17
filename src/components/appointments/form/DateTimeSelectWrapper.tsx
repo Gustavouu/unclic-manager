@@ -12,6 +12,7 @@ import { format, parse, addMinutes } from 'date-fns';
 import { generateTimeSlots } from '../utils/timeUtils';
 import { cn } from "@/lib/utils";
 import { supabase } from '@/integrations/supabase/client';
+import { safeJsonParse } from '@/utils/databaseUtils';
 
 export type DateTimeSelectWrapperProps = {
   form: UseFormReturn<AppointmentFormValues>;
@@ -56,13 +57,13 @@ export default function DateTimeSelectWrapper({
         if (error) throw error;
         
         if (data && data.notes) {
-          // Check if notes is string and parse it, or use directly if it's already an object
-          const notesObj = typeof data.notes === 'string' ? JSON.parse(data.notes) : data.notes;
+          // Parse the notes field safely
+          const notesObj = safeJsonParse(data.notes, {});
           
           // Handle different property paths that might exist
-          if (notesObj && notesObj.business_hours) {
+          if (notesObj?.business_hours) {
             setBusinessHours(notesObj.business_hours);
-          } else if (notesObj && notesObj.webhook_config && notesObj.webhook_config.business_hours) {
+          } else if (notesObj?.webhook_config?.business_hours) {
             setBusinessHours(notesObj.webhook_config.business_hours);
           }
         }

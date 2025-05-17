@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Appointment, AppointmentStatus } from "./types";
 import { useTenant } from "@/contexts/TenantContext";
+import { safeDataExtract, normalizeAppointmentData } from "@/utils/databaseUtils";
 
 export function useAppointmentsFetch() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -28,13 +29,14 @@ export function useAppointmentsFetch() {
       
       // Try fetching from bookings table first
       try {
+        console.log('Trying bookings table');
         let { data, error } = await supabase
           .from('bookings')
           .select(`
             *,
-            clients:client_id (*),
-            services_v2:service_id (*),
-            employees:employee_id (*)
+            clients (*),
+            services_v2 (*),
+            employees (*)
           `)
           .eq('business_id', businessId)
           .order('booking_date', { ascending: false })
@@ -61,9 +63,9 @@ export function useAppointmentsFetch() {
             .from('agendamentos')
             .select(`
               *,
-              clientes:id_cliente (*),
-              servicos:id_servico (*),
-              funcionarios:id_funcionario (*)
+              clientes (*),
+              servicos (*),
+              funcionarios (*)
             `)
             .eq('id_negocio', businessId)
             .order('data', { ascending: false })
@@ -91,9 +93,9 @@ export function useAppointmentsFetch() {
             .from('Appointments')
             .select(`
               *,
-              clientes:id_cliente (*),
-              servicos:id_servico (*),
-              funcionarios:id_funcionario (*)
+              clientes (*),
+              servicos (*),
+              funcionarios (*)
             `)
             .eq('id_negocio', businessId)
             .order('data', { ascending: false })
@@ -125,69 +127,8 @@ export function useAppointmentsFetch() {
         return;
       }
       
-      // Map database response to our Appointment interface
-      const mappedAppointments = appointmentData.map(app => {
-        // Determine if we're using the new or legacy schema
-        const isNewSchema = 'booking_date' in app;
-        
-        if (isNewSchema) {
-          // New schema (bookings table)
-          const client = app.clients || {};
-          const service = app.services_v2 || {};
-          const employee = app.employees || {};
-          
-          // Parse date and time to create a JavaScript Date object
-          const dateStr = app.booking_date;
-          const timeStr = app.start_time;
-          const dateTimeStr = `${dateStr}T${timeStr}`;
-          const dateObj = new Date(dateTimeStr);
-          
-          return {
-            id: app.id,
-            clientId: app.client_id,
-            clientName: client.name || "Client not identified",
-            serviceId: app.service_id,
-            serviceName: service.name || "Service not identified",
-            serviceType: service.type || "service",
-            professionalId: app.employee_id,
-            professionalName: employee.name || "Professional not identified",
-            date: dateObj,
-            duration: app.duration || 30,
-            price: app.price || 0,
-            status: (app.status as AppointmentStatus) || "scheduled",
-            notes: app.notes,
-            paymentMethod: app.payment_method
-          } as Appointment;
-        } else {
-          // Legacy schema (agendamentos or Appointments table)
-          const cliente = app.clientes || {};
-          const servico = app.servicos || {};
-          const funcionario = app.funcionarios || {};
-          
-          // Parse date and time
-          const dateStr = app.data;
-          const timeStr = app.hora_inicio;
-          const dateTimeStr = `${dateStr}T${timeStr}`;
-          const dateObj = new Date(dateTimeStr);
-          
-          return {
-            id: app.id,
-            clientId: app.id_cliente,
-            clientName: cliente.nome || "Cliente não identificado",
-            serviceId: app.id_servico,
-            serviceName: servico.nome || "Serviço não identificado",
-            serviceType: "service", // Default type
-            professionalId: app.id_funcionario,
-            professionalName: funcionario.nome || "Profissional não identificado",
-            date: dateObj,
-            duration: app.duracao || 30,
-            price: app.valor || 0,
-            status: (app.status as AppointmentStatus) || "agendado",
-            notes: app.observacoes,
-            paymentMethod: app.forma_pagamento
-          } as Appointment;
-        }
-      });
+      // Map database response to our Appointment interface using the normalizer
+      const mappedAppointments = appointmentData.map(normalizeAppointmentData);
       
       setAppointments(mappedAppointments);
       console.log('Successfully mapped', mappedAppointments.length, 'appointments');
