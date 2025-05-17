@@ -20,16 +20,42 @@ export function safeJsonParse<T>(jsonString: string | null | undefined, defaultV
  */
 export async function tableExists(tableName: string): Promise<boolean> {
   try {
-    // Try to query the table with a limit of 0 rows
-    const { error } = await supabase
-      .from(tableName as any)
-      .select('id')
-      .limit(0);
+    // Use RPC function to check if table exists
+    const { data, error } = await supabase.rpc('table_exists', { table_name: tableName });
     
-    // If there's no error, the table exists
-    return !error;
+    if (error) {
+      console.error(`Error checking if table ${tableName} exists:`, error);
+      return false;
+    }
+    
+    return data === true;
   } catch (error) {
     console.error(`Error checking if table ${tableName} exists:`, error);
     return false;
   }
+}
+
+/**
+ * Type-safe data extraction from Supabase response
+ * Safely extracts data from a Supabase response, handling potential errors
+ */
+export function safeDataExtract<T>(response: { data: T | null; error: any } | null): T[] {
+  if (!response) return [];
+  if (response.error) {
+    console.error("Error in database query:", response.error);
+    return [];
+  }
+  return (response.data || []) as T[];
+}
+
+/**
+ * Safely extracts a single item from a Supabase response
+ */
+export function safeSingleExtract<T>(response: { data: T | null; error: any } | null): T | null {
+  if (!response) return null;
+  if (response.error) {
+    console.error("Error in database query:", response.error);
+    return null;
+  }
+  return response.data;
 }

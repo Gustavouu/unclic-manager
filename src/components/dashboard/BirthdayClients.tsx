@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
-import { tableExists } from '@/utils/databaseUtils';
+import { tableExists, safeDataExtract } from '@/utils/databaseUtils';
 
 interface ClientWithBirthday {
   id: string;
@@ -38,13 +38,15 @@ export function BirthdayClients() {
         try {
           const clientsExists = await tableExists('clients');
           if (clientsExists) {
-            const { data, error } = await supabase
-              .from('clients' as any)
+            const response = await supabase
+              .from('clients')
               .select('id, name, photo_url, birth_date')
               .eq('business_id', businessId);
               
-            if (!error && data && data.length > 0) {
-              foundClients = data as any[];
+            const data = safeDataExtract(response);
+              
+            if (data && data.length > 0) {
+              foundClients = data;
               hasData = true;
               processClients(data, 'birth_date', 'name', 'photo_url');
             }
@@ -59,12 +61,14 @@ export function BirthdayClients() {
             // Check if legacy table exists before trying to query
             const legacyExists = await tableExists('clientes');
             if (legacyExists) {
-              const { data: legacyData, error: legacyError } = await supabase
-                .from('clientes' as any)
+              const response = await supabase
+                .from('clientes')
                 .select('id, nome, foto_url, data_nascimento')
                 .eq('id_negocio', businessId);
                 
-              if (!legacyError && legacyData && legacyData.length > 0) {
+              const legacyData = safeDataExtract(response);
+                
+              if (legacyData && legacyData.length > 0) {
                 processClients(legacyData, 'data_nascimento', 'nome', 'foto_url');
                 hasData = true;
               }
@@ -128,7 +132,7 @@ export function BirthdayClients() {
         .slice(0, 5); // Take only the closest 5 birthdays
       
       // Map to standardized format
-      setClients(clientsWithBirthdays.map(client => ({
+      const mappedClients: ClientWithBirthday[] = clientsWithBirthdays.map(client => ({
         id: client.id,
         name: client[nameField],
         nome: client.nome,
@@ -137,7 +141,9 @@ export function BirthdayClients() {
         birth_date: client[birthDateField],
         data_nascimento: client.data_nascimento,
         daysUntilBirthday: client.daysUntilBirthday
-      })));
+      }));
+      
+      setClients(mappedClients);
     };
 
     fetchBirthdayClients();

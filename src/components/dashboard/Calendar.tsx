@@ -1,11 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { format, parseISO, isEqual } from 'date-fns';
-import { tableExists } from '@/utils/databaseUtils';
+import { tableExists, safeDataExtract } from '@/utils/databaseUtils';
+import { DayClickEventHandler } from 'react-day-picker';
 
 export interface AppointmentType {
   id: string;
@@ -22,9 +22,9 @@ export interface ServiceType {
 }
 
 interface DayComponentProps {
-  day: Date;
-  selected: Date;
-  // Any other props that might be passed
+  date: Date;
+  displayMonth: Date;
+  // Other props from react-day-picker
   [key: string]: any;
 }
 
@@ -45,19 +45,21 @@ export function Calendar() {
         
         // First try the modern bookings table
         try {
-          const { data: modernData, error: modernError } = await supabase
-            .from('bookings' as any)
+          const response = await supabase
+            .from('bookings')
             .select(`
               id, 
               status, 
               booking_date,
               start_time,
-              clients:client_id (name)
+              clients (name)
             `)
             .eq('business_id', businessId)
             .order('booking_date', { ascending: true });
 
-          if (!modernError && modernData && modernData.length > 0) {
+          const modernData = safeDataExtract(response);
+
+          if (modernData && modernData.length > 0) {
             // Map modern data
             fetchedAppointments = modernData.map(app => ({
               id: app.id,
@@ -81,8 +83,8 @@ export function Calendar() {
               
             if (appointmentsExists) {
               // Try legacy Appointments table (uppercase A)
-              const { data: legacyData, error: legacyError } = await supabase
-                .from('Appointments' as any)
+              const response = await supabase
+                .from('Appointments')
                 .select(`
                   id, 
                   data, 
@@ -92,7 +94,9 @@ export function Calendar() {
                 `)
                 .eq('id_negocio', businessId);
 
-              if (!legacyError && legacyData && legacyData.length > 0) {
+              const legacyData = safeDataExtract(response);
+
+              if (legacyData && legacyData.length > 0) {
                 // Map legacy data
                 fetchedAppointments = legacyData.map(app => ({
                   id: app.id,
@@ -116,8 +120,8 @@ export function Calendar() {
             const agendamentosExists = await tableExists('agendamentos');
             
             if (agendamentosExists) {
-              const { data: agendamentosData, error: agendamentosError } = await supabase
-                .from('agendamentos' as any)
+              const response = await supabase
+                .from('agendamentos')
                 .select(`
                   id, 
                   data, 
@@ -127,7 +131,9 @@ export function Calendar() {
                 `)
                 .eq('id_negocio', businessId);
 
-              if (!agendamentosError && agendamentosData && agendamentosData.length > 0) {
+              const agendamentosData = safeDataExtract(response);
+
+              if (agendamentosData && agendamentosData.length > 0) {
                 // Map agendamentos data
                 fetchedAppointments = agendamentosData.map(app => ({
                   id: app.id,
@@ -189,20 +195,24 @@ export function Calendar() {
 
   // Custom day renderer for the calendar
   const renderDay = (props: DayComponentProps) => {
-    const { day, selected } = props;
+    const { date } = props;
     
     const isAppointmentDay = getDaysWithAppointments().some(appDay => 
-      appDay && isEqual(new Date(appDay.setHours(0, 0, 0, 0)), new Date(day.setHours(0, 0, 0, 0)))
+      appDay && isEqual(new Date(appDay.setHours(0, 0, 0, 0)), new Date(date.setHours(0, 0, 0, 0)))
     );
     
     return (
       <div className="relative">
-        <div>{day.getDate()}</div>
+        <div>{date.getDate()}</div>
         {isAppointmentDay && (
           <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
         )}
       </div>
     );
+  };
+
+  const handleSelectDay: DayClickEventHandler = (day) => {
+    setDate(day);
   };
 
   return (

@@ -6,7 +6,7 @@ import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
 import { DateTimeSelect } from "./DateTimeSelect";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { safeJsonParse } from "@/utils/databaseUtils";
+import { safeJsonParse, safeSingleExtract } from "@/utils/databaseUtils";
 
 interface DateTimeSelectWrapperProps {
   form: UseFormReturn<AppointmentFormValues>;
@@ -42,12 +42,14 @@ const DateTimeSelectWrapper = ({
     const fetchBusinessSettings = async () => {
       try {
         // Try to get business settings
-        const { data: settingsData, error: settingsError } = await supabase
+        const response = await supabase
           .from('business_settings')
           .select('*')
           .single();
         
-        if (!settingsError && settingsData) {
+        const settingsData = safeSingleExtract(response);
+        
+        if (settingsData) {
           // Set business hours from settings if available
           if (settingsData.notes) {
             const notesObj = typeof settingsData.notes === 'string' 

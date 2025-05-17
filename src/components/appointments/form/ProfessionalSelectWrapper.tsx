@@ -5,7 +5,7 @@ import { UseFormReturn } from "react-hook-form";
 import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { tableExists } from "@/utils/databaseUtils";
+import { tableExists, safeDataExtract, safeSingleExtract } from "@/utils/databaseUtils";
 
 export interface Professional {
   id: string;
@@ -47,11 +47,13 @@ const ProfessionalSelectWrapper = ({
         let profsData: Professional[] = [];
         
         try {
-          const { data: newData, error: newError } = await supabase
-            .from('professionals' as any)
+          const response = await supabase
+            .from('professionals')
             .select('id, name, position, specialties');
           
-          if (!newError && newData && newData.length > 0) {
+          const newData = safeDataExtract(response);
+          
+          if (newData && newData.length > 0) {
             // Map new data to expected format
             profsData = newData.map(prof => ({
               id: prof.id,
@@ -69,11 +71,13 @@ const ProfessionalSelectWrapper = ({
         // Try employees table if no data yet
         if (!hasData) {
           try {
-            const { data: employeesData, error: employeesError } = await supabase
-              .from('employees' as any)
+            const response = await supabase
+              .from('employees')
               .select('id, name, position, specialties');
               
-            if (!employeesError && employeesData && employeesData.length > 0) {
+            const employeesData = safeDataExtract(response);
+              
+            if (employeesData && employeesData.length > 0) {
               // Map employee data to expected format
               profsData = employeesData.map(emp => ({
                 id: emp.id,
@@ -97,11 +101,13 @@ const ProfessionalSelectWrapper = ({
               
             if (funcionariosExists) {
               // Table exists, try to query it
-              const { data: legacyData, error: legacyError } = await supabase
-                .from('funcionarios' as any)
+              const response = await supabase
+                .from('funcionarios')
                 .select('id, nome, cargo, especializacoes');
                 
-              if (!legacyError && legacyData && legacyData.length > 0) {
+              const legacyData = safeDataExtract(response);
+                
+              if (legacyData && legacyData.length > 0) {
                 // Map legacy data to expected format
                 profsData = legacyData.map(prof => ({
                   id: prof.id,
@@ -149,13 +155,15 @@ const ProfessionalSelectWrapper = ({
         let hasData = false;
         
         try {
-          const { data, error } = await supabase
-            .from('services' as any)
+          const response = await supabase
+            .from('services')
             .select('name')
             .eq('id', serviceId)
             .single();
 
-          if (!error && data) {
+          const data = safeSingleExtract(response);
+          
+          if (data) {
             serviceName = data.name;
             filterProfessionalsByService(serviceName);
             hasData = true;
@@ -167,13 +175,15 @@ const ProfessionalSelectWrapper = ({
         
         if (!hasData) {
           try {
-            const { data: legacyData, error: legacyError } = await supabase
-              .from('servicos' as any)
+            const response = await supabase
+              .from('servicos')
               .select('nome')
               .eq('id', serviceId)
               .single();
               
-            if (!legacyError && legacyData) {
+            const legacyData = safeSingleExtract(response);
+              
+            if (legacyData) {
               serviceName = legacyData.nome;
               filterProfessionalsByService(serviceName);
               hasData = true;

@@ -6,7 +6,7 @@ import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { tableExists } from "@/utils/databaseUtils";
+import { tableExists, safeDataExtract } from "@/utils/databaseUtils";
 
 export interface ClientData {
   id: string;
@@ -39,12 +39,14 @@ const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelec
         let hasData = false;
         
         try {
-          const { data, error } = await supabase
-            .from('clients' as any)
+          const response = await supabase
+            .from('clients')
             .select('id, name, email, phone')
             .order('name');
           
-          if (!error && data && data.length > 0) {
+          const data = safeDataExtract(response);
+          
+          if (data && data.length > 0) {
             // Map new data to match expected format
             clientsData = data.map(client => ({
               id: client.id,
@@ -69,11 +71,13 @@ const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelec
               
             if (clientesExists) {
               // Table exists, try to query it
-              const { data: clientesData, error: clientesError } = await supabase
-                .from('clientes' as any)
+              const response = await supabase
+                .from('clientes')
                 .select('id, nome, email, telefone');
               
-              if (!clientesError && clientesData && clientesData.length > 0) {
+              const clientesData = safeDataExtract(response);
+              
+              if (clientesData && clientesData.length > 0) {
                 // Map legacy data to match expected format
                 clientsData = clientesData.map(client => ({
                   id: client.id,
