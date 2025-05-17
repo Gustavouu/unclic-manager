@@ -8,19 +8,49 @@ import { WebsiteSection } from "./WebsiteSection";
 import { useBusinessProfileForm } from "@/hooks/useBusinessProfileForm";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
 import { useEffect, useRef } from "react";
+import { useTenant } from "@/contexts/TenantContext";
+import { toast } from "sonner";
 
 export const BusinessProfileCard = () => {
-  const { isSaving, handleSave, handleCancel, formProps } = useBusinessProfileForm();
+  const { isSaving, handleSave, handleCancel, formProps, loadBusinessData } = useBusinessProfileForm();
   const { loadProgress } = useOnboarding();
+  const { businessData, refreshBusinessData } = useTenant();
   const initialized = useRef(false);
 
-  // Load onboarding data when the component mounts - only once
+  // Load onboarding and business data when the component mounts - only once
   useEffect(() => {
-    if (!initialized.current) {
-      loadProgress();
-      initialized.current = true;
+    const initializeData = async () => {
+      if (!initialized.current) {
+        try {
+          // First load onboarding progress data
+          await loadProgress();
+          
+          // Then load actual business data from the tenant context
+          if (businessData) {
+            loadBusinessData(businessData);
+          } else {
+            // If no business data is available yet, try to refresh it
+            await refreshBusinessData();
+            initialized.current = true;
+          }
+        } catch (error) {
+          console.error("Error loading business data:", error);
+          toast.error("Erro ao carregar dados do negócio");
+        }
+        
+        initialized.current = true;
+      }
+    };
+    
+    initializeData();
+  }, [loadProgress, businessData, loadBusinessData, refreshBusinessData]);
+
+  // Update form when business data changes
+  useEffect(() => {
+    if (businessData && initialized.current) {
+      loadBusinessData(businessData);
     }
-  }, [loadProgress]); // Add loadProgress to dependencies
+  }, [businessData, loadBusinessData]);
 
   return (
     <Card>

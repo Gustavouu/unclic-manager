@@ -1,78 +1,41 @@
 
-import { toast } from "sonner";
-
-export const validateRequired = (value: string, fieldName: string): string | null => {
-  if (!value || value.trim() === '') {
-    return `${fieldName} é obrigatório`;
-  }
-  return null;
-};
-
-export const validateEmail = (email: string): string | null => {
-  if (!email) {
-    return "Email é obrigatório";
-  }
+// Function to format a phone number as (XX) XXXXX-XXXX
+export const formatPhone = (value: string): string => {
+  if (!value) return '';
   
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return "Email inválido";
-  }
+  // Remove all non-digit characters
+  const digits = value.replace(/\D/g, '');
   
-  return null;
-};
-
-export const validatePhone = (phone: string): string | null => {
-  if (!phone) {
-    return "Telefone é obrigatório";
-  }
-  
-  // Remove non-numeric characters for validation
-  const numericPhone = phone.replace(/\D/g, '');
-  
-  if (numericPhone.length < 10 || numericPhone.length > 11) {
-    return "Telefone inválido";
-  }
-  
-  return null;
-};
-
-export const formatPhone = (phone: string): string => {
-  // Remove non-numeric characters
-  const numericPhone = phone.replace(/\D/g, '');
-  
-  if (numericPhone.length <= 2) {
-    return numericPhone;
-  } else if (numericPhone.length <= 6) {
-    return `(${numericPhone.slice(0, 2)}) ${numericPhone.slice(2)}`;
-  } else if (numericPhone.length <= 10) {
-    return `(${numericPhone.slice(0, 2)}) ${numericPhone.slice(2, 6)}-${numericPhone.slice(6)}`;
+  // Format based on length
+  if (digits.length <= 2) {
+    return `(${digits}`;
+  } else if (digits.length <= 7) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  } else if (digits.length <= 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
   } else {
-    return `(${numericPhone.slice(0, 2)}) ${numericPhone.slice(2, 7)}-${numericPhone.slice(7, 11)}`;
+    // If more than 11 digits, truncate
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
   }
 };
 
-export const showErrorToast = (message: string = "Ocorreu um erro. Tente novamente.") => {
-  toast.error(message, {
-    duration: 5000,
-    position: 'top-right'
-  });
+// Show success toast (mock for testing)
+export const showSuccessToast = (message: string) => {
+  console.log('Success:', message);
+  // This would be replaced by an actual toast implementation
 };
 
-export const showSuccessToast = (message: string = "Operação realizada com sucesso!") => {
-  toast.success(message, {
-    duration: 5000,
-    position: 'top-right'
-  });
+// Show error toast (mock for testing)
+export const showErrorToast = (message = 'Ocorreu um erro. Tente novamente.') => {
+  console.error('Error:', message);
+  // This would be replaced by an actual toast implementation
 };
 
-// Mock function to simulate saving data to the server
+// Mock save function for testing
 export const mockSaveFunction = async (): Promise<boolean> => {
   return new Promise((resolve) => {
-    // Simulate API call delay
     setTimeout(() => {
-      // 90% chance of success
-      const success = Math.random() < 0.9;
-      resolve(success);
+      resolve(true);
     }, 1000);
   });
 };

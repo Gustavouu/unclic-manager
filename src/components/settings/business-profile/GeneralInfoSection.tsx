@@ -8,6 +8,7 @@ import { fetchAddressByCEP } from "@/utils/addressUtils";
 import { toast } from "sonner";
 import { useState } from "react";
 import { formatPhone } from "@/utils/formUtils";
+import { Textarea } from "@/components/ui/textarea";
 
 interface GeneralInfoSectionProps {
   updateField: (name: string, value: string) => void;
@@ -116,6 +117,17 @@ export const GeneralInfoSection = ({
         {getFieldError("businessAddress") && (
           <p className="text-sm font-medium text-destructive">{getFieldError("businessAddress")}</p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="business-description">Descrição</Label>
+        <Textarea
+          id="business-description"
+          value={getFieldValue("description")}
+          onChange={(e) => updateField("description", e.target.value)}
+          placeholder="Descreva seu negócio"
+          rows={4}
+        />
       </div>
     </div>
   );

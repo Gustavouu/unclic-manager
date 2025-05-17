@@ -1,19 +1,26 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Save, Rocket } from "lucide-react";
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
-import { mockSaveFunction, showSuccessToast, showErrorToast } from "@/utils/formUtils";
+import { showSuccessToast, showErrorToast } from "@/utils/formUtils";
 import { Toaster } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useTenant } from "@/contexts/TenantContext";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("business-profile");
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
+  const { refreshBusinessData } = useTenant();
+
+  // Refresh business data when the component mounts
+  useEffect(() => {
+    refreshBusinessData();
+  }, [refreshBusinessData]);
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -23,16 +30,14 @@ const Settings = () => {
     setIsSaving(true);
     
     try {
-      const success = await mockSaveFunction();
-      
-      if (success) {
+      // For now, we'll just show a success message
+      // In a real application, you'd trigger all tab saves here
+      setTimeout(() => {
         showSuccessToast("Todas as configurações foram salvas com sucesso!");
-      } else {
-        showErrorToast();
-      }
+        setIsSaving(false);
+      }, 1000);
     } catch (error) {
       showErrorToast();
-    } finally {
       setIsSaving(false);
     }
   };
