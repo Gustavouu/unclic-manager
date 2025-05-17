@@ -88,6 +88,8 @@ serve(async (req) => {
       userId
     });
     
+    let businessId: string | null = null;
+    
     try {
       // Create business in businesses table with service role client (bypass RLS)
       const { data: business, error: businessError } = await supabase
@@ -118,7 +120,7 @@ serve(async (req) => {
         throw new Error("Business creation succeeded but no ID was returned");
       }
       
-      const businessId = business.id;
+      businessId = business.id;
       console.log('Business created with ID:', businessId);
       
       // Create association between business and user in business_users table
@@ -149,13 +151,35 @@ serve(async (req) => {
           allow_online_booking: true,
           require_advance_payment: false,
           minimum_notice_time: 30,
-          maximum_days_in_advance: 30
+          maximum_days_in_advance: 30,
+          notes: JSON.stringify({
+            webhook_config: {},
+            business_hours: {},
+          })
         }]);
         
       if (settingsError) {
         console.error('Failed to create business settings:', settingsError);
       } else {
         console.log('Business settings created successfully');
+      }
+      
+      // Call verificar_completar_onboarding to ensure onboarding is marked as complete
+      if (businessId) {
+        try {
+          const { data: verificationResult, error: verificationError } = await supabase
+            .rpc('verificar_completar_onboarding', {
+              business_id_param: businessId
+            });
+          
+          if (verificationError) {
+            console.error('Error verifying onboarding:', verificationError);
+          } else {
+            console.log('Onboarding verification result:', verificationResult);
+          }
+        } catch (onboardingError) {
+          console.error('Failed to verify onboarding status:', onboardingError);
+        }
       }
       
       return new Response(
@@ -169,7 +193,7 @@ serve(async (req) => {
         }
       );
       
-    } catch (dbError) {
+    } catch (dbError: any) {
       console.error("Database operation error:", dbError);
       
       return new Response(
@@ -184,7 +208,7 @@ serve(async (req) => {
       );
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Unhandled error in create-business:", error);
     
     return new Response(

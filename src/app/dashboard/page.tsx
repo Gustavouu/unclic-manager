@@ -1,14 +1,23 @@
 
 "use client";
 
+import { useEffect, useState } from 'react';
 import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 import { DashboardInsights } from "@/components/dashboard/DashboardInsights";
 import { ClientsComparisonChart } from "@/components/dashboard/ClientsComparisonChart";
 import { BirthdayClients } from "@/components/dashboard/BirthdayClients";
 import { DataMigrationTool } from "@/components/admin/DataMigrationTool";
+import { OnboardingBanner } from "@/components/dashboard/OnboardingBanner";
 import { DashboardStats } from "@/types/dashboard";
+import { useTenant } from "@/contexts/TenantContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
+  const [showOnboardingBanner, setShowOnboardingBanner] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const { businessId } = useTenant();
+
   // Using static data for testing purposes
   const mockDashboardStats: DashboardStats = {
     totalAppointments: 150,
@@ -35,6 +44,47 @@ export default function DashboardPage() {
     averageRating: 4.8
   };
 
+  useEffect(() => {
+    const initializeDashboard = async () => {
+      if (!businessId) {
+        setIsInitializing(false);
+        return;
+      }
+
+      try {
+        // Verify and complete onboarding
+        const { data: verificationResult, error: verificationError } = await supabase
+          .rpc('verificar_completar_onboarding', {
+            business_id_param: businessId
+          });
+          
+        if (verificationError) {
+          console.error("Erro ao verificar onboarding:", verificationError);
+        } else {
+          console.log("Verificação de onboarding:", verificationResult);
+          
+          // If onboarding is complete, hide the banner
+          if (verificationResult?.onboarding_complete) {
+            setShowOnboardingBanner(false);
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao inicializar dashboard:", error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initializeDashboard();
+  }, [businessId]);
+
+  const handleDismissOnboardingBanner = () => {
+    setShowOnboardingBanner(false);
+    // Store this preference in local storage
+    localStorage.setItem('hideOnboardingBanner', 'true');
+    toast.success("Banner ocultado com sucesso!");
+  };
+
   return (
     <div className="container px-0 md:px-6 mx-auto">
       <div className="mb-8">
@@ -43,6 +93,11 @@ export default function DashboardPage() {
           Visão geral do seu negócio e desempenho recente
         </p>
       </div>
+
+      {/* Onboarding Banner - shown only when needed */}
+      {showOnboardingBanner && !isInitializing && (
+        <OnboardingBanner onDismiss={handleDismissOnboardingBanner} />
+      )}
 
       {/* Data Migration Tool */}
       <div className="mb-8">
