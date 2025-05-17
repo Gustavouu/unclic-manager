@@ -95,13 +95,22 @@ export const normalizeClientData = (client: any) => {
   return {
     id: client.id,
     name: client.name || client.nome || '',
+    nome: client.nome || client.name || '',
     email: client.email || '',
     phone: client.phone || client.telefone || '',
+    telefone: client.telefone || client.phone || '',
     city: client.city || client.cidade || '',
+    cidade: client.cidade || client.city || '',
     state: client.state || client.estado || '',
+    estado: client.estado || client.state || '',
+    address: client.address || client.endereco || '',
+    endereco: client.endereco || client.address || '',
     birthDate: client.birth_date || client.data_nascimento,
+    data_nascimento: client.data_nascimento || client.birth_date,
     gender: client.gender || client.genero || '',
+    genero: client.genero || client.gender || '',
     notes: client.notes || client.notas || '',
+    notas: client.notas || client.notes || '',
     status: (client.last_visit || client.ultima_visita) ? 'active' : 'inactive',
     // Campos originais mantidos para compatibilidade
     ...client
@@ -132,12 +141,19 @@ export const normalizeServiceData = (service: any) => {
   return {
     id: service.id,
     name: service.name || service.nome || '',
+    nome: service.nome || service.name || '',
     description: service.description || service.descricao || '',
+    descricao: service.descricao || service.description || '',
     price: isNaN(price) ? 0 : price,
+    preco: isNaN(price) ? 0 : price,
     duration: service.duration || service.duracao || 30,
+    duracao: service.duracao || service.duration || 30,
     categoryId: service.category_id || service.id_categoria || service.categoria_id || null,
+    id_categoria: service.id_categoria || service.category_id || service.categoria_id || null,
     isActive: service.is_active !== undefined ? service.is_active : service.ativo !== false,
+    ativo: service.ativo !== undefined ? service.ativo : service.is_active !== false,
     image: service.image || service.image_url || service.imagem_url || '',
+    imagem_url: service.imagem_url || service.image || service.image_url || '',
     // Campos originais mantidos para compatibilidade
     ...service
   };
@@ -155,13 +171,18 @@ export const normalizeProfessionalData = (professional: any) => {
   return {
     id: professional.id,
     name: professional.name || professional.nome || '',
+    nome: professional.nome || professional.name || '',
     email: professional.email || '',
     phone: professional.phone || professional.telefone || '',
+    telefone: professional.telefone || professional.phone || '',
     position: professional.position || professional.cargo || '',
+    cargo: professional.cargo || professional.position || '',
     specialties: professional.specialties || professional.especializacoes || [],
+    especializacoes: professional.especializacoes || professional.specialties || [],
     bio: professional.bio || '',
     status: professional.status || 'ACTIVE',
     photo_url: professional.photo_url || professional.foto_url || '',
+    foto_url: professional.foto_url || professional.photo_url || '',
     // Campos originais mantidos para compatibilidade
     ...professional
   };
@@ -217,17 +238,24 @@ export const normalizeAppointmentData = (appointment: any) => {
   return {
     id: appointment.id,
     clientId: appointment.client_id || appointment.id_cliente,
+    id_cliente: appointment.id_cliente || appointment.client_id,
     clientName,
     serviceId: appointment.service_id || appointment.id_servico,
+    id_servico: appointment.id_servico || appointment.service_id,
     serviceName,
     professionalId: appointment.employee_id || appointment.id_funcionario,
+    id_funcionario: appointment.id_funcionario || appointment.employee_id,
     professionalName,
     date: dateObj,
     duration: appointment.duration || appointment.duracao || 30,
+    duracao: appointment.duracao || appointment.duration || 30,
     price: appointment.price || appointment.valor || 0,
+    valor: appointment.valor || appointment.price || 0,
     status: appointment.status || 'scheduled',
     notes: appointment.notes || appointment.observacoes || '',
+    observacoes: appointment.observacoes || appointment.notes || '',
     paymentMethod: appointment.payment_method || appointment.forma_pagamento,
+    forma_pagamento: appointment.forma_pagamento || appointment.payment_method,
     // Campos originais mantidos para compatibilidade
     ...appointment
   };

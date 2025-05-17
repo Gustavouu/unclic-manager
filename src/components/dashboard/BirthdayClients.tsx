@@ -2,192 +2,147 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Cake, CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
-import { useTenant } from "@/contexts/TenantContext";
-import { tableExists, safeDataExtract, normalizeClientData } from '@/utils/databaseUtils';
+import { Cake } from "lucide-react";
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Badge } from "@/components/ui/badge";
+import { supabase } from '@/integrations/supabase/client';
+import { useTenant } from '@/contexts/TenantContext';
+import { normalizeClientData } from '@/utils/databaseUtils';
 
-interface ClientWithBirthday {
+type ClientInfo = {
   id: string;
-  name?: string;
-  nome?: string; // For legacy data
-  photo_url?: string;
-  foto_url?: string; // For legacy data
-  birth_date?: string;
-  data_nascimento?: string; // For legacy data
-  daysUntilBirthday?: number;
-}
+  name: string;
+  image?: string;
+  birthDate?: Date;
+  lastVisit?: Date;
+  status: 'active' | 'inactive';
+};
 
 export function BirthdayClients() {
-  const [clients, setClients] = useState<ClientWithBirthday[]>([]);
+  const [clients, setClients] = useState<ClientInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const { businessId } = useTenant();
 
   useEffect(() => {
-    const fetchBirthdayClients = async () => {
+    const fetchTodaysBirthdays = async () => {
       if (!businessId) return;
-      
+
       setLoading(true);
       try {
-        let hasData = false;
-        let foundClients: ClientWithBirthday[] = [];
+        // Get current month and day
+        const today = new Date();
+        const currentMonth = today.getMonth() + 1; // JavaScript months are 0-indexed
+        const currentDay = today.getDate();
+
+        let birthdayClients: ClientInfo[] = [];
+
+        // First, try to check if clients table exists and fetch from there
+        const { data: clientsTableExists } = await supabase.rpc('table_exists', { table_name: 'clients' });
         
-        // Check if clients table exists and try fetching data
-        try {
-          const clientsExists = await tableExists('clients');
-          if (clientsExists) {
-            const response = await supabase
-              .from('clients')
-              .select('id, name, photo_url, birth_date')
-              .eq('business_id', businessId);
-              
-            const data = safeDataExtract(response);
-              
-            if (data && data.length > 0) {
-              foundClients = data.map(normalizeClientData) as ClientWithBirthday[];
-              hasData = true;
-              processClients(foundClients, 'birth_date');
-            }
-          }
-        } catch (err) {
-          console.error("Error fetching from clients table:", err);
-        }
-        
-        // If no data found in clients table, try legacy clients table
-        if (!hasData) {
-          try {
-            // Check if legacy table exists before trying to query
-            const legacyExists = await tableExists('clientes');
-            if (legacyExists) {
-              const response = await supabase
-                .from('clientes')
-                .select('id, nome, foto_url, data_nascimento')
-                .eq('id_negocio', businessId);
-                
-              const legacyData = safeDataExtract(response);
-                
-              if (legacyData && legacyData.length > 0) {
-                const normalizedData = legacyData.map(normalizeClientData) as ClientWithBirthday[];
-                processClients(normalizedData, 'birth_date');
-                hasData = true;
-              }
-            }
-          } catch (err) {
-            console.error("Error fetching from clientes table:", err);
+        if (clientsTableExists) {
+          const { data: clientsData, error: clientsError } = await supabase
+            .from('clients')
+            .select('*')
+            .eq('business_id', businessId);
+
+          if (clientsError) {
+            console.error('Error fetching clients:', clientsError);
+          } else if (clientsData && clientsData.length > 0) {
+            birthdayClients = clientsData
+              .filter(client => {
+                if (!client.birth_date) return false;
+                const birthDate = new Date(client.birth_date);
+                return birthDate.getMonth() + 1 === currentMonth && birthDate.getDate() === currentDay;
+              })
+              .map(normalizeClientData);
           }
         }
-        
-        // If no data found in either table, set empty array
-        if (!hasData) {
-          setClients([]);
+
+        // If no data found, try the clientes table
+        if (birthdayClients.length === 0) {
+          // Check if the table exists before querying
+          const { data: cientesExists } = await supabase.rpc('table_exists', { table_name: 'clientes' });
+          if (cientesExists) {
+            const { data: clientesData, error: clientesError } = await supabase
+              .from('clientes')
+              .select('*')
+              .eq('id_negocio', businessId);
+
+            if (clientesError) {
+              console.error('Error fetching clientes:', clientesError);
+            } else if (clientesData && clientesData.length > 0) {
+              const mappedClients = clientesData
+                .filter(cliente => {
+                  if (!cliente.data_nascimento) return false;
+                  const birthDate = new Date(cliente.data_nascimento);
+                  return birthDate.getMonth() + 1 === currentMonth && birthDate.getDate() === currentDay;
+                })
+                .map(normalizeClientData);
+
+              birthdayClients = [...birthdayClients, ...mappedClients];
+            }
+          }
         }
+
+        setClients(birthdayClients);
       } catch (error) {
         console.error('Error fetching birthday clients:', error);
-        setClients([]);
       } finally {
         setLoading(false);
       }
     };
 
-    const processClients = (
-      data: ClientWithBirthday[], 
-      birthDateField: 'birth_date' | 'data_nascimento'
-    ) => {
-      const today = new Date();
-      const currentMonth = today.getMonth();
-      const currentDay = today.getDate();
-      
-      // Filter clients with birthdays in the next 30 days
-      const clientsWithBirthdays = data
-        .filter(client => {
-          // Use either birth_date or data_nascimento field
-          const birthDateValue = client[birthDateField] || client.data_nascimento || client.birth_date;
-          if (!birthDateValue) return false;
-          
-          const birthDate = new Date(birthDateValue);
-          const birthMonth = birthDate.getMonth();
-          const birthDay = birthDate.getDate();
-          
-          // Calculate days until next birthday
-          let nextBirthdayYear = today.getFullYear();
-          if (birthMonth < currentMonth || (birthMonth === currentMonth && birthDay < currentDay)) {
-            // Birthday already passed this year, calculate for next year
-            nextBirthdayYear += 1;
-          }
-          
-          const nextBirthday = new Date(nextBirthdayYear, birthMonth, birthDay);
-          const daysUntil = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-          
-          // Add days until birthday to client object
-          client.daysUntilBirthday = daysUntil;
-          
-          // Return true if birthday is within the next 30 days
-          return daysUntil <= 30;
-        })
-        .sort((a, b) => {
-          // Sort by days until birthday (ascending)
-          return (a.daysUntilBirthday || 999) - (b.daysUntilBirthday || 999);
-        })
-        .slice(0, 5); // Take only the closest 5 birthdays
-      
-      setClients(clientsWithBirthdays);
-    };
-
-    fetchBirthdayClients();
+    fetchTodaysBirthdays();
   }, [businessId]);
 
+  if (loading) {
+    return (
+      <Card className="col-span-1">
+        <CardHeader>
+          <CardTitle className="text-lg font-medium">Aniversariantes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground">Carregando aniversariantes...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl flex items-center">
-          <Cake className="h-5 w-5 mr-2" />
-          Aniversários em Breve
+    <Card className="col-span-1">
+      <CardHeader>
+        <CardTitle className="text-lg font-medium flex items-center gap-2">
+          <Cake className="h-5 w-5" />
+          Aniversariantes
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {loading ? (
-          <div className="space-y-4">
-            {Array(3).fill(0).map((_, i) => (
-              <div key={i} className="flex items-center space-x-4">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-[150px]" />
-                  <Skeleton className="h-4 w-[120px]" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : clients.length > 0 ? (
+        {clients.length === 0 ? (
+          <div className="text-sm text-muted-foreground">Nenhum aniversariante hoje</div>
+        ) : (
           <div className="space-y-4">
             {clients.map((client) => (
-              <div key={client.id} className="flex items-center space-x-4">
-                <Avatar className={cn("h-10 w-10",
-                  client.daysUntilBirthday === 0 ? "ring-2 ring-offset-2 ring-red-500" : "")}>
-                  <AvatarImage src={client.photo_url || client.foto_url} alt={client.name || client.nome || ""} />
-                  <AvatarFallback>
-                    <User className="h-4 w-4" />
-                  </AvatarFallback>
+              <div key={client.id} className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={client.image} alt={client.name} />
+                  <AvatarFallback>{client.name?.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">{client.name || client.nome}</p>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <CalendarIcon className="h-3 w-3 mr-1" /> 
-                    {client.daysUntilBirthday === 0 ? (
-                      <span className="text-red-500 font-medium">Hoje!</span>
-                    ) : (
-                      `Em ${client.daysUntilBirthday} dias`
+                  <div className="font-medium">{client.name}</div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="bg-pink-100 text-pink-800 hover:bg-pink-200">
+                      Aniversário hoje
+                    </Badge>
+                    {client.lastVisit && (
+                      <span className="text-xs text-muted-foreground">
+                        Visita há {formatDistanceToNow(new Date(client.lastVisit), { locale: ptBR, addSuffix: true })}
+                      </span>
                     )}
                   </div>
                 </div>
               </div>
             ))}
-          </div>
-        ) : (
-          <div className="py-6 text-center">
-            <Cake className="h-10 w-10 mx-auto text-muted-foreground/60" />
-            <p className="text-muted-foreground mt-2">Nenhum aniversário nos próximos 30 dias</p>
           </div>
         )}
       </CardContent>

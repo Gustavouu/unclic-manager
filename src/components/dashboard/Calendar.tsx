@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,24 +114,17 @@ export function Calendar() {
           }
         }
         
-        // Try lowercase "agendamentos" if still no data
+        // Try agendamentos if still no data - but check if it exists first
         if (!hasData) {
           try {
-            const agendamentosExists = await tableExists('agendamentos');
+            const { data: agendamentosExists } = await supabase.rpc('table_exists', { table_name: 'agendamentos' });
             
             if (agendamentosExists) {
-              const response = await supabase
-                .from('agendamentos')
-                .select(`
-                  id, 
-                  data, 
-                  hora_inicio, 
-                  status,
-                  clientes:id_cliente (nome)
-                `)
-                .eq('id_negocio', businessId);
+              const response = await supabase.rpc('fetch_agendamentos', {
+                business_id_param: businessId
+              });
 
-              const agendamentosData = safeDataExtract(response);
+              const agendamentosData = response.data || [];
 
               if (agendamentosData && agendamentosData.length > 0) {
                 // Map agendamentos data
@@ -141,7 +133,7 @@ export function Calendar() {
                   date: app.data,
                   startTime: app.hora_inicio,
                   status: app.status,
-                  clientName: app.clientes?.nome ?? "Cliente"
+                  clientName: app.cliente_nome ?? "Cliente"
                 }));
                 setAppointments(fetchedAppointments);
                 hasData = true;

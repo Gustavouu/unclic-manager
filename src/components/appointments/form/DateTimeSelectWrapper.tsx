@@ -61,10 +61,19 @@ export default function DateTimeSelectWrapper({
           const notesObj = safeJsonParse(data.notes, {});
           
           // Handle different property paths that might exist
-          if (notesObj?.business_hours) {
-            setBusinessHours(notesObj.business_hours);
-          } else if (notesObj?.webhook_config?.business_hours) {
-            setBusinessHours(notesObj.webhook_config.business_hours);
+          if (typeof notesObj === 'object' && notesObj !== null) {
+            let hours = DEFAULT_BUSINESS_HOURS;
+            
+            if ('business_hours' in notesObj && typeof notesObj.business_hours === 'object') {
+              hours = notesObj.business_hours as BusinessHours;
+            } else if ('webhook_config' in notesObj && 
+                       typeof notesObj.webhook_config === 'object' && 
+                       notesObj.webhook_config !== null &&
+                       'business_hours' in notesObj.webhook_config) {
+              hours = notesObj.webhook_config.business_hours as BusinessHours;
+            }
+            
+            setBusinessHours(hours);
           }
         }
       } catch (error) {
@@ -128,7 +137,10 @@ export default function DateTimeSelectWrapper({
     const endTimeObj = addMinutes(timeObj, duration);
     const endTime = format(endTimeObj, 'HH:mm');
     
-    form.setValue('endTime', endTime);
+    // Instead of using register, use setValue with a hidden field
+    if (form.getValues) {
+      form.setValue('endTime', endTime, { shouldValidate: true });
+    }
   };
   
   return (
@@ -222,8 +234,8 @@ export default function DateTimeSelectWrapper({
         )}
       />
       
-      {/* Hidden End Time Field */}
-      <input type="hidden" {...form.register('endTime')} />
+      {/* Hidden input for endTime, not registered directly with form control but accessed via setValue */}
+      <input type="hidden" id="endTime" name="endTime" />
     </div>
   );
 }

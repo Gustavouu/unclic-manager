@@ -17,10 +17,16 @@ export async function fetchClientsApi(businessId: string) {
   console.log('Fetching clients for business ID:', businessId);
   
   // Query using only id_negocio to ensure compatibility
-  return supabase
+  const { data, error } = await supabase
     .from('clientes')
     .select('*')
     .eq('id_negocio', businessId);
+
+  if (error) {
+    console.error('Error fetching clients:', error);
+  }
+  
+  return { data, error };
 }
 
 /**

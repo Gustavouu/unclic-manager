@@ -55,17 +55,25 @@ export default function ClientSelectWrapper({ form, onNewClient }: ClientSelectW
         
         // Se não encontrou na tabela clients, tenta na tabela clientes
         if (!clientsData) {
-          console.log('Trying clientes table');
-          const { data, error } = await supabase
-            .from('clientes')
-            .select('*')
-            .eq('id_negocio', businessId);
-            
-          if (error) {
-            console.error('Error fetching from clientes table:', error);
-          } else if (data && data.length > 0) {
-            console.log('Found clients in clientes table:', data.length);
-            clientsData = data.map(normalizeClientData);
+          try {
+            console.log('Trying clientes table');
+            // Check if the table exists before querying
+            const { data, error } = await supabase.rpc('table_exists', { table_name: 'clientes' });
+            if (data) {
+              const response = await supabase
+                .from('clientes')
+                .select('*')
+                .eq('id_negocio', businessId);
+                
+              if (response.error) {
+                console.error('Error fetching from clientes table:', response.error);
+              } else if (response.data && response.data.length > 0) {
+                console.log('Found clients in clientes table:', response.data.length);
+                clientsData = response.data.map(normalizeClientData);
+              }
+            }
+          } catch (error) {
+            console.error('Error checking clientes table:', error);
           }
         }
         
@@ -122,7 +130,7 @@ export default function ClientSelectWrapper({ form, onNewClient }: ClientSelectW
                 </Button>
               </FormControl>
             </PopoverTrigger>
-            <PopoverContent className="p-0 w-[calc(var(--popover-width))]" style={{"--popover-width": "var(--radix-popover-trigger-width)"}}>
+            <PopoverContent className="p-0 w-full" style={{width: "var(--radix-popover-trigger-width)"}}>
               <Command>
                 <CommandInput placeholder="Buscar cliente..." className="h-9" />
                 <CommandEmpty>
