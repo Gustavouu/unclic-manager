@@ -1,130 +1,119 @@
 
-import { useState } from "react";
-import { format, addHours, setHours, setMinutes, isWithinInterval } from "date-fns";
-import { CalendarIcon, Clock } from "lucide-react";
-import { AppointmentType } from "../Calendar";
+import { useEffect, useState } from "react";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 
-type DayViewProps = {
-  appointments: AppointmentType[];
-  selectedDate?: Date;
-};
+interface Appointment {
+  id: string;
+  date: string;
+  startTime: string;
+  status: string;
+  clientName: string;
+  service?: string;
+}
 
-export const DayView = ({ appointments, selectedDate = new Date() }: DayViewProps) => {
-  const [hoveredSlot, setHoveredSlot] = useState<string | null>(null);
+interface DayViewProps {
+  selectedDate: Date;
+  onDateChange: (date: Date) => void;
+  appointments: Appointment[];
+  onAppointmentClick?: (appointmentId: string) => void;
+}
+
+export const DayView = ({
+  selectedDate,
+  onDateChange,
+  appointments,
+  onAppointmentClick
+}: DayViewProps) => {
+  const [timeSlots, setTimeSlots] = useState<string[]>([]);
   
-  // Create time slots from 8am to 8pm (business hours)
-  const businessStart = 8; // 8 AM
-  const businessEnd = 20; // 8 PM
-  
-  const createTimeSlots = () => {
-    const slots = [];
-    const baseDate = setMinutes(setHours(selectedDate, businessStart), 0);
-    
-    for (let hour = businessStart; hour < businessEnd; hour++) {
-      // Create slots at hourly intervals
-      const slotTime = setHours(baseDate, hour);
-      slots.push(slotTime);
-      
-      // Create 30-minute interval slot
-      slots.push(addHours(slotTime, 0.5));
+  // Generate time slots from 8 AM to 8 PM in 15-minute intervals
+  useEffect(() => {
+    const slots: string[] = [];
+    for (let hour = 8; hour < 20; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        slots.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+      }
     }
-    
-    return slots;
+    setTimeSlots(slots);
+  }, []);
+
+  // Navigate to previous/next day
+  const goToPreviousDay = () => {
+    const prevDay = new Date(selectedDate);
+    prevDay.setDate(prevDay.getDate() - 1);
+    onDateChange(prevDay);
   };
-  
-  const timeSlots = createTimeSlots();
-  
-  // Check if a time slot has an appointment
-  const getAppointmentsForSlot = (slotTime: Date) => {
-    return appointments.filter(appointment => 
-      isWithinInterval(slotTime, {
-        start: appointment.date,
-        end: addHours(appointment.date, 1) // Assuming appointments last 1 hour
-      })
-    );
+
+  const goToNextDay = () => {
+    const nextDay = new Date(selectedDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    onDateChange(nextDay);
   };
-  
-  // Format for displaying the time (e.g., "10:00" or "10:30")
-  const formatSlotTime = (date: Date) => {
-    return format(date, "HH:mm");
-  };
-  
-  if (appointments.length === 0) {
-    return (
-      <div className="py-8 text-center">
-        <CalendarIcon className="h-12 w-12 mx-auto text-muted-foreground/60 mb-2" />
-        <p className="text-muted-foreground">Nenhum agendamento para este dia</p>
-        <p className="text-sm text-muted-foreground/75">Clique em + para adicionar um novo agendamento</p>
-      </div>
-    );
-  }
-  
+
+  // Format date for display
+  const formattedDate = format(selectedDate, "EEEE, d 'de' MMMM", { locale: ptBR });
+
   return (
-    <div className="space-y-1">
-      <div className="text-sm font-medium text-muted-foreground mb-3 flex items-center">
-        <Clock className="mr-2 h-4 w-4" />
-        <span>Horários para {format(selectedDate, "dd 'de' MMMM")}</span>
+    <div className="flex flex-col">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center">
+          <Calendar className="h-5 w-5 mr-2" />
+          <h3 className="text-lg font-semibold capitalize">{formattedDate}</h3>
+        </div>
+        <div className="flex space-x-2">
+          <Button variant="outline" size="icon" onClick={goToPreviousDay}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" onClick={goToNextDay}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
-      
-      {timeSlots.map((slot, index) => {
-        const slotAppointments = getAppointmentsForSlot(slot);
-        const hasAppointment = slotAppointments.length > 0;
-        const timeLabel = formatSlotTime(slot);
-        const isHalfHour = index % 2 !== 0;
-        
-        return (
-          <div 
-            key={index}
-            className={cn(
-              "flex items-stretch border-l-2 pl-3 py-2 transition-all",
-              hasAppointment ? "border-l-primary" : "border-l-border/30",
-              hoveredSlot === timeLabel ? "bg-accent/20" : "",
-              isHalfHour ? "border-l-dashed" : ""
-            )}
-            onMouseEnter={() => setHoveredSlot(timeLabel)}
-            onMouseLeave={() => setHoveredSlot(null)}
-          >
-            <div className="w-16 flex-shrink-0 flex items-center">
-              <span className={cn(
-                "text-sm font-medium",
-                hasAppointment ? "text-primary" : "text-muted-foreground"
-              )}>
-                {timeLabel}
-              </span>
-            </div>
-            
-            <div className="flex-1">
-              {hasAppointment ? (
-                <div className="ml-2 space-y-2">
-                  {slotAppointments.map(appointment => (
-                    <div 
+
+      <div className="grid grid-cols-1 gap-2">
+        {timeSlots.map((time) => {
+          const appointmentsAtTime = appointments.filter(
+            (app) => app.startTime === time
+          );
+
+          return (
+            <div key={time} className="flex">
+              <div className="w-16 text-sm text-muted-foreground py-1">{time}</div>
+              <div className="flex-grow grid grid-cols-1 gap-2 pl-2">
+                {appointmentsAtTime.length > 0 ? (
+                  appointmentsAtTime.map((appointment) => (
+                    <Card
                       key={appointment.id}
-                      className="p-3 rounded-lg border border-border/40 bg-white shadow-sm hover:border-border/80 transition-all cursor-pointer"
+                      className={cn(
+                        "p-2 text-xs cursor-pointer transition-shadow hover:shadow-md",
+                        appointment.status === "agendado" || appointment.status === "scheduled" 
+                          ? "bg-blue-50" 
+                          : appointment.status === "concluido" || appointment.status === "completed" 
+                          ? "bg-green-50" 
+                          : "bg-red-50"
+                      )}
+                      onClick={() => onAppointmentClick && onAppointmentClick(appointment.id)}
                     >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium">{appointment.clientName}</p>
-                          <p className="text-sm text-muted-foreground">{appointment.serviceName}</p>
-                        </div>
-                        <div className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                          {format(appointment.date, "HH:mm")}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="ml-2 h-full flex items-center">
-                  <div className="text-sm text-muted-foreground/60 italic">
-                    Disponível
-                  </div>
-                </div>
-              )}
+                      <p className="font-semibold">{appointment.clientName}</p>
+                      <p>{appointment.service || "Serviço não especificado"}</p>
+                      <span className="text-[10px] bg-primary/10 px-1 rounded">
+                        {appointment.status}
+                      </span>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="h-8 border border-dashed border-gray-200 rounded-md"></div>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };

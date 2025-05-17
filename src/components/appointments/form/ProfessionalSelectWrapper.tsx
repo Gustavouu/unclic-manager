@@ -5,6 +5,7 @@ import { UseFormReturn } from "react-hook-form";
 import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { tableExists } from "@/utils/databaseUtils";
 
 export interface Professional {
   id: string;
@@ -90,10 +91,9 @@ const ProfessionalSelectWrapper = ({
         // Try legacy table
         try {
           // Check if the table exists by trying to query it
-          const { error: tableCheckError } = await supabase
-            .rpc('table_exists', { table_name: 'funcionarios' });
+          const funcionariosExists = await tableExists('funcionarios');
             
-          if (!tableCheckError) {
+          if (funcionariosExists) {
             // Table might exist, try to query it
             const { data: legacyData, error: legacyError } = await supabase
               .from('funcionarios')

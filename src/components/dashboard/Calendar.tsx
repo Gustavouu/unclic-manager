@@ -5,15 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { format, parseISO, isEqual } from 'date-fns';
-
-interface Appointment {
-  id: string;
-  data: string;
-  hora_inicio: string;
-  status: string;
-  nome_cliente?: string;
-  client_name?: string;
-}
+import { tableExists } from '@/utils/databaseUtils';
 
 export interface AppointmentType {
   id: string;
@@ -30,8 +22,8 @@ export interface ServiceType {
 
 export function Calendar() {
   const [date, setDate] = useState<Date>(new Date());
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [selectedDayAppointments, setSelectedDayAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentType[]>([]);
+  const [selectedDayAppointments, setSelectedDayAppointments] = useState<AppointmentType[]>([]);
   const { businessId } = useTenant();
 
   // Fetch appointments
@@ -56,12 +48,12 @@ export function Calendar() {
 
           if (!modernError && modernData && modernData.length > 0) {
             // Map modern data
-            const mappedAppointments: Appointment[] = modernData.map(app => ({
+            const mappedAppointments: AppointmentType[] = modernData.map(app => ({
               id: app.id,
-              data: app.booking_date,
-              hora_inicio: app.start_time,
+              date: app.booking_date,
+              startTime: app.start_time,
               status: app.status,
-              client_name: app.clients?.name
+              clientName: app.clients?.name || "Cliente"
             }));
             setAppointments(mappedAppointments);
             return;
@@ -73,10 +65,9 @@ export function Calendar() {
         // Try legacy table
         try {
           // Check if the table exists by trying to query it
-          const { error: tableCheckError } = await supabase
-            .rpc('table_exists', { table_name: 'Appointments' });
+          const appointmentsExists = await tableExists('Appointments');
             
-          if (!tableCheckError) {
+          if (appointmentsExists) {
             // Try legacy Appointments table (uppercase A)
             const { data: legacyData, error: legacyError } = await supabase
               .from('Appointments')
@@ -91,12 +82,12 @@ export function Calendar() {
 
             if (!legacyError && legacyData && legacyData.length > 0) {
               // Map legacy data
-              const mappedAppointments: Appointment[] = legacyData.map(app => ({
+              const mappedAppointments: AppointmentType[] = legacyData.map(app => ({
                 id: app.id,
-                data: app.data,
-                hora_inicio: app.hora_inicio,
+                date: app.data,
+                startTime: app.hora_inicio,
                 status: app.status,
-                nome_cliente: app.clientes?.nome
+                clientName: app.clientes?.nome || "Cliente"
               }));
               setAppointments(mappedAppointments);
               return;
@@ -126,7 +117,7 @@ export function Calendar() {
 
     const formattedDate = format(date, 'yyyy-MM-dd');
     const filteredAppointments = appointments.filter(appointment => {
-      return appointment.data === formattedDate;
+      return appointment.date === formattedDate;
     });
 
     setSelectedDayAppointments(filteredAppointments);
@@ -138,16 +129,16 @@ export function Calendar() {
     
     return appointments.map(appointment => {
       try {
-        return parseISO(appointment.data);
+        return parseISO(appointment.date);
       } catch (e) {
-        console.error('Invalid date format:', appointment.data);
+        console.error('Invalid date format:', appointment.date);
         return null;
       }
     }).filter(Boolean) as Date[];
   };
 
   // Custom day renderer for the calendar
-  const renderDay = (day: Date, selectedDay: Date) => {
+  const renderDay = (day: Date, selected: Date) => {
     const isAppointmentDay = getDaysWithAppointments().some(appDay => 
       appDay && isEqual(new Date(appDay.setHours(0, 0, 0, 0)), new Date(day.setHours(0, 0, 0, 0)))
     );
@@ -187,10 +178,10 @@ export function Calendar() {
               <div key={appointment.id} className="border rounded-md p-2">
                 <div className="flex justify-between items-center">
                   <div className="text-sm font-medium">
-                    {appointment.client_name || appointment.nome_cliente || "Cliente"}
+                    {appointment.clientName || "Cliente"}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {appointment.hora_inicio}
+                    {appointment.startTime}
                   </div>
                 </div>
                 <div className="text-xs">

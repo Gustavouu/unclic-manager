@@ -7,13 +7,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ServiceType } from "../Calendar";
 import { Filter } from "lucide-react";
 
+type ServiceTypeEnum = string;
+
 type ServiceFilterProps = {
-  serviceFilter: ServiceType;
-  onFilterChange: (value: ServiceType) => void;
-  serviceTypes: Record<ServiceType, string>;
+  serviceFilter: string;
+  onFilterChange: (value: string) => void;
+  serviceTypes: Record<string, string>;
 };
 
 export const ServiceFilter = ({ 
@@ -29,7 +30,7 @@ export const ServiceFilter = ({
       </div>
       <Select
         value={serviceFilter}
-        onValueChange={(value) => onFilterChange(value as ServiceType)}
+        onValueChange={(value) => onFilterChange(value)}
       >
         <SelectTrigger className="w-[220px]">
           <SelectValue placeholder="Selecione um serviço" />

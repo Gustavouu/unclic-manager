@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'sonner';
+import { safeJsonParse } from '@/utils/databaseUtils';
 
 interface OnboardingBannerProps {
   onDismiss: () => void;
@@ -50,22 +51,14 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss })
           console.log('Onboarding verification result:', verificationResult);
           
           if (verificationResult) {
-            // Check if the result is an object with the expected properties
-            if (typeof verificationResult === 'object' && verificationResult !== null) {
-              const typedResult = verificationResult as Record<string, any>;
-              
-              if ('success' in typedResult) {
-                const isSuccess = Boolean(typedResult.success);
-                const isComplete = Boolean(typedResult.onboarding_complete);
-                setNeedsOnboarding(!isComplete);
-              } else {
-                // If no success property, default to showing banner
-                setNeedsOnboarding(true);
-              }
-            } else {
-              // If result is not an object, default to showing banner
-              setNeedsOnboarding(true);
-            }
+            // Parse the result safely
+            const parsedResult = safeJsonParse(verificationResult, {});
+            
+            // Check for success and onboarding status
+            const isSuccess = parsedResult.success === true;
+            const isComplete = parsedResult.onboarding_complete === true;
+            
+            setNeedsOnboarding(!isComplete);
             
             // Refresh business data to get updated status
             await refreshBusinessData();

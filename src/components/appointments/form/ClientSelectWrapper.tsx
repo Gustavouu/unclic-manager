@@ -6,6 +6,7 @@ import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { tableExists } from "@/utils/databaseUtils";
 
 export interface ClientData {
   id: string;
@@ -61,10 +62,9 @@ const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelec
         // If no data in clients, try old clientes table if it exists
         try {
           // First check if the table exists by trying to query it
-          const { error: tableCheckError } = await supabase
-            .rpc('table_exists', { table_name: 'clientes' });
+          const clientesExists = await tableExists('clientes');
             
-          if (!tableCheckError) {
+          if (clientesExists) {
             // Table might exist, try to query it
             const { data: clientesData, error: clientesError } = await supabase
               .from('clientes')
