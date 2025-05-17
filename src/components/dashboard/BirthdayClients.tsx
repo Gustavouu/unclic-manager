@@ -31,52 +31,51 @@ export function BirthdayClients() {
       
       setLoading(true);
       try {
-        // Try new clients table first
+        let hasData = false;
         let foundClients: ClientWithBirthday[] = [];
-        let hasFoundClients = false;
         
         // Check if clients table exists and try fetching data
-        const clientsExists = await tableExists('clients');
-        if (clientsExists) {
-          try {
+        try {
+          const clientsExists = await tableExists('clients');
+          if (clientsExists) {
             const { data, error } = await supabase
-              .from('clients')
+              .from('clients' as any)
               .select('id, name, photo_url, birth_date')
               .eq('business_id', businessId);
               
             if (!error && data && data.length > 0) {
-              foundClients = data;
-              hasFoundClients = true;
+              foundClients = data as any[];
+              hasData = true;
               processClients(data, 'birth_date', 'name', 'photo_url');
             }
-          } catch (err) {
-            console.error("Error fetching from clients table:", err);
           }
+        } catch (err) {
+          console.error("Error fetching from clients table:", err);
         }
         
         // If no data found in clients table, try legacy clients table
-        if (!hasFoundClients) {
-          // Check if legacy table exists before trying to query
-          const legacyExists = await tableExists('clientes');
-          if (legacyExists) {
-            try {
+        if (!hasData) {
+          try {
+            // Check if legacy table exists before trying to query
+            const legacyExists = await tableExists('clientes');
+            if (legacyExists) {
               const { data: legacyData, error: legacyError } = await supabase
-                .from('clientes')
+                .from('clientes' as any)
                 .select('id, nome, foto_url, data_nascimento')
                 .eq('id_negocio', businessId);
                 
               if (!legacyError && legacyData && legacyData.length > 0) {
                 processClients(legacyData, 'data_nascimento', 'nome', 'foto_url');
-                hasFoundClients = true;
+                hasData = true;
               }
-            } catch (err) {
-              console.error("Error fetching from clientes table:", err);
             }
+          } catch (err) {
+            console.error("Error fetching from clientes table:", err);
           }
         }
         
         // If no data found in either table, set empty array
-        if (!hasFoundClients) {
+        if (!hasData) {
           setClients([]);
         }
       } catch (error) {

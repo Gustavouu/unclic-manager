@@ -1,41 +1,34 @@
 
-// Function to format a phone number as (XX) XXXXX-XXXX
-export const formatPhone = (value: string): string => {
-  if (!value) return '';
+/**
+ * Validates an email address
+ */
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+/**
+ * Validates a phone number
+ */
+export function validatePhone(phone: string): boolean {
+  // Basic validation - at least 8 digits
+  const phoneRegex = /^\+?[\d\s()-]{8,}$/;
+  return phoneRegex.test(phone);
+}
+
+/**
+ * Formats a phone number
+ */
+export function formatPhone(phone: string): string {
+  // Remove non-digit characters
+  const cleaned = phone.replace(/\D/g, '');
   
-  // Remove all non-digit characters
-  const digits = value.replace(/\D/g, '');
-  
-  // Format based on length
-  if (digits.length <= 2) {
-    return `(${digits}`;
-  } else if (digits.length <= 7) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  } else if (digits.length <= 11) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
-  } else {
-    // If more than 11 digits, truncate
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+  // Format for Brazil (assuming Brazilian format)
+  if (cleaned.length === 11) {
+    return `(${cleaned.substring(0, 2)}) ${cleaned.substring(2, 7)}-${cleaned.substring(7)}`;
+  } else if (cleaned.length === 10) {
+    return `(${cleaned.substring(0, 2)}) ${cleaned.substring(2, 6)}-${cleaned.substring(6)}`;
   }
-};
-
-// Show success toast (mock for testing)
-export const showSuccessToast = (message: string) => {
-  console.log('Success:', message);
-  // This would be replaced by an actual toast implementation
-};
-
-// Show error toast (mock for testing)
-export const showErrorToast = (message = 'Ocorreu um erro. Tente novamente.') => {
-  console.error('Error:', message);
-  // This would be replaced by an actual toast implementation
-};
-
-// Mock save function for testing
-export const mockSaveFunction = async (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(true);
-    }, 1000);
-  });
-};
+  
+  return phone;
+}

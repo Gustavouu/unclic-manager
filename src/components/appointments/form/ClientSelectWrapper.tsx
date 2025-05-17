@@ -35,11 +35,12 @@ const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelec
       setLoading(true);
       try {
         // Try to fetch from clients table first (new schema)
-        let clientsData = [];
+        let clientsData: ClientData[] = [];
+        let hasData = false;
         
         try {
           const { data, error } = await supabase
-            .from('clients')
+            .from('clients' as any)
             .select('id, name, email, phone')
             .order('name');
           
@@ -53,42 +54,46 @@ const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelec
             }));
             setClients(clientsData);
             setLoading(false);
+            hasData = true;
             return;
           }
         } catch (err) {
           console.error("Error fetching from clients table:", err);
         }
         
-        // If no data in clients, try old clientes table if it exists
-        try {
-          // First check if the table exists by trying to query it
-          const clientesExists = await tableExists('clientes');
-            
-          if (clientesExists) {
-            // Table might exist, try to query it
-            const { data: clientesData, error: clientesError } = await supabase
-              .from('clientes')
-              .select('id, nome, email, telefone');
-            
-            if (!clientesError && clientesData && clientesData.length > 0) {
-              // Map legacy data to match expected format
-              clientsData = clientesData.map(client => ({
-                id: client.id,
-                nome: client.nome,
-                email: client.email,
-                telefone: client.telefone
-              }));
-              setClients(clientsData);
-              setLoading(false);
-              return;
+        // If no data in clients, try old clientes table
+        if (!hasData) {
+          try {
+            // First check if the table exists
+            const clientesExists = await tableExists('clientes');
+              
+            if (clientesExists) {
+              // Table exists, try to query it
+              const { data: clientesData, error: clientesError } = await supabase
+                .from('clientes' as any)
+                .select('id, nome, email, telefone');
+              
+              if (!clientesError && clientesData && clientesData.length > 0) {
+                // Map legacy data to match expected format
+                clientsData = clientesData.map(client => ({
+                  id: client.id,
+                  nome: client.nome,
+                  email: client.email,
+                  telefone: client.telefone
+                }));
+                setClients(clientsData);
+                hasData = true;
+              }
             }
+          } catch (err) {
+            console.error("Error checking legacy tables:", err);
           }
-        } catch (err) {
-          console.error("Error checking legacy tables:", err);
         }
         
-        // If we get here, no data was found
-        setClients([]);
+        // If we still have no data, set empty array
+        if (!hasData) {
+          setClients([]);
+        }
         
       } catch (err: any) {
         console.error('Error fetching clients:', err);

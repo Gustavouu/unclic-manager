@@ -43,82 +43,85 @@ const ProfessionalSelectWrapper = ({
       setLoading(true);
       try {
         // First try professionals table (new schema)
+        let hasData = false;
+        let profsData: Professional[] = [];
+        
         try {
           const { data: newData, error: newError } = await supabase
-            .from('professionals')
-            .select('id, name, position, specialties')
-            .eq('isActive', true);
+            .from('professionals' as any)
+            .select('id, name, position, specialties');
           
           if (!newError && newData && newData.length > 0) {
             // Map new data to expected format
-            const mappedData: Professional[] = newData.map(prof => ({
+            profsData = newData.map(prof => ({
               id: prof.id,
               name: prof.name,
               position: prof.position,
               specialties: prof.specialties
             }));
-            setProfessionals(mappedData);
-            setLoading(false);
-            return;
+            setProfessionals(profsData);
+            hasData = true;
           }
         } catch (err) {
           console.error("Error fetching from professionals table:", err);
         }
         
-        // Try employees table
-        try {
-          const { data: employeesData, error: employeesError } = await supabase
-            .from('employees')
-            .select('id, name, position, specialties')
-            .eq('status', 'active');
-            
-          if (!employeesError && employeesData && employeesData.length > 0) {
-            // Map employee data to expected format
-            const mappedData: Professional[] = employeesData.map(emp => ({
-              id: emp.id,
-              name: emp.name,
-              position: emp.position,
-              specialties: emp.specialties
-            }));
-            setProfessionals(mappedData);
-            setLoading(false);
-            return;
-          }
-        } catch (err) {
-          console.error("Error fetching from employees table:", err);
-        }
-        
-        // Try legacy table
-        try {
-          // Check if the table exists by trying to query it
-          const funcionariosExists = await tableExists('funcionarios');
-            
-          if (funcionariosExists) {
-            // Table might exist, try to query it
-            const { data: legacyData, error: legacyError } = await supabase
-              .from('funcionarios')
-              .select('id, nome, cargo, especializacoes')
-              .eq('status', 'ativo');
+        // Try employees table if no data yet
+        if (!hasData) {
+          try {
+            const { data: employeesData, error: employeesError } = await supabase
+              .from('employees' as any)
+              .select('id, name, position, specialties');
               
-            if (!legacyError && legacyData && legacyData.length > 0) {
-              // Map legacy data to expected format
-              const mappedData: Professional[] = legacyData.map(prof => ({
-                id: prof.id,
-                nome: prof.nome,
-                cargo: prof.cargo,
-                especializacoes: prof.especializacoes
+            if (!employeesError && employeesData && employeesData.length > 0) {
+              // Map employee data to expected format
+              profsData = employeesData.map(emp => ({
+                id: emp.id,
+                name: emp.name,
+                position: emp.position,
+                specialties: emp.specialties
               }));
-              setProfessionals(mappedData);
-              setLoading(false);
-              return;
+              setProfessionals(profsData);
+              hasData = true;
             }
+          } catch (err) {
+            console.error("Error fetching from employees table:", err);
           }
-        } catch (err) {
-          console.error("Error checking legacy tables:", err);
         }
         
-        // If we get here, no data was found
-        setProfessionals([]);
+        // Try legacy table if still no data
+        if (!hasData) {
+          try {
+            // Check if the table exists
+            const funcionariosExists = await tableExists('funcionarios');
+              
+            if (funcionariosExists) {
+              // Table exists, try to query it
+              const { data: legacyData, error: legacyError } = await supabase
+                .from('funcionarios' as any)
+                .select('id, nome, cargo, especializacoes');
+                
+              if (!legacyError && legacyData && legacyData.length > 0) {
+                // Map legacy data to expected format
+                profsData = legacyData.map(prof => ({
+                  id: prof.id,
+                  nome: prof.nome,
+                  cargo: prof.cargo,
+                  especializacoes: prof.especializacoes
+                }));
+                setProfessionals(profsData);
+                hasData = true;
+              }
+            }
+          } catch (err) {
+            console.error("Error checking legacy tables:", err);
+          }
+        }
+        
+        // If we get here and still no data, set empty array
+        if (!hasData) {
+          setProfessionals([]);
+        }
         
       } catch (error) {
         console.error('Error fetching professionals:', error);
@@ -143,10 +146,11 @@ const ProfessionalSelectWrapper = ({
       try {
         // Try new services table
         let serviceName = "";
+        let hasData = false;
         
         try {
           const { data, error } = await supabase
-            .from('services')
+            .from('services' as any)
             .select('name')
             .eq('id', serviceId)
             .single();
@@ -154,26 +158,30 @@ const ProfessionalSelectWrapper = ({
           if (!error && data) {
             serviceName = data.name;
             filterProfessionalsByService(serviceName);
+            hasData = true;
             return;
           }
         } catch (err) {
           console.error("Error fetching from services:", err);
         }
         
-        try {
-          const { data: legacyData, error: legacyError } = await supabase
-            .from('servicos')
-            .select('nome')
-            .eq('id', serviceId)
-            .single();
-            
-          if (!legacyError && legacyData) {
-            serviceName = legacyData.nome;
-            filterProfessionalsByService(serviceName);
-            return;
+        if (!hasData) {
+          try {
+            const { data: legacyData, error: legacyError } = await supabase
+              .from('servicos' as any)
+              .select('nome')
+              .eq('id', serviceId)
+              .single();
+              
+            if (!legacyError && legacyData) {
+              serviceName = legacyData.nome;
+              filterProfessionalsByService(serviceName);
+              hasData = true;
+              return;
+            }
+          } catch (err) {
+            console.error("Error fetching from legacy services:", err);
           }
-        } catch (err) {
-          console.error("Error fetching from legacy services:", err);
         }
         
         // If we get here, we couldn't find the service
@@ -222,12 +230,18 @@ const ProfessionalSelectWrapper = ({
                 <SelectValue placeholder={loading ? "Carregando..." : "Selecione um profissional"} />
               </SelectTrigger>
               <SelectContent>
-                {filteredProfessionals.map((professional) => (
-                  <SelectItem key={professional.id} value={professional.id}>
-                    {professional.name || professional.nome || "Unknown"} {(professional.position || professional.cargo) ? 
-                      `(${professional.position || professional.cargo})` : ''}
+                {filteredProfessionals.length > 0 ? (
+                  filteredProfessionals.map((professional) => (
+                    <SelectItem key={professional.id} value={professional.id}>
+                      {professional.name || professional.nome || "Unknown"} {(professional.position || professional.cargo) ? 
+                        `(${professional.position || professional.cargo})` : ''}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no_professionals" disabled>
+                    {loading ? "Carregando profissionais..." : "Nenhum profissional disponível"}
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </FormControl>

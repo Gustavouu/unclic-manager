@@ -9,8 +9,6 @@ import {
 } from "@/components/ui/select";
 import { Filter } from "lucide-react";
 
-type ServiceTypeEnum = string;
-
 type ServiceFilterProps = {
   serviceFilter: string;
   onFilterChange: (value: string) => void;

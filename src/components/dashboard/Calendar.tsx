@@ -13,11 +13,19 @@ export interface AppointmentType {
   startTime: string;
   status: string;
   clientName: string;
+  serviceName?: string;
 }
 
 export interface ServiceType {
   id: string;
   name: string;
+}
+
+interface DayComponentProps {
+  day: Date;
+  selected: Date;
+  // Any other props that might be passed
+  [key: string]: any;
 }
 
 export function Calendar() {
@@ -32,10 +40,13 @@ export function Calendar() {
       if (!businessId) return;
 
       try {
+        let fetchedAppointments: AppointmentType[] = [];
+        let hasData = false;
+        
         // First try the modern bookings table
         try {
           const { data: modernData, error: modernError } = await supabase
-            .from('bookings')
+            .from('bookings' as any)
             .select(`
               id, 
               status, 
@@ -48,57 +59,96 @@ export function Calendar() {
 
           if (!modernError && modernData && modernData.length > 0) {
             // Map modern data
-            const mappedAppointments: AppointmentType[] = modernData.map(app => ({
+            fetchedAppointments = modernData.map(app => ({
               id: app.id,
               date: app.booking_date,
               startTime: app.start_time,
               status: app.status,
-              clientName: app.clients?.name || "Cliente"
+              clientName: app.clients?.name ?? "Cliente"
             }));
-            setAppointments(mappedAppointments);
-            return;
+            setAppointments(fetchedAppointments);
+            hasData = true;
           }
         } catch (error) {
           console.error('Error fetching from bookings table:', error);
         }
 
-        // Try legacy table
-        try {
-          // Check if the table exists by trying to query it
-          const appointmentsExists = await tableExists('Appointments');
-            
-          if (appointmentsExists) {
-            // Try legacy Appointments table (uppercase A)
-            const { data: legacyData, error: legacyError } = await supabase
-              .from('Appointments')
-              .select(`
-                id, 
-                data, 
-                hora_inicio, 
-                status,
-                clientes:id_cliente (nome)
-              `)
-              .eq('id_negocio', businessId);
+        // Try legacy table if no data yet
+        if (!hasData) {
+          try {
+            // Check if the table exists
+            const appointmentsExists = await tableExists('Appointments');
+              
+            if (appointmentsExists) {
+              // Try legacy Appointments table (uppercase A)
+              const { data: legacyData, error: legacyError } = await supabase
+                .from('Appointments' as any)
+                .select(`
+                  id, 
+                  data, 
+                  hora_inicio, 
+                  status,
+                  clientes:id_cliente (nome)
+                `)
+                .eq('id_negocio', businessId);
 
-            if (!legacyError && legacyData && legacyData.length > 0) {
-              // Map legacy data
-              const mappedAppointments: AppointmentType[] = legacyData.map(app => ({
-                id: app.id,
-                date: app.data,
-                startTime: app.hora_inicio,
-                status: app.status,
-                clientName: app.clientes?.nome || "Cliente"
-              }));
-              setAppointments(mappedAppointments);
-              return;
+              if (!legacyError && legacyData && legacyData.length > 0) {
+                // Map legacy data
+                fetchedAppointments = legacyData.map(app => ({
+                  id: app.id,
+                  date: app.data,
+                  startTime: app.hora_inicio,
+                  status: app.status,
+                  clientName: app.clientes?.nome ?? "Cliente"
+                }));
+                setAppointments(fetchedAppointments);
+                hasData = true;
+              }
             }
+          } catch (error) {
+            console.error('Error checking Appointments table:', error);
           }
-        } catch (error) {
-          console.error('Error checking Appointments table:', error);
+        }
+        
+        // Try lowercase "agendamentos" if still no data
+        if (!hasData) {
+          try {
+            const agendamentosExists = await tableExists('agendamentos');
+            
+            if (agendamentosExists) {
+              const { data: agendamentosData, error: agendamentosError } = await supabase
+                .from('agendamentos' as any)
+                .select(`
+                  id, 
+                  data, 
+                  hora_inicio, 
+                  status,
+                  clientes:id_cliente (nome)
+                `)
+                .eq('id_negocio', businessId);
+
+              if (!agendamentosError && agendamentosData && agendamentosData.length > 0) {
+                // Map agendamentos data
+                fetchedAppointments = agendamentosData.map(app => ({
+                  id: app.id,
+                  date: app.data,
+                  startTime: app.hora_inicio,
+                  status: app.status,
+                  clientName: app.clientes?.nome ?? "Cliente"
+                }));
+                setAppointments(fetchedAppointments);
+                hasData = true;
+              }
+            }
+          } catch (error) {
+            console.error('Error checking agendamentos table:', error);
+          }
         }
         
         // If no data found, set empty array
-        setAppointments([]);
+        if (!hasData) {
+          setAppointments([]);
+        }
       } catch (error) {
         console.error('Error fetching appointments:', error);
         setAppointments([]);
@@ -138,7 +188,9 @@ export function Calendar() {
   };
 
   // Custom day renderer for the calendar
-  const renderDay = (day: Date, selected: Date) => {
+  const renderDay = (props: DayComponentProps) => {
+    const { day, selected } = props;
+    
     const isAppointmentDay = getDaysWithAppointments().some(appDay => 
       appDay && isEqual(new Date(appDay.setHours(0, 0, 0, 0)), new Date(day.setHours(0, 0, 0, 0)))
     );
@@ -165,7 +217,7 @@ export function Calendar() {
           onSelect={(newDate) => setDate(newDate || new Date())}
           className="rounded-md border"
           components={{
-            Day: ({ day, selected }) => renderDay(day, selected || new Date())
+            Day: renderDay
           }}
         />
 

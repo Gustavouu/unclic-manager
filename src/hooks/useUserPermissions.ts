@@ -1,200 +1,139 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-export type Role = 'admin' | 'manager' | 'staff';
-
-export interface Permission {
+export interface UserPermission {
   id: string;
+  module: string;
+  action: string;
   name: string;
-  description: string;
+  description?: string;
 }
 
-export function useUserPermissions() {
-  const [role, setRole] = useState<Role | null>(null);
-  const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+export interface UserRole {
+  id: string;
+  name: string;
+  description?: string;
+  isAdmin: boolean;
+  permissions: UserPermission[];
+}
+
+export const useUserPermissions = (userId?: string) => {
+  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
+  const [permissions, setPermissions] = useState<UserPermission[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUserRole = useCallback(async () => {
-    try {
+  useEffect(() => {
+    const fetchUserPermissions = async () => {
+      if (!userId) return;
+      
       setIsLoading(true);
       setError(null);
       
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('Usuário não autenticado');
-      }
-      
-      // Get tenant ID from localStorage
-      const tenantId = localStorage.getItem('tenant_id');
-      
-      if (!tenantId) {
-        // Try to get from business_users table
-        const { data: businessUser, error: businessUserError } = await supabase
-          .from('business_users')
-          .select('role')
-          .eq('user_id', user.id)
-          .maybeSingle();
+      try {
+        // Check if user has admin access first
+        const { data: adminCheck, error: adminError } = await supabase
+          .rpc('user_is_admin');
           
-        if (businessUserError) {
-          console.log('Error getting role from business_users:', businessUserError);
-          
-          // Try from users table
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('funcao')
-            .eq('id', user.id)
-            .maybeSingle();
-            
-          if (userError) {
-            console.log('Error getting role from users:', userError);
-            setRole('staff'); // Default fallback role
-          } else if (userData) {
-            setRole(mapLegacyRole(userData.funcao));
-          } else {
-            setRole('staff'); // Default fallback role
-          }
-        } else if (businessUser) {
-          setRole(mapBusinessUserRole(businessUser.role));
-        } else {
-          setRole('staff'); // Default fallback role
+        if (!adminError && adminCheck === true) {
+          console.log('User is admin, granting full access');
+          setIsAdmin(true);
+          setUserRoles([{ 
+            id: 'admin', 
+            name: 'Admin', 
+            description: 'Full access', 
+            isAdmin: true,
+            permissions: [] 
+          }]);
+          setPermissions([]);
+          return;
         }
         
-        // No tenant ID, so no permissions to load
-        setPermissions([]);
-        setIsLoading(false);
-        return;
-      }
-      
-      // With tenant ID, try to get roles and permissions
-      try {
-        // First try the modern roles system
-        const { data: userRole, error: roleError } = await supabase
-          .from('user_roles')
-          .select(`
-            roleId,
-            roles:roleId (
-              name
-            )
-          `)
-          .eq('userId', user.id)
-          .maybeSingle();
-          
-        if (roleError || !userRole) {
-          console.log('No role found in user_roles, using default staff role');
-          setRole('staff');
-        } else {
-          // Map role name to our Role type
-          const roleName = userRole.roles?.name?.toLowerCase();
-          if (roleName === 'admin' || roleName === 'manager') {
-            setRole(roleName);
-          } else {
-            setRole('staff');
-          }
-          
-          // Try to get permissions for this role
-          const { data: permissionsData, error: permissionsError } = await supabase
-            .from('role_permissions')
+        // Fetch user roles
+        let userRolesData: UserRole[] = [];
+        let fetchedPermissions: UserPermission[] = [];
+
+        try {
+          // Try to fetch user roles from the modern schema
+          const { data: roleData, error: roleError } = await supabase
+            .from('user_roles')
             .select(`
-              permissions:permissionId (
+              id,
+              role:roleId (
                 id,
                 name,
                 description
               )
             `)
-            .eq('roleId', userRole.roleId);
-            
-          if (permissionsError) {
-            console.error('Error fetching permissions:', permissionsError);
-            setPermissions([]);
-          } else if (permissionsData && permissionsData.length > 0) {
-            // Extract permissions from result
-            const extractedPermissions = permissionsData
-              .map(item => item.permissions)
-              .filter(Boolean);
+            .eq('userId', userId);
+
+          if (!roleError && roleData && roleData.length > 0) {
+            // Process role data
+            const roles: UserRole[] = [];
+
+            for (const userRole of roleData) {
+              if (!userRole.role) continue;
               
-            setPermissions(extractedPermissions);
-          } else {
-            setPermissions([]);
+              // Get permissions for this role
+              const { data: permissions, error: permError } = await supabase
+                .from('role_permissions')
+                .select(`
+                  permission:permissionId (
+                    id,
+                    name,
+                    description,
+                    module,
+                    action
+                  )
+                `)
+                .eq('roleId', userRole.role.id);
+              
+              const rolePermissions = !permError && permissions 
+                ? permissions.map(p => p.permission as UserPermission).filter(Boolean)
+                : [];
+              
+              roles.push({
+                id: userRole.role.id,
+                name: userRole.role.name,
+                description: userRole.role.description,
+                isAdmin: userRole.role.name.toLowerCase() === 'admin',
+                permissions: rolePermissions
+              });
+              
+              fetchedPermissions = [...fetchedPermissions, ...rolePermissions];
+            }
+
+            setUserRoles(roles);
+            setPermissions(fetchedPermissions);
+            setIsAdmin(roles.some(role => role.isAdmin));
           }
+        } catch (err) {
+          console.error('Error fetching user roles:', err);
+          throw err;
         }
-      } catch (err) {
-        console.error('Error in permission loading:', err);
-        setPermissions([]);
-        setRole('staff'); // Default fallback
+        
+      } catch (err: any) {
+        console.error('Error in useUserPermissions:', err);
+        setError(err.message);
+        toast.error('Erro ao carregar permissões do usuário');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error: any) {
-      console.error('Error in useUserPermissions:', error);
-      setError(error.message);
-      setRole('staff'); // Default fallback
-      setPermissions([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    };
 
-  // Map legacy role names to our Role type
-  const mapLegacyRole = (role?: string): Role => {
-    if (!role) return 'staff';
-    
-    const lowerRole = role.toLowerCase();
-    if (lowerRole.includes('admin')) return 'admin';
-    if (lowerRole.includes('gerente')) return 'manager';
-    return 'staff';
-  };
-  
-  // Map business_users role to our Role type
-  const mapBusinessUserRole = (role?: string): Role => {
-    if (!role) return 'staff';
-    
-    const lowerRole = role.toLowerCase();
-    if (lowerRole === 'owner' || lowerRole === 'admin') return 'admin';
-    if (lowerRole === 'manager') return 'manager';
-    return 'staff';
-  };
+    fetchUserPermissions();
+  }, [userId]);
 
-  // Check if user has a specific permission
-  const hasPermission = useCallback((permissionName: string): boolean => {
-    if (role === 'admin') return true; // Admins have all permissions
-    return permissions.some(permission => permission.name === permissionName);
-  }, [permissions, role]);
-
-  // Check if user is admin
-  const isAdmin = useCallback((): boolean => {
-    return role === 'admin';
-  }, [role]);
-
-  // Check if user is manager
-  const isManager = useCallback((): boolean => {
-    return role === 'manager' || role === 'admin';
-  }, [role]);
-
-  // Check if user has access to a protected section
-  const canAccess = useCallback((requiredPermissions: string[]): boolean => {
-    // Admins have access to everything
-    if (isAdmin()) return true;
-    
-    // Check if user has at least one of the required permissions
-    return requiredPermissions.some(permission => hasPermission(permission));
-  }, [hasPermission, isAdmin]);
-
-  // Load role and permissions when component mounts
-  useEffect(() => {
-    fetchUserRole();
-  }, [fetchUserRole]);
-
-  return {
-    role,
+  return { 
+    userRoles, 
     permissions,
-    isLoading,
-    error,
-    hasPermission,
-    isAdmin,
-    isManager,
-    canAccess,
-    refreshPermissions: fetchUserRole
+    isAdmin, 
+    isLoading, 
+    error 
   };
-}
+};
+
+export default useUserPermissions;
