@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
+import { tableExists } from '@/utils/databaseUtils';
 
 interface ClientWithBirthday {
   id: string;
@@ -31,41 +32,52 @@ export function BirthdayClients() {
       setLoading(true);
       try {
         // Try new clients table first
-        const { data: newData, error: newError } = await supabase
-          .from('clients')
-          .select('id, name, photo_url, birth_date')
-          .eq('business_id', businessId);
-          
-        if (!newError && newData && newData.length > 0) {
-          processClients(newData, 'birth_date', 'name', 'photo_url');
-        } else {
-          // Try legacy clientes table
+        let foundClients: ClientWithBirthday[] = [];
+        let hasFoundClients = false;
+        
+        // Check if clients table exists and try fetching data
+        const clientsExists = await tableExists('clients');
+        if (clientsExists) {
           try {
-            // Check if the legacy table exists first
-            const { data: checkData, error: checkError } = await supabase
-              .from('negocios')  // Just to check if legacy schema exists
-              .select('id')
-              .limit(1);
+            const { data, error } = await supabase
+              .from('clients')
+              .select('id, name, photo_url, birth_date')
+              .eq('business_id', businessId);
               
-            if (!checkError) {
-              // Legacy schema might exist, try the clients table
+            if (!error && data && data.length > 0) {
+              foundClients = data;
+              hasFoundClients = true;
+              processClients(data, 'birth_date', 'name', 'photo_url');
+            }
+          } catch (err) {
+            console.error("Error fetching from clients table:", err);
+          }
+        }
+        
+        // If no data found in clients table, try legacy clients table
+        if (!hasFoundClients) {
+          // Check if legacy table exists before trying to query
+          const legacyExists = await tableExists('clientes');
+          if (legacyExists) {
+            try {
               const { data: legacyData, error: legacyError } = await supabase
-                .from('clients') // Use 'clients' instead of 'clientes'
+                .from('clientes')
                 .select('id, nome, foto_url, data_nascimento')
                 .eq('id_negocio', businessId);
                 
               if (!legacyError && legacyData && legacyData.length > 0) {
                 processClients(legacyData, 'data_nascimento', 'nome', 'foto_url');
-              } else {
-                setClients([]);
+                hasFoundClients = true;
               }
-            } else {
-              setClients([]);
+            } catch (err) {
+              console.error("Error fetching from clientes table:", err);
             }
-          } catch (err) {
-            console.error("Error checking legacy tables:", err);
-            setClients([]);
           }
+        }
+        
+        // If no data found in either table, set empty array
+        if (!hasFoundClients) {
+          setClients([]);
         }
       } catch (error) {
         console.error('Error fetching birthday clients:', error);
@@ -104,6 +116,7 @@ export function BirthdayClients() {
           const nextBirthday = new Date(nextBirthdayYear, birthMonth, birthDay);
           const daysUntil = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
           
+          // Add days until birthday to client object
           client.daysUntilBirthday = daysUntil;
           
           // Return true if birthday is within the next 30 days

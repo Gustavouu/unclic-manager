@@ -15,6 +15,19 @@ interface Appointment {
   client_name?: string;
 }
 
+export interface AppointmentType {
+  id: string;
+  date: string;
+  startTime: string;
+  status: string;
+  clientName: string;
+}
+
+export interface ServiceType {
+  id: string;
+  name: string;
+}
+
 export function Calendar() {
   const [date, setDate] = useState<Date>(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -27,63 +40,74 @@ export function Calendar() {
       if (!businessId) return;
 
       try {
-        // First try the modern appointments table
-        let { data: modernData, error: modernError } = await supabase
-          .from('bookings')
-          .select(`
-            id, 
-            status, 
-            booking_date,
-            start_time,
-            clients:client_id (name)
-          `)
-          .eq('business_id', businessId)
-          .order('booking_date', { ascending: true });
-
-        if (modernError || !modernData || modernData.length === 0) {
-          // Try legacy table
-          console.log('Trying legacy appointments table');
-          const { data: legacyData, error: legacyError } = await supabase
-            .from('agendamentos')
+        // First try the modern bookings table
+        try {
+          const { data: modernData, error: modernError } = await supabase
+            .from('bookings')
             .select(`
               id, 
-              data, 
-              hora_inicio, 
-              status,
-              clientes:id_cliente (nome)
+              status, 
+              booking_date,
+              start_time,
+              clients:client_id (name)
             `)
-            .eq('id_negocio', businessId);
+            .eq('business_id', businessId)
+            .order('booking_date', { ascending: true });
 
-          if (legacyError) {
-            console.error('Error fetching appointments:', legacyError);
-            setAppointments([]);
-            return;
-          }
-
-          if (legacyData && legacyData.length > 0) {
-            // Map legacy data
-            const mappedAppointments: Appointment[] = legacyData.map(app => ({
+          if (!modernError && modernData && modernData.length > 0) {
+            // Map modern data
+            const mappedAppointments: Appointment[] = modernData.map(app => ({
               id: app.id,
-              data: app.data,
-              hora_inicio: app.hora_inicio,
+              data: app.booking_date,
+              hora_inicio: app.start_time,
               status: app.status,
-              nome_cliente: app.clientes?.nome
+              client_name: app.clients?.name
             }));
             setAppointments(mappedAppointments);
-          } else {
-            setAppointments([]);
+            return;
           }
-        } else {
-          // Map modern data
-          const mappedAppointments: Appointment[] = modernData.map(app => ({
-            id: app.id,
-            data: app.booking_date,
-            hora_inicio: app.start_time,
-            status: app.status,
-            client_name: app.clients?.name
-          }));
-          setAppointments(mappedAppointments);
+        } catch (error) {
+          console.error('Error fetching from bookings table:', error);
         }
+
+        // Try legacy table
+        try {
+          // Check if the table exists by trying to query it
+          const { error: tableCheckError } = await supabase
+            .rpc('table_exists', { table_name: 'Appointments' });
+            
+          if (!tableCheckError) {
+            // Try legacy Appointments table (uppercase A)
+            const { data: legacyData, error: legacyError } = await supabase
+              .from('Appointments')
+              .select(`
+                id, 
+                data, 
+                hora_inicio, 
+                status,
+                clientes:id_cliente (nome)
+              `)
+              .eq('id_negocio', businessId);
+
+            if (!legacyError && legacyData && legacyData.length > 0) {
+              // Map legacy data
+              const mappedAppointments: Appointment[] = legacyData.map(app => ({
+                id: app.id,
+                data: app.data,
+                hora_inicio: app.hora_inicio,
+                status: app.status,
+                nome_cliente: app.clientes?.nome
+              }));
+              setAppointments(mappedAppointments);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Error checking Appointments table:', error);
+        }
+        
+        // If no data found, set empty array
+        setAppointments([]);
       } catch (error) {
         console.error('Error fetching appointments:', error);
         setAppointments([]);
@@ -123,7 +147,7 @@ export function Calendar() {
   };
 
   // Custom day renderer for the calendar
-  const renderDay = (day: Date, selectedDate: Date) => {
+  const renderDay = (day: Date, selectedDay: Date) => {
     const isAppointmentDay = getDaysWithAppointments().some(appDay => 
       appDay && isEqual(new Date(appDay.setHours(0, 0, 0, 0)), new Date(day.setHours(0, 0, 0, 0)))
     );
@@ -150,7 +174,7 @@ export function Calendar() {
           onSelect={(newDate) => setDate(newDate || new Date())}
           className="rounded-md border"
           components={{
-            Day: ({ day, selectedDate }) => renderDay(day, selectedDate)
+            Day: ({ day, selected }) => renderDay(day, selected || new Date())
           }}
         />
 

@@ -42,18 +42,63 @@ const ProfessionalSelectWrapper = ({
       setLoading(true);
       try {
         // First try professionals table (new schema)
-        let { data: newData, error: newError } = await supabase
-          .from('professionals')
-          .select('id, name, position, specialties')
-          .eq('isActive', true);
+        try {
+          const { data: newData, error: newError } = await supabase
+            .from('professionals')
+            .select('id, name, position, specialties')
+            .eq('isActive', true);
+          
+          if (!newError && newData && newData.length > 0) {
+            // Map new data to expected format
+            const mappedData: Professional[] = newData.map(prof => ({
+              id: prof.id,
+              name: prof.name,
+              position: prof.position,
+              specialties: prof.specialties
+            }));
+            setProfessionals(mappedData);
+            setLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.error("Error fetching from professionals table:", err);
+        }
         
-        if (newError || !newData || newData.length === 0) {
-          // Try legacy table using try-catch to handle non-existent tables
-          console.log('Trying legacy professionals table');
-          try {
+        // Try employees table
+        try {
+          const { data: employeesData, error: employeesError } = await supabase
+            .from('employees')
+            .select('id, name, position, specialties')
+            .eq('status', 'active');
+            
+          if (!employeesError && employeesData && employeesData.length > 0) {
+            // Map employee data to expected format
+            const mappedData: Professional[] = employeesData.map(emp => ({
+              id: emp.id,
+              name: emp.name,
+              position: emp.position,
+              specialties: emp.specialties
+            }));
+            setProfessionals(mappedData);
+            setLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.error("Error fetching from employees table:", err);
+        }
+        
+        // Try legacy table
+        try {
+          // Check if the table exists by trying to query it
+          const { error: tableCheckError } = await supabase
+            .rpc('table_exists', { table_name: 'funcionarios' });
+            
+          if (!tableCheckError) {
+            // Table might exist, try to query it
             const { data: legacyData, error: legacyError } = await supabase
               .from('funcionarios')
-              .select('id, nome, cargo, especializacoes');
+              .select('id, nome, cargo, especializacoes')
+              .eq('status', 'ativo');
               
             if (!legacyError && legacyData && legacyData.length > 0) {
               // Map legacy data to expected format
@@ -67,19 +112,14 @@ const ProfessionalSelectWrapper = ({
               setLoading(false);
               return;
             }
-          } catch (err) {
-            console.error("Error checking legacy tables:", err);
           }
-        } else {
-          // Map new data to expected format
-          const mappedData: Professional[] = newData.map(prof => ({
-            id: prof.id,
-            name: prof.name,
-            position: prof.position,
-            specialties: prof.specialties
-          }));
-          setProfessionals(mappedData);
+        } catch (err) {
+          console.error("Error checking legacy tables:", err);
         }
+        
+        // If we get here, no data was found
+        setProfessionals([]);
+        
       } catch (error) {
         console.error('Error fetching professionals:', error);
         setProfessionals([]);
@@ -102,36 +142,42 @@ const ProfessionalSelectWrapper = ({
     const getServiceName = async () => {
       try {
         // Try new services table
-        const { data, error } = await supabase
-          .from('services')
-          .select('name')
-          .eq('id', serviceId)
-          .single();
+        let serviceName = "";
+        
+        try {
+          const { data, error } = await supabase
+            .from('services')
+            .select('name')
+            .eq('id', serviceId)
+            .single();
 
-        if (error || !data) {
-          try {
-            // Try legacy services table
-            const { data: legacyData, error: legacyError } = await supabase
-              .from('servicos')
-              .select('nome')
-              .eq('id', serviceId)
-              .single();
-              
-            if (!legacyError && legacyData) {
-              filterProfessionalsByService(legacyData.nome);
-              return;
-            }
-          } catch (err) {
-            console.error("Error fetching from legacy services:", err);
+          if (!error && data) {
+            serviceName = data.name;
+            filterProfessionalsByService(serviceName);
+            return;
           }
-          
-          // If we get here, we couldn't find the service
-          setFilteredProfessionals(professionals);
-        } else if (data) {
-          filterProfessionalsByService(data.name);
-        } else {
-          setFilteredProfessionals(professionals);
+        } catch (err) {
+          console.error("Error fetching from services:", err);
         }
+        
+        try {
+          const { data: legacyData, error: legacyError } = await supabase
+            .from('servicos')
+            .select('nome')
+            .eq('id', serviceId)
+            .single();
+            
+          if (!legacyError && legacyData) {
+            serviceName = legacyData.nome;
+            filterProfessionalsByService(serviceName);
+            return;
+          }
+        } catch (err) {
+          console.error("Error fetching from legacy services:", err);
+        }
+        
+        // If we get here, we couldn't find the service
+        setFilteredProfessionals(professionals);
       } catch (error) {
         console.error('Error getting service:', error);
         setFilteredProfessionals(professionals);

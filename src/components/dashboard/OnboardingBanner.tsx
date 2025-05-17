@@ -49,9 +49,23 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss })
         } else {
           console.log('Onboarding verification result:', verificationResult);
           
-          // If verification was successful and onboarding is complete, hide banner
-          if (verificationResult && verificationResult.success === true) {
-            setNeedsOnboarding(!verificationResult.onboarding_complete);
+          if (verificationResult) {
+            // Check if the result is an object with the expected properties
+            if (typeof verificationResult === 'object' && verificationResult !== null) {
+              const typedResult = verificationResult as Record<string, any>;
+              
+              if ('success' in typedResult) {
+                const isSuccess = Boolean(typedResult.success);
+                const isComplete = Boolean(typedResult.onboarding_complete);
+                setNeedsOnboarding(!isComplete);
+              } else {
+                // If no success property, default to showing banner
+                setNeedsOnboarding(true);
+              }
+            } else {
+              // If result is not an object, default to showing banner
+              setNeedsOnboarding(true);
+            }
             
             // Refresh business data to get updated status
             await refreshBusinessData();

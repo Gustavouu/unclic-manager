@@ -42,10 +42,11 @@ const NotificationOptions = ({ businessId }: NotificationOptionsProps) => {
         if (data) {
           // If we have business settings, check for notification settings in notes
           try {
-            if (data.notes) {
-              const notesObj = typeof data.notes === 'string' 
-                ? JSON.parse(data.notes) 
-                : data.notes;
+            const notesField = data.notes;
+            if (notesField) {
+              const notesObj = typeof notesField === 'string' 
+                ? JSON.parse(notesField) 
+                : notesField;
               
               if (notesObj && notesObj.notification_settings) {
                 setSettings({
@@ -101,19 +102,36 @@ const NotificationOptions = ({ businessId }: NotificationOptionsProps) => {
       }
       
       // Prepare notification settings object
-      const notificationSettings = {
-        notification_settings: {
-          ...settings,
-          [setting]: value
-        }
+      const updatedSettings = {
+        ...settings,
+        [setting]: value
+      };
+      
+      const notesUpdate = {
+        notification_settings: updatedSettings
       };
       
       if (data) {
         // If business settings exists, update the notes field
+        // Get the current notes object or create a new one
+        let currentNotes;
+        try {
+          currentNotes = data.notes ? 
+            (typeof data.notes === 'string' ? JSON.parse(data.notes) : data.notes) : 
+            {};
+        } catch (e) {
+          currentNotes = {};
+        }
+        
+        const mergedNotes = {
+          ...currentNotes,
+          notification_settings: updatedSettings
+        };
+        
         const { error: updateError } = await supabase
           .from('business_settings')
           .update({
-            notes: JSON.stringify(notificationSettings)
+            notes: mergedNotes
           })
           .eq('business_id', businessId);
           
@@ -131,7 +149,7 @@ const NotificationOptions = ({ businessId }: NotificationOptionsProps) => {
           .from('business_settings')
           .insert({
             business_id: businessId, 
-            notes: JSON.stringify(notificationSettings),
+            notes: notesUpdate,
             primary_color: '#213858',
             secondary_color: '#33c3f0',
             allow_online_booking: true,

@@ -34,54 +34,62 @@ const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelec
       setLoading(true);
       try {
         // Try to fetch from clients table first (new schema)
-        let { data: newData, error: newError } = await supabase
-          .from('clients')
-          .select('id, name, email, phone')
-          .order('name');
+        let clientsData = [];
         
-        if (newError || !newData || newData.length === 0) {
-          // If no data in clients, try legacy 'clientes' table
-          console.log('Trying legacy clients table');
+        try {
+          const { data, error } = await supabase
+            .from('clients')
+            .select('id, name, email, phone')
+            .order('name');
           
-          // Use try-catch to handle tables that might not exist
-          try {
-            const { data: legacyData, error: legacyError } = await supabase
-              .from('negocios') // Just to check if table exists
-              .select('id')
-              .limit(1);
-              
-            if (!legacyError) {
-              // If we can query negocios table, we might have clientes table too
-              const { data: clientesData, error: clientesError } = await supabase
-                .from('clientes')
-                .select('id, nome, email, telefone');
-              
-              if (!clientesError && clientesData && clientesData.length > 0) {
-                // Map legacy data to match expected format
-                const mappedData: ClientData[] = clientesData.map(client => ({
-                  id: client.id,
-                  nome: client.nome,
-                  email: client.email,
-                  telefone: client.telefone
-                }));
-                setClients(mappedData);
-                setLoading(false);
-                return;
-              }
-            }
-          } catch (err) {
-            console.error("Error checking legacy tables:", err);
+          if (!error && data && data.length > 0) {
+            // Map new data to match expected format
+            clientsData = data.map(client => ({
+              id: client.id,
+              name: client.name,
+              email: client.email,
+              phone: client.phone
+            }));
+            setClients(clientsData);
+            setLoading(false);
+            return;
           }
-        } else {
-          // Map new data to match expected format
-          const mappedData: ClientData[] = newData.map(client => ({
-            id: client.id,
-            name: client.name,
-            email: client.email,
-            phone: client.phone
-          }));
-          setClients(mappedData);
+        } catch (err) {
+          console.error("Error fetching from clients table:", err);
         }
+        
+        // If no data in clients, try old clientes table if it exists
+        try {
+          // First check if the table exists by trying to query it
+          const { error: tableCheckError } = await supabase
+            .rpc('table_exists', { table_name: 'clientes' });
+            
+          if (!tableCheckError) {
+            // Table might exist, try to query it
+            const { data: clientesData, error: clientesError } = await supabase
+              .from('clientes')
+              .select('id, nome, email, telefone');
+            
+            if (!clientesError && clientesData && clientesData.length > 0) {
+              // Map legacy data to match expected format
+              clientsData = clientesData.map(client => ({
+                id: client.id,
+                nome: client.nome,
+                email: client.email,
+                telefone: client.telefone
+              }));
+              setClients(clientsData);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (err) {
+          console.error("Error checking legacy tables:", err);
+        }
+        
+        // If we get here, no data was found
+        setClients([]);
+        
       } catch (err: any) {
         console.error('Error fetching clients:', err);
         setClients([]);
