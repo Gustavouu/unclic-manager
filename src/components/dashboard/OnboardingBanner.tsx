@@ -13,7 +13,7 @@ interface OnboardingBannerProps {
 export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss }) => {
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean>(false);
   const [isVerifying, setIsVerifying] = useState<boolean>(true);
-  const { businessId, businessData } = useTenant();
+  const { businessId, businessData, refreshBusinessData } = useTenant();
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
@@ -27,6 +27,14 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss })
       try {
         console.log(`Verifying onboarding status for business: ${businessId}`);
         setIsVerifying(true);
+
+        // First check if business data is available and status is active
+        if (businessData && businessData.status === 'active') {
+          console.log('Business is active, no need for onboarding');
+          setNeedsOnboarding(false);
+          setIsVerifying(false);
+          return;
+        }
 
         // Use the RPC function to check and fix onboarding status
         const { data: verificationResult, error: verificationError } = await supabase
@@ -42,8 +50,11 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss })
           console.log('Onboarding verification result:', verificationResult);
           
           // If verification was successful and onboarding is complete, hide banner
-          if (verificationResult && typeof verificationResult === 'object' && verificationResult.success === true) {
+          if (verificationResult && verificationResult.success === true) {
             setNeedsOnboarding(!verificationResult.onboarding_complete);
+            
+            // Refresh business data to get updated status
+            await refreshBusinessData();
           } else {
             // Default to showing banner if response is unexpected
             setNeedsOnboarding(true);
@@ -57,14 +68,8 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss })
       }
     };
 
-    // Don't check if already verified in business data
-    if (businessData && businessData.status === 'active') {
-      setNeedsOnboarding(false);
-      setIsVerifying(false);
-    } else {
-      checkOnboardingStatus();
-    }
-  }, [businessId, businessData]);
+    checkOnboardingStatus();
+  }, [businessId, businessData, refreshBusinessData]);
 
   const handleCompleteSetup = () => {
     window.location.href = '/onboarding';

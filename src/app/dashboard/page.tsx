@@ -16,7 +16,7 @@ import { toast } from "sonner";
 export default function DashboardPage() {
   const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
-  const { businessId, businessData, refreshBusinessData } = useTenant();
+  const { businessId, businessData, refreshBusinessData, updateBusinessStatus } = useTenant();
 
   // Using static data for testing purposes
   const mockDashboardStats: DashboardStats = {
@@ -76,8 +76,9 @@ export default function DashboardPage() {
           } else {
             console.log("Onboarding verification result:", verificationResult);
             
-            // Show banner only if onboarding is incomplete
-            if (verificationResult && typeof verificationResult === 'object' && verificationResult.onboarding_complete === true) {
+            if (verificationResult && verificationResult.success === true) {
+              // Set business status to active
+              await updateBusinessStatus(businessId, 'active');
               setShowOnboardingBanner(false);
               
               // Refresh business data to get updated status
@@ -95,8 +96,14 @@ export default function DashboardPage() {
       }
     };
 
-    initializeDashboard();
-  }, [businessId, refreshBusinessData, businessData]);
+    // Don't check localStorage on first load to ensure we use server state
+    const hideOnboardingBanner = localStorage.getItem('hideOnboardingBanner') === 'true';
+    if (hideOnboardingBanner) {
+      setShowOnboardingBanner(false);
+    } else {
+      initializeDashboard();
+    }
+  }, [businessId, refreshBusinessData, updateBusinessStatus, businessData]);
 
   const handleDismissOnboardingBanner = () => {
     setShowOnboardingBanner(false);

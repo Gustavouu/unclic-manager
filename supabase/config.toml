@@ -21,3 +21,7 @@ roles = ["authenticated"]
 [auth.policies.rpc.execute.obter_metricas_periodo]
 type = "after_auth"  
 roles = ["authenticated"]
+
+[auth.policies.rpc.execute.set_business_status]
+type = "after_auth"
+roles = ["authenticated"]

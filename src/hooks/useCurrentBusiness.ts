@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { toast } from 'sonner';
 
 export const useCurrentBusiness = () => {
   const [businessId, setBusinessId] = useState<string | null>(null);
@@ -41,9 +42,7 @@ export const useCurrentBusiness = () => {
       // Transform data to include settings
       const transformedData = {
         ...business,
-        settings: business.business_settings?.length 
-          ? business.business_settings[0] 
-          : business.business_settings || {}
+        settings: business.business_settings || {}
       };
       
       setBusinessData(transformedData);
@@ -151,6 +150,7 @@ export const useCurrentBusiness = () => {
       return true;
     } catch (error: any) {
       console.error('Error updating business status:', error);
+      toast.error("Erro ao atualizar status do negócio");
       return false;
     }
   };
@@ -174,62 +174,44 @@ export const useCurrentBusiness = () => {
         
         console.log(`Getting business for user ${user.id}`);
         
-        // First try business_users table
-        const { data: businessUser, error: businessUserError } = await supabase
+        // First try business_users table with limit 1 to avoid multiple results error
+        const { data: businessUsers, error: businessUsersError } = await supabase
           .from('business_users')
           .select('business_id')
           .eq('user_id', user.id)
-          .maybeSingle();
+          .limit(1);
         
-        if (businessUserError) {
-          console.error('Error querying business_users:', businessUserError);
+        if (businessUsersError && businessUsersError.code !== 'PGRST116') {
+          console.error('Error querying business_users:', businessUsersError);
         }
         
         // If found in business_users, use that
-        if (businessUser?.business_id) {
-          console.log(`Found business ID in business_users: ${businessUser.business_id}`);
-          setBusinessId(businessUser.business_id);
-          return;
-        }
-        
-        // If not found, try usuarios table (legacy table)
-        const { data: userLegacy, error: userLegacyError } = await supabase
-          .from('usuarios')
-          .select('id_negocio')
-          .eq('id', user.id)
-          .maybeSingle();
-          
-        if (userLegacyError && userLegacyError.code !== 'PGRST116') {
-          console.error('Error querying usuarios table:', userLegacyError);
-        }
-        
-        // If found in usuarios, use that
-        if (userLegacy?.id_negocio) {
-          console.log(`Found business ID in usuarios: ${userLegacy.id_negocio}`);
-          setBusinessId(userLegacy.id_negocio);
+        if (businessUsers && businessUsers.length > 0) {
+          console.log(`Found business ID in business_users: ${businessUsers[0].business_id}`);
+          setBusinessId(businessUsers[0].business_id);
           return;
         }
         
         // Check if there are any businesses with this user as admin
-        const { data: adminBusiness, error: adminError } = await supabase
+        const { data: adminBusinesses, error: adminError } = await supabase
           .from('businesses')
           .select('id')
           .eq('admin_email', user.email)
-          .maybeSingle();
+          .limit(1);
           
         if (adminError) {
           console.error('Error querying businesses by admin email:', adminError);
         }
         
-        // If found as admin, use that
-        if (adminBusiness?.id) {
-          console.log(`Found business with admin email: ${adminBusiness.id}`);
+        // If found as admin, use the first one
+        if (adminBusinesses && adminBusinesses.length > 0) {
+          console.log(`Found business with admin email: ${adminBusinesses[0].id}`);
           
           // Also create the association in business_users
           const { error: associationError } = await supabase
             .from('business_users')
             .insert({
-              business_id: adminBusiness.id,
+              business_id: adminBusinesses[0].id,
               user_id: user.id,
               role: 'owner'
             });
@@ -240,7 +222,7 @@ export const useCurrentBusiness = () => {
             console.log('Created business_users association');
           }
           
-          setBusinessId(adminBusiness.id);
+          setBusinessId(adminBusinesses[0].id);
           return;
         }
         

@@ -4,6 +4,7 @@ import { Calendar, Banknote, Users, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 type MetricsData = {
   clientes_ativos: number;
@@ -38,8 +39,9 @@ export const DashboardOverview = () => {
 
         if (error) {
           console.error('Error loading metrics:', error);
+          toast.error("Erro ao carregar métricas do dashboard");
           
-          // Return dummy metrics on error
+          // Return default metrics on error
           setMetrics({
             clientes_ativos: 0,
             agendamentos_proximos: 0,
@@ -64,8 +66,9 @@ export const DashboardOverview = () => {
         }
       } catch (err) {
         console.error('Error loading metrics:', err);
+        toast.error("Erro ao carregar métricas do dashboard");
         
-        // Return dummy metrics on error
+        // Return default metrics on error
         setMetrics({
           clientes_ativos: 0,
           agendamentos_proximos: 0,
