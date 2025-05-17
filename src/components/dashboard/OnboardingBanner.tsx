@@ -51,8 +51,8 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss })
           console.log('Onboarding verification result:', verificationResult);
           
           if (verificationResult) {
-            // Parse the result safely
-            const parsedResult = safeJsonParse(verificationResult as string, {});
+            // Parse the result safely - handle both string and object formats
+            const parsedResult = safeJsonParse(verificationResult, {});
             
             // Check for success and onboarding status
             const isSuccess = parsedResult.success === true;

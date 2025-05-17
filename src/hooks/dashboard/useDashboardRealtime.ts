@@ -48,26 +48,98 @@ export const useDashboardRealtime = (period: FilterPeriod = 'month') => {
       const startDateStr = startDate.toISOString().split('T')[0];
       const endDateStr = endDate.toISOString().split('T')[0];
       
-      // Fetch metrics from the database
+      // Fetch metrics from the database using the RPC function
+      // Note: We pass the businessId as a string to match the tenant_id type in the function
       const { data, error } = await supabase.rpc(
         'obter_metricas_periodo',
         { 
-          p_tenant_id: businessId,
+          p_tenant_id: businessId.toString(),
           p_data_inicio: startDateStr, 
           p_data_fim: endDateStr 
         }
       );
       
-      if (error) throw error;
-      
-      // Process and summarize metrics data
-      const processedData = processDashboardData(data || []);
-      setStats(processedData);
+      if (error) {
+        console.error('Error fetching dashboard data:', error);
+        // For RPC errors, fallback to generating metrics from raw data
+        await generateFallbackMetrics(startDateStr, endDateStr);
+      } else {
+        // Process and summarize metrics data
+        const processedData = processDashboardData(data || []);
+        setStats(processedData);
+      }
     } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
       toast.error('Erro ao carregar dados do dashboard');
+      // Set default stats
+      setStats(getDefaultStats());
     } finally {
       setLoading(false);
+    }
+  };
+  
+  // Generate fallback metrics from other tables if the RPC fails
+  const generateFallbackMetrics = async (startDateStr: string, endDateStr: string) => {
+    try {
+      console.log('Generating fallback metrics from raw data');
+      
+      // Create fallback metrics object
+      const fallbackStats = getDefaultStats();
+      
+      // Try to get appointment data from appointments or agendamentos table
+      let appointmentsData = [];
+      try {
+        // First try the appointments table
+        const { data: appointmentsResponse, error: appointmentsError } = await supabase
+          .from('appointments')
+          .select('*')
+          .eq('business_id', businessId)
+          .gte('created_at', startDateStr)
+          .lte('created_at', endDateStr);
+          
+        if (!appointmentsError && appointmentsResponse) {
+          appointmentsData = appointmentsResponse;
+        } else {
+          // Try the agendamentos table
+          const { data: agendamentosResponse } = await supabase
+            .from('agendamentos')
+            .select('*')
+            .eq('id_negocio', businessId)
+            .gte('criado_em', startDateStr)
+            .lte('criado_em', endDateStr);
+            
+          if (agendamentosResponse) {
+            appointmentsData = agendamentosResponse;
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching appointments for fallback:', err);
+      }
+      
+      // Only update stats if we have appointment data
+      if (appointmentsData.length > 0) {
+        // Calculate basic metrics
+        fallbackStats.totalAppointments = appointmentsData.length;
+        fallbackStats.completedAppointments = appointmentsData.filter(a => 
+          a.status === 'completed' || a.status === 'concluido'
+        ).length;
+        
+        // Calculate revenue if possible
+        const totalRevenue = appointmentsData.reduce((sum, app) => {
+          const value = app.value || app.valor || app.price || 0;
+          return sum + Number(value);
+        }, 0);
+        
+        fallbackStats.totalRevenue = totalRevenue;
+        fallbackStats.monthlyRevenue = totalRevenue;
+        fallbackStats.monthlyServices = fallbackStats.completedAppointments;
+      }
+      
+      setStats(fallbackStats);
+      
+    } catch (err) {
+      console.error('Error generating fallback metrics:', err);
+      setStats(getDefaultStats());
     }
   };
   

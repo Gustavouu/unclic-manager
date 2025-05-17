@@ -52,9 +52,7 @@ const DateTimeSelectWrapper = ({
         if (settingsData) {
           // Set business hours from settings if available
           if (settingsData.notes) {
-            const notesObj = typeof settingsData.notes === 'string' 
-              ? safeJsonParse(settingsData.notes, {}) 
-              : settingsData.notes;
+            const notesObj = safeJsonParse(settingsData.notes, {});
             
             if (notesObj && typeof notesObj === 'object' && notesObj.business_hours) {
               setBusinessHours(notesObj.business_hours);

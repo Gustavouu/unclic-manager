@@ -2334,6 +2334,51 @@ export type Database = {
           },
         ]
       }
+      metricas_dashboard: {
+        Row: {
+          created_at: string | null
+          data_referencia: string
+          horarios_pico: Json | null
+          id: string
+          novos_clientes: number
+          servicos_populares: Json | null
+          taxa_cancelamento: number
+          tenant_id: string
+          ticket_medio: number
+          total_agendamentos: number
+          total_vendas: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_referencia: string
+          horarios_pico?: Json | null
+          id?: string
+          novos_clientes?: number
+          servicos_populares?: Json | null
+          taxa_cancelamento?: number
+          tenant_id: string
+          ticket_medio?: number
+          total_agendamentos?: number
+          total_vendas?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_referencia?: string
+          horarios_pico?: Json | null
+          id?: string
+          novos_clientes?: number
+          servicos_populares?: Json | null
+          taxa_cancelamento?: number
+          tenant_id?: string
+          ticket_medio?: number
+          total_agendamentos?: number
+          total_vendas?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       metrics_dashboard: {
         Row: {
           created_at: string | null
@@ -4341,6 +4386,10 @@ export type Database = {
       set_tenant_context: {
         Args: { tenant_id: string }
         Returns: undefined
+      }
+      table_exists: {
+        Args: { table_name: string }
+        Returns: boolean
       }
       user_belongs_to_tenant: {
         Args: { tenant_id: string }

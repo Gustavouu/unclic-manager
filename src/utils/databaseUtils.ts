@@ -4,11 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 /**
  * Safely parses a JSON string, returning a default value if parsing fails
  */
-export function safeJsonParse<T>(jsonString: string | null | undefined, defaultValue: T): T {
+export function safeJsonParse<T>(jsonString: string | null | undefined | object, defaultValue: T): T {
   if (!jsonString) return defaultValue;
   
+  // If it's already an object (not a string), return it directly
+  if (typeof jsonString === 'object') return jsonString as T;
+  
   try {
-    return JSON.parse(jsonString) as T;
+    return JSON.parse(jsonString as string) as T;
   } catch (error) {
     console.error("Error parsing JSON:", error);
     return defaultValue;
@@ -58,4 +61,37 @@ export function safeSingleExtract<T>(response: { data: T | null; error: any } | 
     return null;
   }
   return response.data;
+}
+
+/**
+ * Tries to query a table, and if it doesn't exist, tries an alternative table
+ * @param primaryTable Primary table to query
+ * @param alternativeTable Alternative table to query if primary doesn't exist
+ * @param query Function that performs the actual query given a table name
+ */
+export async function adaptiveTableQuery<T>(
+  primaryTable: string, 
+  alternativeTable: string, 
+  query: (tableName: string) => Promise<{ data: T | null; error: any } | null>
+): Promise<{ data: T | null; error: any } | null> {
+  try {
+    // Try the primary table first
+    const primaryExists = await tableExists(primaryTable);
+    if (primaryExists) {
+      return await query(primaryTable);
+    }
+    
+    // If primary table doesn't exist, try the alternative
+    const alternativeExists = await tableExists(alternativeTable);
+    if (alternativeExists) {
+      return await query(alternativeTable);
+    }
+    
+    // If neither table exists
+    console.error(`Neither ${primaryTable} nor ${alternativeTable} tables exist`);
+    return { data: null, error: new Error(`Tables not found: ${primaryTable}, ${alternativeTable}`) };
+  } catch (error) {
+    console.error(`Error in adaptiveTableQuery:`, error);
+    return { data: null, error };
+  }
 }

@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
+import { tableExists } from "@/utils/databaseUtils";
 
 interface AuthContextProps {
   user: User | null;
@@ -39,6 +40,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasUsuariosTable, setHasUsuariosTable] = useState<boolean | null>(null);
+
+  // Check if usuarios table exists
+  useEffect(() => {
+    const checkTables = async () => {
+      try {
+        const usuariosExists = await tableExists('usuarios');
+        setHasUsuariosTable(usuariosExists);
+        console.log('Usuarios table exists:', usuariosExists);
+      } catch (error) {
+        console.error('Error checking for usuarios table:', error);
+        setHasUsuariosTable(false);
+      }
+    };
+    
+    checkTables();
+  }, []);
 
   useEffect(() => {
     // Set up auth state listener first
@@ -52,15 +70,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // We use setTimeout to avoid supabase auth deadlocks
           setTimeout(async () => {
             try {
-              const { data, error } = await supabase
-                .from('usuarios')
-                .select('id_negocio')
-                .eq('id', session.user.id)
-                .maybeSingle();
-                
-              if (data?.id_negocio) {
-                localStorage.setItem('currentBusinessId', data.id_negocio);
+              // Adaptive query based on table existence
+              if (hasUsuariosTable === true) {
+                const { data, error } = await supabase
+                  .from('usuarios')
+                  .select('id_negocio')
+                  .eq('id', session.user.id)
+                  .maybeSingle();
+                  
+                if (data?.id_negocio) {
+                  localStorage.setItem('currentBusinessId', data.id_negocio);
+                }
+              } else if (hasUsuariosTable === false) {
+                // Try business_users table
+                const { data, error } = await supabase
+                  .from('business_users')
+                  .select('business_id')
+                  .eq('user_id', session.user.id)
+                  .maybeSingle();
+                  
+                if (data?.business_id) {
+                  localStorage.setItem('currentBusinessId', data.business_id);
+                }
               }
+              // If hasUsuariosTable is still null (loading), we'll skip this update
             } catch (err) {
               console.error("Error fetching business ID on auth state change:", err);
             }
@@ -80,16 +113,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       
       // If we have a session, fetch business ID
-      if (session?.user) {
+      if (session?.user && hasUsuariosTable !== null) {
         try {
-          const { data, error } = await supabase
-            .from('usuarios')
-            .select('id_negocio')
-            .eq('id', session.user.id)
-            .maybeSingle();
-            
-          if (data?.id_negocio) {
-            localStorage.setItem('currentBusinessId', data.id_negocio);
+          if (hasUsuariosTable) {
+            // Try usuarios table
+            const { data, error } = await supabase
+              .from('usuarios')
+              .select('id_negocio')
+              .eq('id', session.user.id)
+              .maybeSingle();
+              
+            if (data?.id_negocio) {
+              localStorage.setItem('currentBusinessId', data.id_negocio);
+            }
+          } else {
+            // Try business_users table
+            const { data, error } = await supabase
+              .from('business_users')
+              .select('business_id')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+              
+            if (data?.business_id) {
+              localStorage.setItem('currentBusinessId', data.business_id);
+            }
           }
         } catch (err) {
           console.error("Error fetching business ID on initialization:", err);
@@ -99,13 +146,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     };
 
-    initializeAuth();
+    // Only run initialization if we know which tables exist
+    if (hasUsuariosTable !== null) {
+      initializeAuth();
+    }
 
     // Cleanup subscription on unmount
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [hasUsuariosTable]);
 
   const signIn = async (email: string, password: string) => {
     try {
