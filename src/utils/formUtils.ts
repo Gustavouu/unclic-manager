@@ -1,4 +1,6 @@
 
+import { toast } from "sonner";
+
 /**
  * Validates an email address
  */
@@ -31,4 +33,33 @@ export function formatPhone(phone: string): string {
   }
   
   return phone;
+}
+
+/**
+ * Shows a success toast notification
+ */
+export function showSuccessToast(message: string = "Operação realizada com sucesso!") {
+  toast.success(message, {
+    duration: 3000,
+  });
+}
+
+/**
+ * Shows an error toast notification
+ */
+export function showErrorToast(message: string = "Ocorreu um erro. Por favor, tente novamente.") {
+  toast.error(message, {
+    duration: 5000,
+  });
+}
+
+/**
+ * Mock function for simulating async operations (for prototypes)
+ */
+export async function mockSaveFunction(shouldSucceed: boolean = true): Promise<boolean> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(shouldSucceed);
+    }, 1500);
+  });
 }
