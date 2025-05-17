@@ -34,7 +34,7 @@ export default function ProfessionalSelectWrapper({ form, serviceId }: Professio
         console.log('Fetching professionals for business ID:', businessId);
         let professionalsData: any[] = [];
         
-        // Primeiro tenta na tabela professionals
+        // First try professionals table
         const hasProfessionalsTable = await tableExists('professionals');
         
         if (hasProfessionalsTable) {
@@ -52,7 +52,7 @@ export default function ProfessionalSelectWrapper({ form, serviceId }: Professio
           }
         }
         
-        // Se não encontrou, tenta na tabela employees
+        // If no data found, try employees table
         if (professionalsData.length === 0) {
           const hasEmployeesTable = await tableExists('employees');
           if (hasEmployeesTable) {
@@ -71,27 +71,23 @@ export default function ProfessionalSelectWrapper({ form, serviceId }: Professio
           }
         }
         
-        // Por último, tenta na tabela funcionarios
+        // Finally try funcionarios table
         if (professionalsData.length === 0) {
-          try {
+          const hasFuncionariosTable = await tableExists('funcionarios');
+          
+          if (hasFuncionariosTable) {
             console.log('Trying funcionarios table');
-            // Check if the table exists before querying
-            const { data: existsData } = await supabase.rpc('table_exists', { table_name: 'funcionarios' });
-            if (existsData) {
-              const response = await supabase
-                .from('funcionarios')
-                .select('*')
-                .eq('id_negocio', businessId);
-                
-              if (response.error) {
-                console.error('Error fetching from funcionarios:', response.error);
-              } else if (response.data && response.data.length > 0) {
-                console.log('Found professionals in funcionarios table:', response.data.length);
-                professionalsData = response.data.map(normalizeProfessionalData);
-              }
+            const { data, error } = await supabase
+              .from('funcionarios')
+              .select('*')
+              .eq('id_negocio', businessId);
+              
+            if (error) {
+              console.error('Error fetching from funcionarios:', error);
+            } else if (data && data.length > 0) {
+              console.log('Found professionals in funcionarios table:', data.length);
+              professionalsData = data.map(normalizeProfessionalData);
             }
-          } catch (error) {
-            console.error('Error checking funcionarios table:', error);
           }
         }
         
@@ -145,7 +141,7 @@ export default function ProfessionalSelectWrapper({ form, serviceId }: Professio
                 </Button>
               </FormControl>
             </PopoverTrigger>
-            <PopoverContent className="p-0 w-full" style={{width: "var(--radix-popover-trigger-width)"}}>
+            <PopoverContent className="p-0 w-full" style={{width: "var(--radix-popover-trigger-width)", maxWidth: "100%"}}>
               <Command>
                 <CommandInput placeholder="Buscar profissional..." className="h-9" />
                 <CommandEmpty>Nenhum profissional encontrado.</CommandEmpty>

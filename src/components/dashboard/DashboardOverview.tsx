@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { safeJsonArray, safeJsonNumber } from '@/utils/databaseUtils';
 
 type MetricsData = {
   clientes_ativos: number;
@@ -55,15 +56,33 @@ export const DashboardOverview = () => {
             periodo: 'month',
             error: error.message
           });
-        } else if (data && data.length > 0) {
+        } else if (data) {
           console.log('Metrics loaded successfully:', data);
           
-          // Process metrics data - sum up values from all days
+          // Process metrics data - safely handle potentially different data structures
+          const metricsArray = safeJsonArray(data, []);
+          
+          // Now we'll sum the values safely
+          let clientesAtivos = 0;
+          let agendamentosProximos = 0;
+          let receitaPeriodo = 0;
+          let servicosRealizados = 0;
+
+          if (metricsArray && Array.isArray(metricsArray)) {
+            metricsArray.forEach(dayMetric => {
+              const dayData = typeof dayMetric === 'object' && dayMetric !== null ? dayMetric : {};
+              clientesAtivos += safeJsonNumber(dayData.novos_clientes, 0);
+              agendamentosProximos += safeJsonNumber(dayData.total_agendamentos, 0);
+              receitaPeriodo += safeJsonNumber(dayData.total_vendas, 0);
+              servicosRealizados += Math.floor(safeJsonNumber(dayData.total_agendamentos, 0) * 0.8);
+            });
+          }
+          
           const processedMetrics = {
-            clientes_ativos: data.reduce((sum, day) => sum + day.novos_clientes, 0),
-            agendamentos_proximos: data.reduce((sum, day) => sum + day.total_agendamentos, 0),
-            receita_periodo: data.reduce((sum, day) => sum + Number(day.total_vendas), 0),
-            servicos_realizados: data.reduce((sum, day) => sum + Math.floor(day.total_agendamentos * 0.8), 0),
+            clientes_ativos: clientesAtivos,
+            agendamentos_proximos: agendamentosProximos,
+            receita_periodo: receitaPeriodo,
+            servicos_realizados: servicosRealizados,
             periodo: 'month'
           };
           

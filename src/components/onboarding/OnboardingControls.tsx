@@ -1,553 +1,309 @@
 
-import React, { useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { ArrowLeft, ArrowRight, Save } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { LoadingButton } from "@/components/ui/loading-button";
 import { useTenant } from "@/contexts/TenantContext";
 
-export const OnboardingControls: React.FC = () => {
-  const { 
-    currentStep, 
-    setCurrentStep, 
-    isComplete, 
-    saveProgress,
-    businessData,
-    services,
-    staffMembers,
-    businessHours,
-    hasStaff,
-    status,
-    setStatus,
-    setError,
-    setProcessingStep,
-    setBusinessCreated,
-    onboardingMethod
-  } = useOnboarding();
-  
+interface OnboardingControlsProps {
+  currentStep: string;
+  onPrevious?: () => void;
+  onNext?: () => void;
+  isSubmitting?: boolean;
+}
+
+export function OnboardingControls({
+  currentStep,
+  onPrevious,
+  onNext,
+  isSubmitting = false,
+}: OnboardingControlsProps) {
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { refreshBusinessData } = useTenant();
+  const { businessId } = useTenant();
   
-  const handleNext = async () => {
-    // Validar dados do estabelecimento antes de avançar
-    if (currentStep === 0) {
-      if (!businessData.name || !businessData.email || !businessData.phone) {
-        toast.error("Preencha os campos obrigatórios para continuar");
-        return;
-      }
-      
-      // Check for required address fields (using both naming conventions)
-      const zipCode = businessData.cep || businessData.zipCode;
-      const addressNumber = businessData.number || businessData.addressNumber;
-      
-      if (!zipCode || !businessData.address || !addressNumber) {
-        toast.error("Preencha o endereço completo para continuar");
-        return;
-      }
-      
-      // Check slug availability before proceeding
-      setStatus("verifying");
-      setProcessingStep("Verificando disponibilidade do nome...");
-      
-      try {
-        // Gerar um nome único adicionando um timestamp se necessário
-        const timestamp = Date.now().toString().slice(-4);
-        // Remover caracteres especiais e espaços para garantir um slug válido
-        const normalizedName = businessData.name.normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^a-z0-9\s]/gi, '')
-          .trim()
-          .toLowerCase()
-          .replace(/\s+/g, '-');
-        
-        const modifiedName = `${normalizedName}-${timestamp}`;
-        
-        // Log da chamada para depuração
-        console.log("Verificando disponibilidade do slug:", modifiedName);
-        
-        // Tentativa com timeout de segurança
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Tempo limite excedido ao verificar slug")), 10000)
-        );
-        
-        const response = await Promise.race([
-          supabase.functions.invoke('check-slug-availability', {
-            body: { name: modifiedName },
-          }),
-          timeoutPromise
-        ]);
-        
-        setStatus("idle");
-        
-        // Type guard to ensure the response has data and error properties
-        if (response && typeof response === 'object' && 'data' in response && 'error' in response) {
-          const data = response.data;
-          const error = response.error;
-          
-          console.log("Resposta de verificação de slug:", { data, error });
-          
-          if (error) {
-            console.error("Error checking slug availability:", error);
-            toast.error("Erro ao verificar disponibilidade do nome");
-            return;
-          }
-          
-          if (data && typeof data === 'object' && 'isAvailable' in data && !data.isAvailable) {
-            // Se o nome não estiver disponível, modifique-o para torná-lo único
-            const uniqueName = `${businessData.name} ${timestamp}`;
-            toast.info(`Nome modificado para '${uniqueName}' para garantir unicidade.`);
-            
-            // Atualizar o nome do negócio com o nome único
-            saveProgress();
-          }
-        } else {
-          console.error("Invalid response format:", response);
-          toast.warning("Resposta inválida do servidor, mas você pode continuar.");
-        }
-      } catch (err) {
-        console.error("Failed to check slug availability:", err);
-        toast.warning("Não foi possível verificar a disponibilidade do nome, mas você pode continuar.");
-        setStatus("idle");
-        // Permitir continuar mesmo com erro no slug
-      }
-    }
-    
-    // Avançar para próximo passo
-    if (currentStep < 4) {
-      // Salva progresso antes de avançar
-      saveProgress();
-      setCurrentStep(currentStep + 1);
-    }
-  };
-  
-  const handlePrevious = useCallback(() => {
-    if (currentStep > 0) {
-      // Salva progresso antes de voltar
-      saveProgress();
-      setCurrentStep(currentStep - 1);
-    }
-  }, [currentStep, saveProgress, setCurrentStep]);
-  
-  const createBusiness = async () => {
-    // Prepare business data for creation
-    const businessPayload = {
-      name: businessData.name,
-      email: businessData.email,
-      phone: businessData.phone,
-      address: businessData.address,
-      number: businessData.number || businessData.addressNumber,
-      neighborhood: businessData.neighborhood,
-      city: businessData.city,
-      state: businessData.state,
-      cep: businessData.cep || businessData.zipCode
-    };
-    
-    console.log("Criando negócio com os dados:", businessPayload);
-    
-    // Add timestamp to ensure uniqueness
-    const timestamp = Date.now().toString().slice(-4);
-    // Normalize business name for slug
-    const normalizedName = businessData.name.normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s]/gi, '')
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, '-');
-    
-    const businessSlug = `${normalizedName}-${timestamp}`;
-    
-    try {
-      // First try with the Edge Function
-      console.log("Tentando criar negócio via Edge Function...");
-      const response = await supabase.functions.invoke('create-business', {
-        body: {
-          businessData: {
-            ...businessPayload,
-            slug: businessSlug
-          },
-          userId: user?.id
-        }
-      });
-      
-      console.log("Resposta da criação do negócio:", response);
-      
-      if (!response?.data) {
-        throw new Error("Não foi possível obter resposta do servidor");
-      }
-      
-      const { success, businessId, businessSlug: responseSlug, error: businessError } = response.data;
-      
-      if (!success || !businessId) {
-        throw new Error(businessError || "Erro ao criar negócio");
-      }
-      
-      return { businessId, businessSlug: responseSlug };
-    } catch (error) {
-      console.error("Erro na criação do negócio:", error);
-      
-      // Fallback: try direct creation if Edge Function fails
-      try {
-        console.log("Tentando criar negócio diretamente no banco de dados...");
-        
-        // Create business record
-        const { data: businessData, error: businessError } = await supabase
-          .from('businesses')
-          .insert({
-            name: businessPayload.name,
-            admin_email: businessPayload.email || 'contact@example.com',
-            phone: businessPayload.phone,
-            address: businessPayload.address,
-            address_number: businessPayload.number,
-            neighborhood: businessPayload.neighborhood,
-            city: businessPayload.city,
-            state: businessPayload.state,
-            zip_code: businessPayload.cep,
-            slug: businessSlug,
-            status: 'pending'
-          })
-          .select('id, slug')
-          .single();
-          
-        if (businessError) {
-          console.error("Erro ao criar registro do negócio:", businessError);
-          throw businessError;
-        }
-        
-        if (!businessData) throw new Error("Business creation returned no data");
-        
-        console.log("Negócio criado diretamente:", businessData);
-        
-        // Create association
-        const { error: assocError } = await supabase
-          .from('business_users')
-          .insert({
-            business_id: businessData.id,
-            user_id: user?.id,
-            role: 'owner'
-          });
-          
-        if (assocError) {
-          console.error("Erro ao criar associação:", assocError);
-          throw assocError;
-        }
-        
-        // Create settings
-        const { error: settingsError } = await supabase
-          .from('business_settings')
-          .insert({
-            business_id: businessData.id,
-            logo_url: null,
-            banner_url: null
-          });
-          
-        if (settingsError) {
-          console.error("Erro ao criar configurações:", settingsError);
-          throw settingsError;
-        }
-        
-        return { businessId: businessData.id, businessSlug: businessData.slug };
-      } catch (fallbackError) {
-        console.error("Falha na criação direta:", fallbackError);
-        throw error; // Throw original error
-      }
-    }
-  };
-  
-  const completeBusinessSetup = async (businessId) => {
-    console.log("Completando configuração do negócio:", {
-      userId: user?.id,
-      businessId,
-      servicesCount: services?.length,
-      staffCount: staffMembers?.length,
-      hasStaff
-    });
-    
-    try {
-      // First try with Edge Function
-      const response = await supabase.functions.invoke('complete-business-setup', {
-        body: {
-          userId: user?.id,
-          businessId,
-          services,
-          staffMembers,
-          hasStaff,
-          businessHours
-        }
-      });
-      
-      console.log("Resposta da configuração do negócio:", response);
-      
-      if (!response?.data) {
-        throw new Error("Não foi possível obter resposta do servidor");
-      }
-      
-      const { success, error: setupError } = response.data;
-      
-      if (!success) {
-        throw new Error(setupError || "Erro ao finalizar configuração");
-      }
-      
-      return success;
-    } catch (error) {
-      console.error("Erro ao completar configuração do negócio:", error);
-      
-      // Fallback: try direct updates if Edge Function fails
-      try {
-        console.log("Tentando completar configuração diretamente...");
-        
-        // Update business status
-        const { error: statusError } = await supabase
-          .from('businesses')
-          .update({ status: 'active' })
-          .eq('id', businessId);
-          
-        if (statusError) {
-          console.error("Erro ao atualizar status em businesses:", statusError);
-          throw statusError;
-        }
-        
-        // Add services if available
-        if (services && services.length > 0) {
-          const servicesData = services.map(service => ({
-            business_id: businessId,
-            name: service.name,
-            description: service.description,
-            duration: service.duration,
-            price: service.price
-          }));
-          
-          const { error: servicesError } = await supabase
-            .from('services')
-            .insert(servicesData);
-            
-          if (servicesError) {
-            console.error("Erro ao criar serviços:", servicesError);
-            throw servicesError;
-          }
-        }
-        
-        // Add staff if available
-        if (hasStaff && staffMembers && staffMembers.length > 0) {
-          const staffData = staffMembers.map(staff => ({
-            business_id: businessId,
-            name: staff.name,
-            email: staff.email,
-            phone: staff.phone,
-            position: staff.position || staff.role || "Profissional",
-            commission_percentage: staff.commission || 0
-          }));
-          
-          const { error: staffError } = await supabase
-            .from('professionals')
-            .insert(staffData);
-            
-          if (staffError) {
-            console.error("Erro ao criar profissionais:", staffError);
-            throw staffError;
-          }
-        }
-        
-        return true;
-      } catch (fallbackError) {
-        console.error("Falha ao completar configuração diretamente:", fallbackError);
-        throw fallbackError;
-      }
-    }
-  };
-  
-  const verifyBusinessCreation = async (userId) => {
-    try {
-      console.log("Verificando se o negócio foi criado para o usuário:", userId);
-      
-      // Verificar associação na business_users primeiro
-      const { data: businessUserData, error: businessUserError } = await supabase
-        .from('business_users')
-        .select('business_id')
-        .eq('user_id', userId)
-        .maybeSingle();
-      
-      if (!businessUserError && businessUserData?.business_id) {
-        console.log("Negócio encontrado em business_users:", businessUserData.business_id);
-        return businessUserData.business_id;
-      }
-      
-      console.log("Nenhum negócio encontrado em business_users, verificando usuarios...");
-      
-      // Tentar em usuarios como fallback
-      const { data: userData, error: userError } = await supabase
-        .from('usuarios')
-        .select('id_negocio')
-        .eq('id', userId)
-        .maybeSingle();
-      
-      if (!userError && userData?.id_negocio) {
-        console.log("Negócio encontrado em usuarios:", userData.id_negocio);
-        return userData.id_negocio;
-      }
-      
-      console.log("Nenhum negócio encontrado para o usuário");
-      return null;
-    } catch (error) {
-      console.error("Erro ao verificar criação do negócio:", error);
-      return null;
-    }
-  };
-  
-  const handleFinish = async () => {
-    if (!isComplete()) {
-      toast.error("Preencha todas as informações obrigatórias antes de finalizar");
+  const handleSkip = async () => {
+    if (!businessId) {
+      toast.error("ID do negócio não encontrado");
       return;
     }
     
-    if (!user) {
-      toast.error("Você precisa estar autenticado para criar um negócio");
-      navigate("/login");
-      return;
-    }
-    
-    // Update status to processing
-    setStatus("processing");
-    setError(null);
-    setBusinessCreated(null);
-    setProcessingStep("Iniciando criação do estabelecimento...");
-    
+    setLoading(true);
     try {
-      // Tentar criar o negócio
-      setProcessingStep("Criando seu estabelecimento...");
-      
-      let businessId = null;
-      let businessSlug = null;
-      
-      try {
-        const result = await createBusiness();
-        businessId = result.businessId;
-        businessSlug = result.businessSlug;
-        
-        // Store business info for next step
-        setBusinessCreated({
-          id: businessId,
-          slug: businessSlug
+      // Mark current step as completed
+      await supabase
+        .from('onboarding_progress')
+        .upsert([
+          {
+            tenantId: businessId,
+            step: currentStep,
+            completed: true,
+            completedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ], {
+          onConflict: 'tenantId,step'
         });
-        
-        toast.success("Estabelecimento criado com sucesso!");
-      } catch (createError) {
-        console.error("Falha ao criar negócio:", createError);
-        
-        // Verificar se o negócio foi criado apesar do erro
-        setProcessingStep("Verificando se o negócio foi criado...");
-        
-        const existingBusinessId = await verifyBusinessCreation(user.id);
-        
-        if (existingBusinessId) {
-          businessId = existingBusinessId;
-          setBusinessCreated({
-            id: existingBusinessId
-          });
-          toast.warning("Negócio foi criado, mas houve problemas na comunicação.");
-        } else {
-          throw new Error("Não foi possível criar o negócio. Tente novamente.");
-        }
-      }
       
-      // Se chegou aqui, temos um ID de negócio. Completar configuração.
-      if (businessId) {
-        setProcessingStep("Configurando serviços e profissionais...");
-        
-        try {
-          await completeBusinessSetup(businessId);
-          toast.success("Serviços e profissionais configurados com sucesso!");
-        } catch (setupError) {
-          console.error("Falha ao completar configuração:", setupError);
-          
-          // Tentar atualizar manualmente o status do negócio
-          setProcessingStep("Atualizando status do negócio...");
-          
-          try {
-            // Tentar atualizar status diretamente
-            const { error: updateError } = await supabase
-              .from('businesses')
-              .update({ 
-                status: 'active',
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', businessId);
-            
-            if (updateError) {
-              console.error("Erro ao atualizar status em businesses:", updateError);
-              throw new Error("Não foi possível atualizar o status do negócio");
-            }
-            
-            toast.info("Status do negócio atualizado com sucesso.");
-          } catch (manualUpdateError) {
-            console.error("Erro ao atualizar manualmente:", manualUpdateError);
-            throw new Error("Configuração parcial: criamos seu negócio mas houve um erro ao finalizar a configuração.");
-          }
-        }
-        
-        // Success!
-        setStatus("success");
-        setProcessingStep("Configuração concluída com sucesso!");
-        toast.success("Estabelecimento configurado com sucesso!");
-        
-        // Clear onboarding data
-        localStorage.removeItem('unclic-manager-onboarding');
-        
-        // Refresh business data to update contexts
-        await refreshBusinessData();
-        
-        // Redirect to dashboard after a delay
-        setTimeout(() => {
-          navigate("/dashboard", { replace: true });
-        }, 2000);
-      } else {
-        throw new Error("ID do negócio não disponível após criação");
+      // Navigate to next step based on current step
+      switch (currentStep) {
+        case 'welcome':
+          navigate('/onboarding/business');
+          break;
+        case 'business':
+          navigate('/onboarding/services');
+          break;
+        case 'services':
+          navigate('/onboarding/professionals');
+          break;
+        case 'professionals':
+          navigate('/onboarding/schedule');
+          break;
+        case 'schedule':
+          navigate('/onboarding/complete');
+          break;
+        case 'complete':
+          navigate('/dashboard');
+          break;
+        default:
+          navigate('/dashboard');
       }
     } catch (error) {
-      console.error("Erro ao configurar estabelecimento:", error);
-      setError(error.message || "Erro ao configurar estabelecimento");
-      setStatus("error");
-      toast.error(error.message || "Erro ao configurar estabelecimento");
+      console.error('Error skipping step:', error);
+      toast.error("Erro ao pular etapa");
+    } finally {
+      setLoading(false);
     }
+  };
+  
+  const handleFinishOnboarding = async () => {
+    if (!businessId) return;
+    
+    setLoading(true);
+    try {
+      // Mark all steps as completed
+      const steps = ['welcome', 'business', 'services', 'professionals', 'schedule', 'complete'];
+      
+      const upsertPromises = steps.map(step => 
+        supabase
+          .from('onboarding_progress')
+          .upsert({
+            tenantId: businessId,
+            step,
+            completed: true,
+            completedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }, {
+            onConflict: 'tenantId,step'
+          })
+      );
+      
+      await Promise.all(upsertPromises);
+      
+      // Set business as active
+      await supabase
+        .from('businesses')
+        .update({ status: 'active' })
+        .eq('id', businessId);
+      
+      toast.success("Configuração concluída com sucesso!");
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error finishing onboarding:', error);
+      toast.error("Erro ao finalizar configuração");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleCreateDefaultServices = async () => {
+    if (!businessId) {
+      toast.error("ID do negócio não encontrado");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      // Create service categories
+      const { data: categoryData, error: categoryError } = await supabase
+        .from('service_categories')
+        .insert([
+          { 
+            tenantId: businessId,
+            name: 'Cortes',
+            description: 'Cortes de cabelo e barba',
+            order: 1,
+            isActive: true
+          },
+          {
+            tenantId: businessId,
+            name: 'Tratamentos',
+            description: 'Tratamentos para cabelo e barba',
+            order: 2,
+            isActive: true
+          }
+        ])
+        .select();
+      
+      if (categoryError) throw categoryError;
+      
+      if (categoryData && categoryData.length > 0) {
+        const haircutsCategoryId = categoryData[0].id;
+        const treatmentsCategoryId = categoryData[1].id;
+        
+        // Create default services
+        const defaultServices = [
+          {
+            business_id: businessId,
+            name: 'Corte de Cabelo',
+            description: 'Corte masculino tradicional',
+            duration: 30,
+            price: 35,
+            categoryId: haircutsCategoryId
+          },
+          {
+            business_id: businessId,
+            name: 'Barba',
+            description: 'Aparo e modelagem de barba',
+            duration: 20,
+            price: 25,
+            categoryId: haircutsCategoryId
+          },
+          {
+            business_id: businessId,
+            name: 'Hidratação',
+            description: 'Tratamento hidratante para cabelos',
+            duration: 45,
+            price: 50,
+            categoryId: treatmentsCategoryId
+          }
+        ];
+        
+        const { error: servicesError } = await supabase
+          .from('services')
+          .insert(defaultServices);
+          
+        if (servicesError) throw servicesError;
+        
+        toast.success("Serviços padrão criados com sucesso!");
+        
+        // Mark step as completed
+        await supabase
+          .from('onboarding_progress')
+          .upsert({
+            tenantId: businessId,
+            step: 'services',
+            completed: true,
+            completedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }, {
+            onConflict: 'tenantId,step'
+          });
+        
+        // Navigate to next step
+        navigate('/onboarding/professionals');
+      }
+    } catch (error) {
+      console.error('Error creating default services:', error);
+      toast.error("Erro ao criar serviços padrão");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Render appropriate buttons based on current step
+  const renderButtons = () => {
+    if (currentStep === 'complete') {
+      return (
+        <Button 
+          onClick={handleFinishOnboarding}
+          disabled={loading || isSubmitting}
+          className="ml-auto"
+        >
+          {loading || isSubmitting ? "Processando..." : "Finalizar e Ir para o Dashboard"}
+          <ChevronRight className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    }
+    
+    if (currentStep === 'services') {
+      return (
+        <>
+          <Button 
+            variant="outline" 
+            onClick={onPrevious}
+            disabled={loading || isSubmitting}
+          >
+            Voltar
+          </Button>
+          
+          <Button
+            variant="secondary"
+            onClick={handleCreateDefaultServices}
+            disabled={loading || isSubmitting}
+          >
+            {loading || isSubmitting ? "Criando..." : "Criar Serviços Padrão"}
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={handleSkip}
+            disabled={loading || isSubmitting}
+          >
+            Pular
+          </Button>
+          
+          <Button 
+            onClick={onNext}
+            disabled={loading || isSubmitting}
+          >
+            {loading || isSubmitting ? "Processando..." : "Continuar"}
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        </>
+      );
+    }
+    
+    // Default buttons for most steps
+    return (
+      <>
+        {onPrevious && (
+          <Button 
+            variant="outline" 
+            onClick={onPrevious}
+            disabled={loading || isSubmitting}
+          >
+            Voltar
+          </Button>
+        )}
+        
+        <Button 
+          variant="outline" 
+          onClick={handleSkip}
+          disabled={loading || isSubmitting}
+          className="ml-auto"
+        >
+          Pular
+        </Button>
+        
+        {onNext && (
+          <Button 
+            onClick={onNext}
+            disabled={loading || isSubmitting}
+          >
+            {loading || isSubmitting ? "Processando..." : "Continuar"}
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        )}
+      </>
+    );
   };
   
   return (
-    <div className="space-y-4 mt-8">
-      <div className="flex justify-between">
-        <Button 
-          variant="outline" 
-          onClick={handlePrevious} 
-          disabled={currentStep === 0}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-        </Button>
-        
-        {currentStep === 4 ? (
-          <LoadingButton 
-            onClick={handleFinish}
-            isLoading={status === "processing"}
-            loadingText="Finalizando..."
-            icon={<Save className="mr-2 h-4 w-4" />}
-            className="bg-primary hover:bg-primary/90"
-          >
-            Finalizar
-          </LoadingButton>
-        ) : (
-          <LoadingButton
-            onClick={handleNext}
-            isLoading={status === "verifying"}
-            loadingText="Verificando..."
-            icon={<ArrowRight className="ml-2 h-4 w-4" />}
-            className="bg-primary hover:bg-primary/90"
-          >
-            Avançar
-          </LoadingButton>
-        )}
-      </div>
+    <div className="flex justify-between pt-6">
+      {renderButtons()}
     </div>
   );
-};
+}

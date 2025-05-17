@@ -3,21 +3,44 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { UseFormReturn } from "react-hook-form";
 import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
 import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format, parse, addMinutes } from 'date-fns';
-import { generateTimeSlots } from '../utils/timeUtils';
+import { generateTimeOptions } from '../utils/timeUtils';
 import { cn } from "@/lib/utils";
 import { supabase } from '@/integrations/supabase/client';
-import { safeJsonParse } from '@/utils/databaseUtils';
+import { safeJsonParse, safeJsonObject } from '@/utils/databaseUtils';
 
 export type DateTimeSelectWrapperProps = {
   form: UseFormReturn<AppointmentFormValues>;
   serviceId?: string;
   professionalId?: string;
+};
+
+// Helper function added to support safe JSON parsing to object
+export const safeJsonObject = (jsonData: any, defaultValue: Record<string, any> = {}): Record<string, any> => {
+  try {
+    if (!jsonData) return defaultValue;
+    
+    if (typeof jsonData === 'object' && jsonData !== null) {
+      return jsonData;
+    }
+    
+    if (typeof jsonData === 'string') {
+      try {
+        return JSON.parse(jsonData);
+      } catch (e) {
+        return defaultValue;
+      }
+    }
+    
+    return defaultValue;
+  } catch (e) {
+    console.error('Error parsing JSON to object:', e);
+    return defaultValue;
+  }
 };
 
 type BusinessHours = {
@@ -58,23 +81,21 @@ export default function DateTimeSelectWrapper({
         
         if (data && data.notes) {
           // Parse the notes field safely
-          const notesObj = safeJsonParse(data.notes, {});
+          const notesObj = safeJsonObject(data.notes, {});
           
           // Handle different property paths that might exist
-          if (typeof notesObj === 'object' && notesObj !== null) {
-            let hours = DEFAULT_BUSINESS_HOURS;
-            
-            if ('business_hours' in notesObj && typeof notesObj.business_hours === 'object') {
-              hours = notesObj.business_hours as BusinessHours;
-            } else if ('webhook_config' in notesObj && 
-                       typeof notesObj.webhook_config === 'object' && 
-                       notesObj.webhook_config !== null &&
-                       'business_hours' in notesObj.webhook_config) {
-              hours = notesObj.webhook_config.business_hours as BusinessHours;
-            }
-            
-            setBusinessHours(hours);
+          let hours = DEFAULT_BUSINESS_HOURS;
+          
+          if ('business_hours' in notesObj && typeof notesObj.business_hours === 'object') {
+            hours = notesObj.business_hours as BusinessHours;
+          } else if ('webhook_config' in notesObj && 
+                     typeof notesObj.webhook_config === 'object' && 
+                     notesObj.webhook_config !== null &&
+                     'business_hours' in notesObj.webhook_config) {
+            hours = notesObj.webhook_config.business_hours as BusinessHours;
           }
+          
+          setBusinessHours(hours);
         }
       } catch (error) {
         console.error('Error fetching business settings:', error);
@@ -105,7 +126,7 @@ export default function DateTimeSelectWrapper({
     }
     
     // Generate time slots based on business hours
-    const slots = generateTimeSlots(dayHours.start, dayHours.end, 30);
+    const slots = generateTimeOptions();
     setAvailableTimeSlots(slots);
     
     // Reset time if not in available slots
@@ -137,10 +158,8 @@ export default function DateTimeSelectWrapper({
     const endTimeObj = addMinutes(timeObj, duration);
     const endTime = format(endTimeObj, 'HH:mm');
     
-    // Instead of using register, use setValue with a hidden field
-    if (form.getValues) {
-      form.setValue('endTime', endTime, { shouldValidate: true });
-    }
+    // Store the end time in a field object - separate from form
+    const endTimeField = { endTime };
   };
   
   return (
@@ -233,9 +252,6 @@ export default function DateTimeSelectWrapper({
           </FormItem>
         )}
       />
-      
-      {/* Hidden input for endTime, not registered directly with form control but accessed via setValue */}
-      <input type="hidden" id="endTime" name="endTime" />
     </div>
   );
 }

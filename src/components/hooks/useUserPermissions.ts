@@ -1,143 +1,97 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'sonner';
-import { safeDataExtract } from '@/utils/databaseUtils';
 
-export interface UserPermission {
-  id: string;
-  module: string;
-  action: string;
-  name: string;
-  description?: string;
-}
+type Permission = 'agendamentos' | 'clientes' | 'financeiro' | 'estoque' | 'relatorios' | 'configuracoes' | 'marketing';
 
-export interface UserRole {
-  id: string;
-  name: string;
-  description?: string;
-  isAdmin: boolean;
-  permissions: UserPermission[];
-}
-
-export const useUserPermissions = (userId?: string) => {
-  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
-  const [permissions, setPermissions] = useState<UserPermission[]>([]);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const useUserPermissions = () => {
+  const [permissions, setPermissions] = useState<Record<Permission, boolean>>({
+    agendamentos: false,
+    clientes: false,
+    financeiro: false,
+    estoque: false,
+    relatorios: false,
+    configuracoes: false,
+    marketing: false
+  });
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const { businessId } = useTenant();
 
   useEffect(() => {
-    const fetchUserPermissions = async () => {
-      if (!userId) return;
-      
-      setIsLoading(true);
-      setError(null);
-      
+    const checkPermissions = async () => {
+      if (!businessId) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Check if user has admin access first
-        const { data: adminCheck, error: adminError } = await supabase
-          .rpc('user_is_admin');
+        setLoading(true);
+
+        // Check if user is admin
+        const { data: isAdminData, error: isAdminError } = await supabase.rpc('user_is_admin_for_tenant', {
+          tenant_id: businessId
+        });
+
+        if (isAdminError) {
+          console.error('Error checking admin status:', isAdminError);
+          toast.error('Erro ao verificar permissões de administrador');
+        } else {
+          setIsAdmin(!!isAdminData);
           
-        if (!adminError && adminCheck === true) {
-          console.log('User is admin, granting full access');
-          setIsAdmin(true);
-          setUserRoles([{ 
-            id: 'admin', 
-            name: 'Admin', 
-            description: 'Full access', 
-            isAdmin: true,
-            permissions: [] 
-          }]);
-          setPermissions([]);
-          return;
-        }
-        
-        // Fetch user roles
-        let userRolesData: UserRole[] = [];
-        let fetchedPermissions: UserPermission[] = [];
+          // If user is admin, set all permissions to true
+          if (isAdminData) {
+            setPermissions({
+              agendamentos: true,
+              clientes: true,
+              financeiro: true,
+              estoque: true,
+              relatorios: true,
+              configuracoes: true,
+              marketing: true
+            });
+          } else {
+            // Otherwise, check individual permissions
+            const permissionsChecks = await Promise.all([
+              supabase.rpc('user_has_permission_on_resource', { resource_name: 'agendamentos' }),
+              supabase.rpc('user_has_permission_on_resource', { resource_name: 'clientes' }),
+              supabase.rpc('user_has_permission_on_resource', { resource_name: 'financeiro' }),
+              supabase.rpc('user_has_permission_on_resource', { resource_name: 'estoque' }),
+              supabase.rpc('user_has_permission_on_resource', { resource_name: 'relatorios' }),
+              supabase.rpc('user_has_permission_on_resource', { resource_name: 'configuracoes' }),
+              supabase.rpc('user_has_permission_on_resource', { resource_name: 'marketing' })
+            ]);
 
-        try {
-          // Try to fetch user roles from the modern schema
-          const response = await supabase
-            .from('user_roles')
-            .select(`
-              id,
-              role:roleId (
-                id,
-                name,
-                description
-              )
-            `)
-            .eq('userId', userId);
-
-          const roleData = safeDataExtract(response);
-
-          if (roleData && roleData.length > 0) {
-            // Process role data
-            const roles: UserRole[] = [];
-
-            for (const userRole of roleData) {
-              if (!userRole.role) continue;
-              
-              // Get permissions for this role
-              const permResponse = await supabase
-                .from('role_permissions')
-                .select(`
-                  permission:permissionId (
-                    id,
-                    name,
-                    description,
-                    module,
-                    action
-                  )
-                `)
-                .eq('roleId', userRole.role.id);
-              
-              const permissions = safeDataExtract(permResponse);
-              
-              const rolePermissions = permissions
-                ? permissions.map(p => p.permission as UserPermission).filter(Boolean)
-                : [];
-              
-              roles.push({
-                id: userRole.role.id,
-                name: userRole.role.name,
-                description: userRole.role.description,
-                isAdmin: userRole.role.name.toLowerCase() === 'admin',
-                permissions: rolePermissions
-              });
-              
-              fetchedPermissions = [...fetchedPermissions, ...rolePermissions];
-            }
-
-            setUserRoles(roles);
-            setPermissions(fetchedPermissions);
-            setIsAdmin(roles.some(role => role.isAdmin));
+            setPermissions({
+              agendamentos: !!permissionsChecks[0].data,
+              clientes: !!permissionsChecks[1].data,
+              financeiro: !!permissionsChecks[2].data,
+              estoque: !!permissionsChecks[3].data,
+              relatorios: !!permissionsChecks[4].data,
+              configuracoes: !!permissionsChecks[5].data,
+              marketing: !!permissionsChecks[6].data
+            });
           }
-        } catch (err) {
-          console.error('Error fetching user roles:', err);
-          throw err;
         }
-        
-      } catch (err: any) {
-        console.error('Error in useUserPermissions:', err);
-        setError(err.message);
-        toast.error('Erro ao carregar permissões do usuário');
+      } catch (error) {
+        console.error('Error checking permissions:', error);
+        toast.error('Erro ao verificar permissões');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    fetchUserPermissions();
-  }, [userId]);
+    checkPermissions();
+  }, [businessId]);
 
-  return { 
-    userRoles, 
+  return {
     permissions,
-    isAdmin, 
-    isLoading, 
-    error 
+    isAdmin,
+    loading,
+    hasPermission: (permission: Permission): boolean => {
+      return isAdmin || permissions[permission];
+    }
   };
 };
 

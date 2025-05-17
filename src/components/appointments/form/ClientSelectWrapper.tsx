@@ -33,12 +33,12 @@ export default function ClientSelectWrapper({ form, onNewClient }: ClientSelectW
       setLoading(true);
       try {
         console.log('Fetching clients for business ID:', businessId);
-        let clientsData;
+        let clientsData: any[] = [];
         
-        // Primeiro tenta tabela clients
-        const hasClientsTable = await tableExists('clients');
+        // Try clients table first
+        const clientsExists = await tableExists('clients');
         
-        if (hasClientsTable) {
+        if (clientsExists) {
           console.log('Trying clients table');
           const { data, error } = await supabase
             .from('clients')
@@ -53,23 +53,23 @@ export default function ClientSelectWrapper({ form, onNewClient }: ClientSelectW
           }
         }
         
-        // Se não encontrou na tabela clients, tenta na tabela clientes
-        if (!clientsData) {
+        // If no data found, try legacy clientes table
+        if (clientsData.length === 0) {
           try {
-            console.log('Trying clientes table');
-            // Check if the table exists before querying
-            const { data, error } = await supabase.rpc('table_exists', { table_name: 'clientes' });
-            if (data) {
-              const response = await supabase
+            const clientesExists = await tableExists('clientes');
+            
+            if (clientesExists) {
+              console.log('Trying clientes table');
+              const { data, error } = await supabase
                 .from('clientes')
                 .select('*')
                 .eq('id_negocio', businessId);
                 
-              if (response.error) {
-                console.error('Error fetching from clientes table:', response.error);
-              } else if (response.data && response.data.length > 0) {
-                console.log('Found clients in clientes table:', response.data.length);
-                clientsData = response.data.map(normalizeClientData);
+              if (error) {
+                console.error('Error fetching from clientes table:', error);
+              } else if (data && data.length > 0) {
+                console.log('Found clients in clientes table:', data.length);
+                clientsData = data.map(normalizeClientData);
               }
             }
           } catch (error) {
@@ -77,7 +77,7 @@ export default function ClientSelectWrapper({ form, onNewClient }: ClientSelectW
           }
         }
         
-        if (clientsData && clientsData.length > 0) {
+        if (clientsData.length > 0) {
           setClients(clientsData);
         } else {
           console.log('No clients found in any table');
@@ -130,7 +130,7 @@ export default function ClientSelectWrapper({ form, onNewClient }: ClientSelectW
                 </Button>
               </FormControl>
             </PopoverTrigger>
-            <PopoverContent className="p-0 w-full" style={{width: "var(--radix-popover-trigger-width)"}}>
+            <PopoverContent className="p-0 w-full" style={{width: "var(--radix-popover-trigger-width)", maxWidth: "100%"}}>
               <Command>
                 <CommandInput placeholder="Buscar cliente..." className="h-9" />
                 <CommandEmpty>

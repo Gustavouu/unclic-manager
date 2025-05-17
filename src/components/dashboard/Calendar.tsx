@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { format, parseISO, isEqual } from 'date-fns';
-import { tableExists, safeDataExtract } from '@/utils/databaseUtils';
+import { tableExists, safeDataExtract, safeJsonArray } from '@/utils/databaseUtils';
 import { DayClickEventHandler } from 'react-day-picker';
 
 export interface AppointmentType {
@@ -45,31 +46,35 @@ export function Calendar() {
         
         // First try the modern bookings table
         try {
-          const response = await supabase
-            .from('bookings')
-            .select(`
-              id, 
-              status, 
-              booking_date,
-              start_time,
-              clients:client_id (name)
-            `)
-            .eq('business_id', businessId)
-            .order('booking_date', { ascending: true });
+          const bookingsExists = await tableExists('bookings');
+          
+          if (bookingsExists) {
+            const response = await supabase
+              .from('bookings')
+              .select(`
+                id, 
+                status, 
+                booking_date,
+                start_time,
+                clients:client_id (name)
+              `)
+              .eq('business_id', businessId)
+              .order('booking_date', { ascending: true });
 
-          const modernData = safeDataExtract(response);
+            const modernData = safeDataExtract(response);
 
-          if (modernData && modernData.length > 0) {
-            // Map modern data
-            fetchedAppointments = modernData.map((app: any) => ({
-              id: app.id,
-              date: app.booking_date,
-              startTime: app.start_time,
-              status: app.status,
-              clientName: app.clients?.name ?? "Cliente"
-            }));
-            setAppointments(fetchedAppointments);
-            hasData = true;
+            if (modernData && modernData.length > 0) {
+              // Map modern data
+              fetchedAppointments = modernData.map((app: any) => ({
+                id: app.id,
+                date: app.booking_date,
+                startTime: app.start_time,
+                status: app.status,
+                clientName: app.clients?.name ?? "Cliente"
+              }));
+              setAppointments(fetchedAppointments);
+              hasData = true;
+            }
           }
         } catch (error) {
           console.error('Error fetching from bookings table:', error);
@@ -114,19 +119,19 @@ export function Calendar() {
           }
         }
         
-        // Try agendamentos if still no data - but check if it exists first
+        // Try using the fetch_agendamentos function we created
         if (!hasData) {
           try {
-            const { data: agendamentosExists } = await supabase.rpc('table_exists', { table_name: 'agendamentos' });
-            
-            if (agendamentosExists) {
-              const response = await supabase.rpc('fetch_agendamentos', {
-                business_id_param: businessId
-              });
+            const { data, error } = await supabase.rpc('fetch_agendamentos', {
+              business_id_param: businessId
+            });
 
-              const agendamentosData = response.data || [];
-
-              if (agendamentosData && agendamentosData.length > 0) {
+            if (error) {
+              console.error('Error calling fetch_agendamentos:', error);
+            } else {
+              const agendamentosData = safeJsonArray(data, []);
+              
+              if (agendamentosData.length > 0) {
                 // Map agendamentos data
                 fetchedAppointments = agendamentosData.map((app: any) => ({
                   id: app.id,
@@ -140,7 +145,7 @@ export function Calendar() {
               }
             }
           } catch (error) {
-            console.error('Error checking agendamentos table:', error);
+            console.error('Error calling fetch_agendamentos function:', error);
           }
         }
         

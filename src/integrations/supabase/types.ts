@@ -4337,6 +4337,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      fetch_agendamentos: {
+        Args: { business_id_param: string }
+        Returns: Json[]
+      }
       get_current_tenant_context: {
         Args: Record<PropertyKey, never>
         Returns: string

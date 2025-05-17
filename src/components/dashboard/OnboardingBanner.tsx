@@ -1,117 +1,164 @@
-
-import React, { useEffect, useState } from 'react';
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { CheckCircle2, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
-import { toast } from 'sonner';
-import { safeJsonParse } from '@/utils/databaseUtils';
+import { safeJsonObject } from '@/utils/databaseUtils';
 
-interface OnboardingBannerProps {
-  onDismiss: () => void;
+interface OnboardingStep {
+  id: string;
+  name: string;
+  url: string;
+  completed: boolean;
 }
 
-export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss }) => {
-  const [needsOnboarding, setNeedsOnboarding] = useState<boolean>(false);
-  const [isVerifying, setIsVerifying] = useState<boolean>(true);
-  const { businessId, businessData, refreshBusinessData } = useTenant();
-
+export function OnboardingBanner() {
+  const [showBanner, setShowBanner] = useState<boolean>(false);
+  const [onboardingProgress, setOnboardingProgress] = useState<number>(0);
+  const navigate = useNavigate();
+  const { businessId } = useTenant();
+  
+  const steps: OnboardingStep[] = [
+    { id: 'welcome', name: 'Boas vindas', url: '/onboarding/welcome', completed: false },
+    { id: 'business', name: 'Negócio', url: '/onboarding/business', completed: false },
+    { id: 'services', name: 'Serviços', url: '/onboarding/services', completed: false },
+    { id: 'professionals', name: 'Profissionais', url: '/onboarding/professionals', completed: false },
+  ];
+  
+  const [completedSteps, setCompletedSteps] = useState<OnboardingStep[]>([]);
+  const [nextStep, setNextStep] = useState<OnboardingStep | null>(null);
+  
   useEffect(() => {
     const checkOnboardingStatus = async () => {
-      if (!businessId) {
-        console.log('No business ID available, assuming onboarding is needed');
-        setNeedsOnboarding(true);
-        setIsVerifying(false);
-        return;
-      }
-
+      if (!businessId) return;
+      
       try {
-        console.log(`Verifying onboarding status for business: ${businessId}`);
-        setIsVerifying(true);
-
-        // First check if business data is available and status is active
-        if (businessData && businessData.status === 'active') {
-          console.log('Business is active, no need for onboarding');
-          setNeedsOnboarding(false);
-          setIsVerifying(false);
+        // Check if onboarding is complete
+        const { data: onboardingData, error } = await supabase.rpc('verificar_completar_onboarding', {
+          business_id_param: businessId
+        });
+        
+        if (error) {
+          console.error('Error checking onboarding status:', error);
           return;
         }
-
-        // Use the RPC function to check and fix onboarding status
-        const { data: verificationResult, error: verificationError } = await supabase
-          .rpc('verificar_completar_onboarding', {
-            business_id_param: businessId
-          });
         
-        if (verificationError) {
-          console.error('Error verifying onboarding:', verificationError);
-          // Default to showing banner on error
-          setNeedsOnboarding(true);
-        } else {
-          console.log('Onboarding verification result:', verificationResult);
+        // Process the response safely
+        const onboardingResult = safeJsonObject(onboardingData);
+        
+        // If onboarding is already complete, hide the banner
+        if (onboardingResult.success && onboardingResult.onboarding_complete) {
+          setShowBanner(false);
+          return;
+        }
+        
+        // Otherwise show the banner and calculate progress
+        setShowBanner(true);
+        
+        // Check completed steps from database
+        const { data: progressData, error: progressError } = await supabase
+          .from('onboarding_progress')
+          .select('step, completed')
+          .eq('tenantId', businessId);
+        
+        if (progressError) {
+          console.error('Error fetching onboarding progress:', progressError);
+          return;
+        }
+        
+        if (progressData && progressData.length > 0) {
+          // Map progress data to steps
+          const completed = steps.filter(step => 
+            progressData.find(item => item.step === step.id && item.completed)
+          );
           
-          if (verificationResult) {
-            // Parse the result safely
-            const parsedResult = typeof verificationResult === 'string' 
-              ? safeJsonParse(verificationResult, {}) 
-              : (verificationResult as Record<string, any>);
-            
-            // Check for success and onboarding status
-            const isSuccess = parsedResult && 'success' in parsedResult && parsedResult.success === true;
-            const isComplete = parsedResult && 'onboarding_complete' in parsedResult && parsedResult.onboarding_complete === true;
-            
-            setNeedsOnboarding(!isComplete);
-            
-            // Refresh business data to get updated status
-            await refreshBusinessData();
-          } else {
-            // Default to showing banner if response is unexpected
-            setNeedsOnboarding(true);
-          }
+          setCompletedSteps(completed);
+          
+          // Calculate progress percentage
+          const progress = (completed.length / steps.length) * 100;
+          setOnboardingProgress(progress);
+          
+          // Find the next incomplete step
+          const next = steps.find(step => 
+            !progressData.find(item => item.step === step.id && item.completed)
+          );
+          
+          setNextStep(next || null);
         }
       } catch (error) {
-        console.error('Error in checkOnboardingStatus:', error);
-        setNeedsOnboarding(true);
-      } finally {
-        setIsVerifying(false);
+        console.error('Error checking onboarding status:', error);
       }
     };
-
+    
     checkOnboardingStatus();
-  }, [businessId, businessData, refreshBusinessData]);
-
-  const handleCompleteSetup = () => {
-    window.location.href = '/onboarding';
+  }, [businessId]);
+  
+  const handleContinueSetup = () => {
+    if (nextStep) {
+      navigate(nextStep.url);
+    } else {
+      navigate('/onboarding/welcome');
+    }
   };
-
-  // If we're still verifying or onboarding is not needed, don't show the banner
-  if (isVerifying || !needsOnboarding) {
+  
+  if (!showBanner) {
     return null;
   }
-
+  
   return (
-    <div className="bg-primary/10 border-l-4 border-primary p-4 mb-6 relative">
-      <button 
-        onClick={onDismiss} 
-        className="absolute top-2 right-2 p-1 rounded-full hover:bg-primary/10"
-      >
-        <X className="h-4 w-4" />
-      </button>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-medium">Complete seu perfil</h3>
-          <p className="text-sm text-muted-foreground">
-            Configure seu negócio e comece a receber agendamentos!
-          </p>
+    <Card className="mb-6 border-blue-100">
+      <CardHeader className="bg-blue-50 border-b border-blue-100">
+        <CardTitle className="text-blue-800">Complete a configuração do seu negócio</CardTitle>
+        <CardDescription className="text-blue-600">
+          {completedSteps.length === 0
+            ? 'Vamos começar a configurar seu negócio para você aproveitar todos os recursos.'
+            : `Você já completou ${completedSteps.length} de ${steps.length} etapas.`}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-4">
+        <div className="flex flex-col gap-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Progresso</span>
+              <span>{Math.round(onboardingProgress)}%</span>
+            </div>
+            <Progress value={onboardingProgress} className="h-2" />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+            {steps.map((step) => {
+              const isCompleted = completedSteps.some(s => s.id === step.id);
+              return (
+                <div
+                  key={step.id}
+                  className={`flex items-center p-3 rounded-md ${
+                    isCompleted ? 'bg-green-50 border border-green-100' : 'bg-gray-50 border border-gray-100'
+                  }`}
+                >
+                  <div className="flex-1">{step.name}</div>
+                  {isCompleted ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <div className="h-5 w-5 rounded-full border border-gray-300 bg-white"></div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
+      </CardContent>
+      <CardFooter className="bg-gray-50 border-t">
         <Button 
-          size="sm" 
-          className="md:w-auto w-full"
-          onClick={handleCompleteSetup}
+          className="ml-auto" 
+          onClick={handleContinueSetup}
         >
-          Completar configuração
+          {completedSteps.length === 0 ? 'Iniciar Configuração' : 'Continuar Configuração'}
+          <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
-};
+}

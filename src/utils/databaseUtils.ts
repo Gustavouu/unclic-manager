@@ -8,12 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
  * @returns A boolean indicating whether the table exists
  */
 export const tableExists = async (tableName: string): Promise<boolean> => {
-  // We're using a simple true for now as a placeholder
-  // In a real implementation, you'd want to query the information_schema
   try {
     const { data, error } = await supabase.rpc('table_exists', { table_name: tableName });
     if (error) throw error;
-    return data || false;
+    return Boolean(data);
   } catch (err) {
     console.error(`Error checking if table ${tableName} exists:`, err);
     return false;
@@ -47,29 +45,14 @@ export const safeSingleExtract = <T>(response: PostgrestSingleResponse<T>): T | 
 };
 
 /**
- * Transforms a database response to handle both modern and legacy schemas
- * @param data The data to transform
- * @param transformFn The function to transform each item
- * @returns The transformed data
- */
-export const transformDatabaseResponse = <T, R>(
-  data: T[],
-  transformFn: (item: T) => R
-): R[] => {
-  if (!data || !Array.isArray(data)) {
-    return [];
-  }
-  
-  return data.map(transformFn);
-};
-
-/**
  * Safely parse JSON string to object
  * @param jsonString The JSON string to parse
  * @param defaultValue The default value to return if parsing fails
  * @returns The parsed object or the default value
  */
-export const safeJsonParse = <T>(jsonString: string | object, defaultValue: T): T => {
+export const safeJsonParse = <T>(jsonString: string | null | undefined | object, defaultValue: T): T => {
+  if (!jsonString) return defaultValue;
+  
   // If it's already an object, just return it
   if (typeof jsonString !== 'string') {
     return jsonString as unknown as T;
@@ -107,6 +90,7 @@ export const normalizeClientData = (client: any) => {
     endereco: client.endereco || client.address || '',
     birthDate: client.birth_date || client.data_nascimento,
     data_nascimento: client.data_nascimento || client.birth_date,
+    birth_date: client.birth_date || client.data_nascimento,
     gender: client.gender || client.genero || '',
     genero: client.genero || client.gender || '',
     notes: client.notes || client.notas || '',
@@ -114,48 +98,6 @@ export const normalizeClientData = (client: any) => {
     status: (client.last_visit || client.ultima_visita) ? 'active' : 'inactive',
     // Campos originais mantidos para compatibilidade
     ...client
-  };
-};
-
-/**
- * Adaptador para normalizar dados de serviços de diferentes tabelas
- * @param service Dados brutos do serviço de qualquer tabela
- * @returns Objeto serviço normalizado
- */
-export const normalizeServiceData = (service: any) => {
-  // Determina se é formato legado baseado na existência de certos campos
-  const isLegacy = 'nome' in service || 'descricao' in service;
-  
-  // Normaliza os valores
-  let price = 0;
-  if (typeof service.price === 'string') {
-    price = parseFloat(service.price);
-  } else if (typeof service.price === 'number') {
-    price = service.price;
-  } else if (typeof service.preco === 'string') {
-    price = parseFloat(service.preco);
-  } else if (typeof service.preco === 'number') {
-    price = service.preco;
-  }
-  
-  return {
-    id: service.id,
-    name: service.name || service.nome || '',
-    nome: service.nome || service.name || '',
-    description: service.description || service.descricao || '',
-    descricao: service.descricao || service.description || '',
-    price: isNaN(price) ? 0 : price,
-    preco: isNaN(price) ? 0 : price,
-    duration: service.duration || service.duracao || 30,
-    duracao: service.duracao || service.duration || 30,
-    categoryId: service.category_id || service.id_categoria || service.categoria_id || null,
-    id_categoria: service.id_categoria || service.category_id || service.categoria_id || null,
-    isActive: service.is_active !== undefined ? service.is_active : service.ativo !== false,
-    ativo: service.ativo !== undefined ? service.ativo : service.is_active !== false,
-    image: service.image || service.image_url || service.imagem_url || '',
-    imagem_url: service.imagem_url || service.image || service.image_url || '',
-    // Campos originais mantidos para compatibilidade
-    ...service
   };
 };
 
@@ -188,75 +130,28 @@ export const normalizeProfessionalData = (professional: any) => {
   };
 };
 
-/**
- * Adaptador para normalizar dados de agendamentos de diferentes tabelas
- * @param appointment Dados brutos do agendamento de qualquer tabela
- * @returns Objeto agendamento normalizado
- */
-export const normalizeAppointmentData = (appointment: any) => {
-  // Determina se é formato legado baseado na existência de certos campos
-  const isLegacy = 'data' in appointment || 'hora_inicio' in appointment;
-  
-  // Trata o cliente
-  let clientName = '';
-  if (appointment.clients) {
-    clientName = appointment.clients.name || appointment.clients.nome || '';
-  } else if (appointment.clientes) {
-    clientName = appointment.clientes.nome || '';
+// Helper function to convert any JSON value to array safely
+export const safeJsonArray = (value: any, defaultValue: any[] = []): any[] => {
+  if (!value) return defaultValue;
+  if (Array.isArray(value)) return value;
+  return defaultValue;
+};
+
+// Helper function to convert any JSON value to string safely
+export const safeJsonString = (value: any, defaultValue: string = ''): string => {
+  if (!value) return defaultValue;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return defaultValue;
+};
+
+// Helper function to convert any JSON value to number safely
+export const safeJsonNumber = (value: any, defaultValue: number = 0): number => {
+  if (value === null || value === undefined) return defaultValue;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? defaultValue : parsed;
   }
-  
-  // Trata o profissional
-  let professionalName = '';
-  if (appointment.employees) {
-    professionalName = appointment.employees.name || appointment.employees.nome || '';
-  } else if (appointment.funcionarios) {
-    professionalName = appointment.funcionarios.nome || '';
-  }
-  
-  // Trata o serviço
-  let serviceName = '';
-  if (appointment.services_v2) {
-    serviceName = appointment.services_v2.name || appointment.services_v2.nome || '';
-  } else if (appointment.servicos) {
-    serviceName = appointment.servicos.nome || '';
-  }
-  
-  // Cria um objeto Date a partir da data e hora
-  let dateObj;
-  if (isLegacy) {
-    const dateStr = appointment.data || '';
-    const timeStr = appointment.hora_inicio || '';
-    const dateTimeStr = `${dateStr}T${timeStr}`;
-    dateObj = new Date(dateTimeStr);
-  } else {
-    const dateStr = appointment.booking_date || '';
-    const timeStr = appointment.start_time || '';
-    const dateTimeStr = `${dateStr}T${timeStr}`;
-    dateObj = new Date(dateTimeStr);
-  }
-  
-  return {
-    id: appointment.id,
-    clientId: appointment.client_id || appointment.id_cliente,
-    id_cliente: appointment.id_cliente || appointment.client_id,
-    clientName,
-    serviceId: appointment.service_id || appointment.id_servico,
-    id_servico: appointment.id_servico || appointment.service_id,
-    serviceName,
-    professionalId: appointment.employee_id || appointment.id_funcionario,
-    id_funcionario: appointment.id_funcionario || appointment.employee_id,
-    professionalName,
-    date: dateObj,
-    duration: appointment.duration || appointment.duracao || 30,
-    duracao: appointment.duracao || appointment.duration || 30,
-    price: appointment.price || appointment.valor || 0,
-    valor: appointment.valor || appointment.price || 0,
-    status: appointment.status || 'scheduled',
-    notes: appointment.notes || appointment.observacoes || '',
-    observacoes: appointment.observacoes || appointment.notes || '',
-    paymentMethod: appointment.payment_method || appointment.forma_pagamento,
-    forma_pagamento: appointment.forma_pagamento || appointment.payment_method,
-    // Campos originais mantidos para compatibilidade
-    ...appointment
-  };
+  return defaultValue;
 };
