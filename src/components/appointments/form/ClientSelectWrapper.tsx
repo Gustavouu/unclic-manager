@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 
-interface ClientData {
+export interface ClientData {
   id: string;
   nome?: string;
   name?: string;
@@ -34,30 +34,43 @@ const ClientSelectWrapper = ({ form, disabled = false, clientName }: ClientSelec
       setLoading(true);
       try {
         // Try to fetch from clients table first (new schema)
-        let { data, error } = await supabase
+        let { data: newData, error: newError } = await supabase
           .from('clients')
           .select('id, name, email, phone')
           .order('name');
         
-        if (error || !data || data.length === 0) {
+        if (newError || !newData || newData.length === 0) {
           // If no data in clients, try legacy 'clientes' table
           console.log('Trying legacy clients table');
           const { data: legacyData, error: legacyError } = await supabase
-            .from('clients') // Use a view or similar mechanism to query the legacy table
+            .from('clientes')
             .select('id, nome, email, telefone')
             .order('nome');
           
           if (legacyError) {
             console.error('Error fetching legacy clients:', legacyError);
+          } else if (legacyData && legacyData.length > 0) {
+            // Map legacy data to match expected format
+            const mappedData: ClientData[] = legacyData.map(client => ({
+              id: client.id,
+              nome: client.nome,
+              email: client.email,
+              telefone: client.telefone
+            }));
+            setClients(mappedData);
+          } else {
             setClients([]);
-            setLoading(false);
-            return;
           }
-          
-          data = legacyData;
+        } else {
+          // Map new data to match expected format
+          const mappedData: ClientData[] = newData.map(client => ({
+            id: client.id,
+            name: client.name,
+            email: client.email,
+            phone: client.phone
+          }));
+          setClients(mappedData);
         }
-        
-        setClients(data || []);
       } catch (error) {
         console.error('Error fetching clients:', error);
         setClients([]);

@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    // Create Supabase client
+    // Create Supabase client with service role key
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
@@ -70,7 +70,9 @@ serve(async (req) => {
           name: service.name,
           duration: service.duration,
           price: service.price,
-          description: service.description || null
+          description: service.description || null,
+          isActive: true,
+          allowOnlineBooking: true
         }));
         
         const { error: servicesError } = await supabase
@@ -98,7 +100,8 @@ serve(async (req) => {
           email: staff.email || null,
           phone: staff.phone || null,
           position: staff.position || null,
-          commission_percentage: staff.commission || 0
+          commission_percentage: staff.commission || 0,
+          isActive: true
         }));
         
         const { error: staffError } = await supabase
@@ -120,19 +123,62 @@ serve(async (req) => {
     // Update business settings with business hours if provided
     if (businessHours) {
       try {
-        const { error: hoursError } = await supabase
+        // First try finding existing settings
+        const { data: existingSettings } = await supabase
           .from('business_settings')
-          .update({ 
-            working_hours: businessHours,
-            updated_at: new Date().toISOString()
-          })
-          .eq('business_id', businessId);
+          .select('id, notes')
+          .eq('business_id', businessId)
+          .maybeSingle();
           
-        if (hoursError) {
-          console.error("Error updating business hours:", hoursError);
-          // Continue even if there's an error
+        if (existingSettings) {
+          // If settings exist, update them
+          let notesObj = {};
+          
+          // If notes exist, parse them
+          if (existingSettings.notes) {
+            try {
+              notesObj = typeof existingSettings.notes === 'string' 
+                ? JSON.parse(existingSettings.notes) 
+                : existingSettings.notes;
+            } catch (e) {
+              notesObj = {};
+            }
+          }
+          
+          // Add working hours to notes
+          notesObj.working_hours = businessHours;
+          
+          const { error: hoursError } = await supabase
+            .from('business_settings')
+            .update({ 
+              notes: JSON.stringify(notesObj),
+              updated_at: new Date().toISOString()
+            })
+            .eq('business_id', businessId);
+            
+          if (hoursError) {
+            console.error("Error updating business hours:", hoursError);
+            // Continue even if there's an error
+          } else {
+            console.log("Business hours updated successfully");
+          }
         } else {
-          console.log("Business hours updated successfully");
+          // If settings don't exist, create them
+          const { error: createError } = await supabase
+            .from('business_settings')
+            .insert({
+              business_id: businessId,
+              primary_color: '#213858',
+              secondary_color: '#33c3f0',
+              notes: JSON.stringify({ working_hours: businessHours })
+            });
+            
+          if (createError) {
+            console.error("Error creating business settings with hours:", createError);
+            // Continue even if there's an error
+          } else {
+            console.log("Business settings with hours created successfully");
+          }
         }
       } catch (error) {
         console.error("Exception during business hours update:", error);

@@ -1,255 +1,188 @@
 
-import { useState, useEffect } from "react";
-import { 
-  addMonths, 
-  subMonths, 
-  startOfMonth, 
-  endOfMonth, 
-  eachDayOfInterval, 
-  getDay, 
-  isSameDay,
-  parseISO
-} from "date-fns";
-import { cn } from "@/lib/utils";
-import { CalendarHeader } from "./calendar/CalendarHeader";
-import { MonthView } from "./calendar/MonthView";
-import { DayView } from "./calendar/DayView";
-import { CalendarFooter } from "./calendar/CalendarFooter";
-import { ServiceFilter } from "./calendar/ServiceFilter";
-import { supabase } from "@/integrations/supabase/client";
-import { CalendarProvider } from "../appointments/calendar/CalendarContext";
-import { AppointmentType as CalendarAppointmentType } from "../appointments/calendar/types";
+import { useState, useEffect } from 'react';
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from '@/integrations/supabase/client';
+import { useTenant } from '@/contexts/TenantContext';
+import { format, parseISO, isEqual } from 'date-fns';
 
-// Service types for filter
-export type ServiceType = "all" | "hair" | "barber" | "nails" | "makeup" | "skincare";
-
-// Map service types to display names
-export const SERVICE_TYPE_NAMES: Record<ServiceType, string> = {
-  all: "Todos os Serviços",
-  hair: "Cabelo",
-  barber: "Barbearia",
-  nails: "Manicure/Pedicure",
-  makeup: "Maquiagem",
-  skincare: "Estética Facial"
-};
-
-const weekDays = ["D", "S", "T", "Q", "Q", "S", "S"];
-
-export type AppointmentType = {
+interface Appointment {
   id: string;
-  date: Date;
-  clientName: string;
-  serviceName: string;
-  serviceType: string;
-};
-
-export interface AppointmentCalendarProps {
-  businessId: string | null;
+  data: string;
+  hora_inicio: string;
+  status: string;
+  nome_cliente?: string;
+  client_name?: string;
 }
 
-export const AppointmentCalendar = ({ businessId }: AppointmentCalendarProps) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [calendarView, setCalendarView] = useState<"month" | "day">("month");
-  const [serviceFilter, setServiceFilter] = useState<ServiceType>("all");
-  const [appointments, setAppointments] = useState<AppointmentType[]>([]);
-  const [loading, setLoading] = useState(true);
+export function Calendar() {
+  const [date, setDate] = useState<Date>(new Date());
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [selectedDayAppointments, setSelectedDayAppointments] = useState<Appointment[]>([]);
+  const { businessId } = useTenant();
 
-  // Buscar agendamentos do Supabase
+  // Fetch appointments
   useEffect(() => {
     const fetchAppointments = async () => {
       if (!businessId) return;
-      
+
       try {
-        setLoading(true);
-        
-        // Configurar datas para o mês atual
-        const monthStart = startOfMonth(currentMonth);
-        const monthEnd = endOfMonth(currentMonth);
-        
-        const startDate = monthStart.toISOString().split('T')[0];
-        const endDate = monthEnd.toISOString().split('T')[0];
-        
-        // First try bookings table (new schema)
-        let data: any[] = [];
-        let error = null;
+        // First try the modern appointments table
+        let { data: modernData, error: modernError } = await supabase
+          .from('bookings')
+          .select(`
+            id, 
+            status, 
+            booking_date,
+            start_time,
+            clients:client_id (name)
+          `)
+          .eq('business_id', businessId)
+          .order('booking_date', { ascending: true });
 
-        try {
-          const response = await supabase
-            .from('bookings')
+        if (modernError || !modernData || modernData.length === 0) {
+          // Try legacy table
+          console.log('Trying legacy appointments table');
+          const { data: legacyData, error: legacyError } = await supabase
+            .from('agendamentos')
             .select(`
-              id,
-              booking_date,
-              start_time,
-              client:client_id (id, name),
-              service:service_id (id, name, type)
+              id, 
+              data, 
+              hora_inicio, 
+              status,
+              clientes:id_cliente (nome)
             `)
-            .eq('business_id', businessId)
-            .gte('booking_date', startDate)
-            .lte('booking_date', endDate);
-          
-          if (!response.error && response.data && response.data.length > 0) {
-            data = response.data;
+            .eq('id_negocio', businessId);
+
+          if (legacyError) {
+            console.error('Error fetching appointments:', legacyError);
+            setAppointments([]);
+            return;
+          }
+
+          if (legacyData && legacyData.length > 0) {
+            // Map legacy data
+            const mappedAppointments: Appointment[] = legacyData.map(app => ({
+              id: app.id,
+              data: app.data,
+              hora_inicio: app.hora_inicio,
+              status: app.status,
+              nome_cliente: app.clientes?.nome
+            }));
+            setAppointments(mappedAppointments);
           } else {
-            error = response.error;
+            setAppointments([]);
           }
-        } catch (err) {
-          console.error('Error fetching from bookings:', err);
-          error = err;
+        } else {
+          // Map modern data
+          const mappedAppointments: Appointment[] = modernData.map(app => ({
+            id: app.id,
+            data: app.booking_date,
+            hora_inicio: app.start_time,
+            status: app.status,
+            client_name: app.clients?.name
+          }));
+          setAppointments(mappedAppointments);
         }
-
-        if (error || data.length === 0) {
-          // Fallback to legacy table
-          try {
-            console.log('Falling back to legacy appointments table');
-            const legacyResponse = await supabase
-              .from('appointments')
-              .select(`
-                id,
-                data,
-                hora_inicio,
-                client:client_id (id, name),
-                service:service_id (id, name)
-              `)
-              .eq('business_id', businessId)
-              .gte('data', startDate)
-              .lte('data', endDate);
-
-            if (!legacyResponse.error) {
-              data = legacyResponse.data || [];
-            }
-          } catch (legacyErr) {
-            console.error('Error fetching from legacy appointments:', legacyErr);
-          }
-        }
-        
-        // Converter dados para o formato de AppointmentType
-        const formattedAppointments: AppointmentType[] = data.map((appointment: any) => {
-          // Get date and time fields (handling both schemas)
-          const dateField = appointment.booking_date || appointment.data;
-          const timeField = appointment.start_time || appointment.hora_inicio;
-          
-          // Create date combining date and time
-          const [hours, minutes] = (timeField || '00:00').split(':');
-          const appointmentDate = parseISO(dateField);
-          appointmentDate.setHours(parseInt(hours));
-          appointmentDate.setMinutes(parseInt(minutes));
-          
-          // Handle client name correctly
-          let clientName = "Cliente não identificado";
-          if (appointment.client) {
-            clientName = typeof appointment.client === 'object' ? 
-              appointment.client.name || appointment.client.nome || "Cliente não identificado" : 
-              "Cliente não identificado";
-          }
-          
-          // Handle service name correctly
-          let serviceName = "Serviço não identificado";
-          let serviceType = "all";
-          if (appointment.service) {
-            if (typeof appointment.service === 'object') {
-              serviceName = appointment.service.name || appointment.service.nome || "Serviço não identificado";
-              serviceType = appointment.service.type || "all";
-            }
-          }
-          
-          return {
-            id: appointment.id,
-            date: appointmentDate,
-            clientName,
-            serviceName,
-            serviceType
-          };
-        });
-        
-        setAppointments(formattedAppointments);
       } catch (error) {
-        console.error("Erro ao buscar agendamentos:", error);
+        console.error('Error fetching appointments:', error);
         setAppointments([]);
-      } finally {
-        setLoading(false);
       }
     };
+
+    fetchAppointments();
+  }, [businessId]);
+
+  // Filter appointments for selected day
+  useEffect(() => {
+    if (!date || !appointments.length) {
+      setSelectedDayAppointments([]);
+      return;
+    }
+
+    const formattedDate = format(date, 'yyyy-MM-dd');
+    const filteredAppointments = appointments.filter(appointment => {
+      return appointment.data === formattedDate;
+    });
+
+    setSelectedDayAppointments(filteredAppointments);
+  }, [date, appointments]);
+
+  // Get days with appointments for highlighting
+  const getDaysWithAppointments = () => {
+    if (!appointments.length) return [];
     
-    if (businessId) {
-      fetchAppointments();
-    }
-  }, [businessId, currentMonth]);
-
-  const nextMonth = () => {
-    setCurrentMonth(addMonths(currentMonth, 1));
+    return appointments.map(appointment => {
+      try {
+        return parseISO(appointment.data);
+      } catch (e) {
+        console.error('Invalid date format:', appointment.data);
+        return null;
+      }
+    }).filter(Boolean) as Date[];
   };
 
-  const prevMonth = () => {
-    setCurrentMonth(subMonths(currentMonth, 1));
+  // Custom day renderer for the calendar
+  const renderDay = (day: Date, selectedDate: Date) => {
+    const isAppointmentDay = getDaysWithAppointments().some(appDay => 
+      appDay && isEqual(new Date(appDay.setHours(0, 0, 0, 0)), new Date(day.setHours(0, 0, 0, 0)))
+    );
+    
+    return (
+      <div className="relative">
+        <div>{day.getDate()}</div>
+        {isAppointmentDay && (
+          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+        )}
+      </div>
+    );
   };
-
-  const handleSelectDate = (date: Date | undefined) => {
-    if (date) {
-      setSelectedDate(date);
-      setCurrentMonth(date);
-    }
-  };
-
-  const handleSelectDay = (day: Date) => {
-    setSelectedDate(day);
-    setCalendarView("day");
-  };
-
-  // Transform appointments to match the CalendarAppointmentType
-  const calendarAppointments: CalendarAppointmentType[] = appointments.map(app => ({
-    id: app.id,
-    date: app.date,
-    clientName: app.clientName,
-    serviceName: app.serviceName,
-    serviceType: app.serviceType,
-    // Add required properties from CalendarAppointmentType
-    duration: 60, // Default duration of 60 minutes
-    price: 0,     // Default price of 0
-    professionalId: "default", // Default professional ID
-    status: "agendado" // Default status
-  }));
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-border/40 animate-fade-in overflow-hidden">
-      <CalendarProvider appointments={calendarAppointments}>
-        <div className="p-6 border-b border-border/60">
-          <CalendarHeader 
-            currentMonth={currentMonth}
-            selectedDate={selectedDate}
-            calendarView={calendarView}
-            onPrevMonth={prevMonth}
-            onNextMonth={nextMonth}
-            onSelectDate={handleSelectDate}
-            onViewChange={setCalendarView}
-          />
-          
-          <ServiceFilter 
-            serviceFilter={serviceFilter}
-            onFilterChange={setServiceFilter}
-            serviceTypes={SERVICE_TYPE_NAMES}
-          />
-          
-          {calendarView === "month" && (
-            <MonthView
-              calendarDays={[]}
-              weekDays={weekDays}
-              selectedDate={selectedDate}
-              appointments={calendarAppointments}
-              onSelectDay={handleSelectDay}
-            />
-          )}
-          
-          {calendarView === "day" && (
-            <DayView 
-              appointments={calendarAppointments.filter(app => isSameDay(app.date, selectedDate))} 
-              selectedDate={selectedDate}
-            />
+    <Card className="col-span-1 row-span-2">
+      <CardHeader>
+        <CardTitle className="text-lg font-medium">Agenda</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <CalendarComponent
+          mode="single"
+          selected={date}
+          onSelect={(newDate) => setDate(newDate || new Date())}
+          className="rounded-md border"
+          components={{
+            Day: ({ day, selectedDate }) => renderDay(day, selectedDate)
+          }}
+        />
+
+        <div className="space-y-2 mt-4">
+          <h3 className="font-medium text-sm">Agendamentos do dia</h3>
+          {selectedDayAppointments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum agendamento para este dia.</p>
+          ) : (
+            selectedDayAppointments.map((appointment) => (
+              <div key={appointment.id} className="border rounded-md p-2">
+                <div className="flex justify-between items-center">
+                  <div className="text-sm font-medium">
+                    {appointment.client_name || appointment.nome_cliente || "Cliente"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {appointment.hora_inicio}
+                  </div>
+                </div>
+                <div className="text-xs">
+                  <span className={`inline-block px-1 rounded ${
+                    appointment.status === 'completed' || appointment.status === 'concluido' ? 'bg-green-100 text-green-800' :
+                    appointment.status === 'canceled' || appointment.status === 'cancelado' ? 'bg-red-100 text-red-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {appointment.status}
+                  </span>
+                </div>
+              </div>
+            ))
           )}
         </div>
-        
-        <CalendarFooter />
-      </CalendarProvider>
-    </div>
+      </CardContent>
+    </Card>
   );
-};
+}

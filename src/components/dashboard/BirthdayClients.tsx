@@ -1,49 +1,46 @@
 
-import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
-import { Cake, PhoneCall, Mail, Calendar, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
+import React, { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { format, isSameMonth, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useTenant } from '@/contexts/TenantContext';
+import { Cake, Mail, Phone } from 'lucide-react';
 
-interface BirthdayClient {
+export interface BirthdayClient {
   id: string;
   nome?: string;
   name?: string;
+  email?: string;
   telefone?: string;
   phone?: string;
-  email?: string;
   data_nascimento?: string;
   birth_date?: string;
 }
 
 export function BirthdayClients() {
-  const [loading, setLoading] = useState<boolean>(true);
   const [birthdayClients, setBirthdayClients] = useState<BirthdayClient[]>([]);
-  const { businessId } = useCurrentBusiness();
-  
+  const [loading, setLoading] = useState(true);
+  const { businessId } = useTenant();
+
   useEffect(() => {
     const fetchBirthdayClients = async () => {
       if (!businessId) return;
       
-      const today = new Date();
-      const currentMonth = today.getMonth() + 1; // JS months are 0-indexed
-      
+      setLoading(true);
       try {
-        setLoading(true);
-        
-        // First try the clients table (new schema)
-        let { data, error } = await supabase
+        // First try the new clients table
+        let { data: newData, error: newError } = await supabase
           .from('clients')
-          .select('id, name, phone, email, birth_date')
+          .select('id, name, email, phone, birth_date')
           .eq('business_id', businessId);
-          
-        if (error || !data || data.length === 0) {
-          // Try legacy clients
-          console.log('Trying to fetch from legacy clients table');
+        
+        if (newError || !newData || newData.length === 0) {
+          // Try legacy table
           const { data: legacyData, error: legacyError } = await supabase
-            .from('clients')
-            .select('id, nome, telefone, email, data_nascimento')
+            .from('clientes')
+            .select('id, nome, email, telefone, data_nascimento')
             .eq('id_negocio', businessId);
             
           if (legacyError) {
@@ -53,88 +50,95 @@ export function BirthdayClients() {
             return;
           }
           
-          data = legacyData;
-        }
-        
-        // Filter for clients with birthdays in the current month
-        const currentMonthClients = data?.filter(client => {
-          const birthDate = client.birth_date || client.data_nascimento;
-          if (!birthDate) return false;
+          if (legacyData && legacyData.length > 0) {
+            // Filter clients with birthdays in the current month
+            const clientsWithBirthday = legacyData.filter(client => {
+              if (!client.data_nascimento) return false;
+              try {
+                return isSameMonth(parseISO(client.data_nascimento), new Date());
+              } catch (e) {
+                return false;
+              }
+            });
+            
+            setBirthdayClients(clientsWithBirthday);
+          } else {
+            setBirthdayClients([]);
+          }
+        } else {
+          // Filter clients with birthdays in the current month
+          const clientsWithBirthday = newData.filter(client => {
+            if (!client.birth_date) return false;
+            try {
+              return isSameMonth(parseISO(client.birth_date), new Date());
+            } catch (e) {
+              return false;
+            }
+          });
           
-          const birthMonth = new Date(birthDate).getMonth() + 1;
-          return birthMonth === currentMonth;
-        }) || [];
-        
-        setBirthdayClients(currentMonthClients);
+          setBirthdayClients(clientsWithBirthday);
+        }
       } catch (error) {
-        console.error('Erro ao buscar aniversariantes do mês:', error);
+        console.error('Error fetching birthday clients:', error);
         setBirthdayClients([]);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchBirthdayClients();
   }, [businessId]);
-  
+
   const formatBirthDate = (dateStr?: string) => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    if (!dateStr) return '';
+    try {
+      return format(parseISO(dateStr), "dd 'de' MMMM", { locale: ptBR });
+    } catch (e) {
+      return '';
+    }
   };
-  
+
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-display flex items-center">
-          <Cake className="mr-2 h-5 w-5 text-yellow-500" />
-          Aniversariantes do Mês
-        </CardTitle>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg font-medium">Aniversariantes do Mês</CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="space-y-4">
         {loading ? (
-          <div className="flex justify-center items-center h-[200px]">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : birthdayClients.length > 0 ? (
-          <div className="space-y-1 max-h-[300px] overflow-y-auto pr-2">
-            {birthdayClients.map((client) => (
-              <div 
-                key={client.id} 
-                className="flex items-center justify-between border-l-2 border-yellow-400 bg-yellow-50/50 p-3 rounded-r-md"
-              >
-                <div className="space-y-1 min-w-0 flex-1">
-                  <p className="font-medium truncate">{client.name || client.nome}</p>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5 mr-1" />
-                    <span>{formatBirthDate(client.birth_date || client.data_nascimento)}</span>
-                  </div>
+          <p className="text-sm text-muted-foreground">Carregando aniversariantes...</p>
+        ) : birthdayClients.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum aniversariante este mês.</p>
+        ) : (
+          birthdayClients.map((client) => (
+            <div key={client.id} className="flex items-center space-x-3">
+              <Avatar>
+                <AvatarFallback>
+                  {(client.name || client.nome || '?').substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 space-y-1">
+                <p className="font-medium">{client.name || client.nome}</p>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <Cake className="mr-1 h-3 w-3" />
+                  <span>{formatBirthDate(client.birth_date || client.data_nascimento)}</span>
                 </div>
-                <div className="flex space-x-2 ml-2">
-                  {(client.telefone || client.phone) && (
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-yellow-100 text-yellow-600">
-                      <PhoneCall className="h-4 w-4" />
-                      <span className="sr-only">Ligar</span>
-                    </Button>
+                <div className="flex gap-3">
+                  {(client.email) && (
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <Mail className="mr-1 h-3 w-3" />
+                      <span>{client.email}</span>
+                    </div>
                   )}
-                  {client.email && (
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-yellow-100 text-yellow-600">
-                      <Mail className="h-4 w-4" />
-                      <span className="sr-only">Email</span>
-                    </Button>
+                  {(client.phone || client.telefone) && (
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <Phone className="mr-1 h-3 w-3" />
+                      <span>{client.phone || client.telefone}</span>
+                    </div>
                   )}
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
-            <div className="bg-yellow-100 p-3 rounded-full mb-3">
-              <Cake className="h-8 w-8 text-yellow-500" />
             </div>
-            <p className="font-medium">Nenhum aniversariante este mês</p>
-            <p className="text-xs mt-1">Seus clientes com aniversário neste mês aparecerão aqui</p>
-          </div>
+          ))
         )}
       </CardContent>
     </Card>

@@ -1,118 +1,185 @@
 
-import { FormField, FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
-import { UseFormReturn } from "react-hook-form";
-import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 
-export type NotificationsOptionsProps = {
-  form: UseFormReturn<AppointmentFormValues>;
+type NotificationOptionsProps = {
+  businessId: string;
 };
 
-interface NotificationSettingsData {
-  id: string;
+type NotificationSettings = {
   email_enabled: boolean;
   sms_enabled: boolean;
-}
+};
 
-export const NotificationsOptions = ({ form }: NotificationsOptionsProps) => {
-  const [notificationsDisabled, setNotificationsDisabled] = useState(false);
-  const { businessId } = useCurrentBusiness();
+const NotificationOptions = ({ businessId }: NotificationOptionsProps) => {
+  const [settings, setSettings] = useState<NotificationSettings>({
+    email_enabled: true,
+    sms_enabled: false
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const checkNotificationSettings = async () => {
+    const fetchSettings = async () => {
       if (!businessId) return;
       
+      setLoading(true);
       try {
-        // Try to read from a settings table or similar
-        // This is a placeholder - adjust according to your actual schema
-        const { data, error } = await supabase
-          .from('business_settings') // Use an existing table that has notification settings
+        // Try to get from notification_settings table first
+        let { data, error } = await supabase
+          .from('business_settings')
           .select('*')
           .eq('business_id', businessId)
           .maybeSingle();
-          
-        if (error) throw error;
-        
-        if (data) {
-          // Extract notification settings from business settings
-          // Adjust this part based on how your notification settings are stored
-          const notesObj = typeof data.notes === 'string' && data.notes ? JSON.parse(data.notes) : {};
-          const notificationSettings = notesObj.notification_settings || {};
-          
-          setNotificationsDisabled(
-            !notificationSettings.email_enabled && !notificationSettings.sms_enabled
-          );
+
+        if (error) {
+          console.error('Error fetching notification settings:', error);
+          return;
         }
-      } catch (error) {
-        console.error('Error checking notification settings:', error);
+
+        if (data) {
+          // If we have business settings, check for notification settings in notes
+          try {
+            if (data.notes) {
+              const notesObj = typeof data.notes === 'string' 
+                ? JSON.parse(data.notes) 
+                : data.notes;
+              
+              if (notesObj && notesObj.notification_settings) {
+                setSettings({
+                  email_enabled: notesObj.notification_settings.email_enabled ?? true,
+                  sms_enabled: notesObj.notification_settings.sms_enabled ?? false
+                });
+                return;
+              }
+            }
+          } catch (parseError) {
+            console.error('Error parsing notification settings:', parseError);
+          }
+        }
+
+        // If we get here, we didn't find settings, try fallback table
+        ({ data, error } = await supabase
+          .from('notification_settings')
+          .select('*')
+          .eq('id_negocio', businessId)
+          .maybeSingle());
+
+        if (error) {
+          console.error('Error fetching legacy notification settings:', error);
+          return;
+        }
+
+        if (data) {
+          setSettings({
+            email_enabled: data.email_enabled,
+            sms_enabled: data.sms_enabled
+          });
+        }
+      } catch (err) {
+        console.error('Error in notification settings fetch:', err);
+      } finally {
+        setLoading(false);
       }
     };
-    
-    checkNotificationSettings();
+
+    fetchSettings();
   }, [businessId]);
+
+  const handleChange = async (setting: 'email_enabled' | 'sms_enabled', value: boolean) => {
+    // Update UI first for faster response
+    setSettings(prev => ({
+      ...prev,
+      [setting]: value
+    }));
+
+    try {
+      // First try to update notification_settings table
+      const { error } = await supabase
+        .from('business_settings')
+        .select('*')
+        .eq('business_id', businessId)
+        .maybeSingle();
+      
+      if (error) {
+        // If business_settings doesn't exist, try updating the legacy table
+        const { error: legacyError } = await supabase
+          .from('notification_settings')
+          .upsert({
+            id_negocio: businessId,
+            [setting]: value
+          }, { onConflict: 'id_negocio' });
+          
+        if (legacyError) {
+          console.error('Failed to update notification settings:', legacyError);
+          // Revert UI change on error
+          setSettings(prev => ({
+            ...prev,
+            [setting]: !value
+          }));
+        }
+      } else {
+        // Business settings exists, update the notes field
+        const notificationSettings = {
+          notification_settings: {
+            ...settings,
+            [setting]: value
+          }
+        };
+        
+        const { error: updateError } = await supabase
+          .from('business_settings')
+          .update({
+            notes: JSON.stringify(notificationSettings)
+          })
+          .eq('business_id', businessId);
+          
+        if (updateError) {
+          console.error('Failed to update notification settings:', updateError);
+          // Revert UI change on error
+          setSettings(prev => ({
+            ...prev,
+            [setting]: !value
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Error updating notification settings:', err);
+      // Revert UI change on error
+      setSettings(prev => ({
+        ...prev,
+        [setting]: !value
+      }));
+    }
+  };
 
   return (
     <Card>
-      <CardContent className="pt-6 space-y-3">
-        {notificationsDisabled && (
-          <Alert variant="warning">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Atenção</AlertTitle>
-            <AlertDescription>
-              As notificações por email e SMS estão desativadas nas configurações. O cliente não receberá notificações mesmo que estas opções estejam marcadas.
-            </AlertDescription>
-          </Alert>
-        )}
+      <CardContent className="p-4 space-y-4">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="email-notifications"
+            checked={settings.email_enabled}
+            onCheckedChange={(checked) => handleChange('email_enabled', checked as boolean)}
+            disabled={loading}
+          />
+          <Label htmlFor="email-notifications">Notificações por Email</Label>
+        </div>
         
-        <FormField
-          control={form.control}
-          name="notifications.sendConfirmation"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-md shadow-sm">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">Enviar confirmação</FormLabel>
-                <FormDescription>
-                  Envia uma confirmação por e-mail/SMS para o cliente após o agendamento.
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  disabled={notificationsDisabled}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="notifications.sendReminder"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between p-3 border rounded-md shadow-sm">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">Enviar lembrete</FormLabel>
-                <FormDescription>
-                  Envia um lembrete para o cliente algumas horas antes do agendamento.
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  disabled={notificationsDisabled}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="sms-notifications"
+            checked={settings.sms_enabled}
+            onCheckedChange={(checked) => handleChange('sms_enabled', checked as boolean)}
+            disabled={loading}
+          />
+          <Label htmlFor="sms-notifications">Notificações por SMS</Label>
+        </div>
       </CardContent>
     </Card>
   );
 };
+
+export default NotificationOptions;

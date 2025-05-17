@@ -6,7 +6,7 @@ import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Professional {
+export interface Professional {
   id: string;
   nome?: string;
   name?: string;
@@ -42,31 +42,46 @@ const ProfessionalSelectWrapper = ({
       setLoading(true);
       try {
         // First try professionals table (new schema)
-        let { data, error } = await supabase
+        let { data: newData, error: newError } = await supabase
           .from('professionals')
           .select('id, name, position, specialties')
           .eq('isActive', true);
         
-        if (error || !data || data.length === 0) {
+        if (newError || !newData || newData.length === 0) {
           // Try legacy table
           console.log('Trying legacy professionals table');
           const { data: legacyData, error: legacyError } = await supabase
-            .from('employees')
-            .select('id, name, position, specialties')
-            .eq('status', 'active');
+            .from('funcionarios')
+            .select('id, nome, cargo, especializacoes')
+            .eq('status', 'ativo');
             
           if (legacyError) {
-            console.error('Error fetching from employees:', legacyError);
-            setLoading(false);
-            return;
+            console.error('Error fetching from legacy professionals:', legacyError);
+          } else if (legacyData && legacyData.length > 0) {
+            // Map legacy data to expected format
+            const mappedData: Professional[] = legacyData.map(prof => ({
+              id: prof.id,
+              nome: prof.nome,
+              cargo: prof.cargo,
+              especializacoes: prof.especializacoes
+            }));
+            setProfessionals(mappedData);
+          } else {
+            setProfessionals([]);
           }
-          
-          data = legacyData;
+        } else {
+          // Map new data to expected format
+          const mappedData: Professional[] = newData.map(prof => ({
+            id: prof.id,
+            name: prof.name,
+            position: prof.position,
+            specialties: prof.specialties
+          }));
+          setProfessionals(mappedData);
         }
-        
-        setProfessionals(data || []);
       } catch (error) {
         console.error('Error fetching professionals:', error);
+        setProfessionals([]);
       } finally {
         setLoading(false);
       }
@@ -95,8 +110,8 @@ const ProfessionalSelectWrapper = ({
         if (error || !data) {
           // Try legacy services table
           const { data: legacyData, error: legacyError } = await supabase
-            .from('services_v2')
-            .select('name')
+            .from('servicos')
+            .select('nome')
             .eq('id', serviceId)
             .single();
             
@@ -107,7 +122,7 @@ const ProfessionalSelectWrapper = ({
           }
           
           if (legacyData) {
-            filterProfessionalsByService(legacyData.name);
+            filterProfessionalsByService(legacyData.nome);
             return;
           }
         }

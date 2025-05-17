@@ -1,1 +1,14 @@
-project_id = "jcdymkgmtxpryceziazt"
+
+project_id = "ztwntsmwzstvmoqgiztc"
+
+[functions.create-business]
+verify_jwt = false
+
+[functions.complete-business-setup]
+verify_jwt = false
+
+[functions.check-business-status]
+verify_jwt = false
+
+[functions.check-slug-availability]
+verify_jwt = false

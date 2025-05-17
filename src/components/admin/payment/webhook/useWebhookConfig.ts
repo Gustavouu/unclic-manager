@@ -39,15 +39,21 @@ export const useWebhookConfig = () => {
           return;
         }
 
-        // Check if settings exist and has a notes property that can be parsed
-        if (settings && settings.notes) {
+        // Check if settings exist
+        if (settings) {
           try {
-            // Parse the notes as JSON
-            const notesObj = typeof settings.notes === 'string' 
-              ? JSON.parse(settings.notes) 
-              : settings.notes;
+            // Parse the notes field if it exists
+            let notesObj = null;
+            
+            if (settings.notes) {
+              // Handle notes as string or object
+              notesObj = typeof settings.notes === 'string' 
+                ? JSON.parse(settings.notes) 
+                : settings.notes;
+            }
               
-            if (notesObj.webhook_config) {
+            // If we have webhook configuration in notes
+            if (notesObj && notesObj.webhook_config) {
               setConfig({
                 webhookUrl: notesObj.webhook_config.webhook_url || "",
                 secretKey: notesObj.webhook_config.secret_key || "",
@@ -103,7 +109,7 @@ export const useWebhookConfig = () => {
         }
       };
 
-      // Convert to JSON string if needed
+      // Convert to JSON string
       const notesValue = JSON.stringify(webhookConfigData);
 
       const { error } = await supabase

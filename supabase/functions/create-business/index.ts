@@ -14,11 +14,11 @@ serve(async (req) => {
   }
 
   try {
-    // Create Supabase client with service role key for admin access
+    // Create Supabase client with service role key for admin access (bypasses RLS)
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
-    console.log("Function initialization:");
+    console.log("Starting create-business function execution");
     console.log(`SUPABASE_URL: ${supabaseUrl ? "set" : "missing"}`);
     console.log(`SUPABASE_SERVICE_ROLE_KEY: ${supabaseServiceKey ? "set" : "missing"}`);
     
@@ -52,11 +52,30 @@ serve(async (req) => {
       );
     }
 
+    console.log("Received request to create business with valid user ID:", userId);
+
+    // Verify user exists in auth system
+    console.log("Verifying user exists in auth system...");
+    try {
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+      
+      if (userError || !userData?.user) {
+        throw new Error(`User not found in auth: ${userError?.message || 'unknown error'}`);
+      }
+      
+      console.log("Auth user verified:", userData.user.email);
+    } catch (verifyError) {
+      console.error("Error verifying auth user:", verifyError);
+      // Continue anyway as the user might exist only in the users table
+    }
+
     // Generate a slug from business name
     const timestamp = Date.now().toString().slice(-6);
     // Convert to lowercase, replace spaces with hyphens, remove special characters
     const baseSlug = businessData.name
       .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
       .replace(/\s+/g, '-')
       .replace(/[^\w-]/g, '');
       
@@ -70,21 +89,8 @@ serve(async (req) => {
     });
     
     try {
-      // First check if the businesses table exists by running a simple query
-      const { data: tableExists, error: tableCheckError } = await supabase
-        .from('businesses')
-        .select('id')
-        .limit(1);
-        
-      if (tableCheckError && tableCheckError.code !== 'PGRST116') {
-        console.error('Error checking businesses table:', tableCheckError);
-        throw new Error(`Table check error: ${tableCheckError.message}`);
-      }
-      
-      console.log("Businesses table check result:", tableExists !== null);
-      
-      // Create business in businesses table
-      const { data: businessData, error: businessError } = await supabase
+      // Create business in businesses table with service role client (bypass RLS)
+      const { data: business, error: businessError } = await supabase
         .from('businesses')
         .insert([{
           name: businessData.name,
@@ -98,7 +104,7 @@ serve(async (req) => {
           state: businessData.state,
           zip_code: businessData.zipCode || businessData.cep,
           slug: slug,
-          status: 'active' // Changed from 'pending' to 'active' to skip further setup
+          status: 'active' // Set to active to skip further setup
         }])
         .select('id, slug')
         .single();
@@ -108,14 +114,14 @@ serve(async (req) => {
         throw businessError;
       }
       
-      if (!businessData?.id) {
+      if (!business?.id) {
         throw new Error("Business creation succeeded but no ID was returned");
       }
       
-      const businessId = businessData.id;
+      const businessId = business.id;
       console.log('Business created with ID:', businessId);
       
-      // Create association between business and user
+      // Create association between business and user in business_users table
       const { error: userError } = await supabase
         .from('business_users')
         .insert([{
@@ -126,7 +132,7 @@ serve(async (req) => {
         
       if (userError) {
         console.error('Error creating business-user association:', userError);
-        // Don't throw here, we'll still return success if the business was created
+        // Continue anyway, as we want to return the business even if association fails
       } else {
         console.log('Business-user association created successfully');
       }
@@ -137,7 +143,13 @@ serve(async (req) => {
         .insert([{
           business_id: businessId,
           logo_url: businessData.logoUrl,
-          banner_url: businessData.bannerUrl
+          banner_url: businessData.bannerUrl,
+          primary_color: '#213858',
+          secondary_color: '#33c3f0',
+          allow_online_booking: true,
+          require_advance_payment: false,
+          minimum_notice_time: 30,
+          maximum_days_in_advance: 30
         }]);
         
       if (settingsError) {
