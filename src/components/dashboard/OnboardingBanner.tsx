@@ -13,20 +13,22 @@ interface OnboardingBannerProps {
 export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss }) => {
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean>(false);
   const [isVerifying, setIsVerifying] = useState<boolean>(true);
-  const { businessId } = useTenant();
+  const { businessId, businessData } = useTenant();
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       if (!businessId) {
+        console.log('No business ID available, assuming onboarding is needed');
         setNeedsOnboarding(true);
         setIsVerifying(false);
         return;
       }
 
       try {
+        console.log(`Verifying onboarding status for business: ${businessId}`);
         setIsVerifying(true);
 
-        // Use our new RPC function to check onboarding status
+        // Use the RPC function to check and fix onboarding status
         const { data: verificationResult, error: verificationError } = await supabase
           .rpc('verificar_completar_onboarding', {
             business_id_param: businessId
@@ -34,32 +36,16 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss })
         
         if (verificationError) {
           console.error('Error verifying onboarding:', verificationError);
-          
-          // Check if business is active via direct query as fallback
-          const { data: businessData, error: businessError } = await supabase
-            .from('businesses')
-            .select('status')
-            .eq('id', businessId)
-            .maybeSingle();
-          
-          if (businessError) {
-            console.error('Error checking business status:', businessError);
-            setNeedsOnboarding(true);
-          } else {
-            setNeedsOnboarding(businessData?.status !== 'active');
-          }
+          // Default to showing banner on error
+          setNeedsOnboarding(true);
         } else {
-          // Use the verification result - now with the correct property access
-          if (verificationResult && typeof verificationResult === 'object') {
+          console.log('Onboarding verification result:', verificationResult);
+          
+          // If verification was successful and onboarding is complete, hide banner
+          if (verificationResult && typeof verificationResult === 'object' && verificationResult.success === true) {
             setNeedsOnboarding(!verificationResult.onboarding_complete);
-            
-            if (verificationResult.onboarding_complete) {
-              console.log('Onboarding is complete');
-            } else {
-              console.log('Onboarding is incomplete, missing steps:', verificationResult.missing_steps);
-            }
           } else {
-            console.log('Unexpected verification result format:', verificationResult);
+            // Default to showing banner if response is unexpected
             setNeedsOnboarding(true);
           }
         }
@@ -71,8 +57,14 @@ export const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss })
       }
     };
 
-    checkOnboardingStatus();
-  }, [businessId]);
+    // Don't check if already verified in business data
+    if (businessData && businessData.status === 'active') {
+      setNeedsOnboarding(false);
+      setIsVerifying(false);
+    } else {
+      checkOnboardingStatus();
+    }
+  }, [businessId, businessData]);
 
   const handleCompleteSetup = () => {
     window.location.href = '/onboarding';

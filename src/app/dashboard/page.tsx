@@ -14,9 +14,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function DashboardPage() {
-  const [showOnboardingBanner, setShowOnboardingBanner] = useState(true);
+  const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
-  const { businessId } = useTenant();
+  const { businessId, businessData, refreshBusinessData } = useTenant();
 
   // Using static data for testing purposes
   const mockDashboardStats: DashboardStats = {
@@ -47,36 +47,56 @@ export default function DashboardPage() {
   useEffect(() => {
     const initializeDashboard = async () => {
       if (!businessId) {
+        console.log('No business ID available, marking initialization as complete');
         setIsInitializing(false);
+        setShowOnboardingBanner(true);
         return;
       }
 
       try {
-        // Verify and complete onboarding using our new RPC function
-        const { data: verificationResult, error: verificationError } = await supabase
-          .rpc('verificar_completar_onboarding', {
-            business_id_param: businessId
-          });
-          
-        if (verificationError) {
-          console.error("Erro ao verificar onboarding:", verificationError);
+        console.log(`Initializing dashboard for business: ${businessId}`);
+        
+        // Refresh business data first
+        await refreshBusinessData();
+        
+        // Check if business status is active
+        if (businessData?.status === 'active') {
+          console.log('Business is active, hiding onboarding banner');
+          setShowOnboardingBanner(false);
         } else {
-          console.log("Verificação de onboarding:", verificationResult);
-          
-          // If onboarding is complete, hide the banner - type check the result first
-          if (verificationResult && typeof verificationResult === 'object' && verificationResult.onboarding_complete === true) {
-            setShowOnboardingBanner(false);
+          // Verify and complete onboarding using RPC function
+          const { data: verificationResult, error: verificationError } = await supabase
+            .rpc('verificar_completar_onboarding', {
+              business_id_param: businessId
+            });
+            
+          if (verificationError) {
+            console.error("Error verifying onboarding:", verificationError);
+            setShowOnboardingBanner(true);
+          } else {
+            console.log("Onboarding verification result:", verificationResult);
+            
+            // Show banner only if onboarding is incomplete
+            if (verificationResult && typeof verificationResult === 'object' && verificationResult.onboarding_complete === true) {
+              setShowOnboardingBanner(false);
+              
+              // Refresh business data to get updated status
+              await refreshBusinessData();
+            } else {
+              setShowOnboardingBanner(true);
+            }
           }
         }
       } catch (error) {
-        console.error("Erro ao inicializar dashboard:", error);
+        console.error("Error initializing dashboard:", error);
+        setShowOnboardingBanner(true);
       } finally {
         setIsInitializing(false);
       }
     };
 
     initializeDashboard();
-  }, [businessId]);
+  }, [businessId, refreshBusinessData, businessData]);
 
   const handleDismissOnboardingBanner = () => {
     setShowOnboardingBanner(false);

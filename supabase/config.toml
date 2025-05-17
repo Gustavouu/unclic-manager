@@ -13,7 +13,7 @@ verify_jwt = false
 [functions.check-slug-availability]
 verify_jwt = false
 
-# Adicionar política para executar RPC functions
+# Configure RPC function permissions
 [auth.policies.rpc.execute.verificar_completar_onboarding]
 type = "after_auth"
 roles = ["authenticated"]

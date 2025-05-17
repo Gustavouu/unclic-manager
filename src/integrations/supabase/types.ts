@@ -522,6 +522,7 @@ export type Database = {
           logo_url: string | null
           maximum_days_in_advance: number | null
           minimum_notice_time: number | null
+          notes: Json | null
           primary_color: string | null
           require_advance_payment: boolean | null
           secondary_color: string | null
@@ -536,6 +537,7 @@ export type Database = {
           logo_url?: string | null
           maximum_days_in_advance?: number | null
           minimum_notice_time?: number | null
+          notes?: Json | null
           primary_color?: string | null
           require_advance_payment?: boolean | null
           secondary_color?: string | null
@@ -550,6 +552,7 @@ export type Database = {
           logo_url?: string | null
           maximum_days_in_advance?: number | null
           minimum_notice_time?: number | null
+          notes?: Json | null
           primary_color?: string | null
           require_advance_payment?: boolean | null
           secondary_color?: string | null

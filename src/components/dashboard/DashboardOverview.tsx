@@ -22,24 +22,58 @@ export const DashboardOverview = () => {
   useEffect(() => {
     const loadMetrics = async () => {
       if (!businessId) {
+        console.log('No business ID available, cannot load metrics');
         setIsLoading(false);
         return;
       }
 
       try {
+        console.log(`Loading metrics for business: ${businessId}`);
         setIsLoading(true);
+        
         const { data, error } = await supabase.rpc('obter_metricas_periodo', {
           business_id_param: businessId,
           periodo: 'month'
         });
 
         if (error) {
-          console.error('Erro ao obter métricas:', error);
+          console.error('Error loading metrics:', error);
+          
+          // Return dummy metrics on error
+          setMetrics({
+            clientes_ativos: 0,
+            agendamentos_proximos: 0,
+            receita_periodo: 0,
+            servicos_realizados: 0,
+            periodo: 'month',
+            error: error.message
+          });
         } else if (data) {
+          console.log('Metrics loaded successfully:', data);
           setMetrics(data as MetricsData);
+        } else {
+          // Handle empty response
+          console.warn('No metrics data received');
+          setMetrics({
+            clientes_ativos: 0,
+            agendamentos_proximos: 0,
+            receita_periodo: 0,
+            servicos_realizados: 0,
+            periodo: 'month'
+          });
         }
       } catch (err) {
-        console.error('Erro ao carregar métricas:', err);
+        console.error('Error loading metrics:', err);
+        
+        // Return dummy metrics on error
+        setMetrics({
+          clientes_ativos: 0,
+          agendamentos_proximos: 0,
+          receita_periodo: 0,
+          servicos_realizados: 0,
+          periodo: 'month',
+          error: err instanceof Error ? err.message : 'Unknown error'
+        });
       } finally {
         setIsLoading(false);
       }
