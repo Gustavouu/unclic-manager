@@ -1,96 +1,228 @@
 
-import React from 'react';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
-import { DateTimeSelect } from "./DateTimeSelect";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { safeJsonParse, safeSingleExtract } from "@/utils/databaseUtils";
+import { format, parse, addMinutes } from 'date-fns';
+import { generateTimeSlots } from '../utils/timeUtils';
+import { cn } from "@/lib/utils";
+import { supabase } from '@/integrations/supabase/client';
 
-interface DateTimeSelectWrapperProps {
+export type DateTimeSelectWrapperProps = {
   form: UseFormReturn<AppointmentFormValues>;
   serviceId?: string;
   professionalId?: string;
-}
+};
 
-const DateTimeSelectWrapper = ({ 
+type BusinessHours = {
+  [key: string]: {
+    start: string;
+    end: string;
+  };
+};
+
+const DEFAULT_BUSINESS_HOURS: BusinessHours = {
+  '1': { start: '09:00', end: '17:00' },
+  '2': { start: '09:00', end: '17:00' },
+  '3': { start: '09:00', end: '17:00' },
+  '4': { start: '09:00', end: '17:00' },
+  '5': { start: '09:00', end: '17:00' },
+  '6': { start: '09:00', end: '17:00' },
+  '0': { start: '00:00', end: '00:00' }, // Sunday closed
+};
+
+export default function DateTimeSelectWrapper({ 
   form, 
   serviceId, 
   professionalId 
-}: DateTimeSelectWrapperProps) => {
-  const [businessHours, setBusinessHours] = useState<Record<string, { enabled: boolean; start: string; end: string; }>>(
-    {
-      domingo: { enabled: false, start: "09:00", end: "17:00" },
-      segunda: { enabled: true, start: "09:00", end: "17:00" },
-      terca: { enabled: true, start: "09:00", end: "17:00" },
-      quarta: { enabled: true, start: "09:00", end: "17:00" },
-      quinta: { enabled: true, start: "09:00", end: "17:00" },
-      sexta: { enabled: true, start: "09:00", end: "17:00" },
-      sabado: { enabled: true, start: "09:00", end: "15:00" },
-    }
-  );
-  const [settings, setSettings] = useState<{
-    minimum_notice_time: number;
-    maximum_days_in_advance: number;
-  }>({
-    minimum_notice_time: 30,
-    maximum_days_in_advance: 30
-  });
-
+}: DateTimeSelectWrapperProps) {
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
+  const [businessHours, setBusinessHours] = useState<BusinessHours>(DEFAULT_BUSINESS_HOURS);
+  
+  // Fetch business settings (including hours)
   useEffect(() => {
     const fetchBusinessSettings = async () => {
       try {
-        // Try to get business settings
-        const response = await supabase
+        const { data, error } = await supabase
           .from('business_settings')
-          .select('*')
+          .select('notes')
           .single();
         
-        const settingsData = safeSingleExtract(response);
+        if (error) throw error;
         
-        if (settingsData) {
-          // Set business hours from settings if available
-          if (settingsData.notes) {
-            // Handle notes being either a string or an object
-            const notesObj = safeJsonParse(settingsData.notes, {});
-            
-            if (notesObj && typeof notesObj === 'object' && notesObj.business_hours) {
-              // Ensure we have a valid business_hours object
-              if (typeof notesObj.business_hours === 'object') {
-                setBusinessHours(notesObj.business_hours);
-              }
-            }
-          }
+        if (data && data.notes) {
+          // Check if notes is string and parse it, or use directly if it's already an object
+          const notesObj = typeof data.notes === 'string' ? JSON.parse(data.notes) : data.notes;
           
-          // Set timing settings
-          setSettings({
-            minimum_notice_time: settingsData.minimum_notice_time || 30,
-            maximum_days_in_advance: settingsData.maximum_days_in_advance || 30
-          });
+          // Handle different property paths that might exist
+          if (notesObj && notesObj.business_hours) {
+            setBusinessHours(notesObj.business_hours);
+          } else if (notesObj && notesObj.webhook_config && notesObj.webhook_config.business_hours) {
+            setBusinessHours(notesObj.webhook_config.business_hours);
+          }
         }
       } catch (error) {
-        console.error("Error fetching business settings:", error);
+        console.error('Error fetching business settings:', error);
       }
     };
-
+    
     fetchBusinessSettings();
   }, []);
-
-  // Handle time change
-  const handleTimeChange = () => {
-    // Additional logic when time changes can be added here
+  
+  // Generate available time slots based on selected date
+  useEffect(() => {
+    const date = form.watch('date');
+    const selectedServiceId = serviceId || form.watch('serviceId');
+    const selectedProfessionalId = professionalId || form.watch('professionalId');
+    
+    if (!date || !selectedServiceId) {
+      setAvailableTimeSlots([]);
+      return;
+    }
+    
+    const dayOfWeek = date.getDay().toString();
+    const dayHours = businessHours[dayOfWeek] || DEFAULT_BUSINESS_HOURS[dayOfWeek];
+    
+    // If business is closed on this day
+    if (!dayHours || (dayHours.start === '00:00' && dayHours.end === '00:00')) {
+      setAvailableTimeSlots([]);
+      return;
+    }
+    
+    // Generate time slots based on business hours
+    const slots = generateTimeSlots(dayHours.start, dayHours.end, 30);
+    setAvailableTimeSlots(slots);
+    
+    // Reset time if not in available slots
+    const currentTime = form.watch('time');
+    if (currentTime && !slots.includes(currentTime)) {
+      form.setValue('time', '');
+    }
+    
+    // TODO: Filter out already booked slots when we have professional and service
+    if (selectedProfessionalId) {
+      // In the future, we could filter out already booked slots here
+    }
+  }, [form.watch('date'), serviceId, professionalId, form, businessHours]);
+  
+  const handleTimeSelect = (time: string) => {
+    form.setValue('time', time);
+    
+    // Calculate end time based on service duration
+    const selectedServiceId = serviceId || form.watch('serviceId');
+    // For now, assuming 30 minutes as default duration
+    const duration = 30; 
+    
+    // TODO: Fetch actual service duration when we have the serviceId
+    if (selectedServiceId) {
+      // Here we would fetch the service duration
+    }
+    
+    const timeObj = parse(time, 'HH:mm', new Date());
+    const endTimeObj = addMinutes(timeObj, duration);
+    const endTime = format(endTimeObj, 'HH:mm');
+    
+    form.setValue('endTime', endTime);
   };
-
+  
   return (
-    <DateTimeSelect 
-      form={form}
-      onTimeChange={handleTimeChange}
-      minAdvanceTime={settings.minimum_notice_time}
-      maxFutureDays={settings.maximum_days_in_advance}
-      businessHours={businessHours}
-    />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Date Field */}
+      <FormField
+        control={form.control}
+        name="date"
+        render={({ field }) => (
+          <FormItem className="flex flex-col">
+            <FormLabel>Data</FormLabel>
+            <Popover>
+              <PopoverTrigger asChild>
+                <FormControl>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "pl-3 text-left font-normal",
+                      !field.value && "text-muted-foreground"
+                    )}
+                  >
+                    {field.value ? (
+                      format(field.value, "dd/MM/yyyy")
+                    ) : (
+                      <span>Selecione uma data</span>
+                    )}
+                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                  </Button>
+                </FormControl>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={field.value}
+                  onSelect={(date) => {
+                    field.onChange(date);
+                    // Reset time when date changes
+                    form.setValue('time', '');
+                  }}
+                  disabled={(date) => {
+                    // Disable dates in the past
+                    const now = new Date();
+                    now.setHours(0, 0, 0, 0);
+                    return date < now;
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      {/* Time Field */}
+      <FormField
+        control={form.control}
+        name="time"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Horário</FormLabel>
+            <FormControl>
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-2 max-h-32 overflow-y-auto">
+                {availableTimeSlots.length > 0 ? (
+                  availableTimeSlots.map((time) => (
+                    <Button
+                      key={time}
+                      type="button"
+                      variant={field.value === time ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleTimeSelect(time)}
+                      className="text-xs"
+                      disabled={!form.watch('date')}
+                    >
+                      {time}
+                    </Button>
+                  ))
+                ) : form.watch('date') ? (
+                  <p className="text-sm text-muted-foreground col-span-full">
+                    Não há horários disponíveis para esta data.
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground col-span-full">
+                    Selecione uma data primeiro.
+                  </p>
+                )}
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      {/* Hidden End Time Field */}
+      <input type="hidden" {...form.register('endTime')} />
+    </div>
   );
-};
-
-export default DateTimeSelectWrapper;
+}

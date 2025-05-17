@@ -46,9 +46,9 @@ export function BirthdayClients() {
             const data = safeDataExtract(response);
               
             if (data && data.length > 0) {
-              foundClients = data;
+              foundClients = data as ClientWithBirthday[];
               hasData = true;
-              processClients(data, 'birth_date', 'name', 'photo_url');
+              processClients(foundClients, 'birth_date', 'name', 'photo_url');
             }
           }
         } catch (err) {
@@ -69,7 +69,7 @@ export function BirthdayClients() {
               const legacyData = safeDataExtract(response);
                 
               if (legacyData && legacyData.length > 0) {
-                processClients(legacyData, 'data_nascimento', 'nome', 'foto_url');
+                processClients(legacyData as ClientWithBirthday[], 'data_nascimento', 'nome', 'foto_url');
                 hasData = true;
               }
             }
@@ -91,10 +91,10 @@ export function BirthdayClients() {
     };
 
     const processClients = (
-      data: any[], 
-      birthDateField: string, 
-      nameField: string,
-      photoField: string
+      data: ClientWithBirthday[], 
+      birthDateField: 'birth_date' | 'data_nascimento', 
+      nameField: 'name' | 'nome',
+      photoField: 'photo_url' | 'foto_url'
     ) => {
       const today = new Date();
       const currentMonth = today.getMonth();
@@ -103,9 +103,10 @@ export function BirthdayClients() {
       // Filter clients with birthdays in the next 30 days
       const clientsWithBirthdays = data
         .filter(client => {
-          if (!client[birthDateField]) return false;
+          const birthDateValue = client[birthDateField];
+          if (!birthDateValue) return false;
           
-          const birthDate = new Date(client[birthDateField]);
+          const birthDate = new Date(birthDateValue);
           const birthMonth = birthDate.getMonth();
           const birthDay = birthDate.getDate();
           
@@ -131,19 +132,7 @@ export function BirthdayClients() {
         })
         .slice(0, 5); // Take only the closest 5 birthdays
       
-      // Map to standardized format
-      const mappedClients: ClientWithBirthday[] = clientsWithBirthdays.map(client => ({
-        id: client.id,
-        name: client[nameField],
-        nome: client.nome,
-        photo_url: client[photoField],
-        foto_url: client.foto_url,
-        birth_date: client[birthDateField],
-        data_nascimento: client.data_nascimento,
-        daysUntilBirthday: client.daysUntilBirthday
-      }));
-      
-      setClients(mappedClients);
+      setClients(clientsWithBirthdays);
     };
 
     fetchBirthdayClients();

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,7 +53,7 @@ export function Calendar() {
               status, 
               booking_date,
               start_time,
-              clients (name)
+              clients:client_id (name)
             `)
             .eq('business_id', businessId)
             .order('booking_date', { ascending: true });
@@ -61,7 +62,7 @@ export function Calendar() {
 
           if (modernData && modernData.length > 0) {
             // Map modern data
-            fetchedAppointments = modernData.map(app => ({
+            fetchedAppointments = modernData.map((app: any) => ({
               id: app.id,
               date: app.booking_date,
               startTime: app.start_time,
@@ -98,7 +99,7 @@ export function Calendar() {
 
               if (legacyData && legacyData.length > 0) {
                 // Map legacy data
-                fetchedAppointments = legacyData.map(app => ({
+                fetchedAppointments = legacyData.map((app: any) => ({
                   id: app.id,
                   date: app.data,
                   startTime: app.hora_inicio,
@@ -135,7 +136,7 @@ export function Calendar() {
 
               if (agendamentosData && agendamentosData.length > 0) {
                 // Map agendamentos data
-                fetchedAppointments = agendamentosData.map(app => ({
+                fetchedAppointments = agendamentosData.map((app: any) => ({
                   id: app.id,
                   date: app.data,
                   startTime: app.hora_inicio,
@@ -227,7 +228,7 @@ export function Calendar() {
           onSelect={(newDate) => setDate(newDate || new Date())}
           className="rounded-md border"
           components={{
-            Day: renderDay
+            Day: renderDay as any
           }}
         />
 
