@@ -17,11 +17,11 @@ import { formatPhoneNumber } from '@/services/client/clientUtils';
 
 // Schema for client form validation
 const clientSchema = z.object({
-  name: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres' }),
+  nome: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres' }),
   email: z.string().email({ message: 'Email inválido' }).optional().or(z.literal('')),
-  phone: z.string().optional().or(z.literal('')),
-  city: z.string().optional().or(z.literal('')),
-  state: z.string().optional().or(z.literal('')),
+  telefone: z.string().optional().or(z.literal('')),
+  cidade: z.string().optional().or(z.literal('')),
+  estado: z.string().optional().or(z.literal('')),
 });
 
 interface NewClientDialogProps {
@@ -39,11 +39,11 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
-      name: '',
+      nome: '',
       email: '',
-      phone: '',
-      city: '',
-      state: '',
+      telefone: '',
+      cidade: '',
+      estado: '',
     }
   });
   
@@ -67,14 +67,22 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
       formattedPhone = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7, 11)}`;
     }
     
-    setValue('phone', formattedPhone);
+    setValue('telefone', formattedPhone);
   };
   
   const onSubmit = async (data: ClientFormData) => {
     try {
       console.log("Submitting client data:", data);
       
-      const newClient = await createClient(data);
+      const newClient = await createClient({
+        ...data,
+        // Make sure we're only sending fields that exist in the database
+        nome: data.nome,
+        email: data.email,
+        telefone: data.telefone,
+        cidade: data.cidade,
+        estado: data.estado
+      });
       
       if (newClient) {
         onClose();
@@ -112,15 +120,15 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
           <div className="space-y-4">
             <div className="grid w-full gap-1.5">
-              <Label htmlFor="name">Nome completo *</Label>
+              <Label htmlFor="nome">Nome completo *</Label>
               <Input 
-                id="name" 
-                {...register('name')}
+                id="nome" 
+                {...register('nome')}
                 placeholder="Nome completo do cliente" 
-                className={errors.name ? "border-red-500" : ""}
+                className={errors.nome ? "border-red-500" : ""}
               />
-              {errors.name && (
-                <p className="text-sm text-red-500">{errors.name.message}</p>
+              {errors.nome && (
+                <p className="text-sm text-red-500">{errors.nome.message}</p>
               )}
             </div>
             
@@ -139,43 +147,43 @@ export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogPro
             </div>
             
             <div className="grid w-full gap-1.5">
-              <Label htmlFor="phone">Telefone</Label>
+              <Label htmlFor="telefone">Telefone</Label>
               <Input 
-                id="phone"
-                {...register('phone')}
+                id="telefone"
+                {...register('telefone')}
                 placeholder="(00) 00000-0000" 
-                className={errors.phone ? "border-red-500" : ""}
+                className={errors.telefone ? "border-red-500" : ""}
                 onChange={handlePhoneChange}
               />
-              {errors.phone && (
-                <p className="text-sm text-red-500">{errors.phone.message}</p>
+              {errors.telefone && (
+                <p className="text-sm text-red-500">{errors.telefone.message}</p>
               )}
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="grid w-full gap-1.5">
-                <Label htmlFor="city">Cidade</Label>
+                <Label htmlFor="cidade">Cidade</Label>
                 <Input 
-                  id="city"
-                  {...register('city')}
+                  id="cidade"
+                  {...register('cidade')}
                   placeholder="Cidade" 
-                  className={errors.city ? "border-red-500" : ""}
+                  className={errors.cidade ? "border-red-500" : ""}
                 />
-                {errors.city && (
-                  <p className="text-sm text-red-500">{errors.city.message}</p>
+                {errors.cidade && (
+                  <p className="text-sm text-red-500">{errors.cidade.message}</p>
                 )}
               </div>
               
               <div className="grid w-full gap-1.5">
-                <Label htmlFor="state">Estado</Label>
+                <Label htmlFor="estado">Estado</Label>
                 <Input 
-                  id="state"
-                  {...register('state')}
+                  id="estado"
+                  {...register('estado')}
                   placeholder="Estado" 
-                  className={errors.state ? "border-red-500" : ""}
+                  className={errors.estado ? "border-red-500" : ""}
                 />
-                {errors.state && (
-                  <p className="text-sm text-red-500">{errors.state.message}</p>
+                {errors.estado && (
+                  <p className="text-sm text-red-500">{errors.estado.message}</p>
                 )}
               </div>
             </div>

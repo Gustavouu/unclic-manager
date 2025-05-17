@@ -16,11 +16,11 @@ export async function fetchClientsApi(businessId: string) {
 
   console.log('Fetching clients for business ID:', businessId);
   
-  // Query using both field names to ensure compatibility
+  // Query using only id_negocio to ensure compatibility
   return supabase
     .from('clientes')
     .select('*')
-    .or(`id_negocio.eq.${businessId},tenant_id.eq.${businessId}`);
+    .eq('id_negocio', businessId);
 }
 
 /**
@@ -33,11 +33,10 @@ export async function createClientApi(clientData: Partial<Client>, businessId: s
   
   console.log('Creating client for business ID:', businessId, clientData);
   
-  // Include both tenant_id and id_negocio for compatibility
+  // Only use id_negocio field which exists in the database
   const dataToInsert = {
     ...clientData,
-    id_negocio: businessId,
-    tenant_id: businessId // Adding standard field
+    id_negocio: businessId
   };
 
   return supabase
@@ -58,7 +57,7 @@ export async function findClientApi(params: ClientSearchParams, businessId: stri
   let query = supabase
     .from('clientes')
     .select('*')
-    .or(`id_negocio.eq.${businessId},tenant_id.eq.${businessId}`);
+    .eq('id_negocio', businessId);
 
   // Add filters based on provided params
   if (params.email) {
