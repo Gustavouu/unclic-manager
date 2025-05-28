@@ -1,103 +1,37 @@
 
-import { SetStateAction } from "react";
+export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'canceled' | 'no_show' | 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'faltou';
 
-export type AppointmentStatus = 
-  | "agendado" 
-  | "confirmado" 
-  | "pendente" 
-  | "concluido" 
-  | "cancelado"
-  | "faltou";
-
-export interface Appointment {
-  id: string;
-  date: Date;
+export interface CreateAppointmentData {
   clientId: string;
-  clientName: string;
-  serviceId?: string;
-  serviceName: string;
-  serviceType: string;
+  serviceId: string;
   professionalId: string;
-  professionalName?: string;
-  duration: number;
-  price: number;
-  status: AppointmentStatus;
-  notes?: string;
-  paymentMethod?: string;
-  confirmed?: boolean;
-  notifications?: {
-    sendConfirmation: boolean;
-    sendReminder: boolean;
-  };
-  additionalServices?: Array<{
-    id?: string;
-    name?: string;
-    duration?: number;
-    price: number;
-  }>;
-}
-
-export interface UpdatedAppointmentData {
-  date?: Date;
-  clientId?: string;
-  clientName?: string;
-  serviceId?: string;
-  serviceName?: string;
-  serviceType?: string;
-  professionalId?: string;
-  professionalName?: string;
+  date: Date;
+  time: string;
+  endTime?: string;
   duration?: number;
   price?: number;
   status?: AppointmentStatus;
-  notes?: string;
   paymentMethod?: string;
-  confirmed?: boolean;
-  notifications?: {
-    sendConfirmation: boolean;
-    sendReminder: boolean;
-  };
-  additionalServices?: Array<{
-    id?: string;
-    name?: string;
-    duration?: number;
-    price: number;
-  }>;
+  notes?: string;
 }
 
-export interface CreateAppointmentData {
-  date: Date;
+export interface UpdatedAppointmentData extends Partial<CreateAppointmentData> {
+  status?: AppointmentStatus;
+}
+
+export interface Appointment {
+  id: string;
   clientId: string;
   clientName: string;
-  serviceId?: string;
+  serviceId: string;
   serviceName: string;
   serviceType: string;
   professionalId: string;
-  professionalName?: string;
+  professionalName: string;
+  date: Date;
   duration: number;
   price: number;
   status: AppointmentStatus;
-  notes?: string;
+  notes: string;
   paymentMethod?: string;
-  isEmergency?: boolean;
-  emergencyReason?: string;
-  notifications?: {
-    sendConfirmation: boolean;
-    sendReminder: boolean;
-  };
-  additionalServices?: Array<{
-    id?: string;
-    name?: string;
-    duration?: number;
-    price: number;
-  }>;
-}
-
-export interface AppointmentHookReturn {
-  appointments: Appointment[];
-  isLoading: boolean;
-  error: Error | null;
-  fetchAppointments: () => void;
-  createAppointment: (data: Omit<Appointment, "id">) => Promise<string>;
-  updateAppointment: (id: string, changes: Partial<Appointment>) => Promise<void>;
-  deleteAppointment: (id: string) => Promise<void>;
 }

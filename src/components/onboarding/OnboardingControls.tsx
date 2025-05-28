@@ -100,12 +100,21 @@ export function OnboardingControls({ currentStep, onNext, onPrevious }: Onboardi
           updated_at: new Date().toISOString()
         }));
 
+        // Use the correct table name that exists in the database
         const { error: servicesError } = await supabase
-          .from('services')
+          .from('services_v2')
           .insert(serviceRecords);
 
         if (servicesError) {
           console.error('Error creating services:', servicesError);
+          // Fallback to services table if services_v2 doesn't exist
+          const { error: fallbackError } = await supabase
+            .from('services')
+            .insert(serviceRecords);
+          
+          if (fallbackError) {
+            console.error('Error creating services (fallback):', fallbackError);
+          }
         }
       }
 
