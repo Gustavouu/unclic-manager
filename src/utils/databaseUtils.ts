@@ -39,6 +39,28 @@ export const normalizeProfessionalData = (professional: any) => {
   };
 };
 
+export const normalizeServiceData = (service: any) => {
+  return {
+    id: service.id,
+    name: service.name || service.nome || '',
+    nome: service.name || service.nome || '',
+    description: service.description || service.descricao || '',
+    descricao: service.description || service.descricao || '',
+    price: service.price || service.preco || 0,
+    preco: service.price || service.preco || 0,
+    duration: service.duration || service.duracao || 60,
+    duracao: service.duration || service.duracao || 60,
+    category_id: service.category_id || service.categoria_id || service.id_categoria,
+    categoria_id: service.category_id || service.categoria_id || service.id_categoria,
+    categoryId: service.category_id || service.categoria_id || service.id_categoria,
+    is_active: service.is_active !== undefined ? service.is_active : (service.ativo !== undefined ? service.ativo : true),
+    ativo: service.is_active !== undefined ? service.is_active : (service.ativo !== undefined ? service.ativo : true),
+    isActive: service.is_active !== undefined ? service.is_active : (service.ativo !== undefined ? service.ativo : true),
+    image_url: service.image_url || service.imagem_url || '',
+    imagem_url: service.image_url || service.imagem_url || ''
+  };
+};
+
 export const normalizeAppointmentData = (appointment: any) => {
   return {
     id: appointment.id,
