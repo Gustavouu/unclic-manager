@@ -1,5 +1,5 @@
 
-import { Appointment, AppointmentStatus } from "@/hooks/appointments/types";
+import { Appointment } from "@/hooks/appointments/types";
 
 // Sample data
 export const appointments: Appointment[] = [
@@ -13,7 +13,10 @@ export const appointments: Appointment[] = [
     serviceType: "hair",
     duration: 120,
     clientId: "client1",
-    professionalId: "prof1" // Added required professionalId
+    professionalId: "prof1",
+    serviceId: "service1",
+    professionalName: "João Silva",
+    notes: "Cliente preferencial"
   },
   {
     id: "2",
@@ -25,7 +28,10 @@ export const appointments: Appointment[] = [
     serviceType: "barber",
     duration: 60,
     clientId: "client2",
-    professionalId: "prof2" // Added required professionalId
+    professionalId: "prof2",
+    serviceId: "service2",
+    professionalName: "Ana Costa",
+    notes: "Primeira vez no salão"
   },
   {
     id: "3",
@@ -37,7 +43,10 @@ export const appointments: Appointment[] = [
     serviceType: "nails",
     duration: 45,
     clientId: "client3",
-    professionalId: "prof3" // Added required professionalId
+    professionalId: "prof3",
+    serviceId: "service3",
+    professionalName: "Maria Santos",
+    notes: "Cancelado por motivos pessoais"
   },
   {
     id: "4",
@@ -49,7 +58,10 @@ export const appointments: Appointment[] = [
     serviceType: "makeup",
     duration: 90,
     clientId: "client4",
-    professionalId: "prof1" // Added required professionalId
+    professionalId: "prof1",
+    serviceId: "service4",
+    professionalName: "João Silva",
+    notes: "Evento especial - casamento"
   },
   {
     id: "5",
@@ -61,6 +73,9 @@ export const appointments: Appointment[] = [
     serviceType: "skincare",
     duration: 75,
     clientId: "client5",
-    professionalId: "prof2" // Added required professionalId
+    professionalId: "prof2",
+    serviceId: "service5",
+    professionalName: "Ana Costa",
+    notes: "Primeira sessão de tratamento"
   },
 ];

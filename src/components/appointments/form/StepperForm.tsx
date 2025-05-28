@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
-import { Appointment } from "@/hooks/appointments/types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { appointmentFormSchema } from "../schemas/appointmentFormSchema";
@@ -10,6 +8,7 @@ import { useServices } from "@/hooks/useServices";
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { CreateAppointmentData } from "@/hooks/appointments/types";
 
 interface AppointmentStepperFormProps {
   onClose: () => void;
@@ -91,15 +90,12 @@ export function AppointmentStepperForm({
       const [hours, minutes] = data.time.split(':').map(Number);
       appointmentDate.setHours(hours, minutes, 0, 0);
       
-      const appointmentData = {
+      const appointmentData: CreateAppointmentData = {
         clientId: preselectedClientId,
-        clientName: preselectedClientName || "Cliente",
         serviceId: data.serviceId,
-        serviceName: service.nome,
-        serviceType: "service",
         professionalId: data.professionalId,
-        professionalName: professional.name,
         date: appointmentDate,
+        time: data.time,
         duration: service.duracao,
         price: service.preco,
         status: data.status,
@@ -220,7 +216,7 @@ export function AppointmentStepperForm({
             >
               <option value="agendado">Agendado</option>
               <option value="confirmado">Confirmado</option>
-              <option value="pendente">Pendente</option>
+              <option value="concluido">Concluído</option>
             </select>
           </div>
           <div>

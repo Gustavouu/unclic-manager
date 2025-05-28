@@ -1,7 +1,6 @@
-
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { AppointmentStatus, AppointmentType, Appointment } from "../types";
+import { AppointmentStatus, AppointmentType } from "../types";
 import { useState } from "react";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { 
@@ -49,7 +48,9 @@ export function AppointmentDialog({
   
   const handleStatusChange = async (newStatus: AppointmentStatus) => {
     try {
-      await updateAppointmentStatus(appointment.id, newStatus);
+      // Map component status to hook status
+      const hookStatus = newStatus === "pendente" ? "agendado" : newStatus;
+      await updateAppointmentStatus(appointment.id, hookStatus as any);
       toast.success(`Status alterado para ${newStatus}`);
     } catch (error) {
       toast.error("Erro ao atualizar status");

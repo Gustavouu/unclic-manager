@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -11,6 +10,7 @@ import { appointments } from "./data/appointmentsSampleData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Appointment } from "@/hooks/appointments/types";
 
 export const AppointmentsList = () => {
   const { 
@@ -43,7 +43,7 @@ export const AppointmentsList = () => {
     }
     groups[dateStr].push(appointment);
     return groups;
-  }, {} as Record<string, typeof sortedAppointments>);
+  }, {} as Record<string, Appointment[]>);
 
   return (
     <div className="space-y-4">

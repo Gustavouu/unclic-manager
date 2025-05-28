@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -87,33 +86,26 @@ export function OnboardingControls({ currentStep, onNext, onPrevious }: Onboardi
           console.error('Error creating categories:', categoriesError);
         }
 
-        // Create services - using the services table structure from the database
-        const serviceRecords = services.map(service => ({
-          id: crypto.randomUUID(),
-          business_id: businessId,
-          name: service.name,
-          description: service.description,
-          duration: service.duration,
-          price: service.price,
-          category_id: categoryId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }));
+        // Create services - using the services table that exists in the database
+        for (const service of services) {
+          const serviceRecord = {
+            id: crypto.randomUUID(),
+            business_id: businessId,
+            name: service.name,
+            description: service.description,
+            duration: service.duration,
+            price: service.price,
+            category_id: categoryId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
 
-        // Use the correct table name that exists in the database
-        const { error: servicesError } = await supabase
-          .from('services_v2')
-          .insert(serviceRecords);
-
-        if (servicesError) {
-          console.error('Error creating services:', servicesError);
-          // Fallback to services table if services_v2 doesn't exist
-          const { error: fallbackError } = await supabase
+          const { error: serviceError } = await supabase
             .from('services')
-            .insert(serviceRecords);
-          
-          if (fallbackError) {
-            console.error('Error creating services (fallback):', fallbackError);
+            .insert(serviceRecord);
+
+          if (serviceError) {
+            console.error('Error creating service:', serviceError);
           }
         }
       }

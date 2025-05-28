@@ -83,6 +83,7 @@ export function WebsiteBookingFlow({
               typeof service.duracao !== 'undefined' ? service.duracao : 30,
     category: service.category || "",
     isActive: service.isActive ?? service.ativo ?? true,
+    active: service.isActive ?? service.ativo ?? true, // Add required property
   }));
   
   return (
