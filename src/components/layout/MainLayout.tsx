@@ -1,7 +1,8 @@
+
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { UserMenu } from '@/components/auth/UserMenu';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Permission } from '@/types/user';
 
 interface NavItem {
@@ -76,4 +77,4 @@ export function MainLayout({ children }: MainLayoutProps) {
       </main>
     </div>
   );
-} 
+}
