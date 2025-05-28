@@ -19,7 +19,9 @@ export const normalizeClientData = (client: any) => {
     address: client.address || client.endereco || '',
     gender: client.gender || client.genero || '',
     notes: client.notes || client.notas || '',
-    created_at: client.created_at || client.criado_em
+    created_at: client.created_at || client.criado_em,
+    business_id: client.business_id || client.id_negocio,
+    user_id: client.user_id || client.id_usuario
   };
 };
 
@@ -83,6 +85,39 @@ export const normalizeAppointmentData = (appointment: any) => {
       sendReminder: true
     },
     additionalServices: []
+  };
+};
+
+export const normalizeBusinessData = (business: any) => {
+  return {
+    id: business.id,
+    name: business.name || business.nome || '',
+    slug: business.slug || '',
+    admin_email: business.admin_email || business.email_admin || '',
+    phone: business.phone || business.telefone || '',
+    zip_code: business.zip_code || business.cep || '',
+    address: business.address || business.endereco || '',
+    address_number: business.address_number || business.numero || '',
+    address_complement: business.address_complement || business.complemento || '',
+    neighborhood: business.neighborhood || business.bairro || '',
+    city: business.city || business.cidade || '',
+    state: business.state || business.estado || '',
+    logo_url: business.logo_url || business.url_logo || '',
+    description: business.description || business.descricao || '',
+    ein: business.ein || business.cnpj || '',
+    legal_name: business.legal_name || business.razao_social || '',
+    trade_name: business.trade_name || business.nome_fantasia || '',
+    status: business.status || 'pending',
+    subscription_status: business.subscription_status || business.status_assinatura || 'trial',
+    timezone: business.timezone || business.fuso_horario || 'America/Sao_Paulo',
+    currency: business.currency || business.moeda || 'BRL',
+    language: business.language || business.idioma || 'pt-BR',
+    latitude: business.latitude || null,
+    longitude: business.longitude || null,
+    trial_end_date: business.trial_end_date || business.data_fim_teste,
+    subscription_end_date: business.subscription_end_date || business.data_fim_assinatura,
+    created_at: business.created_at || business.criado_em,
+    updated_at: business.updated_at || business.atualizado_em
   };
 };
 
@@ -161,5 +196,21 @@ export const safeDataExtract = (response: any): any[] => {
   } catch (error) {
     console.error('Error extracting data:', error);
     return [];
+  }
+};
+
+export const safeSingleExtract = (response: any): any | null => {
+  try {
+    if (response?.data) {
+      return response.data;
+    }
+    if (response?.error) {
+      console.error('Database query error:', response.error);
+      return null;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error extracting single data:', error);
+    return null;
   }
 };

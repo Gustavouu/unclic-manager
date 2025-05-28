@@ -742,67 +742,112 @@ export type Database = {
       }
       clients: {
         Row: {
+          address: string | null
           atualizado_em: string | null
+          birth_date: string | null
+          business_id: string | null
           cep: string | null
           cidade: string | null
+          city: string | null
+          created_at: string | null
           criado_em: string | null
           data_nascimento: string | null
           email: string | null
           endereco: string | null
           estado: string | null
+          gender: string | null
           genero: string | null
           id: string
           id_negocio: string
           id_usuario: string | null
+          last_visit: string | null
+          name: string | null
           nome: string
           notas: string | null
+          notes: string | null
+          phone: string | null
           preferencias: Json | null
+          state: string | null
           telefone: string | null
           tenant_id: string | null
+          total_spent: number | null
           ultima_visita: string | null
+          updated_at: string | null
+          user_id: string | null
           valor_total_gasto: number | null
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
           atualizado_em?: string | null
+          birth_date?: string | null
+          business_id?: string | null
           cep?: string | null
           cidade?: string | null
+          city?: string | null
+          created_at?: string | null
           criado_em?: string | null
           data_nascimento?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
+          gender?: string | null
           genero?: string | null
           id?: string
           id_negocio: string
           id_usuario?: string | null
+          last_visit?: string | null
+          name?: string | null
           nome: string
           notas?: string | null
+          notes?: string | null
+          phone?: string | null
           preferencias?: Json | null
+          state?: string | null
           telefone?: string | null
           tenant_id?: string | null
+          total_spent?: number | null
           ultima_visita?: string | null
+          updated_at?: string | null
+          user_id?: string | null
           valor_total_gasto?: number | null
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
           atualizado_em?: string | null
+          birth_date?: string | null
+          business_id?: string | null
           cep?: string | null
           cidade?: string | null
+          city?: string | null
+          created_at?: string | null
           criado_em?: string | null
           data_nascimento?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
+          gender?: string | null
           genero?: string | null
           id?: string
           id_negocio?: string
           id_usuario?: string | null
+          last_visit?: string | null
+          name?: string | null
           nome?: string
           notas?: string | null
+          notes?: string | null
+          phone?: string | null
           preferencias?: Json | null
+          state?: string | null
           telefone?: string | null
           tenant_id?: string | null
+          total_spent?: number | null
           ultima_visita?: string | null
+          updated_at?: string | null
+          user_id?: string | null
           valor_total_gasto?: number | null
+          zip_code?: string | null
         }
         Relationships: [
           {
@@ -4416,6 +4461,10 @@ export type Database = {
         Returns: boolean
       }
       verificar_completar_onboarding: {
+        Args: { business_id_param: string }
+        Returns: Json
+      }
+      verificar_completar_onboarding_v2: {
         Args: { business_id_param: string }
         Returns: Json
       }

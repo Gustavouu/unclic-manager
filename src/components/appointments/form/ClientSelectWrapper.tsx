@@ -10,7 +10,7 @@ import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
-import { normalizeClientData, tableExists } from "@/utils/databaseUtils";
+import { normalizeClientData } from "@/utils/databaseUtils";
 import { NewClientDialog } from "@/components/clients/NewClientDialog";
 
 export type ClientSelectWrapperProps = {
@@ -31,39 +31,27 @@ export default function ClientSelectWrapper({ form }: ClientSelectWrapperProps) 
       setLoading(true);
       try {
         console.log('Fetching clients for business ID:', businessId);
-        let clientsData: any[] = [];
         
-        // First try clients table
-        const hasClientsTable = await tableExists('clients');
-        
-        if (hasClientsTable) {
-          console.log('Trying clients table');
-          const { data, error } = await supabase
-            .from('clients')
-            .select('*')
-            .eq('business_id', businessId);
-            
-          if (error) {
-            console.error('Error fetching from clients:', error);
-          } else if (data && data.length > 0) {
-            console.log('Found clients in clients table:', data.length);
-            clientsData = data.map(normalizeClientData);
-          }
+        // Use the migrated clients table
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('business_id', businessId);
+          
+        if (error) {
+          console.error('Error fetching clients:', error);
+          setClients([]);
+        } else if (data && data.length > 0) {
+          console.log('Found clients:', data.length);
+          const normalizedClients = data.map(normalizeClientData);
+          setClients(normalizedClients);
+        } else {
+          console.log('No clients found');
+          setClients([]);
         }
-        
-        // If no data found and funcionarios table exists, it means we have legacy data
-        if (clientsData.length === 0) {
-          const hasFuncionariosTable = await tableExists('funcionarios');
-          if (hasFuncionariosTable) {
-            console.log('Trying to create sample clients for legacy system');
-            // For legacy systems, we'll show a message or create sample data
-            clientsData = [];
-          }
-        }
-        
-        setClients(clientsData);
       } catch (error) {
         console.error('Error fetching clients:', error);
+        setClients([]);
       } finally {
         setLoading(false);
       }

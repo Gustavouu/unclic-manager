@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { Client, ClientFormData } from '@/types/client';
-import { normalizeClientData, tableExists } from '@/utils/databaseUtils';
+import { normalizeClientData } from '@/utils/databaseUtils';
 
 export { type Client, type ClientFormData } from '@/types/client';
 
@@ -20,48 +20,23 @@ export const useClients = () => {
       
       setLoading(true);
       try {
-        let clientsData: any[] = [];
+        console.log('Fetching clients for business:', businessId);
         
-        // Try clients table first
-        const clientsExists = await tableExists('clients');
-        
-        if (clientsExists) {
-          const { data, error } = await supabase
-            .from('clients')
-            .select('*')
-            .eq('business_id', businessId);
-            
-          if (error) {
-            console.error('Error fetching clients:', error);
-          } else if (data && data.length > 0) {
-            clientsData = data.map(normalizeClientData);
-          }
+        // Use the migrated clients table with proper business_id column
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('business_id', businessId);
+          
+        if (error) {
+          console.error('Error fetching clients:', error);
+          setError('Failed to fetch clients');
+        } else {
+          console.log('Found clients:', data?.length || 0);
+          const normalizedClients = (data || []).map(normalizeClientData);
+          setClients(normalizedClients);
+          setError(null);
         }
-        
-        // If no data found, try legacy clientes table
-        if (clientsData.length === 0) {
-          try {
-            const clientesExists = await tableExists('funcionarios'); // Use funcionarios as proxy check
-            
-            if (clientesExists) {
-              // Try to use the clients table instead of clientes
-              const { data, error } = await supabase
-                .from('clients')
-                .select('*')
-                .eq('id_negocio', businessId);
-                
-              if (error) {
-                console.error('Error fetching from clients table:', error);
-              } else if (data && data.length > 0) {
-                clientsData = data.map(normalizeClientData);
-              }
-            }
-          } catch (error) {
-            console.error('Error checking clients table:', error);
-          }
-        }
-        
-        setClients(clientsData);
       } catch (error) {
         console.error('Error fetching clients:', error);
         setError('Failed to fetch clients');
@@ -80,6 +55,8 @@ export const useClients = () => {
 
     setIsSubmitting(true);
     try {
+      console.log('Creating client for business:', businessId);
+      
       const { data, error } = await supabase
         .from('clients')
         .insert([{
@@ -94,6 +71,7 @@ export const useClients = () => {
       const normalizedClient = normalizeClientData(data);
       setClients(prev => [...prev, normalizedClient]);
       
+      console.log('Client created successfully:', normalizedClient.name);
       return normalizedClient;
     } catch (error) {
       console.error('Error creating client:', error);

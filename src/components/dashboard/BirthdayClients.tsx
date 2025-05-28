@@ -8,7 +8,7 @@ import { ptBR } from 'date-fns/locale';
 import { Badge } from "@/components/ui/badge";
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
-import { normalizeClientData, tableExists } from '@/utils/databaseUtils';
+import { normalizeClientData } from '@/utils/databaseUtils';
 
 type ClientInfo = {
   id: string;
@@ -34,52 +34,43 @@ export function BirthdayClients() {
         const currentMonth = today.getMonth() + 1;
         const currentDay = today.getDate();
 
-        let birthdayClients: ClientInfo[] = [];
+        console.log('Fetching birthday clients for business:', businessId);
 
-        // First, try to check if clients table exists and fetch from there
-        const clientsTableExists = await tableExists('clients');
-        
-        if (clientsTableExists) {
-          const { data: clientsData, error: clientsError } = await supabase
-            .from('clients')
-            .select('*')
-            .eq('business_id', businessId);
+        // Use the migrated clients table
+        const { data: clientsData, error: clientsError } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('business_id', businessId);
 
-          if (clientsError) {
-            console.error('Error fetching clients:', clientsError);
-          } else if (clientsData && clientsData.length > 0) {
-            const normalizedClients = clientsData.map(normalizeClientData);
-            
-            const todaysBirthdays = normalizedClients.filter(client => {
-              if (!client.birth_date) return false;
-              const birthDate = new Date(client.birth_date);
-              return birthDate.getMonth() + 1 === currentMonth && birthDate.getDate() === currentDay;
-            });
-
-            birthdayClients = todaysBirthdays.map(client => ({
-              id: client.id,
-              name: client.name || 'Cliente',
-              image: client.avatar,
-              birthDate: client.birth_date ? new Date(client.birth_date) : undefined,
-              lastVisit: client.last_visit ? new Date(client.last_visit) : undefined,
-              status: (client.status as 'active' | 'inactive') || 'active'
-            }));
-          }
-        }
-
-        // If no data found, create empty result
-        if (birthdayClients.length === 0) {
-          const funcionariosExists = await tableExists('funcionarios');
+        if (clientsError) {
+          console.error('Error fetching clients:', clientsError);
+          setClients([]);
+        } else if (clientsData && clientsData.length > 0) {
+          const normalizedClients = clientsData.map(normalizeClientData);
           
-          if (funcionariosExists) {
-            // This indicates a legacy system, but we'll show no birthdays for now
-            birthdayClients = [];
-          }
-        }
+          const todaysBirthdays = normalizedClients.filter(client => {
+            if (!client.birth_date) return false;
+            const birthDate = new Date(client.birth_date);
+            return birthDate.getMonth() + 1 === currentMonth && birthDate.getDate() === currentDay;
+          });
 
-        setClients(birthdayClients);
+          const birthdayClients = todaysBirthdays.map(client => ({
+            id: client.id,
+            name: client.name || 'Cliente',
+            image: client.avatar,
+            birthDate: client.birth_date ? new Date(client.birth_date) : undefined,
+            lastVisit: client.last_visit ? new Date(client.last_visit) : undefined,
+            status: (client.status as 'active' | 'inactive') || 'active'
+          }));
+
+          console.log('Found birthday clients:', birthdayClients.length);
+          setClients(birthdayClients);
+        } else {
+          setClients([]);
+        }
       } catch (error) {
         console.error('Error fetching birthday clients:', error);
+        setClients([]);
       } finally {
         setLoading(false);
       }
