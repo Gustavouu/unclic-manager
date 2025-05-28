@@ -19,19 +19,7 @@ import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
 import "./services/InitializationService"; // Import initialization service
 import { RequireAuth } from "./components/auth/RequireAuth";
-import Payments from "./pages/Payments"; // Add import for Payments page
-
-// Painel de segurança isolado
-let SecurityLayout, SecurityDashboard, SecurityAlerts, SecurityLogs, SecuritySettings;
-try {
-  SecurityLayout = require('./components/layout/SecurityLayout').SecurityLayout;
-  SecurityDashboard = require('./components/security/SecurityDashboard').SecurityDashboard;
-  SecurityAlerts = require('./pages/security/SecurityAlerts').SecurityAlerts;
-  SecurityLogs = require('./pages/security/SecurityLogs').SecurityLogs;
-  SecuritySettings = require('./pages/security/SecuritySettings').SecuritySettings;
-} catch (e) {
-  // Não faz nada, painel de segurança fica inacessível se der erro
-}
+import Payments from "./pages/Payments";
 
 function App() {
   return (
@@ -45,16 +33,6 @@ function App() {
             <OnboardingPage />
           </RequireAuth>
         } />
-        
-        {/* Painel de segurança isolado, não afeta o app principal */}
-        {SecurityLayout && (
-          <Route path="/admin/security/*" element={<SecurityLayout />}>
-            <Route index element={<SecurityDashboard />} />
-            <Route path="alerts" element={<SecurityAlerts />} />
-            <Route path="logs" element={<SecurityLogs />} />
-            <Route path="settings" element={<SecuritySettings />} />
-          </Route>
-        )}
 
         {/* Rotas principais da aplicação */}
         <Route path="/*" element={
