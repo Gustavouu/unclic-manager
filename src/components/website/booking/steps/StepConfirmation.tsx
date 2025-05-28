@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,7 +6,7 @@ import { BookingData } from "../types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Loader2, CalendarCheck } from "lucide-react";
-import { useAppointments } from "@/hooks/appointments/useAppointments";
+import { useAppointmentCreate } from "@/hooks/appointments/useAppointmentCreate";
 import { toast } from "sonner";
 
 interface StepConfirmationProps {
@@ -15,7 +16,7 @@ interface StepConfirmationProps {
 
 export function StepConfirmation({ bookingData, onComplete }: StepConfirmationProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { createAppointment, fetchAppointments } = useAppointments();
+  const { createAppointment } = useAppointmentCreate();
   
   const handleCompleteBooking = async () => {
     if (!bookingData.date) {
@@ -42,26 +43,25 @@ export function StepConfirmation({ bookingData, onComplete }: StepConfirmationPr
       
       // Create appointment
       await createAppointment({
+        clientId: bookingData.clientId || "guest-client",
         clientName: bookingData.clientName || "Cliente não identificado",
+        serviceId: bookingData.serviceId,
         serviceName: bookingData.serviceName,
+        professionalId: bookingData.professionalId,
+        professionalName: bookingData.professionalName,
         date: appointmentDate,
+        time: bookingData.time,
         status: "agendado",
         price: bookingData.servicePrice,
         serviceType: "servico", 
         duration: bookingData.serviceDuration,
         notes: bookingData.notes,
-        serviceId: bookingData.serviceId,
-        clientId: bookingData.clientId || "guest-client", // Ensure clientId is provided
-        professionalId: bookingData.professionalId,
-        paymentMethod: "local", // Default payment method
+        paymentMethod: "local",
         notifications: {
           sendConfirmation: true,
           sendReminder: true
         }
       });
-      
-      // Refresh the appointments list to show the new appointment
-      fetchAppointments();
       
       toast.success("Agendamento confirmado com sucesso!");
       onComplete();

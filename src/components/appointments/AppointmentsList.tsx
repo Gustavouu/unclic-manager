@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -99,7 +100,7 @@ export const AppointmentsList = () => {
                     <div key={appointment.id} className="p-4 hover:bg-gray-50 transition-colors flex justify-between items-center">
                       <div className="flex items-start gap-3">
                         <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                          {appointment.serviceType === "haircut" || appointment.serviceType === "combo" ? (
+                          {appointment.serviceType === "haircut" || appointment.serviceType === "combo" || appointment.serviceType === "hair" ? (
                             <Scissors className="h-5 w-5" />
                           ) : (
                             <User className="h-5 w-5" />
@@ -109,7 +110,7 @@ export const AppointmentsList = () => {
                           <div className="font-medium text-gray-900">{appointment.clientName}</div>
                           <div className="text-sm text-gray-600">{appointment.serviceName}</div>
                           <div className="flex items-center gap-3 mt-1">
-                            <div className="text-xs text-gray-500">{appointment.serviceType} min</div>
+                            <div className="text-xs text-gray-500">{appointment.duration} min</div>
                             <div className="text-xs text-gray-500">R$ {appointment.price.toFixed(2)}</div>
                           </div>
                         </div>

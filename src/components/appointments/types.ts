@@ -1,4 +1,3 @@
-
 export type AppointmentStatus = "agendado" | "confirmado" | "pendente" | "concluido" | "cancelado" | "faltou";
 export type ServiceType = "all" | "haircut" | "barber" | "combo" | "treatment";
 export type DateFilter = "all" | "today" | "tomorrow" | "thisWeek" | "custom";
@@ -51,3 +50,18 @@ export const SERVICE_TYPE_NAMES: Record<ServiceType, string> = {
   combo: "Corte e Barba",
   treatment: "Tratamentos"
 };
+
+// Re-export all types from the hooks directory for consistency
+export * from '@/hooks/appointments/types';
+
+// Keep any component-specific types here if needed
+export interface AppointmentFilters {
+  searchTerm: string;
+  statusFilter: string;
+  serviceFilter: string;
+  dateFilter: string;
+  customDateRange: {
+    from: Date | undefined;
+    to: Date | undefined;
+  };
+}

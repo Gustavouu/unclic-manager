@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -86,18 +87,19 @@ export function OnboardingControls({ currentStep, onNext, onPrevious }: Onboardi
           console.error('Error creating categories:', categoriesError);
         }
 
-        // Create services - using the services table that exists in the database
+        // Create services - using the correct table structure
         for (const service of services) {
           const serviceRecord = {
             id: crypto.randomUUID(),
-            business_id: businessId,
+            tenantId: businessId,
             name: service.name,
             description: service.description,
             duration: service.duration,
-            price: service.price,
-            category_id: categoryId,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            cost: service.price,
+            categoryId: categoryId,
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           };
 
           const { error: serviceError } = await supabase

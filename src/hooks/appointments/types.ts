@@ -1,10 +1,13 @@
 
-export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'canceled' | 'no_show' | 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'faltou';
+export type AppointmentStatus = 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'scheduled' | 'confirmed' | 'completed' | 'canceled' | 'no_show' | 'faltou';
 
 export interface CreateAppointmentData {
   clientId: string;
+  clientName?: string;
   serviceId: string;
+  serviceName?: string;
   professionalId: string;
+  professionalName?: string;
   date: Date;
   time: string;
   endTime?: string;
@@ -13,6 +16,12 @@ export interface CreateAppointmentData {
   status?: AppointmentStatus;
   paymentMethod?: string;
   notes?: string;
+  serviceType?: string;
+  businessId?: string;
+  notifications?: {
+    sendConfirmation: boolean;
+    sendReminder: boolean;
+  };
 }
 
 export interface UpdatedAppointmentData extends Partial<CreateAppointmentData> {
@@ -34,4 +43,34 @@ export interface Appointment {
   status: AppointmentStatus;
   notes: string;
   paymentMethod?: string;
+  businessId?: string;
+  service?: {
+    price: number;
+  };
+  additionalServices?: Array<{
+    price: number;
+  }>;
+  notifications?: {
+    sendConfirmation: boolean;
+    sendReminder: boolean;
+  };
 }
+
+// For backward compatibility, re-export with different names
+export type AppointmentType = Appointment;
+export type ServiceType = "all" | "haircut" | "barber" | "combo" | "treatment" | "hair" | "nails" | "makeup" | "skincare";
+export type DateFilter = "all" | "today" | "tomorrow" | "thisWeek" | "custom";
+export type CalendarViewType = "month" | "week" | "day";
+
+// Map service types to display names for barbershop
+export const SERVICE_TYPE_NAMES: Record<ServiceType, string> = {
+  all: "Todos os Serviços",
+  haircut: "Corte de Cabelo",
+  barber: "Barba",
+  combo: "Corte e Barba",
+  treatment: "Tratamentos",
+  hair: "Cabelo",
+  nails: "Unhas",
+  makeup: "Maquiagem",
+  skincare: "Cuidados com a Pele"
+};

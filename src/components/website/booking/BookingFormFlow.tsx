@@ -114,7 +114,7 @@ export function BookingFormFlow({ onComplete }: BookingFormFlowProps) {
         
         {step === "appointment" && clientData?.id && (
           <PaymentRequiredAppointmentForm
-            customerId={clientData.id}
+            clientId={clientData.id}
             customerName={clientData.name}
             customerEmail={clientData.email}
             customerPhone={clientData.phone}
