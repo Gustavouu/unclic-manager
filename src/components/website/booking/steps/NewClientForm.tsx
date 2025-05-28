@@ -1,166 +1,126 @@
 
-import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Checkbox } from "@/components/ui/checkbox";
-import { validateRequired, validateEmail, formatPhone } from "@/utils/formUtils";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { validateRequired, validateEmail } from '@/utils/formUtils';
 
 interface NewClientFormProps {
-  phone?: string; // Make phone optional but available
+  phone: string;
   onComplete: (clientData: any) => void;
   onBack: () => void;
 }
 
-export const NewClientForm: React.FC<NewClientFormProps> = ({ phone = "", onComplete, onBack }) => {
+export function NewClientForm({ phone, onComplete, onBack }: NewClientFormProps) {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: phone, // Initialize with the passed phone number if available
-    marketingConsent: true
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: phone
   });
-  
-  const [errors, setErrors] = useState<Record<string, string | null>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-  
-  const handleChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    setTouched(prev => ({ ...prev, [field]: true }));
-  };
-  
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formattedPhone = formatPhone(e.target.value);
-    handleChange("phone", formattedPhone);
-  };
-  
-  const validate = () => {
-    const newErrors = {
-      firstName: validateRequired(formData.firstName, "Nome"),
-      lastName: validateRequired(formData.lastName, "Sobrenome"),
-      email: validateEmail(formData.email),
-      phone: validateRequired(formData.phone, "Telefone")
-    };
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
     
+    newErrors.firstName = validateRequired(formData.firstName);
+    newErrors.lastName = validateRequired(formData.lastName);
+    newErrors.email = validateEmail(formData.email);
+
     setErrors(newErrors);
-    
-    // Mark all fields as touched
-    const allTouched = Object.keys(formData).reduce((acc, key) => ({
-      ...acc,
-      [key]: true
-    }), {});
-    setTouched(allTouched);
-    
-    // Check if there are any errors
-    return !Object.values(newErrors).some(error => error !== null);
+
+    return Object.values(newErrors).every(error => error === '');
   };
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (validate()) {
+    if (validateForm()) {
       onComplete(formData);
     }
   };
-  
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Seus Dados</h2>
-        <p className="text-muted-foreground">
-          Precisamos de algumas informações para criar seu cadastro.
-        </p>
-      </div>
-      
-      <Separator />
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="firstName" className={errors.firstName && touched.firstName ? "text-destructive" : ""}>
-              Nome*
-            </Label>
-            <Input 
+    <Card>
+      <CardHeader>
+        <CardTitle>Complete seus dados</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="firstName">Nome</Label>
+            <Input
               id="firstName"
               value={formData.firstName}
-              onChange={(e) => handleChange("firstName", e.target.value)}
-              className={errors.firstName && touched.firstName ? "border-destructive" : ""}
+              onChange={(e) => handleInputChange('firstName', e.target.value)}
+              placeholder="Seu nome"
+              className={errors.firstName ? 'border-red-500' : ''}
             />
-            {errors.firstName && touched.firstName && (
-              <p className="text-xs text-destructive">{errors.firstName}</p>
+            {errors.firstName && (
+              <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
             )}
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="lastName" className={errors.lastName && touched.lastName ? "text-destructive" : ""}>
-              Sobrenome*
-            </Label>
-            <Input 
+
+          <div>
+            <Label htmlFor="lastName">Sobrenome</Label>
+            <Input
               id="lastName"
               value={formData.lastName}
-              onChange={(e) => handleChange("lastName", e.target.value)}
-              className={errors.lastName && touched.lastName ? "border-destructive" : ""}
+              onChange={(e) => handleInputChange('lastName', e.target.value)}
+              placeholder="Seu sobrenome"
+              className={errors.lastName ? 'border-red-500' : ''}
             />
-            {errors.lastName && touched.lastName && (
-              <p className="text-xs text-destructive">{errors.lastName}</p>
+            {errors.lastName && (
+              <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
             )}
           </div>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="email" className={errors.email && touched.email ? "text-destructive" : ""}>
-            Email*
-          </Label>
-          <Input 
-            id="email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => handleChange("email", e.target.value)}
-            className={errors.email && touched.email ? "border-destructive" : ""}
-          />
-          {errors.email && touched.email && (
-            <p className="text-xs text-destructive">{errors.email}</p>
-          )}
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="phone" className={errors.phone && touched.phone ? "text-destructive" : ""}>
-            Telefone*
-          </Label>
-          <Input 
-            id="phone"
-            type="tel"
-            value={formData.phone}
-            onChange={handlePhoneChange}
-            placeholder="(00) 00000-0000"
-            className={errors.phone && touched.phone ? "border-destructive" : ""}
-          />
-          {errors.phone && touched.phone && (
-            <p className="text-xs text-destructive">{errors.phone}</p>
-          )}
-        </div>
-        
-        <div className="flex items-center space-x-2 pt-2">
-          <Checkbox 
-            id="marketingConsent" 
-            checked={formData.marketingConsent}
-            onCheckedChange={(checked) => handleChange("marketingConsent", !!checked)}
-          />
-          <Label htmlFor="marketingConsent" className="text-sm text-muted-foreground">
-            Aceito receber novidades, promoções e comunicados via email e WhatsApp
-          </Label>
-        </div>
-        
-        <div className="flex justify-between pt-4">
-          <Button type="button" variant="outline" onClick={onBack}>
-            Voltar
-          </Button>
-          <Button type="submit">
-            Continuar
-          </Button>
-        </div>
-      </form>
-    </div>
+
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              placeholder="seu@email.com"
+              className={errors.email ? 'border-red-500' : ''}
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="phone">Telefone</Label>
+            <Input
+              id="phone"
+              value={formData.phone}
+              readOnly
+              className="bg-gray-100"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={onBack} className="flex-1">
+              Voltar
+            </Button>
+            <Button type="submit" className="flex-1">
+              Continuar
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
-};
+}

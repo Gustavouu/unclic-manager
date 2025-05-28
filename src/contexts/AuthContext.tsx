@@ -82,13 +82,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return response;
     } catch (error) {
       console.error('Error signing in:', error);
-      const authError: AuthError = {
-        name: 'AuthError',
-        message: 'Erro inesperado ao fazer login',
-        code: 'unexpected_error',
-        status: 500,
-        __isAuthError: true
-      };
+      const authError = new Error('Erro inesperado ao fazer login') as AuthError;
+      authError.name = 'AuthError';
       return { data: { user: null, session: null }, error: authError };
     }
   };
@@ -110,13 +105,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return response;
     } catch (error) {
       console.error('Error signing up:', error);
-      const authError: AuthError = {
-        name: 'AuthError',
-        message: 'Erro inesperado ao criar conta',
-        code: 'unexpected_error',
-        status: 500,
-        __isAuthError: true
-      };
+      const authError = new Error('Erro inesperado ao criar conta') as AuthError;
+      authError.name = 'AuthError';
       return { data: { user: null, session: null }, error: authError };
     }
   };
@@ -133,13 +123,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return { error: null };
     } catch (error) {
       console.error('Error signing out:', error);
-      const authError: AuthError = {
-        name: 'AuthError',
-        message: 'Erro inesperado ao fazer logout',
-        code: 'unexpected_error',
-        status: 500,
-        __isAuthError: true
-      };
+      const authError = new Error('Erro inesperado ao fazer logout') as AuthError;
+      authError.name = 'AuthError';
       return { error: authError };
     }
   };

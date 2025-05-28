@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,12 +7,18 @@ import { useOnboarding } from '@/contexts/onboarding/OnboardingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-export function OnboardingControls() {
+interface OnboardingControlsProps {
+  currentStep?: string;
+  onNext?: () => void;
+  onPrevious?: () => void;
+}
+
+export function OnboardingControls({ currentStep, onNext, onPrevious }: OnboardingControlsProps) {
   const { businessData, services, staffMembers: staff, businessHours } = useOnboarding();
   const { user } = useAuth();
-  const router = useRouter();
+  const navigate = useNavigate();
   const [isCompleting, setIsCompleting] = useState(false);
 
   const calculateProgress = () => {
@@ -21,7 +28,7 @@ export function OnboardingControls() {
     if (businessData.name) completed++;
     if (services.length > 0) completed++;
     if (staff.length > 0) completed++;
-    if (Object.values(businessHours).some(day => day.enabled)) completed++;
+    if (Object.values(businessHours).some(day => day.open)) completed++;
 
     return (completed / total) * 100;
   };
@@ -36,14 +43,14 @@ export function OnboardingControls() {
 
     try {
       // Create business first - using the existing businesses table
-      const businessId = businessData.id || crypto.randomUUID();
+      const businessId = crypto.randomUUID();
       
       const { error: businessError } = await supabase
         .from('businesses')
         .upsert({
           id: businessId,
           name: businessData.name,
-          slug: businessData.slug || businessData.name.toLowerCase().replace(/\s+/g, '-'),
+          slug: businessData.name.toLowerCase().replace(/\s+/g, '-'),
           admin_email: user.email || '',
           description: businessData.description,
           phone: businessData.phone,
@@ -63,21 +70,18 @@ export function OnboardingControls() {
 
       // Create categories for services
       if (services.length > 0) {
-        const categories = [
-          {
-            id: crypto.randomUUID(),
+        const categoryId = crypto.randomUUID();
+        const { error: categoriesError } = await supabase
+          .from('categories')
+          .insert({
+            id: categoryId,
             business_id: businessId,
             name: 'Serviços Gerais',
             description: 'Categoria padrão para serviços',
             type: 'service',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          }
-        ];
-
-        const { error: categoriesError } = await supabase
-          .from('categories')
-          .insert(categories);
+          });
 
         if (categoriesError) {
           console.error('Error creating categories:', categoriesError);
@@ -91,7 +95,7 @@ export function OnboardingControls() {
           description: service.description,
           duration: service.duration,
           price: service.price,
-          category_id: categories[0].id,
+          category_id: categoryId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }));
@@ -147,7 +151,7 @@ export function OnboardingControls() {
       }
 
       toast.success('Configuração inicial concluída com sucesso!');
-      router.push('/dashboard');
+      navigate('/dashboard');
     } catch (error) {
       console.error('Error completing onboarding:', error);
       toast.error('Erro ao finalizar configuração');
@@ -186,21 +190,35 @@ export function OnboardingControls() {
             <div className={`w-2 h-2 rounded-full ${staff.length > 0 ? 'bg-green-600' : 'bg-gray-300'}`} />
             Funcionários ({staff.length})
           </div>
-          <div className={`flex items-center gap-2 ${Object.values(businessHours).some(day => day.enabled) ? 'text-green-600' : 'text-gray-500'}`}>
-            <div className={`w-2 h-2 rounded-full ${Object.values(businessHours).some(day => day.enabled) ? 'bg-green-600' : 'bg-gray-300'}`} />
+          <div className={`flex items-center gap-2 ${Object.values(businessHours).some(day => day.open) ? 'text-green-600' : 'text-gray-500'}`}>
+            <div className={`w-2 h-2 rounded-full ${Object.values(businessHours).some(day => day.open) ? 'bg-green-600' : 'bg-gray-300'}`} />
             Horários de funcionamento
           </div>
         </div>
 
-        {isComplete && (
-          <Button 
-            onClick={completeOnboarding} 
-            className="w-full"
-            disabled={isCompleting}
-          >
-            {isCompleting ? 'Finalizando...' : 'Finalizar Configuração'}
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {onPrevious && (
+            <Button variant="outline" onClick={onPrevious} className="flex-1">
+              Anterior
+            </Button>
+          )}
+          
+          {onNext && !isComplete && (
+            <Button onClick={onNext} className="flex-1">
+              Próximo
+            </Button>
+          )}
+
+          {isComplete && (
+            <Button 
+              onClick={completeOnboarding} 
+              className="flex-1"
+              disabled={isCompleting}
+            >
+              {isCompleting ? 'Finalizando...' : 'Finalizar Configuração'}
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

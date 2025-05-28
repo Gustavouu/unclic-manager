@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useOnboardingContext } from '@/contexts/onboarding/OnboardingContext';
+import { useOnboarding } from '@/contexts/onboarding/OnboardingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,7 +15,7 @@ interface BusinessBasicInfoSectionProps {
 }
 
 export function BusinessBasicInfoSection({ onNext }: BusinessBasicInfoSectionProps) {
-  const { businessData, updateBusinessData } = useOnboardingContext();
+  const { businessData, updateBusinessData } = useOnboarding();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -35,12 +35,13 @@ export function BusinessBasicInfoSection({ onNext }: BusinessBasicInfoSectionPro
 
     try {
       // Save business data
+      const businessId = crypto.randomUUID();
       const { error: businessError } = await supabase
         .from('businesses')
         .upsert({
-          id: businessData.id || crypto.randomUUID(),
+          id: businessId,
           name: businessData.name,
-          slug: businessData.slug || businessData.name.toLowerCase().replace(/\s+/g, '-'),
+          slug: businessData.name.toLowerCase().replace(/\s+/g, '-'),
           admin_email: user.email || '',
           description: businessData.description,
           phone: businessData.phone,
@@ -57,19 +58,6 @@ export function BusinessBasicInfoSection({ onNext }: BusinessBasicInfoSectionPro
         toast.error('Erro ao salvar dados do negócio');
         return;
       }
-
-      // Mark step as completed - using the correct approach for this table
-      const stepData = {
-        id: crypto.randomUUID(),
-        tenantId: user.id,
-        step: 'business-info',
-        completed: true,
-        completedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      // Since the table structure isn't clear, let's just proceed without the step tracking for now
-      console.log('Business info step completed:', stepData);
 
       toast.success('Informações básicas salvas com sucesso!');
       onNext();
