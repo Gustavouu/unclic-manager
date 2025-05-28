@@ -1,45 +1,39 @@
-import { Navigate, useLocation } from "react-router-dom";
+
+import { useEffect } from "react";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { ReactNode } from "react";
-import { OnboardingRedirect } from "./OnboardingRedirect";
+import { Loader } from "@/components/ui/loader";
 
 interface RequireAuthProps {
-  children: ReactNode;
-  skipOnboardingCheck?: boolean;
-  requireAdmin?: boolean;
+  children: React.ReactNode;
+  allowedRoles?: string[];
 }
 
-export function RequireAuth({ 
-  children, 
-  skipOnboardingCheck = false,
-  requireAdmin = false 
-}: RequireAuthProps) {
+export function RequireAuth({ children, allowedRoles }: RequireAuthProps) {
   const { user, loading } = useAuth();
-  const location = useLocation();
-  
+
+  useEffect(() => {
+    console.log("RequireAuth - User:", user);
+    console.log("RequireAuth - Loading:", loading);
+  }, [user, loading]);
+
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader size="lg" text="Verificando permissões..." />
+      </div>
+    );
   }
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/login" replace />;
   }
 
-  if (requireAdmin && !user.is_admin) {
-    return <Navigate to="/dashboard" replace />;
+  // For now, skip role-based checks since user metadata structure is not clear
+  // This can be enhanced later when user roles are properly defined
+  if (allowedRoles && allowedRoles.length > 0) {
+    console.log("Role-based access control not yet implemented");
   }
 
-  if (!skipOnboardingCheck && !user.onboarding_completed) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  // If we should skip the onboarding check (for the onboarding page itself)
-  if (skipOnboardingCheck) {
-    return <>{children}</>;
-  }
-
-  // Use the non-blocking onboarding notification approach
-  return <OnboardingRedirect>{children}</OnboardingRedirect>;
+  return <>{children}</>;
 }
-
-export default RequireAuth;

@@ -1,68 +1,32 @@
-import { ReactNode, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import type { Permission } from '@/types/user';
+
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { Loader } from "@/components/ui/loader";
 
 interface ProtectedRouteProps {
-  children: ReactNode;
-  requiredPermissions?: Permission[];
-  redirectTo?: string;
+  children: React.ReactNode;
+  requireAuth?: boolean;
 }
 
-export function ProtectedRoute({
-  children,
-  requiredPermissions = [],
-  redirectTo = '/login',
-}: ProtectedRouteProps) {
-  const { user, isLoading, hasPermission } = useAuth();
-  const navigate = useNavigate();
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [isCheckingPermissions, setIsCheckingPermissions] = useState(true);
+export function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteProps) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
 
-  useEffect(() => {
-    const checkPermissions = async () => {
-      if (!user) {
-        setIsAuthorized(false);
-        setIsCheckingPermissions(false);
-        return;
-      }
-
-      if (requiredPermissions.length === 0) {
-        setIsAuthorized(true);
-        setIsCheckingPermissions(false);
-        return;
-      }
-
-      try {
-        const hasAllPermissions = await Promise.all(
-          requiredPermissions.map((permission) => hasPermission(permission))
-        );
-
-        setIsAuthorized(hasAllPermissions.every((has) => has));
-      } catch (error) {
-        console.error('Error checking permissions:', error);
-        setIsAuthorized(false);
-      } finally {
-        setIsCheckingPermissions(false);
-      }
-    };
-
-    checkPermissions();
-  }, [user, requiredPermissions, hasPermission]);
-
-  useEffect(() => {
-    if (!isLoading && !isCheckingPermissions && !isAuthorized) {
-      navigate(redirectTo);
-    }
-  }, [isLoading, isCheckingPermissions, isAuthorized, navigate, redirectTo]);
-
-  if (isLoading || isCheckingPermissions) {
-    return <div>Loading...</div>; // TODO: Replace with a proper loading component
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader size="lg" text="Verificando autenticação..." />
+      </div>
+    );
   }
 
-  if (!isAuthorized) {
-    return null;
+  if (requireAuth && !user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (!requireAuth && user) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
-} 
+}

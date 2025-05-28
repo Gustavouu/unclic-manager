@@ -1,83 +1,64 @@
-import { Fragment } from 'react';
-import { Menu, Transition } from '@headlessui/react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { LogOut, User } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function UserMenu() {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogout = async () => {
+  const handleSignOut = async () => {
+    setIsLoading(true);
     try {
-      await logout();
-      navigate('/login');
+      await signOut();
     } catch (error) {
-      console.error('Failed to logout:', error);
+      console.error("Error signing out:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  if (!user) {
+    return null;
+  }
+
+  const userInitials = user.email?.substring(0, 2).toUpperCase() || "U";
+  const userName = user.user_metadata?.name || user.email || "Usuário";
+
   return (
-    <Menu as="div" className="relative ml-3">
-      <div>
-        <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-          <span className="sr-only">Open user menu</span>
-          <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white">
-            {user?.email?.[0].toUpperCase()}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={user.user_metadata?.avatar_url} alt={userName} />
+            <AvatarFallback>{userInitials}</AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <div className="flex items-center justify-start gap-2 p-2">
+          <div className="flex flex-col space-y-1 leading-none">
+            <p className="font-medium">{userName}</p>
+            <p className="w-[200px] truncate text-sm text-muted-foreground">
+              {user.email}
+            </p>
           </div>
-        </Menu.Button>
-      </div>
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-200"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-75"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
-      >
-        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-          <div className="px-4 py-2 text-sm text-gray-700 border-b">
-            <p className="font-medium">{user?.email}</p>
-            <p className="text-gray-500 capitalize">{user?.role}</p>
-          </div>
-          <Menu.Item>
-            {({ active }) => (
-              <button
-                onClick={() => navigate('/profile')}
-                className={`${
-                  active ? 'bg-gray-100' : ''
-                } block w-full px-4 py-2 text-left text-sm text-gray-700`}
-              >
-                Your Profile
-              </button>
-            )}
-          </Menu.Item>
-          <Menu.Item>
-            {({ active }) => (
-              <button
-                onClick={() => navigate('/change-password')}
-                className={`${
-                  active ? 'bg-gray-100' : ''
-                } block w-full px-4 py-2 text-left text-sm text-gray-700`}
-              >
-                Change Password
-              </button>
-            )}
-          </Menu.Item>
-          <Menu.Item>
-            {({ active }) => (
-              <button
-                onClick={handleLogout}
-                className={`${
-                  active ? 'bg-gray-100' : ''
-                } block w-full px-4 py-2 text-left text-sm text-gray-700`}
-              >
-                Sign out
-              </button>
-            )}
-          </Menu.Item>
-        </Menu.Items>
-      </Transition>
-    </Menu>
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSignOut} disabled={isLoading}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>{isLoading ? "Saindo..." : "Sair"}</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
-} 
+}

@@ -1,6 +1,5 @@
 
 import React, { useEffect, useState } from "react";
-import { Onboarding } from "@/components/onboarding/Onboarding";
 import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { Toaster } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +10,13 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+// Import the actual Onboarding component inside the provider
+const OnboardingContent = React.lazy(() => 
+  import("@/components/onboarding/Onboarding").then(module => ({
+    default: module.Onboarding
+  }))
+);
 
 const OnboardingPage = () => {
   const { user, loading } = useAuth();
@@ -109,7 +115,15 @@ const OnboardingPage = () => {
   return (
     <OnboardingProvider>
       <div className="min-h-screen bg-slate-50 py-8">
-        <Onboarding />
+        <React.Suspense 
+          fallback={
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+              <Loader size="lg" text="Carregando onboarding..." />
+            </div>
+          }
+        >
+          <OnboardingContent />
+        </React.Suspense>
         <Toaster position="top-right" />
       </div>
     </OnboardingProvider>
