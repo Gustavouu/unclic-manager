@@ -39,3 +39,26 @@ export const safeJsonObject = (obj: any): any => {
     return {};
   }
 };
+
+export const safeJsonArray = (arr: any, defaultValue: any[] = []): any[] => {
+  try {
+    if (Array.isArray(arr)) {
+      return arr;
+    }
+    if (arr && typeof arr === 'object') {
+      return [arr];
+    }
+    return defaultValue;
+  } catch {
+    return defaultValue;
+  }
+};
+
+export const safeJsonNumber = (value: any, defaultValue: number = 0): number => {
+  try {
+    const num = typeof value === 'number' ? value : parseFloat(value);
+    return isNaN(num) ? defaultValue : num;
+  } catch {
+    return defaultValue;
+  }
+};
