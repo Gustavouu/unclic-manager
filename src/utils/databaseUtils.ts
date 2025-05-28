@@ -39,6 +39,31 @@ export const normalizeProfessionalData = (professional: any) => {
   };
 };
 
+export const normalizeAppointmentData = (appointment: any) => {
+  return {
+    id: appointment.id,
+    date: new Date(appointment.booking_date || appointment.data || appointment.data_agendamento),
+    clientId: appointment.client_id || appointment.id_cliente,
+    clientName: appointment.clients?.name || appointment.clientes?.nome || appointment.cliente_nome || 'Cliente',
+    serviceId: appointment.service_id || appointment.id_servico,
+    serviceName: appointment.services_v2?.name || appointment.servicos?.nome || appointment.service_name || 'Serviço',
+    serviceType: appointment.services_v2?.category || appointment.servicos?.categoria || 'Geral',
+    professionalId: appointment.employee_id || appointment.id_funcionario,
+    professionalName: appointment.employees?.name || appointment.funcionarios?.nome || appointment.professional_name || 'Profissional',
+    duration: appointment.duration || appointment.duracao || 60,
+    price: appointment.price || appointment.valor || 0,
+    status: appointment.status || 'agendado',
+    notes: appointment.notes || appointment.observacoes || '',
+    paymentMethod: appointment.payment_method || appointment.forma_pagamento,
+    confirmed: appointment.status === 'confirmado' || appointment.status === 'confirmed',
+    notifications: {
+      sendConfirmation: true,
+      sendReminder: true
+    },
+    additionalServices: []
+  };
+};
+
 export const tableExists = async (tableName: string): Promise<boolean> => {
   try {
     const { error } = await supabase
