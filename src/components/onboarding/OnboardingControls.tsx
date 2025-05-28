@@ -1,325 +1,208 @@
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import { useTenant } from "@/contexts/TenantContext";
-import { v4 as uuidv4 } from 'uuid';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { useOnboardingContext } from '@/contexts/onboarding/OnboardingContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'react-router-dom';
 
-interface OnboardingControlsProps {
-  currentStep: string;
-  onPrevious?: () => void;
-  onNext?: () => void;
-  isSubmitting?: boolean;
-}
+export function OnboardingControls() {
+  const { businessData, services, staff, businessHours } = useOnboardingContext();
+  const { user } = useAuth();
+  const router = useRouter();
+  const [isCompleting, setIsCompleting] = useState(false);
 
-export function OnboardingControls({
-  currentStep,
-  onPrevious,
-  onNext,
-  isSubmitting = false,
-}: OnboardingControlsProps) {
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const { businessId } = useTenant();
-  
-  const handleSkip = async () => {
-    if (!businessId) {
-      toast.error("ID do negócio não encontrado");
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      // Try to create a tenant record first if it doesn't exist
-      try {
-        const { error: tenantError } = await supabase
-          .from('tenants')
-          .upsert([
-            {
-              id: businessId,
-              name: 'Estabelecimento',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-          ], {
-            onConflict: 'id'
-          });
-        
-        if (tenantError) {
-          console.warn('Warning creating tenant:', tenantError);
-        }
-      } catch (tenantErr) {
-        console.warn('Could not create tenant record:', tenantErr);
-      }
-      
-      // Navigate to next step without saving to onboarding_progress for now
-      switch (currentStep) {
-        case 'welcome':
-          navigate('/onboarding/business');
-          break;
-        case 'business':
-          navigate('/onboarding/services');
-          break;
-        case 'services':
-          navigate('/onboarding/professionals');
-          break;
-        case 'professionals':
-          navigate('/onboarding/schedule');
-          break;
-        case 'schedule':
-          navigate('/onboarding/complete');
-          break;
-        case 'complete':
-          navigate('/dashboard');
-          break;
-        default:
-          navigate('/dashboard');
-      }
-    } catch (error) {
-      console.error('Error skipping step:', error);
-      toast.error("Erro ao pular etapa");
-    } finally {
-      setLoading(false);
-    }
+  const calculateProgress = () => {
+    let completed = 0;
+    let total = 4;
+
+    if (businessData.name) completed++;
+    if (services.length > 0) completed++;
+    if (staff.length > 0) completed++;
+    if (Object.values(businessHours).some(day => day.enabled)) completed++;
+
+    return (completed / total) * 100;
   };
-  
-  const handleFinishOnboarding = async () => {
-    if (!businessId) {
-      toast.error("ID do negócio não encontrado. Não foi possível finalizar o onboarding.");
+
+  const completeOnboarding = async () => {
+    if (!user?.id) {
+      toast.error('Usuário não autenticado');
       return;
     }
-    
-    setLoading(true);
+
+    setIsCompleting(true);
+
     try {
-      toast.info("Finalizando configuração do estabelecimento...");
+      // Create business first - using the existing businesses table
+      const businessId = businessData.id || crypto.randomUUID();
       
-      // First try to create tenant record if it doesn't exist
-      try {
-        const { error: tenantError } = await supabase
-          .from('tenants')
-          .upsert([
-            {
-              id: businessId,
-              name: 'Estabelecimento',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-          ], {
-            onConflict: 'id'
-          });
-        
-        if (tenantError) {
-          console.warn('Warning creating tenant:', tenantError);
-        } else {
-          console.log('Tenant record created/updated successfully');
-        }
-      } catch (tenantErr) {
-        console.warn('Could not create tenant record:', tenantErr);
-      }
-      
-      // Ativar o negócio
       const { error: businessError } = await supabase
         .from('businesses')
-        .update({ status: 'active' })
-        .eq('id', businessId);
-        
+        .upsert({
+          id: businessId,
+          name: businessData.name,
+          slug: businessData.slug || businessData.name.toLowerCase().replace(/\s+/g, '-'),
+          admin_email: user.email || '',
+          description: businessData.description,
+          phone: businessData.phone,
+          address: businessData.address,
+          city: businessData.city,
+          state: businessData.state,
+          zip_code: businessData.zipCode,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
       if (businessError) {
-        console.error('Error updating business status:', businessError);
-        throw businessError;
+        console.error('Error creating business:', businessError);
+        toast.error('Erro ao criar negócio');
+        return;
       }
-      
-      toast.success("Estabelecimento ativado com sucesso!");
-      
-      // Clear onboarding data from localStorage
-      localStorage.removeItem('unclic-manager-onboarding');
-      
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Erro ao finalizar onboarding:', error);
-      toast.error("Erro ao finalizar configuração: " + (error?.message || error));
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleCreateDefaultServices = async () => {
-    if (!businessId) {
-      toast.error("ID do negócio não encontrado");
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      // Create service categories
-      const { data: categoryData, error: categoryError } = await supabase
-        .from('service_categories')
-        .insert([
-          { 
-            tenantId: businessId,
-            name: 'Cortes',
-            description: 'Cortes de cabelo e barba',
-            order: 1,
-            isActive: true
-          },
+
+      // Create categories for services
+      if (services.length > 0) {
+        const categories = [
           {
-            tenantId: businessId,
-            name: 'Tratamentos',
-            description: 'Tratamentos para cabelo e barba',
-            order: 2,
-            isActive: true
-          }
-        ])
-        .select();
-      
-      if (categoryError) throw categoryError;
-      
-      if (categoryData && categoryData.length > 0) {
-        const haircutsCategoryId = categoryData[0].id;
-        const treatmentsCategoryId = categoryData[1].id;
-        
-        // Create default services
-        const defaultServices = [
-          {
+            id: crypto.randomUUID(),
             business_id: businessId,
-            name: 'Corte de Cabelo',
-            description: 'Corte masculino tradicional',
-            duration: 30,
-            price: 35,
-            categoryId: haircutsCategoryId
-          },
-          {
-            business_id: businessId,
-            name: 'Barba',
-            description: 'Aparo e modelagem de barba',
-            duration: 20,
-            price: 25,
-            categoryId: haircutsCategoryId
-          },
-          {
-            business_id: businessId,
-            name: 'Hidratação',
-            description: 'Tratamento hidratante para cabelos',
-            duration: 45,
-            price: 50,
-            categoryId: treatmentsCategoryId
+            name: 'Serviços Gerais',
+            description: 'Categoria padrão para serviços',
+            type: 'service',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           }
         ];
-        
+
+        const { error: categoriesError } = await supabase
+          .from('categories')
+          .insert(categories);
+
+        if (categoriesError) {
+          console.error('Error creating categories:', categoriesError);
+        }
+
+        // Create services - using the services table structure from the database
+        const serviceRecords = services.map(service => ({
+          id: crypto.randomUUID(),
+          business_id: businessId,
+          name: service.name,
+          description: service.description,
+          duration: service.duration,
+          price: service.price,
+          category_id: categories[0].id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }));
+
         const { error: servicesError } = await supabase
           .from('services')
-          .insert(defaultServices);
-          
-        if (servicesError) throw servicesError;
-        
-        toast.success("Serviços padrão criados com sucesso!");
-        
-        // Navigate to next step
-        navigate('/onboarding/professionals');
+          .insert(serviceRecords);
+
+        if (servicesError) {
+          console.error('Error creating services:', servicesError);
+        }
       }
+
+      // Create staff members - using the employees table
+      if (staff.length > 0) {
+        const staffRecords = staff.map(member => ({
+          id: crypto.randomUUID(),
+          business_id: businessId,
+          name: member.name,
+          email: member.email,
+          phone: member.phone,
+          position: member.position,
+          specialties: member.specialties,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }));
+
+        const { error: staffError } = await supabase
+          .from('employees')
+          .insert(staffRecords);
+
+        if (staffError) {
+          console.error('Error creating staff:', staffError);
+        }
+      }
+
+      // Create business settings
+      const { error: settingsError } = await supabase
+        .from('business_settings')
+        .insert({
+          id: crypto.randomUUID(),
+          business_id: businessId,
+          allow_online_booking: true,
+          minimum_notice_time: 30,
+          maximum_days_in_advance: 30,
+          require_advance_payment: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (settingsError) {
+        console.error('Error creating settings:', settingsError);
+      }
+
+      toast.success('Configuração inicial concluída com sucesso!');
+      router.push('/dashboard');
     } catch (error) {
-      console.error('Error creating default services:', error);
-      toast.error("Erro ao criar serviços padrão");
+      console.error('Error completing onboarding:', error);
+      toast.error('Erro ao finalizar configuração');
     } finally {
-      setLoading(false);
+      setIsCompleting(false);
     }
   };
-  
-  // Render appropriate buttons based on current step
-  const renderButtons = () => {
-    // Aceita tanto string 'complete' quanto o índice do último step (4 ou 5)
-    const isLastStep = currentStep === 'complete' || currentStep === 4 || currentStep === '4' || currentStep === 5 || currentStep === '5';
-    if (isLastStep) {
-      return (
-        <Button 
-          onClick={handleFinishOnboarding}
-          disabled={loading || isSubmitting}
-          className="ml-auto"
-        >
-          {loading || isSubmitting ? "Processando..." : "Finalizar e Ir para o Dashboard"}
-          <ChevronRight className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    }
-    
-    if (currentStep === 'services') {
-      return (
-        <>
-          <Button 
-            variant="outline" 
-            onClick={onPrevious}
-            disabled={loading || isSubmitting}
-          >
-            Voltar
-          </Button>
-          
-          <Button
-            variant="secondary"
-            onClick={handleCreateDefaultServices}
-            disabled={loading || isSubmitting}
-          >
-            {loading || isSubmitting ? "Criando..." : "Criar Serviços Padrão"}
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            onClick={handleSkip}
-            disabled={loading || isSubmitting}
-          >
-            Pular
-          </Button>
-          
-          <Button 
-            onClick={onNext}
-            disabled={loading || isSubmitting}
-          >
-            {loading || isSubmitting ? "Processando..." : "Continuar"}
-            <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
-        </>
-      );
-    }
-    
-    // Default buttons for most steps
-    return (
-      <>
-        {onPrevious && (
-          <Button 
-            variant="outline" 
-            onClick={onPrevious}
-            disabled={loading || isSubmitting}
-          >
-            Voltar
-          </Button>
-        )}
-        
-        <Button 
-          variant="outline" 
-          onClick={handleSkip}
-          disabled={loading || isSubmitting}
-          className="ml-auto"
-        >
-          Pular
-        </Button>
-        
-        {onNext && (
-          <Button 
-            onClick={onNext}
-            disabled={loading || isSubmitting}
-          >
-            {loading || isSubmitting ? "Processando..." : "Continuar"}
-            <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
-        )}
-      </>
-    );
-  };
-  
+
+  const progress = calculateProgress();
+  const isComplete = progress === 100;
+
   return (
-    <div className="flex justify-between pt-6">
-      {renderButtons()}
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Progresso da Configuração</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <div className="flex justify-between text-sm mb-2">
+            <span>Progresso</span>
+            <span>{Math.round(progress)}%</span>
+          </div>
+          <Progress value={progress} />
+        </div>
+
+        <div className="space-y-2 text-sm">
+          <div className={`flex items-center gap-2 ${businessData.name ? 'text-green-600' : 'text-gray-500'}`}>
+            <div className={`w-2 h-2 rounded-full ${businessData.name ? 'bg-green-600' : 'bg-gray-300'}`} />
+            Informações do negócio
+          </div>
+          <div className={`flex items-center gap-2 ${services.length > 0 ? 'text-green-600' : 'text-gray-500'}`}>
+            <div className={`w-2 h-2 rounded-full ${services.length > 0 ? 'bg-green-600' : 'bg-gray-300'}`} />
+            Serviços ({services.length})
+          </div>
+          <div className={`flex items-center gap-2 ${staff.length > 0 ? 'text-green-600' : 'text-gray-500'}`}>
+            <div className={`w-2 h-2 rounded-full ${staff.length > 0 ? 'bg-green-600' : 'bg-gray-300'}`} />
+            Funcionários ({staff.length})
+          </div>
+          <div className={`flex items-center gap-2 ${Object.values(businessHours).some(day => day.enabled) ? 'text-green-600' : 'text-gray-500'}`}>
+            <div className={`w-2 h-2 rounded-full ${Object.values(businessHours).some(day => day.enabled) ? 'bg-green-600' : 'bg-gray-300'}`} />
+            Horários de funcionamento
+          </div>
+        </div>
+
+        {isComplete && (
+          <Button 
+            onClick={completeOnboarding} 
+            className="w-full"
+            disabled={isCompleting}
+          >
+            {isCompleting ? 'Finalizando...' : 'Finalizar Configuração'}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
   );
 }
