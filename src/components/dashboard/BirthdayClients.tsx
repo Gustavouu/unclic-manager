@@ -30,9 +30,8 @@ export function BirthdayClients() {
 
       setLoading(true);
       try {
-        // Get current month and day
         const today = new Date();
-        const currentMonth = today.getMonth() + 1; // JavaScript months are 0-indexed
+        const currentMonth = today.getMonth() + 1;
         const currentDay = today.getDate();
 
         let birthdayClients: ClientInfo[] = [];
@@ -49,57 +48,32 @@ export function BirthdayClients() {
           if (clientsError) {
             console.error('Error fetching clients:', clientsError);
           } else if (clientsData && clientsData.length > 0) {
-            // Find clients with birthdays today
-            const todaysBirthdays = clientsData.filter(client => {
-              if (!client.birth_date && !client.data_nascimento) return false;
-              const birthDate = new Date(client.birth_date || client.data_nascimento);
+            const normalizedClients = clientsData.map(normalizeClientData);
+            
+            const todaysBirthdays = normalizedClients.filter(client => {
+              if (!client.birth_date) return false;
+              const birthDate = new Date(client.birth_date);
               return birthDate.getMonth() + 1 === currentMonth && birthDate.getDate() === currentDay;
             });
 
             birthdayClients = todaysBirthdays.map(client => ({
               id: client.id,
-              name: client.name || client.nome || 'Cliente',
-              image: client.avatar || client.image_url || undefined,
-              birthDate: client.birth_date ? new Date(client.birth_date) : 
-                        client.data_nascimento ? new Date(client.data_nascimento) : undefined,
-              lastVisit: client.last_visit ? new Date(client.last_visit) : 
-                      client.ultima_visita ? new Date(client.ultima_visita) : undefined,
-              status: client.status || 'active'
+              name: client.name || 'Cliente',
+              image: client.avatar,
+              birthDate: client.birth_date ? new Date(client.birth_date) : undefined,
+              lastVisit: client.last_visit ? new Date(client.last_visit) : undefined,
+              status: (client.status as 'active' | 'inactive') || 'active'
             }));
           }
         }
 
-        // If no data found, try the clientes table
+        // If no data found, create empty result
         if (birthdayClients.length === 0) {
-          const clientesExists = await tableExists('clientes');
+          const funcionariosExists = await tableExists('funcionarios');
           
-          if (clientesExists) {
-            const { data: clientesData, error: clientesError } = await supabase
-              .from('clientes')
-              .select('*')
-              .eq('id_negocio', businessId);
-
-            if (clientesError) {
-              console.error('Error fetching clientes:', clientesError);
-            } else if (clientesData && clientesData.length > 0) {
-              // Find clients with birthdays today
-              const todaysBirthdays = clientesData.filter(cliente => {
-                if (!cliente.data_nascimento) return false;
-                const birthDate = new Date(cliente.data_nascimento);
-                return birthDate.getMonth() + 1 === currentMonth && birthDate.getDate() === currentDay;
-              });
-
-              const mappedClients = todaysBirthdays.map(cliente => ({
-                id: cliente.id,
-                name: cliente.nome || 'Cliente',
-                image: cliente.avatar || cliente.url_avatar,
-                birthDate: cliente.data_nascimento ? new Date(cliente.data_nascimento) : undefined,
-                lastVisit: cliente.ultima_visita ? new Date(cliente.ultima_visita) : undefined,
-                status: cliente.status || 'active'
-              }));
-
-              birthdayClients = [...birthdayClients, ...mappedClients];
-            }
+          if (funcionariosExists) {
+            // This indicates a legacy system, but we'll show no birthdays for now
+            birthdayClients = [];
           }
         }
 

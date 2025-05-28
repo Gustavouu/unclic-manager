@@ -1,4 +1,3 @@
-
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
@@ -11,7 +10,7 @@ import { format, parse, addMinutes } from 'date-fns';
 import { generateTimeOptions } from '../utils/timeUtils';
 import { cn } from "@/lib/utils";
 import { supabase } from '@/integrations/supabase/client';
-import { safeJsonParse, safeJsonObject } from '@/utils/databaseUtils';
+import { safeJsonObject } from '@/utils/databaseUtils';
 
 export type DateTimeSelectWrapperProps = {
   form: UseFormReturn<AppointmentFormValues>;

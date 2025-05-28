@@ -1,207 +1,219 @@
 
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { useClients } from "@/hooks/useClients";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import * as z from 'zod';
-import { useAuth } from '@/hooks/useAuth';
-import { useTenant } from '@/contexts/TenantContext';
-import { ClientFormData } from '@/hooks/useClients';
-import { formatPhoneNumber } from '@/services/client/clientUtils';
-
-// Schema for client form validation
-const clientSchema = z.object({
-  nome: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres' }),
-  email: z.string().email({ message: 'Email inválido' }).optional().or(z.literal('')),
-  telefone: z.string().optional().or(z.literal('')),
-  cidade: z.string().optional().or(z.literal('')),
-  estado: z.string().optional().or(z.literal('')),
-});
+import React, { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useClients, ClientFormData } from "@/hooks/useClients";
+import { toast } from "sonner";
 
 interface NewClientDialogProps {
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onClientCreated?: (client: any) => void;
 }
 
-export const NewClientDialog = ({ onClose, onClientCreated }: NewClientDialogProps) => {
-  const { createClient, isSubmitting, error } = useClients(onClientCreated);
-  const [authChecked, setAuthChecked] = useState(false);
-  const { user } = useAuth();
-  const { businessId } = useTenant();
-  
-  // Set up the form with validation
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm<ClientFormData>({
-    resolver: zodResolver(clientSchema),
-    defaultValues: {
-      nome: '',
-      email: '',
-      telefone: '',
-      cidade: '',
-      estado: '',
-    }
+export const NewClientDialog: React.FC<NewClientDialogProps> = ({
+  open,
+  onOpenChange,
+  onClientCreated
+}) => {
+  const { createClient, isSubmitting } = useClients();
+  const [formData, setFormData] = useState<ClientFormData>({
+    name: "",
+    email: "",
+    phone: "",
+    birth_date: "",
+    gender: "",
+    address: "",
+    city: "",
+    state: "",
+    zip_code: "",
+    notes: ""
   });
-  
-  // Check auth status when component mounts
-  useEffect(() => {
-    setAuthChecked(true);
-  }, [user, businessId]);
-  
-  // Format phone number as user types
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    let formattedPhone = '';
-    
-    if (value.length <= 2) {
-      formattedPhone = value;
-    } else if (value.length <= 6) {
-      formattedPhone = `(${value.slice(0, 2)}) ${value.slice(2)}`;
-    } else if (value.length <= 10) {
-      formattedPhone = `(${value.slice(0, 2)}) ${value.slice(2, 6)}-${value.slice(6)}`;
-    } else {
-      formattedPhone = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7, 11)}`;
-    }
-    
-    setValue('telefone', formattedPhone);
+
+  const handleInputChange = (field: keyof ClientFormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
-  
-  const onSubmit = async (data: ClientFormData) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      toast.error("Nome é obrigatório");
+      return;
+    }
+
     try {
-      console.log("Submitting client data:", data);
+      const newClient = await createClient(formData);
+      toast.success("Cliente criado com sucesso!");
       
-      const newClient = await createClient({
-        ...data,
-        // Make sure we're only sending fields that exist in the database
-        nome: data.nome,
-        email: data.email,
-        telefone: data.telefone,
-        cidade: data.cidade,
-        estado: data.estado
+      if (onClientCreated) {
+        onClientCreated(newClient);
+      }
+      
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        birth_date: "",
+        gender: "",
+        address: "",
+        city: "",
+        state: "",
+        zip_code: "",
+        notes: ""
       });
       
-      if (newClient) {
-        onClose();
-      }
-    } catch (error: any) {
-      console.error("Error in client creation:", error);
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error creating client:", error);
+      toast.error("Erro ao criar cliente");
     }
   };
 
   return (
-    <Dialog open onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo Cliente</DialogTitle>
+          <DialogDescription>
+            Adicione um novo cliente ao sistema.
+          </DialogDescription>
         </DialogHeader>
         
-        {!businessId && (
-          <div className="bg-yellow-100 p-3 rounded-md mb-4">
-            <p className="text-yellow-800">Aviso: ID do negócio não disponível. Você precisa estar vinculado a um negócio.</p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => handleInputChange("name", e.target.value)}
+              placeholder="Nome completo"
+              required
+            />
           </div>
-        )}
-        
-        {!user && authChecked && (
-          <div className="bg-red-100 p-3 rounded-md mb-4">
-            <p className="text-red-800">Aviso: Você precisa estar autenticado para criar clientes.</p>
-          </div>
-        )}
-        
-        {error && (
-          <div className="bg-red-100 p-3 rounded-md mb-4">
-            <p className="text-red-800">Erro: {error}</p>
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
-          <div className="space-y-4">
-            <div className="grid w-full gap-1.5">
-              <Label htmlFor="nome">Nome completo *</Label>
-              <Input 
-                id="nome" 
-                {...register('nome')}
-                placeholder="Nome completo do cliente" 
-                className={errors.nome ? "border-red-500" : ""}
-              />
-              {errors.nome && (
-                <p className="text-sm text-red-500">{errors.nome.message}</p>
-              )}
-            </div>
-            
-            <div className="grid w-full gap-1.5">
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input 
+              <Input
                 id="email"
                 type="email"
-                {...register('email')}
-                placeholder="email@exemplo.com" 
-                className={errors.email ? "border-red-500" : ""}
+                value={formData.email}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+                placeholder="email@exemplo.com"
               />
-              {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
-              )}
             </div>
             
-            <div className="grid w-full gap-1.5">
-              <Label htmlFor="telefone">Telefone</Label>
-              <Input 
-                id="telefone"
-                {...register('telefone')}
-                placeholder="(00) 00000-0000" 
-                className={errors.telefone ? "border-red-500" : ""}
-                onChange={handlePhoneChange}
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefone</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => handleInputChange("phone", e.target.value)}
+                placeholder="(11) 99999-9999"
               />
-              {errors.telefone && (
-                <p className="text-sm text-red-500">{errors.telefone.message}</p>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid w-full gap-1.5">
-                <Label htmlFor="cidade">Cidade</Label>
-                <Input 
-                  id="cidade"
-                  {...register('cidade')}
-                  placeholder="Cidade" 
-                  className={errors.cidade ? "border-red-500" : ""}
-                />
-                {errors.cidade && (
-                  <p className="text-sm text-red-500">{errors.cidade.message}</p>
-                )}
-              </div>
-              
-              <div className="grid w-full gap-1.5">
-                <Label htmlFor="estado">Estado</Label>
-                <Input 
-                  id="estado"
-                  {...register('estado')}
-                  placeholder="Estado" 
-                  className={errors.estado ? "border-red-500" : ""}
-                />
-                {errors.estado && (
-                  <p className="text-sm text-red-500">{errors.estado.message}</p>
-                )}
-              </div>
             </div>
           </div>
           
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="birth_date">Data de Nascimento</Label>
+              <Input
+                id="birth_date"
+                type="date"
+                value={formData.birth_date}
+                onChange={(e) => handleInputChange("birth_date", e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="gender">Gênero</Label>
+              <Select onValueChange={(value) => handleInputChange("gender", value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="masculino">Masculino</SelectItem>
+                  <SelectItem value="feminino">Feminino</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                  <SelectItem value="nao_informado">Não informado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="address">Endereço</Label>
+            <Input
+              id="address"
+              value={formData.address}
+              onChange={(e) => handleInputChange("address", e.target.value)}
+              placeholder="Rua, número, bairro"
+            />
+          </div>
+          
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="city">Cidade</Label>
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => handleInputChange("city", e.target.value)}
+                placeholder="Cidade"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="state">Estado</Label>
+              <Input
+                id="state"
+                value={formData.state}
+                onChange={(e) => handleInputChange("state", e.target.value)}
+                placeholder="UF"
+                maxLength={2}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="zip_code">CEP</Label>
+              <Input
+                id="zip_code"
+                value={formData.zip_code}
+                onChange={(e) => handleInputChange("zip_code", e.target.value)}
+                placeholder="00000-000"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="notes">Observações</Label>
+            <Textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => handleInputChange("notes", e.target.value)}
+              placeholder="Observações adicionais..."
+              rows={3}
+            />
+          </div>
+          
           <DialogFooter>
-            <Button variant="outline" type="button" onClick={onClose}>Cancelar</Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || !businessId || !user}
-              className="relative"
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Criando...
-                </>
-              ) : "Criar cliente"}
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Criando..." : "Criar Cliente"}
             </Button>
           </DialogFooter>
         </form>
