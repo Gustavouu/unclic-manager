@@ -1,107 +1,125 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
-export interface UserPermission {
-  id: string;
-  module: string;
-  action: string;
-  name: string;
-  description?: string;
-}
+export type Role = 'admin' | 'manager' | 'staff';
 
-export interface UserRole {
+export interface Permission {
   id: string;
   name: string;
-  description?: string;
-  isAdmin: boolean;
-  permissions: UserPermission[];
+  description: string;
 }
 
-export const useUserPermissions = (userId?: string) => {
-  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
-  const [permissions, setPermissions] = useState<UserPermission[]>([]);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+export function useUserPermissions() {
+  const [role, setRole] = useState<Role | null>(null);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUserPermissions = async () => {
-      if (!userId) return;
-      
+  const fetchUserRole = useCallback(async () => {
+    try {
       setIsLoading(true);
       setError(null);
       
-      try {
-        // Check if user has admin access first
-        const { data: adminCheck, error: adminError } = await supabase
-          .rpc('user_is_admin');
-          
-        if (!adminError && adminCheck === true) {
-          console.log('User is admin, granting full access');
-          setIsAdmin(true);
-          setUserRoles([{ 
-            id: 'admin', 
-            name: 'Admin', 
-            description: 'Full access', 
-            isAdmin: true,
-            permissions: [] 
-          }]);
-          setPermissions([]);
-          return;
-        }
-        
-        // For demo purposes, set some default values
-        // In a real app, these would come from the database
-        setIsAdmin(true); // Default to admin for demo
-        setUserRoles([{ 
-          id: 'admin', 
-          name: 'Admin', 
-          description: 'Full access', 
-          isAdmin: true,
-          permissions: [{
-            id: 'services-manage',
-            module: 'services',
-            action: 'manage',
-            name: 'services.manage',
-            description: 'Manage services'
-          }] 
-        }]);
-        setPermissions([{
-          id: 'services-manage',
-          module: 'services',
-          action: 'manage',
-          name: 'services.manage',
-          description: 'Manage services'
-        }]);
-        
-      } catch (err: any) {
-        console.error('Error in useUserPermissions:', err);
-        setError(err.message);
-        toast.error('Erro ao carregar permissões do usuário');
-      } finally {
-        setIsLoading(false);
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('Usuário não autenticado');
       }
-    };
+      
+      // Get business association to determine role
+      const { data: businessUser, error: businessError } = await supabase
+        .from('business_users')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (businessError && businessError.code !== 'PGRST116') {
+        throw businessError;
+      }
+      
+      // Default to staff if no specific role found
+      const userRole = (businessUser?.role as Role) || 'staff';
+      setRole(userRole);
+      
+      // Set default permissions based on role
+      const defaultPermissions: Permission[] = [];
+      
+      if (userRole === 'admin') {
+        defaultPermissions.push(
+          { id: '1', name: 'manage_all', description: 'Gerenciar tudo' },
+          { id: '2', name: 'view_reports', description: 'Ver relatórios' },
+          { id: '3', name: 'manage_users', description: 'Gerenciar usuários' },
+          { id: '4', name: 'manage_appointments', description: 'Gerenciar agendamentos' },
+          { id: '5', name: 'manage_clients', description: 'Gerenciar clientes' }
+        );
+      } else if (userRole === 'manager') {
+        defaultPermissions.push(
+          { id: '2', name: 'view_reports', description: 'Ver relatórios' },
+          { id: '4', name: 'manage_appointments', description: 'Gerenciar agendamentos' },
+          { id: '5', name: 'manage_clients', description: 'Gerenciar clientes' }
+        );
+      } else {
+        defaultPermissions.push(
+          { id: '4', name: 'manage_appointments', description: 'Gerenciar agendamentos' },
+          { id: '5', name: 'manage_clients', description: 'Gerenciar clientes' }
+        );
+      }
+      
+      setPermissions(defaultPermissions);
+    } catch (error: any) {
+      console.error('Erro ao buscar papel e permissões do usuário:', error);
+      setError(error.message);
+      // Set default staff role on error
+      setRole('staff');
+      setPermissions([
+        { id: '4', name: 'manage_appointments', description: 'Gerenciar agendamentos' },
+        { id: '5', name: 'manage_clients', description: 'Gerenciar clientes' }
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-    fetchUserPermissions();
-  }, [userId]);
+  // Check if user has a specific permission
+  const hasPermission = useCallback((permissionName: string): boolean => {
+    return permissions.some(permission => permission.name === permissionName);
+  }, [permissions]);
 
-  // Helper method to check if user has a specific permission
-  const hasPermission = (permissionName: string): boolean => {
-    if (isAdmin) return true;
-    return permissions.some(p => p.name === permissionName);
-  };
+  // Check if user is admin
+  const isAdmin = useCallback((): boolean => {
+    return role === 'admin';
+  }, [role]);
 
-  return { 
-    userRoles, 
+  // Check if user is manager
+  const isManager = useCallback((): boolean => {
+    return role === 'manager' || role === 'admin';
+  }, [role]);
+
+  // Check if user can access a protected section
+  const canAccess = useCallback((requiredPermissions: string[]): boolean => {
+    // Admins have access to everything
+    if (isAdmin()) return true;
+    
+    // Check if user has at least one of the required permissions
+    return requiredPermissions.some(permission => hasPermission(permission));
+  }, [hasPermission, isAdmin]);
+
+  // Load role and permissions when component mounts
+  useEffect(() => {
+    fetchUserRole();
+  }, [fetchUserRole]);
+
+  return {
+    role,
     permissions,
-    isAdmin,
     isLoading,
     error,
-    hasPermission
+    hasPermission,
+    isAdmin,
+    isManager,
+    canAccess,
+    refreshPermissions: fetchUserRole
   };
-};
-
-export default useUserPermissions;
+}

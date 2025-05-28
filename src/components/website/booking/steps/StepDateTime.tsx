@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookingData } from "../types";
@@ -9,7 +10,7 @@ import { useTimeSlots } from "./datetime/useTimeSlots";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { Appointment } from "@/components/appointments/types";
+import { Appointment } from "@/hooks/appointments/types";
 import { parseDateFromAppointment } from "../utils/dateUtils";
 
 interface StepDateTimeProps {
@@ -39,7 +40,7 @@ export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepD
     const formattedSelectedDate = format(selectedDate, 'yyyy-MM-dd');
     
     // Find appointments for the selected date
-    const appointmentsForDate = appointments.filter((app) => {
+    const appointmentsForDate = appointments.filter((app: Appointment) => {
       if (!app.date) return false;
       
       const appDate = parseDateFromAppointment(app).date;
@@ -47,7 +48,7 @@ export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepD
     });
     
     // Mark time slots as booked
-    appointmentsForDate.forEach((app) => {
+    appointmentsForDate.forEach((app: Appointment) => {
       const { time } = parseDateFromAppointment(app);
       
       if (time) {

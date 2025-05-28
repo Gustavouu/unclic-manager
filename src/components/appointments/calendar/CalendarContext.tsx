@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from 'react';
 import { 
   addMonths, 
@@ -12,11 +13,11 @@ import {
   addWeeks,
   subWeeks
 } from "date-fns";
-import { AppointmentType, CalendarViewType, ServiceType } from "./types";
+import { CalendarViewType, ServiceType } from "./types";
 import { toast } from "sonner";
 import { useAppointmentUpdate } from "@/hooks/appointments/useAppointmentUpdate";
 import { useAppointmentConflicts } from "@/hooks/appointments/useAppointmentConflicts";
-import { Appointment, AppointmentStatus } from "../types";
+import { Appointment, AppointmentStatus } from "@/hooks/appointments/types";
 
 interface ConflictCheckParams {
   date: Date;
@@ -32,10 +33,10 @@ interface CalendarContextType {
   serviceFilter: ServiceType;
   professionalFilter: string | null;
   calendarDays: (Date | null)[];
-  filteredAppointments: AppointmentType[];
-  dayAppointments: AppointmentType[];
-  weekAppointments: AppointmentType[];
-  selectedAppointment: AppointmentType | null;
+  filteredAppointments: Appointment[];
+  dayAppointments: Appointment[];
+  weekAppointments: Appointment[];
+  selectedAppointment: Appointment | null;
   isDragging: boolean;
   
   setCurrentDate: (date: Date) => void;
@@ -43,12 +44,12 @@ interface CalendarContextType {
   setCalendarView: (view: CalendarViewType) => void;
   setServiceFilter: (filter: ServiceType) => void;
   setProfessionalFilter: (professionalId: string | null) => void;
-  setSelectedAppointment: (appointment: AppointmentType | null) => void;
+  setSelectedAppointment: (appointment: Appointment | null) => void;
   nextPeriod: () => void;
   prevPeriod: () => void;
   handleSelectDate: (date: Date | undefined) => void;
   handleSelectDay: (day: Date) => void;
-  handleSelectAppointment: (appointment: AppointmentType) => void;
+  handleSelectAppointment: (appointment: Appointment) => void;
   handleDragStart: (appointmentId: string) => void;
   handleDragEnd: (newDate: Date) => Promise<boolean>;
 }
@@ -56,7 +57,7 @@ interface CalendarContextType {
 // Define the props interface for the CalendarProvider
 interface CalendarProviderProps {
   children: React.ReactNode;
-  appointments: AppointmentType[];
+  appointments: Appointment[];
 }
 
 const CalendarContext = createContext<CalendarContextType>({} as CalendarContextType);
@@ -67,26 +68,13 @@ export const CalendarProvider: React.FC<CalendarProviderProps> = ({ children, ap
   const [calendarView, setCalendarView] = useState<CalendarViewType>("month");
   const [serviceFilter, setServiceFilter] = useState<ServiceType>("all");
   const [professionalFilter, setProfessionalFilter] = useState<string | null>(null);
-  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentType | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [localAppointments, setLocalAppointments] = useState<AppointmentType[]>(appointments);
+  const [localAppointments, setLocalAppointments] = useState<Appointment[]>(appointments);
   
   const { updateAppointment } = useAppointmentUpdate(setLocalAppointments);
   
-  const appointmentsForConflict: Appointment[] = appointments.map(app => ({
-    id: app.id,
-    clientName: app.clientName,
-    serviceName: app.serviceName,
-    date: app.date,
-    status: (app.status as AppointmentStatus) || "agendado",
-    price: app.price,
-    serviceType: app.serviceType,
-    duration: app.duration,
-    clientId: "default-client-id",
-    professionalId: app.professionalId
-  }));
-  
-  const { validateAppointmentTime } = useAppointmentConflicts(appointmentsForConflict);
+  const { validateAppointmentTime } = useAppointmentConflicts(appointments);
   
   const nextPeriod = () => {
     if (calendarView === "month") {
@@ -116,7 +104,7 @@ export const CalendarProvider: React.FC<CalendarProviderProps> = ({ children, ap
     setCalendarView("day");
   };
 
-  const handleSelectAppointment = (appointment: AppointmentType) => {
+  const handleSelectAppointment = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
   };
   
