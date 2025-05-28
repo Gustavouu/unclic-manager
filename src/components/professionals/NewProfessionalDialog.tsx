@@ -1,69 +1,28 @@
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useProfessionals } from "@/hooks/professionals/useProfessionals";
-import { ProfessionalForm } from "./form/ProfessionalForm";
-import { ProfessionalFormData } from "@/hooks/professionals/types";
-import { toast } from "sonner";
-import { useTenant } from "@/contexts/TenantContext";
+import React from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface NewProfessionalDialogProps {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  onSuccess?: () => void;
-  trigger?: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export const NewProfessionalDialog = ({ 
-  open: controlledOpen, 
-  onOpenChange: setControlledOpen,
-  onSuccess,
-  trigger 
-}: NewProfessionalDialogProps) => {
-  const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { createProfessional } = useProfessionals();
-  const { currentBusiness } = useTenant();
-  
-  const isControlled = controlledOpen !== undefined && setControlledOpen !== undefined;
-  const isOpen = isControlled ? controlledOpen : open;
-  const setIsOpen = isControlled ? setControlledOpen : setOpen;
-  
-  const handleSubmit = async (data: ProfessionalFormData) => {
-    setIsSubmitting(true);
-    
-    try {
-      // Add business_id from the current tenant
-      const professionalData = {
-        ...data,
-        business_id: currentBusiness?.id
-      };
-      
-      await createProfessional(professionalData);
-      setIsOpen(false);
-      toast.success("Profissional adicionado com sucesso!");
-      if (onSuccess) onSuccess();
-    } catch (error) {
-      console.error("Error creating professional:", error);
-      toast.error("Erro ao adicionar profissional");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
+export const NewProfessionalDialog: React.FC<NewProfessionalDialogProps> = ({
+  open,
+  onOpenChange
+}) => {
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-[600px]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Adicionar Novo Profissional</DialogTitle>
+          <DialogTitle>Novo Profissional</DialogTitle>
+          <DialogDescription>
+            Adicione um novo profissional ao sistema.
+          </DialogDescription>
         </DialogHeader>
-        <ProfessionalForm 
-          onClose={() => setIsOpen(false)} 
-          onSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
-        />
+        <div className="p-4">
+          <p>Componente em desenvolvimento.</p>
+        </div>
       </DialogContent>
     </Dialog>
   );

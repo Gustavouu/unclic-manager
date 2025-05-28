@@ -51,7 +51,7 @@ export const SERVICE_TYPE_NAMES: Record<ServiceType, string> = {
   treatment: "Tratamentos"
 };
 
-// Re-export all types from the hooks directory for consistency
+// Re-export everything from hooks to maintain consistency
 export * from '@/hooks/appointments/types';
 
 // Keep any component-specific types here if needed

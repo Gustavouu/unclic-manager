@@ -29,6 +29,13 @@ export interface ClientFormData {
   phone?: string;
   firstName?: string;
   lastName?: string;
+  birth_date?: string;
+  gender?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  notes?: string;
 }
 
 export const useClients = () => {
@@ -78,6 +85,13 @@ export const useClients = () => {
         name: clientData.name,
         email: clientData.email,
         phone: clientData.phone,
+        birth_date: clientData.birth_date,
+        gender: clientData.gender,
+        address: clientData.address,
+        city: clientData.city,
+        state: clientData.state,
+        zip_code: clientData.zip_code,
+        notes: clientData.notes,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };

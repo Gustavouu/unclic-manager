@@ -18,8 +18,8 @@ const clientSchema = z.object({
 interface StepClientInfoProps {
   onNext: (data: any) => void; 
   onBack?: () => void;
-  bookingData: any; // Add this to match WebsiteBookingFlow props
-  onUpdateBookingData: (data: any) => void; // Add this to match WebsiteBookingFlow props
+  bookingData: any;
+  onUpdateBookingData: (data: any) => void;
 }
 
 export const StepClientInfo: React.FC<StepClientInfoProps> = ({ 

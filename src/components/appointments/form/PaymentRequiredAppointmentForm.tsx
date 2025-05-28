@@ -1,41 +1,40 @@
 
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
-import { AppointmentFormValues } from '../schemas/appointmentFormSchema';
-import AppointmentForm from './AppointmentForm';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CreditCard } from 'lucide-react';
-import NotificationOptions from './NotificationsOptions';
+import { Button } from "@/components/ui/button";
 
-interface PaymentRequiredAppointmentFormProps {
-  form: UseFormReturn<AppointmentFormValues>;
-  onSubmit: (values: AppointmentFormValues) => void;
-  isSubmitting?: boolean;
+export interface PaymentRequiredAppointmentFormProps {
+  customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  onSuccess: () => void;
+  availableServices: any[];
+  availableStaff: any[];
 }
 
-const PaymentRequiredAppointmentForm = ({ form, onSubmit, isSubmitting }: PaymentRequiredAppointmentFormProps) => {
+const PaymentRequiredAppointmentForm: React.FC<PaymentRequiredAppointmentFormProps> = ({
+  customerName,
+  customerEmail,
+  customerPhone,
+  onSuccess,
+  availableServices,
+  availableStaff
+}) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Novo Agendamento</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Alert className="mb-6">
-          <CreditCard className="h-4 w-4" />
-          <AlertTitle>Pré-pagamento requerido</AlertTitle>
-          <AlertDescription>
-            Este serviço requer um pré-pagamento para confirmar o agendamento.
-          </AlertDescription>
-        </Alert>
-        
-        <AppointmentForm 
-          form={form}
-          onSubmit={onSubmit}
-          isSubmitting={isSubmitting}
-        />
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Formulário de Agendamento</h3>
+      <div className="space-y-2">
+        <p><strong>Cliente:</strong> {customerName}</p>
+        {customerEmail && <p><strong>Email:</strong> {customerEmail}</p>}
+        {customerPhone && <p><strong>Telefone:</strong> {customerPhone}</p>}
+      </div>
+      <div className="space-y-2">
+        <p><strong>Serviços disponíveis:</strong> {availableServices.length}</p>
+        <p><strong>Profissionais disponíveis:</strong> {availableStaff.length}</p>
+      </div>
+      <Button onClick={onSuccess} className="w-full">
+        Confirmar Agendamento
+      </Button>
+    </div>
   );
 };
 

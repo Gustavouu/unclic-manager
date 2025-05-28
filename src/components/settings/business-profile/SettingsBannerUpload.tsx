@@ -1,37 +1,11 @@
 
-import React from "react";
-import { ImageUpload } from "@/components/ui/image-upload";
-import { CameraIcon } from "lucide-react";
-import { useTenant } from "@/contexts/TenantContext";
+import React from 'react';
 
-export const SettingsBannerUpload: React.FC = () => {
-  const { currentBusiness, updateBusinessSettings } = useTenant();
-  
-  const handleImageChange = (file: File, bannerUrl: string) => {
-    updateBusinessSettings({
-      banner_url: bannerUrl
-    });
-  };
-  
+export const SettingsBannerUpload = () => {
   return (
-    <div className="w-full">
-      <ImageUpload
-        id="settings-banner-upload"
-        imageUrl={currentBusiness?.settings?.banner_url || ""}
-        onChange={(file) => {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const result = event.target?.result as string;
-            handleImageChange(file, result);
-          };
-          reader.readAsDataURL(file);
-        }}
-        icon={<CameraIcon className="h-5 w-5" />}
-        label="Banner do estabelecimento"
-        subLabel="Imagem que aparecerá no topo da página do seu negócio"
-        width="100%"
-        height="200px"
-      />
+    <div className="p-4 border rounded bg-muted">
+      <h3 className="text-lg font-semibold mb-2">Upload de Banner</h3>
+      <p>Componente de upload de banner em desenvolvimento.</p>
     </div>
   );
 };

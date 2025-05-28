@@ -33,4 +33,6 @@ export interface ClientFormData {
   state?: string;
   zip_code?: string;
   notes?: string;
+  firstName?: string;
+  lastName?: string;
 }

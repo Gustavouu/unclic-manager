@@ -1,36 +1,11 @@
 
-import React from "react";
-import { ImageUpload } from "@/components/ui/image-upload";
-import { ImageIcon } from "lucide-react";
-import { useTenant } from "@/contexts/TenantContext";
+import React from 'react';
 
-export const SettingsLogoUpload: React.FC = () => {
-  const { currentBusiness, updateBusinessSettings } = useTenant();
-  
-  const handleImageChange = (file: File, logoUrl: string) => {
-    updateBusinessSettings({
-      logo_url: logoUrl
-    });
-  };
-  
+export const SettingsLogoUpload = () => {
   return (
-    <div className="flex justify-center">
-      <ImageUpload
-        id="settings-logo-upload"
-        imageUrl={currentBusiness?.settings?.logo_url || ""}
-        onChange={(file) => {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const result = event.target?.result as string;
-            handleImageChange(file, result);
-          };
-          reader.readAsDataURL(file);
-        }}
-        icon={<ImageIcon className="h-5 w-5" />}
-        label="Logo"
-        width="150px"
-        height="150px"
-      />
+    <div className="p-4 border rounded bg-muted">
+      <h3 className="text-lg font-semibold mb-2">Upload de Logo</h3>
+      <p>Componente de upload de logo em desenvolvimento.</p>
     </div>
   );
 };

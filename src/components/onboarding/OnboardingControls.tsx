@@ -87,7 +87,7 @@ export function OnboardingControls({ currentStep, onNext, onPrevious }: Onboardi
           console.error('Error creating categories:', categoriesError);
         }
 
-        // Create services - using the correct table structure
+        // Create services - using the correct table structure with required fields
         for (const service of services) {
           const serviceRecord = {
             id: crypto.randomUUID(),
@@ -96,6 +96,7 @@ export function OnboardingControls({ currentStep, onNext, onPrevious }: Onboardi
             description: service.description,
             duration: service.duration,
             cost: service.price,
+            price: service.price, // Add the required price field
             categoryId: categoryId,
             isActive: true,
             createdAt: new Date().toISOString(),
