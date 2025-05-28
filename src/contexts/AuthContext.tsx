@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { User, Session, AuthError, AuthResponse } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { Permission } from '@/types/user';
 
 export interface AuthContextType {
   user: User | null;
@@ -12,6 +13,7 @@ export interface AuthContextType {
   signUp: (email: string, password: string, options?: { data?: any }) => Promise<AuthResponse>;
   signOut: () => Promise<{ error: AuthError | null }>;
   logout: () => Promise<void>;
+  hasPermission: (permission: Permission) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -22,6 +24,7 @@ const AuthContext = createContext<AuthContextType>({
   signUp: async () => ({ data: { user: null, session: null }, error: null }),
   signOut: async () => ({ error: null }),
   logout: async () => {},
+  hasPermission: () => false,
 });
 
 export const useAuth = () => {
@@ -136,6 +139,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await signOut();
   };
 
+  const hasPermission = (permission: Permission): boolean => {
+    // For now, return true for all permissions when user is authenticated
+    // This can be extended later to check actual user permissions
+    return !!user;
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -144,6 +153,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signUp,
     signOut,
     logout,
+    hasPermission,
   };
 
   return (
