@@ -1,16 +1,15 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useOnboardingContext } from '@/contexts/onboarding/OnboardingContext';
+import { useOnboarding } from '@/contexts/onboarding/OnboardingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'react-router-dom';
 
 export function OnboardingControls() {
-  const { businessData, services, staff, businessHours } = useOnboardingContext();
+  const { businessData, services, staffMembers: staff, businessHours } = useOnboarding();
   const { user } = useAuth();
   const router = useRouter();
   const [isCompleting, setIsCompleting] = useState(false);
