@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
@@ -32,22 +33,29 @@ export function OnboardingControls({
     
     setLoading(true);
     try {
-      // Mark current step as completed
-      await supabase
-        .from('onboarding_progress')
-        .upsert([
-          {
-            tenantId: businessId,
-            step: currentStep,
-            completed: true,
-            completedAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ], {
-          onConflict: 'tenantId,step'
-        });
+      // Try to create a tenant record first if it doesn't exist
+      try {
+        const { error: tenantError } = await supabase
+          .from('tenants')
+          .upsert([
+            {
+              id: businessId,
+              name: 'Estabelecimento',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          ], {
+            onConflict: 'id'
+          });
+        
+        if (tenantError) {
+          console.warn('Warning creating tenant:', tenantError);
+        }
+      } catch (tenantErr) {
+        console.warn('Could not create tenant record:', tenantErr);
+      }
       
-      // Navigate to next step based on current step
+      // Navigate to next step without saving to onboarding_progress for now
       switch (currentStep) {
         case 'welcome':
           navigate('/onboarding/business');
@@ -83,31 +91,51 @@ export function OnboardingControls({
       toast.error("ID do negócio não encontrado. Não foi possível finalizar o onboarding.");
       return;
     }
+    
     setLoading(true);
     try {
       toast.info("Finalizando configuração do estabelecimento...");
-      // Marcar todos os steps como completos
-      const steps = ['welcome', 'business', 'services', 'professionals', 'schedule', 'complete'];
-      const now = new Date().toISOString();
-      const progressArray = steps.map(step => ({
-        id: uuidv4(),
-        tenantId: businessId,
-        step,
-        completed: true,
-        completedAt: now,
-        updatedAt: now
-      }));
-      await supabase
-        .from('onboarding_progress')
-        .upsert(progressArray, { onConflict: 'tenantId,step' });
-      toast.success("Progresso do onboarding salvo.");
+      
+      // First try to create tenant record if it doesn't exist
+      try {
+        const { error: tenantError } = await supabase
+          .from('tenants')
+          .upsert([
+            {
+              id: businessId,
+              name: 'Estabelecimento',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+          ], {
+            onConflict: 'id'
+          });
+        
+        if (tenantError) {
+          console.warn('Warning creating tenant:', tenantError);
+        } else {
+          console.log('Tenant record created/updated successfully');
+        }
+      } catch (tenantErr) {
+        console.warn('Could not create tenant record:', tenantErr);
+      }
+      
       // Ativar o negócio
       const { error: businessError } = await supabase
         .from('businesses')
         .update({ status: 'active' })
         .eq('id', businessId);
-      if (businessError) throw businessError;
+        
+      if (businessError) {
+        console.error('Error updating business status:', businessError);
+        throw businessError;
+      }
+      
       toast.success("Estabelecimento ativado com sucesso!");
+      
+      // Clear onboarding data from localStorage
+      localStorage.removeItem('unclic-manager-onboarding');
+      
       navigate('/dashboard');
     } catch (error) {
       console.error('Erro ao finalizar onboarding:', error);
@@ -187,19 +215,6 @@ export function OnboardingControls({
         if (servicesError) throw servicesError;
         
         toast.success("Serviços padrão criados com sucesso!");
-        
-        // Mark step as completed
-        await supabase
-          .from('onboarding_progress')
-          .upsert({
-            tenantId: businessId,
-            step: 'services',
-            completed: true,
-            completedAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }, {
-            onConflict: 'tenantId,step'
-          });
         
         // Navigate to next step
         navigate('/onboarding/professionals');

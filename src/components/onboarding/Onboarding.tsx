@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+
+import React, { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
@@ -25,11 +26,15 @@ export const Onboarding = () => {
   } = useOnboarding();
 
   const totalSteps = 5; // 0 a 4
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSaveRef = useRef<number>(0);
+
   const handleNext = () => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     }
   };
+  
   const handlePrevious = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
@@ -42,17 +47,39 @@ export const Onboarding = () => {
       loadProgress();
     }, 100);
     return () => clearTimeout(timer);
-    // This effect should run only once when component mounts
   }, [loadProgress]);
 
-  // Auto-save data when steps change
+  // Optimized auto-save with debouncing and rate limiting
   useEffect(() => {
-    // Avoid saving during initial render
-    const timeoutId = setTimeout(() => {
-      saveProgress();
-    }, 500); // Increased timeout to reduce saving frequency
+    // Don't save during initial render or if method is null
+    if (currentStep === -1 || onboardingMethod === null) return;
+    
+    // Rate limiting: only save once every 2 seconds
+    const now = Date.now();
+    if (now - lastSaveRef.current < 2000) {
+      return;
+    }
 
-    return () => clearTimeout(timeoutId);
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Set new timeout with longer delay
+    saveTimeoutRef.current = setTimeout(() => {
+      try {
+        saveProgress();
+        lastSaveRef.current = Date.now();
+      } catch (error) {
+        console.error('Error in auto-save:', error);
+      }
+    }, 1000); // Increased from 500ms to 1000ms
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [currentStep, saveProgress, onboardingMethod]);
 
   // Show welcome screen if no method is selected

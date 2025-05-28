@@ -1,4 +1,5 @@
-import React, { createContext, useContext, ReactNode, useState, useRef, useEffect } from "react";
+
+import React, { createContext, useContext, ReactNode, useState, useRef, useEffect, useCallback } from "react";
 import { OnboardingContextType, BusinessData, OnboardingMethod, OnboardingStatus } from "./types";
 import { useServicesState } from "./hooks/useServicesState";
 import { useStaffState } from "./hooks/useStaffState";
@@ -19,16 +20,14 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
   const [businessCreated, setBusinessCreated] = useState<{id?: string; slug?: string} | null>(null);
   
   const hasLoaded = useRef(false);
-  const saveTimeoutRef = useRef<number | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastUpdateRef = useRef<number>(0);
   
   // Initialize state hooks
   const { businessHours, setBusinessHours, updateBusinessHours } = useBusinessHoursState();
   const { services, setServices, addService, removeService, updateService } = useServicesState();
   const { staffMembers, setStaffMembers, hasStaff, setHasStaff, addStaffMember, removeStaffMember, updateStaffMember } = useStaffState();
 
-  // Create a reference for saveProgress function
-  const saveProgressRef = useRef<() => void>(() => {});
-  
   // Create business data state directly with useState
   const [businessData, setBusinessDataState] = useState<BusinessData>({
     name: "",
@@ -44,8 +43,49 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     state: ""
   });
   
+  // Persistence hook
+  const { saveProgress, loadProgress } = usePersistence(
+    businessData,
+    services,
+    staffMembers,
+    businessHours,
+    hasStaff,
+    currentStep,
+    onboardingMethod,
+    hasLoaded,
+    setBusinessDataState,
+    setServices,
+    setStaffMembers,
+    setBusinessHours,
+    setHasStaff,
+    setCurrentStep,
+    setOnboardingMethod
+  );
+
+  // Debounced save function
+  const debouncedSave = useCallback(() => {
+    // Rate limiting: only save once every 3 seconds
+    const now = Date.now();
+    if (now - lastUpdateRef.current < 3000) {
+      return;
+    }
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      try {
+        saveProgress();
+        lastUpdateRef.current = Date.now();
+      } catch (error) {
+        console.error('Error in debounced save:', error);
+      }
+    }, 1500); // Increased debounce time
+  }, [saveProgress]);
+  
   // Custom function to handle business data updates with field synchronization
-  const updateBusinessData = (data: Partial<BusinessData>) => {
+  const updateBusinessData = useCallback((data: Partial<BusinessData>) => {
     setBusinessDataState(prev => {
       // Sync zipCode and cep fields if either is provided
       const updatedData = { ...prev, ...data };
@@ -74,48 +114,18 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
         };
       }
       
-      // Set a new timeout for auto-save
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      
-      saveTimeoutRef.current = window.setTimeout(() => {
-        saveProgress();
-      }, 1000) as unknown as number;
+      // Trigger debounced save
+      debouncedSave();
       
       return updatedData;
     });
-  };
-  
-  // Persistence hook
-  const { saveProgress, loadProgress } = usePersistence(
-    businessData,
-    services,
-    staffMembers,
-    businessHours,
-    hasStaff,
-    currentStep,
-    onboardingMethod,
-    hasLoaded,
-    setBusinessDataState,
-    setServices,
-    setStaffMembers,
-    setBusinessHours,
-    setHasStaff,
-    setCurrentStep,
-    setOnboardingMethod
-  );
-  
-  // Assign the real function to the ref
-  useEffect(() => {
-    saveProgressRef.current = saveProgress;
-  }, [saveProgress]);
+  }, [debouncedSave]);
   
   // Completion hook
   const { isComplete } = useCompletion(businessData, services, staffMembers, hasStaff);
 
   // Function to reset onboarding
-  const resetOnboarding = () => {
+  const resetOnboarding = useCallback(() => {
     setCurrentStep(-1);
     setOnboardingMethod(null);
     setStatus("idle");
@@ -143,7 +153,16 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     
     // Clear localStorage
     localStorage.removeItem('unclic-manager-onboarding');
-  };
+  }, [setServices, setStaffMembers, setHasStaff]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // The context value object with all the state and functions
   const contextValue: OnboardingContextType = {
