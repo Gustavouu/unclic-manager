@@ -6,8 +6,22 @@ import { Button } from "@/components/ui/button";
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ClientFormData } from '@/types/client';
 import { useClients } from '@/hooks/useClients';
+
+interface ClientFormData {
+  name: string;
+  email?: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
+  birth_date?: string;
+  gender?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  notes?: string;
+}
 
 const clientSchema = z.object({
   name: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres' }),

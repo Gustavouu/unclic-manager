@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { CreateAppointmentData, Appointment } from "./types";
 import { toast } from "sonner";
 
-export const useAppointmentCreate = () => {
+export const useAppointmentCreate = (
+  setAppointments?: React.Dispatch<React.SetStateAction<Appointment[]>>
+) => {
   const queryClient = useQueryClient();
 
   const createAppointment = useMutation({
@@ -47,7 +49,7 @@ export const useAppointmentCreate = () => {
       }
 
       // Transform the database result back to our Appointment type
-      return {
+      const appointment: Appointment = {
         id: data.id,
         clientId: data.client_id,
         clientName: appointmentData.clientName || 'Cliente',
@@ -64,6 +66,13 @@ export const useAppointmentCreate = () => {
         paymentMethod: data.payment_method,
         businessId: data.business_id,
       };
+
+      // Update local state if provided
+      if (setAppointments) {
+        setAppointments(prev => [appointment, ...prev]);
+      }
+
+      return appointment;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
@@ -77,7 +86,10 @@ export const useAppointmentCreate = () => {
 
   return {
     createAppointment: createAppointment.mutateAsync,
+    updateAppointment: createAppointment.mutateAsync, // For compatibility
+    cancelAppointment: createAppointment.mutateAsync, // For compatibility
     isCreating: createAppointment.isPending,
+    isLoading: createAppointment.isPending, // For compatibility
     error: createAppointment.error,
   };
 };

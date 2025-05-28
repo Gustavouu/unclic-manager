@@ -15,26 +15,25 @@ export function useAppointmentUpdate(
     setError(null);
 
     try {
-      // Update in Supabase
+      // Use the bookings table which exists in the database
+      const updateData: any = {};
+      
+      if (data.date) updateData.booking_date = data.date.toISOString().split('T')[0];
+      if (data.clientId) updateData.client_id = data.clientId;
+      if (data.serviceId) updateData.service_id = data.serviceId;
+      if (data.professionalId) updateData.employee_id = data.professionalId;
+      if (data.duration !== undefined) updateData.duration = data.duration;
+      if (data.price !== undefined) updateData.price = data.price;
+      if (data.status) updateData.status = mapStatusToDb(data.status);
+      if (data.notes !== undefined) updateData.notes = data.notes;
+      if (data.paymentMethod !== undefined) updateData.payment_method = data.paymentMethod;
+      if (data.time) updateData.start_time = data.time;
+      
+      updateData.updated_at = new Date().toISOString();
+
       const { error: supabaseError } = await supabase
-        .from("agendamentos")
-        .update({
-          data: data.date?.toISOString(),
-          cliente_id: data.clientId,
-          cliente_nome: data.clientName,
-          servico_id: data.serviceId,
-          servico_nome: data.serviceName,
-          tipo_servico: data.serviceType,
-          profissional_id: data.professionalId,
-          profissional_nome: data.professionalName,
-          duracao: data.duration,
-          preco: data.price,
-          status: data.status,
-          notas: data.notes,
-          metodo_pagamento: data.paymentMethod,
-          confirmado: data.confirmed,
-          servicos_adicionais: data.additionalServices
-        })
+        .from("bookings")
+        .update(updateData)
         .eq("id", id);
 
       if (supabaseError) throw supabaseError;
@@ -57,9 +56,7 @@ export function useAppointmentUpdate(
               ...(data.price !== undefined && { price: data.price }),
               ...(data.status && { status: data.status as AppointmentStatus }),
               ...(data.notes !== undefined && { notes: data.notes }),
-              ...(data.paymentMethod !== undefined && { paymentMethod: data.paymentMethod }),
-              ...(data.confirmed !== undefined && { confirmed: data.confirmed }),
-              ...(data.additionalServices && { additionalServices: data.additionalServices })
+              ...(data.paymentMethod !== undefined && { paymentMethod: data.paymentMethod })
             };
           }
           return appointment;
@@ -82,4 +79,18 @@ export function useAppointmentUpdate(
     isUpdating,
     error
   };
+}
+
+function mapStatusToDb(status: string): string {
+  const statusMap: Record<string, string> = {
+    'agendado': 'scheduled',
+    'confirmado': 'confirmed',
+    'concluido': 'completed',
+    'cancelado': 'canceled',
+    'scheduled': 'scheduled',
+    'confirmed': 'confirmed',
+    'completed': 'completed',
+    'canceled': 'canceled',
+  };
+  return statusMap[status] || 'scheduled';
 }

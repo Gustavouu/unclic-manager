@@ -1,5 +1,5 @@
 
-export type AppointmentStatus = 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'scheduled' | 'confirmed' | 'completed' | 'canceled' | 'no_show' | 'faltou';
+export type AppointmentStatus = 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'scheduled' | 'confirmed' | 'completed' | 'canceled' | 'no_show' | 'faltou' | 'pendente';
 
 export interface CreateAppointmentData {
   clientId: string;
@@ -26,6 +26,10 @@ export interface CreateAppointmentData {
 
 export interface UpdatedAppointmentData extends Partial<CreateAppointmentData> {
   status?: AppointmentStatus;
+  confirmed?: boolean;
+  additionalServices?: Array<{
+    price: number;
+  }>;
 }
 
 export interface Appointment {

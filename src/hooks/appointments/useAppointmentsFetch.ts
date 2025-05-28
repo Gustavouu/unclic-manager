@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Appointment, AppointmentStatus } from "./types";
 import { useTenant } from "@/contexts/TenantContext";
-import { safeDataExtract, normalizeAppointmentData } from "@/utils/databaseUtils";
 
 export function useAppointmentsFetch() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -24,111 +23,50 @@ export function useAppointmentsFetch() {
     
     try {
       console.log('Fetching appointments for business ID:', businessId);
-      let appointmentData;
-      let fetchError;
       
-      // Try fetching from bookings table first
-      try {
-        console.log('Trying bookings table');
-        let { data, error } = await supabase
-          .from('bookings')
-          .select(`
-            *,
-            clients (*),
-            services_v2 (*),
-            employees (*)
-          `)
-          .eq('business_id', businessId)
-          .order('booking_date', { ascending: false })
-          .order('start_time', { ascending: false });
+      // Use the bookings table which exists in the database
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          clients (*),
+          services_v2 (*),
+          employees (*)
+        `)
+        .eq('business_id', businessId)
+        .order('booking_date', { ascending: false })
+        .order('start_time', { ascending: false });
           
-        if (error) {
-          console.error('Error fetching from bookings:', error);
-          fetchError = error;
-        } else if (data && data.length > 0) {
-          console.log('Successfully fetched data from bookings table:', data.length, 'records');
-          appointmentData = data;
-        } else {
-          console.log('No data in bookings table');
-        }
-      } catch (err) {
-        console.error('Exception when fetching from bookings:', err);
+      if (error) {
+        console.error('Error fetching from bookings:', error);
+        throw error;
       }
       
-      // If bookings didn't work, try original agendamentos table
-      if (!appointmentData) {
-        try {
-          console.log('Trying legacy agendamentos table');
-          const { data: legacyData, error: legacyError } = await supabase
-            .from('agendamentos')
-            .select(`
-              *,
-              clientes (*),
-              servicos (*),
-              funcionarios (*)
-            `)
-            .eq('id_negocio', businessId)
-            .order('data', { ascending: false })
-            .order('hora_inicio', { ascending: false });
-            
-          if (legacyError) {
-            console.error('Error fetching from agendamentos:', legacyError);
-            if (!fetchError) fetchError = legacyError;
-          } else if (legacyData && legacyData.length > 0) {
-            console.log('Successfully fetched data from agendamentos table:', legacyData.length, 'records');
-            appointmentData = legacyData;
-          } else {
-            console.log('No data in agendamentos table');
-          }
-        } catch (err) {
-          console.error('Exception when fetching from agendamentos:', err);
-        }
-      }
-      
-      // Try the capitalized table name as a last resort
-      if (!appointmentData) {
-        try {
-          console.log('Trying Appointments table with capital A');
-          const { data: capitalData, error: capitalError } = await supabase
-            .from('Appointments')
-            .select(`
-              *,
-              clientes (*),
-              servicos (*),
-              funcionarios (*)
-            `)
-            .eq('id_negocio', businessId)
-            .order('data', { ascending: false })
-            .order('hora_inicio', { ascending: false });
-            
-          if (capitalError) {
-            console.error('Error fetching from Appointments:', capitalError);
-            if (!fetchError) fetchError = capitalError;
-          } else if (capitalData && capitalData.length > 0) {
-            console.log('Successfully fetched data from Appointments table:', capitalData.length, 'records');
-            appointmentData = capitalData;
-          } else {
-            console.log('No data in Appointments table');
-          }
-        } catch (err) {
-          console.error('Exception when fetching from Appointments:', err);
-        }
-      }
-      
-      // If we still have no data and have errors, throw the first error
-      if (!appointmentData && fetchError) {
-        throw fetchError;
-      }
-      
-      if (!appointmentData || appointmentData.length === 0) {
-        console.log('No appointment data found in any table');
+      if (!data || data.length === 0) {
+        console.log('No appointment data found');
         setAppointments([]);
         setIsLoading(false);
         return;
       }
       
-      // Map database response to our Appointment interface using the normalizer
-      const mappedAppointments = appointmentData.map(normalizeAppointmentData);
+      // Map database response to our Appointment interface
+      const mappedAppointments: Appointment[] = data.map((booking: any) => ({
+        id: booking.id,
+        clientId: booking.client_id,
+        clientName: booking.clients?.name || 'Cliente',
+        serviceId: booking.service_id,
+        serviceName: booking.services_v2?.name || 'Serviço',
+        serviceType: booking.services_v2?.category || 'service',
+        professionalId: booking.employee_id,
+        professionalName: booking.employees?.name || 'Profissional',
+        date: new Date(`${booking.booking_date}T${booking.start_time}`),
+        duration: booking.duration,
+        price: booking.price,
+        status: mapStatusFromDb(booking.status),
+        notes: booking.notes || '',
+        paymentMethod: booking.payment_method,
+        businessId: booking.business_id,
+      }));
       
       setAppointments(mappedAppointments);
       console.log('Successfully mapped', mappedAppointments.length, 'appointments');
@@ -148,4 +86,15 @@ export function useAppointmentsFetch() {
     error,
     fetchAppointments,
   };
+}
+
+function mapStatusFromDb(status: string): AppointmentStatus {
+  const statusMap: Record<string, AppointmentStatus> = {
+    'scheduled': 'agendado',
+    'confirmed': 'confirmado',
+    'completed': 'concluido',
+    'canceled': 'cancelado',
+    'no_show': 'faltou',
+  };
+  return statusMap[status] || 'agendado';
 }

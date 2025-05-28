@@ -8,8 +8,9 @@ export const useAppointmentDelete = (
 ) => {
   const deleteAppointment = async (id: string) => {
     try {
+      // Use the bookings table which exists in the database
       const { error } = await supabase
-        .from('agendamentos')
+        .from('bookings')
         .delete()
         .eq('id', id);
       

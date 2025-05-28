@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 
 export interface PaymentRequiredAppointmentFormProps {
+  clientId?: string;
   customerName: string;
   customerEmail?: string;
   customerPhone?: string;
@@ -12,6 +13,7 @@ export interface PaymentRequiredAppointmentFormProps {
 }
 
 const PaymentRequiredAppointmentForm: React.FC<PaymentRequiredAppointmentFormProps> = ({
+  clientId,
   customerName,
   customerEmail,
   customerPhone,
@@ -26,6 +28,7 @@ const PaymentRequiredAppointmentForm: React.FC<PaymentRequiredAppointmentFormPro
         <p><strong>Cliente:</strong> {customerName}</p>
         {customerEmail && <p><strong>Email:</strong> {customerEmail}</p>}
         {customerPhone && <p><strong>Telefone:</strong> {customerPhone}</p>}
+        {clientId && <p><strong>ID:</strong> {clientId}</p>}
       </div>
       <div className="space-y-2">
         <p><strong>Serviços disponíveis:</strong> {availableServices.length}</p>
