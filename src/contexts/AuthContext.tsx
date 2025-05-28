@@ -2,13 +2,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import type { Permission } from '@/types/user';
 
 export interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   logout: () => Promise<void>;
-  hasPermission: (permission: string) => boolean;
+  hasPermission: (permission: Permission) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,9 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const hasPermission = (permission: string): boolean => {
-    // Basic permission check - can be expanded based on user roles
-    return !!user;
+  const hasPermission = (permission: Permission): boolean => {
+    // For now, return true if user is authenticated
+    // This can be expanded to check actual user roles/permissions from database
+    if (!user) return false;
+    
+    // Basic permission logic - can be enhanced later with role-based permissions
+    return true;
   };
 
   const value: AuthContextType = {
