@@ -1,11 +1,14 @@
 
 import React from 'react';
+import { UseFormReturn } from 'react-hook-form';
 import { DateTimeSelect } from './DateTimeSelect';
+import { AppointmentFormValues } from '../schemas/appointmentFormSchema';
 import { cn } from '@/lib/utils';
 
 interface DateTimeSelectWrapperProps {
-  value: string;
-  onChange: (value: string) => void;
+  form: UseFormReturn<AppointmentFormValues>;
+  serviceId?: string;
+  professionalId?: string;
   className?: string;
   error?: string;
   label?: string;
@@ -14,8 +17,9 @@ interface DateTimeSelectWrapperProps {
 }
 
 export function DateTimeSelectWrapper({
-  value,
-  onChange,
+  form,
+  serviceId,
+  professionalId,
   className,
   error,
   label,
@@ -30,10 +34,21 @@ export function DateTimeSelectWrapper({
         </label>
       )}
       <DateTimeSelect
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        disabled={disabled}
+        form={form}
+        onTimeChange={() => {
+          // Handle time change if needed
+        }}
+        minAdvanceTime={30}
+        maxFutureDays={30}
+        businessHours={{
+          segunda: { enabled: true, start: "09:00", end: "18:00" },
+          terca: { enabled: true, start: "09:00", end: "18:00" },
+          quarta: { enabled: true, start: "09:00", end: "18:00" },
+          quinta: { enabled: true, start: "09:00", end: "18:00" },
+          sexta: { enabled: true, start: "09:00", end: "18:00" },
+          sabado: { enabled: true, start: "09:00", end: "15:00" },
+          domingo: { enabled: false, start: "00:00", end: "00:00" }
+        }}
       />
       {error && (
         <p className="text-sm text-red-600">{error}</p>

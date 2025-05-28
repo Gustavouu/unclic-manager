@@ -2,7 +2,7 @@
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { AppointmentFormValues } from '../schemas/appointmentFormSchema';
-import DateTimeSelectWrapper from './DateTimeSelectWrapper';
+import { DateTimeSelectWrapper } from './DateTimeSelectWrapper';
 import ServiceSelectWrapper from './ServiceSelectWrapper';
 import ProfessionalSelectWrapper from './ProfessionalSelectWrapper';
 import ClientSelectWrapper from './ClientSelectWrapper';

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,24 +7,26 @@ import { Client } from "@/types/client";
 
 interface ClientsFiltersProps {
   clients: Client[];
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  cityFilter: string;
-  setCityFilter: (city: string) => void;
-  spentFilter: string;
-  setSpentFilter: (spent: string) => void;
-  onClearFilters: () => void;
+  searchTerm?: string;
+  setSearchTerm?: (term: string) => void;
+  cityFilter?: string;
+  setCityFilter?: (city: string) => void;
+  spentFilter?: string;
+  setSpentFilter?: (spent: string) => void;
+  onClearFilters?: () => void;
+  onFilteredClientsChange?: (clients: Client[]) => void;
 }
 
 export function ClientsFilters({
   clients,
-  searchTerm,
-  setSearchTerm,
-  cityFilter,
-  setCityFilter,
-  spentFilter,
-  setSpentFilter,
-  onClearFilters
+  searchTerm = '',
+  setSearchTerm = () => {},
+  cityFilter = '',
+  setCityFilter = () => {},
+  spentFilter = '',
+  setSpentFilter = () => {},
+  onClearFilters = () => {},
+  onFilteredClientsChange = () => {}
 }: ClientsFiltersProps) {
   // Get unique cities from clients
   const uniqueCities = [...new Set(clients.map(client => client.city).filter(Boolean))];
@@ -49,6 +51,11 @@ export function ClientsFilters({
 
     return matchesSearch && matchesCity && matchesSpent;
   });
+
+  // Call the callback whenever filters change
+  React.useEffect(() => {
+    onFilteredClientsChange(filteredClients);
+  }, [filteredClients, onFilteredClientsChange]);
 
   // Filter clients who visited in the last 30 days
   const recentClients = clients.filter(client => {
