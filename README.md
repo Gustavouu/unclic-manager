@@ -67,3 +67,26 @@ Simply open [Lovable](https://lovable.dev/projects/e8f2341b-e418-4013-abc5-6be07
 ## I want to use a custom domain - is that possible?
 
 We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+
+## Testes e Checklist de Produção
+
+### Cobertura de Testes Unitários
+
+```sh
+npm run test -- --coverage
+```
+O relatório será gerado na pasta `coverage/`.
+
+### Testes E2E
+
+```sh
+npm run cy:run
+```
+O relatório será exibido no terminal. Para modo visual, use `npm run cy:open`.
+
+### Checklist Automatizado de Produção
+
+```sh
+node scripts/checklist-producao.js
+```
+O script valida pré-requisitos essenciais antes do deploy.

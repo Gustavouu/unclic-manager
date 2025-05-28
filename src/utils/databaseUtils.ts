@@ -1,4 +1,3 @@
-
 import { PostgrestSingleResponse, PostgrestResponse } from '@supabase/supabase-js';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -7,16 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
  * @param tableName The name of the table to check
  * @returns A boolean indicating whether the table exists
  */
-export const tableExists = async (tableName: string): Promise<boolean> => {
-  try {
-    const { data, error } = await supabase.rpc('table_exists', { table_name: tableName });
-    if (error) throw error;
-    return Boolean(data);
-  } catch (err) {
-    console.error(`Error checking if table ${tableName} exists:`, err);
-    return false;
-  }
-};
+export async function tableExists(tableName: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from(tableName)
+    .select('*')
+    .limit(1);
+  
+  return !error;
+}
 
 /**
  * Safely extracts data from a Supabase response, handling errors
@@ -155,3 +152,28 @@ export const safeJsonNumber = (value: any, defaultValue: number = 0): number => 
   }
   return defaultValue;
 };
+
+export function normalizeServiceData(data: any) {
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    duration: data.duration,
+    price: data.price,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+  };
+}
+
+export function normalizeAppointmentData(data: any) {
+  return {
+    id: data.id,
+    service_id: data.service_id,
+    client_id: data.client_id,
+    date: data.date,
+    status: data.status,
+    notes: data.notes,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+  };
+}

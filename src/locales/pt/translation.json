@@ -1,0 +1,14 @@
+{
+  "clientes": {
+    "novo": "Novo Cliente",
+    "editar": "Editar Cliente"
+  },
+  "erros": {
+    "requiredField": "Campo obrigatório",
+    "loginFailed": "Usuário ou senha inválidos"
+  },
+  "ui": {
+    "salvar": "Salvar",
+    "cancelar": "Cancelar"
+  }
+} 

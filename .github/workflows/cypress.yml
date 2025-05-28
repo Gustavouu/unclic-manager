@@ -1,0 +1,38 @@
+name: Cypress E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      # Ajuste os comandos abaixo conforme seu projeto
+      - name: Start backend
+        run: npm run start:backend &
+        env:
+          NODE_ENV: test
+
+      - name: Start frontend
+        run: npm run dev &
+        env:
+          NODE_ENV: test
+
+      - name: Wait for app to be ready
+        run: npx wait-on http://localhost:3000
+
+      - name: Run Cypress tests
+        run: npm run cy:run 

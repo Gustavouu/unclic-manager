@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
@@ -6,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useTenant } from "@/contexts/TenantContext";
+import { v4 as uuidv4 } from 'uuid';
 
 interface OnboardingControlsProps {
   currentStep: string;
@@ -79,40 +79,39 @@ export function OnboardingControls({
   };
   
   const handleFinishOnboarding = async () => {
-    if (!businessId) return;
-    
+    if (!businessId) {
+      toast.error("ID do negócio não encontrado. Não foi possível finalizar o onboarding.");
+      return;
+    }
     setLoading(true);
     try {
-      // Mark all steps as completed
+      toast.info("Finalizando configuração do estabelecimento...");
+      // Marcar todos os steps como completos
       const steps = ['welcome', 'business', 'services', 'professionals', 'schedule', 'complete'];
-      
-      const upsertPromises = steps.map(step => 
-        supabase
-          .from('onboarding_progress')
-          .upsert({
-            tenantId: businessId,
-            step,
-            completed: true,
-            completedAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }, {
-            onConflict: 'tenantId,step'
-          })
-      );
-      
-      await Promise.all(upsertPromises);
-      
-      // Set business as active
+      const now = new Date().toISOString();
+      const progressArray = steps.map(step => ({
+        id: uuidv4(),
+        tenantId: businessId,
+        step,
+        completed: true,
+        completedAt: now,
+        updatedAt: now
+      }));
       await supabase
+        .from('onboarding_progress')
+        .upsert(progressArray, { onConflict: 'tenantId,step' });
+      toast.success("Progresso do onboarding salvo.");
+      // Ativar o negócio
+      const { error: businessError } = await supabase
         .from('businesses')
         .update({ status: 'active' })
         .eq('id', businessId);
-      
-      toast.success("Configuração concluída com sucesso!");
+      if (businessError) throw businessError;
+      toast.success("Estabelecimento ativado com sucesso!");
       navigate('/dashboard');
     } catch (error) {
-      console.error('Error finishing onboarding:', error);
-      toast.error("Erro ao finalizar configuração");
+      console.error('Erro ao finalizar onboarding:', error);
+      toast.error("Erro ao finalizar configuração: " + (error?.message || error));
     } finally {
       setLoading(false);
     }
@@ -215,7 +214,9 @@ export function OnboardingControls({
   
   // Render appropriate buttons based on current step
   const renderButtons = () => {
-    if (currentStep === 'complete') {
+    // Aceita tanto string 'complete' quanto o índice do último step (4 ou 5)
+    const isLastStep = currentStep === 'complete' || currentStep === 4 || currentStep === '4' || currentStep === 5 || currentStep === '5';
+    if (isLastStep) {
       return (
         <Button 
           onClick={handleFinishOnboarding}

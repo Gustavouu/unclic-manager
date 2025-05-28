@@ -1,4 +1,3 @@
-
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ReactNode } from "react";
@@ -7,9 +6,14 @@ import { OnboardingRedirect } from "./OnboardingRedirect";
 interface RequireAuthProps {
   children: ReactNode;
   skipOnboardingCheck?: boolean;
+  requireAdmin?: boolean;
 }
 
-export const RequireAuth = ({ children, skipOnboardingCheck = false }: RequireAuthProps) => {
+export function RequireAuth({ 
+  children, 
+  skipOnboardingCheck = false,
+  requireAdmin = false 
+}: RequireAuthProps) {
   const { user, loading } = useAuth();
   const location = useLocation();
   
@@ -21,6 +25,14 @@ export const RequireAuth = ({ children, skipOnboardingCheck = false }: RequireAu
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
+  if (requireAdmin && !user.is_admin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (!skipOnboardingCheck && !user.onboarding_completed) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
   // If we should skip the onboarding check (for the onboarding page itself)
   if (skipOnboardingCheck) {
     return <>{children}</>;
@@ -28,6 +40,6 @@ export const RequireAuth = ({ children, skipOnboardingCheck = false }: RequireAu
 
   // Use the non-blocking onboarding notification approach
   return <OnboardingRedirect>{children}</OnboardingRedirect>;
-};
+}
 
 export default RequireAuth;

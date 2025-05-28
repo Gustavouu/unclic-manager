@@ -1,257 +1,80 @@
+import { useEffect, useState, createContext, useContext, ReactNode } from 'react';
+import { supabase } from '@/lib/supabase';
+import { User } from '@supabase/supabase-js';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { User, Session } from "@supabase/supabase-js";
-import { tableExists } from "@/utils/databaseUtils";
-
-interface AuthContextProps {
+interface AuthContextType {
   user: User | null;
-  session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: any) => Promise<void>;
-  signOut: () => Promise<void>;
-  updateProfile: (data: any) => Promise<void>;
-  
-  // Add these methods to fix the auth-related errors
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, userData: any) => Promise<void>;
-  logout: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
+  hasPermission: (permission: string) => boolean;
 }
 
-const AuthContext = createContext<AuthContextProps>({
+const AuthContext = createContext<AuthContextType>({
   user: null,
-  session: null,
   loading: true,
-  signIn: async () => {},
-  signUp: async () => {},
-  signOut: async () => {},
-  updateProfile: async () => {},
-  
-  // Add these methods to the default context value
   login: async () => {},
-  signup: async () => {},
-  logout: async () => {},
-  resetPassword: async () => {}
+  hasPermission: () => true,
 });
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasUsuariosTable, setHasUsuariosTable] = useState<boolean | null>(null);
 
-  // Check if usuarios table exists
   useEffect(() => {
-    const checkTables = async () => {
+    // Verifica o usuário atual
+    const checkUser = async () => {
       try {
-        const usuariosExists = await tableExists('usuarios');
-        setHasUsuariosTable(usuariosExists);
-        console.log('Usuarios table exists:', usuariosExists);
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
       } catch (error) {
-        console.error('Error checking for usuarios table:', error);
-        setHasUsuariosTable(false);
-      }
-    };
-    
-    checkTables();
-  }, []);
-
-  useEffect(() => {
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // If session changes, we need to update user's business ID in localStorage
-        if (session?.user) {
-          // We use setTimeout to avoid supabase auth deadlocks
-          setTimeout(async () => {
-            try {
-              // Adaptive query based on table existence
-              if (hasUsuariosTable === true) {
-                const { data, error } = await supabase
-                  .from('usuarios')
-                  .select('id_negocio')
-                  .eq('id', session.user.id)
-                  .maybeSingle();
-                  
-                if (data?.id_negocio) {
-                  localStorage.setItem('currentBusinessId', data.id_negocio);
-                }
-              } else if (hasUsuariosTable === false) {
-                // Try business_users table
-                const { data, error } = await supabase
-                  .from('business_users')
-                  .select('business_id')
-                  .eq('user_id', session.user.id)
-                  .maybeSingle();
-                  
-                if (data?.business_id) {
-                  localStorage.setItem('currentBusinessId', data.business_id);
-                }
-              }
-              // If hasUsuariosTable is still null (loading), we'll skip this update
-            } catch (err) {
-              console.error("Error fetching business ID on auth state change:", err);
-            }
-          }, 0);
-        }
-        
+        console.error('Erro ao verificar usuário:', error);
+      } finally {
         setLoading(false);
       }
-    );
-
-    // Then check for existing session
-    const initializeAuth = async () => {
-      setLoading(true);
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      // If we have a session, fetch business ID
-      if (session?.user && hasUsuariosTable !== null) {
-        try {
-          if (hasUsuariosTable) {
-            // Try usuarios table
-            const { data, error } = await supabase
-              .from('usuarios')
-              .select('id_negocio')
-              .eq('id', session.user.id)
-              .maybeSingle();
-              
-            if (data?.id_negocio) {
-              localStorage.setItem('currentBusinessId', data.id_negocio);
-            }
-          } else {
-            // Try business_users table
-            const { data, error } = await supabase
-              .from('business_users')
-              .select('business_id')
-              .eq('user_id', session.user.id)
-              .maybeSingle();
-              
-            if (data?.business_id) {
-              localStorage.setItem('currentBusinessId', data.business_id);
-            }
-          }
-        } catch (err) {
-          console.error("Error fetching business ID on initialization:", err);
-        }
-      }
-      
-      setLoading(false);
     };
 
-    // Only run initialization if we know which tables exist
-    if (hasUsuariosTable !== null) {
-      initializeAuth();
-    }
+    checkUser();
 
-    // Cleanup subscription on unmount
+    // Inscreve-se para mudanças na autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
     return () => {
       subscription.unsubscribe();
     };
-  }, [hasUsuariosTable]);
+  }, []);
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      console.error("Error signing in:", error);
-      throw error;
-    }
+  // Função de login
+  const login = async (email: string, password: string) => {
+    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    setUser(data.user);
   };
 
-  const signUp = async (email: string, password: string, userData: any) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: userData, // Store user profile data like name
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      console.error("Error signing up:", error);
-      throw error;
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      // Clear business ID from localStorage
-      localStorage.removeItem('currentBusinessId');
-      
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      console.error("Error signing out:", error);
-      throw error;
-    }
-  };
-
-  const updateProfile = async (userData: any) => {
-    try {
-      if (!user) throw new Error("No user logged in");
-      
-      const { error } = await supabase.auth.updateUser({
-        data: userData
-      });
-      
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      throw error;
-    }
-  };
-
-  const resetPassword = async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      throw error;
-    }
+  // Função de permissão (ajuste conforme sua estrutura de usuário)
+  const hasPermission = (permission: string) => {
+    // Exemplo: se user tiver um array de permissões
+    // return user?.permissions?.includes(permission) ?? false;
+    // Exemplo: se user.role for 'admin', sempre tem permissão
+    if (!user) return false;
+    // Ajuste conforme sua lógica real
+    if ((user as any).role === 'admin') return true;
+    // Se não houver controle, retorna true para não travar o sistema
+    return true;
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        signIn,
-        signUp,
-        signOut,
-        updateProfile,
-        // Alias the functions to maintain backward compatibility
-        login: signIn,
-        signup: signUp,
-        logout: signOut,
-        resetPassword
-      }}
-    >
+    <AuthContext.Provider value={{ user, loading, login, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+  }
+  return context;
+} 

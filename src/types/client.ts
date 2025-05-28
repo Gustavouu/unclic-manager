@@ -1,4 +1,3 @@
-
 /**
  * Client data types and interfaces for the application
  */
@@ -8,35 +7,27 @@
  */
 export interface Client {
   id: string;
+  business_id: string;
   name: string;
-  nome?: string; // Portuguese version of name
-  email?: string;
-  phone?: string;
-  telefone?: string; // Portuguese version of phone
-  ultima_visita?: string;
-  last_visit?: string;
-  valor_total_gasto?: number;
-  total_spent?: number;
-  total_agendamentos?: number;
-  total_appointments?: number;
-  status?: 'active' | 'inactive';
-  criado_em?: string;
-  created_at?: string;
-  cidade?: string;
-  city?: string;
-  estado?: string;
-  state?: string;
-  notas?: string;
-  notes?: string;
-  tenant_id?: string; // Standard field
-  business_id?: string; // New field
-  id_negocio?: string; // Original field
-  gender?: string;
-  genero?: string;
-  birth_date?: string | Date;
-  data_nascimento?: string | Date;
-  address?: string;
-  endereco?: string;
+  email: string;
+  phone: string;
+  birth_date: string | null;
+  gender: 'male' | 'female' | 'other' | null;
+  address: string | null;
+  address_number: string | null;
+  address_complement: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null;
+  notes: string | null;
+  preferences: ClientPreferences;
+  status: 'active' | 'inactive' | 'blocked';
+  last_appointment: string | null;
+  total_appointments: number;
+  total_spent: number;
+  created_at: string;
+  updated_at: string;
 }
 
 /**
@@ -84,4 +75,66 @@ export interface ClientListResult {
   success: boolean;
   data?: Client[];
   error?: string;
+}
+
+export interface ClientCreate {
+  business_id: string;
+  name: string;
+  email: string;
+  phone: string;
+  birth_date?: string | null;
+  gender?: 'male' | 'female' | 'other' | null;
+  address?: string | null;
+  address_number?: string | null;
+  address_complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip_code?: string | null;
+  notes?: string | null;
+  preferences?: Partial<ClientPreferences>;
+  status?: 'active' | 'inactive' | 'blocked';
+}
+
+export interface ClientUpdate {
+  name?: string;
+  email?: string;
+  phone?: string;
+  birth_date?: string | null;
+  gender?: 'male' | 'female' | 'other' | null;
+  address?: string | null;
+  address_number?: string | null;
+  address_complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip_code?: string | null;
+  notes?: string | null;
+  preferences?: Partial<ClientPreferences>;
+  status?: 'active' | 'inactive' | 'blocked';
+}
+
+export interface ClientPreferences {
+  preferred_professionals: string[];
+  preferred_services: string[];
+  preferred_payment_method: 'credit_card' | 'debit_card' | 'cash' | 'pix' | null;
+  preferred_communication_channel: 'email' | 'sms' | 'whatsapp' | null;
+  preferred_appointment_time: 'morning' | 'afternoon' | 'evening' | null;
+  preferred_appointment_day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday' | null;
+  send_reminders: boolean;
+  send_followup: boolean;
+  send_promotions: boolean;
+  send_birthday_greeting: boolean;
+  notes: string | null;
+}
+
+export interface ClientStats {
+  totalAppointments: number;
+  totalSpent: number;
+  averageAppointmentValue: number;
+  lastAppointmentDate: string | null;
+  favoriteService: string | null;
+  favoriteProfessional: string | null;
+  noShowCount: number;
+  cancellationCount: number;
 }

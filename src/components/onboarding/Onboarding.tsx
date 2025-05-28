@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -21,8 +20,21 @@ export const Onboarding = () => {
     saveProgress, 
     onboardingMethod,
     status,
-    error
+    error,
+    setCurrentStep
   } = useOnboarding();
+
+  const totalSteps = 5; // 0 a 4
+  const handleNext = () => {
+    if (currentStep < totalSteps - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
 
   // Load saved data when component mounts
   useEffect(() => {
@@ -100,7 +112,11 @@ export const Onboarding = () => {
             </Tabs>
           </div>
           
-          <OnboardingControls />
+          <OnboardingControls 
+            currentStep={currentStep.toString()}
+            onNext={currentStep < totalSteps - 1 ? handleNext : undefined}
+            onPrevious={currentStep > 0 ? handlePrevious : undefined}
+          />
         </CardContent>
       </Card>
     </div>

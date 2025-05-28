@@ -1,0 +1,14 @@
+{
+  "clientes": {
+    "novo": "New Client",
+    "editar": "Edit Client"
+  },
+  "erros": {
+    "requiredField": "Required field",
+    "loginFailed": "Invalid username or password"
+  },
+  "ui": {
+    "salvar": "Save",
+    "cancelar": "Cancel"
+  }
+} 
