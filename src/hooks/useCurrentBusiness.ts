@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { normalizeBusinessData } from '@/utils/databaseUtils';
 
@@ -135,7 +135,7 @@ export const useCurrentBusiness = () => {
       }));
       
       // Refresh business data
-      fetchBusinessData();
+      await fetchBusinessData();
       return true;
     } catch (error: any) {
       console.error('Error updating business status:', error);

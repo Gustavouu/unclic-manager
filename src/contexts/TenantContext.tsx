@@ -30,7 +30,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     error,
     updateBusinessStatus,
     updateBusinessSettings,
-    fetchBusinessData
+    refreshBusinessData
   } = useCurrentBusiness();
 
   return (
@@ -42,7 +42,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
         error,
         updateBusinessStatus,
         updateBusinessSettings,
-        refreshBusinessData: fetchBusinessData
+        refreshBusinessData
       }}
     >
       {children}
