@@ -1,187 +1,108 @@
 
-import { Card, CardContent } from "@/components/ui/card";
+import React from 'react';
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Client } from "@/hooks/useClients";
-import { CheckIcon, SearchIcon } from "lucide-react";
-import { useEffect, useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Client } from "@/types/client";
 
 interface ClientsFiltersProps {
   clients: Client[];
-  onFilteredClientsChange: (clients: Client[]) => void;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  cityFilter: string;
+  setCityFilter: (city: string) => void;
+  spentFilter: string;
+  setSpentFilter: (spent: string) => void;
+  onClearFilters: () => void;
 }
 
-export function ClientsFilters({ clients, onFilteredClientsChange }: ClientsFiltersProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCity, setSelectedCity] = useState<string>("");
-  const [minAmount, setMinAmount] = useState(0);
-  const [maxAmount, setMaxAmount] = useState(10000);
-  const [lastVisit, setLastVisit] = useState<string>("all");
-  
-  // Get unique cities
-  const cities = Array.from(
-    new Set(
-      clients
-        .map((client) => client.city || client.cidade)
-        .filter(Boolean)
-    )
-  ).sort();
-  
-  // Get max amount spent
-  const maxAmountPossible = Math.max(
-    ...clients.map((client) => client.total_spent || client.valor_total_gasto || 0)
-  );
-  
-  useEffect(() => {
-    // Filter clients based on selected filters
-    let filtered = clients;
-    
-    // Search term filter
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (client) =>
-          (client.name || client.nome || "").toLowerCase().includes(term) ||
-          (client.email && client.email.toLowerCase().includes(term)) ||
-          (client.phone || client.telefone || "").includes(term)
-      );
-    }
-    
-    // City filter
-    if (selectedCity) {
-      filtered = filtered.filter(
-        (client) => (client.city || client.cidade) === selectedCity
-      );
-    }
-    
-    // Amount filter
-    filtered = filtered.filter(
-      (client) => {
-        const spent = client.total_spent || client.valor_total_gasto || 0;
-        return spent >= minAmount && spent <= maxAmount;
+export function ClientsFilters({
+  clients,
+  searchTerm,
+  setSearchTerm,
+  cityFilter,
+  setCityFilter,
+  spentFilter,
+  setSpentFilter,
+  onClearFilters
+}: ClientsFiltersProps) {
+  // Get unique cities from clients
+  const uniqueCities = [...new Set(clients.map(client => client.city).filter(Boolean))];
+
+  const filteredClients = clients.filter(client => {
+    const matchesSearch = !searchTerm || 
+      client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.phone?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesCity = !cityFilter || client.city === cityFilter;
+
+    const matchesSpent = !spentFilter || (() => {
+      const totalSpent = client.total_spent || 0;
+      switch (spentFilter) {
+        case 'low': return totalSpent < 100;
+        case 'medium': return totalSpent >= 100 && totalSpent < 500;
+        case 'high': return totalSpent >= 500;
+        default: return true;
       }
-    );
-    
-    // Last visit filter
-    if (lastVisit !== "all") {
-      const now = new Date();
-      const daysAgo = parseInt(lastVisit);
-      const cutoffDate = new Date();
-      cutoffDate.setDate(now.getDate() - daysAgo);
-      
-      filtered = filtered.filter((client) => {
-        const lastVisitDate = client.last_visit || client.ultima_visita;
-        if (!lastVisitDate) return lastVisit === "never";
-        
-        const visitDate = new Date(lastVisitDate);
-        return lastVisit === "never" 
-          ? false 
-          : visitDate >= cutoffDate;
-      });
-    }
-    
-    onFilteredClientsChange(filtered);
-  }, [clients, searchTerm, selectedCity, minAmount, maxAmount, lastVisit, onFilteredClientsChange]);
-  
-  const handleReset = () => {
-    setSearchTerm("");
-    setSelectedCity("");
-    setMinAmount(0);
-    setMaxAmount(maxAmountPossible);
-    setLastVisit("all");
-  };
+    })();
+
+    return matchesSearch && matchesCity && matchesSpent;
+  });
+
+  // Filter clients who visited in the last 30 days
+  const recentClients = clients.filter(client => {
+    if (!client.last_visit) return false;
+    const lastVisit = new Date(client.last_visit);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return lastVisit >= thirtyDaysAgo;
+  });
 
   return (
-    <Card className="w-full">
-      <CardContent className="p-4 space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="search">Buscar</Label>
-          <div className="relative">
-            <SearchIcon size={16} className="absolute left-2.5 top-2.5 text-muted-foreground" />
-            <Input
-              id="search"
-              placeholder="Nome, email ou telefone"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
-            />
-          </div>
-        </div>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Input
+          placeholder="Buscar por nome, email ou telefone..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
         
-        <div className="space-y-2">
-          <Label htmlFor="city">Cidade</Label>
-          <Select value={selectedCity} onValueChange={setSelectedCity}>
-            <SelectTrigger>
-              <SelectValue placeholder="Todas as cidades" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all_cities">Todas as cidades</SelectItem>
-              {cities.map((city) => (
-                <SelectItem key={city} value={city || "unknown"}>
-                  {city || "Sem cidade"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={cityFilter} onValueChange={setCityFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder="Filtrar por cidade" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Todas as cidades</SelectItem>
+            {uniqueCities.map(city => (
+              <SelectItem key={city} value={city || ''}>{city}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="amount">Valor gasto</Label>
-            <span className="text-xs text-muted-foreground">
-              {new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-              }).format(minAmount)} - {new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-              }).format(maxAmount)}
-            </span>
-          </div>
-          <Slider
-            id="amount"
-            min={0}
-            max={maxAmountPossible}
-            step={100}
-            value={[minAmount, maxAmount]}
-            onValueChange={([min, max]) => {
-              setMinAmount(min);
-              setMaxAmount(max);
-            }}
-          />
-        </div>
+        <Select value={spentFilter} onValueChange={setSpentFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder="Filtrar por gasto" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Todos os gastos</SelectItem>
+            <SelectItem value="low">Até R$ 100</SelectItem>
+            <SelectItem value="medium">R$ 100 - R$ 500</SelectItem>
+            <SelectItem value="high">Acima de R$ 500</SelectItem>
+          </SelectContent>
+        </Select>
         
-        <div className="space-y-2">
-          <Label htmlFor="lastVisit">Última visita</Label>
-          <Select value={lastVisit} onValueChange={setLastVisit}>
-            <SelectTrigger id="lastVisit">
-              <SelectValue placeholder="Todas as visitas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as visitas</SelectItem>
-              <SelectItem value="7">Últimos 7 dias</SelectItem>
-              <SelectItem value="30">Últimos 30 dias</SelectItem>
-              <SelectItem value="90">Últimos 90 dias</SelectItem>
-              <SelectItem value="never">Nunca visitou</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <button
-          onClick={handleReset}
-          className="text-sm text-primary hover:underline flex items-center justify-center w-full mt-2"
-        >
-          Limpar filtros
-        </button>
-      </CardContent>
-    </Card>
+        <Button variant="outline" onClick={onClearFilters}>
+          Limpar Filtros
+        </Button>
+      </div>
+      
+      <div className="text-sm text-gray-600">
+        Mostrando {filteredClients.length} de {clients.length} clientes
+        {recentClients.length > 0 && (
+          <span className="ml-2">• {recentClients.length} visitaram nos últimos 30 dias</span>
+        )}
+      </div>
+    </div>
   );
 }
