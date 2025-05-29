@@ -61,7 +61,7 @@ export const useClients = () => {
       // Map the data to ensure all required fields are present
       const mappedClients: Client[] = (data || []).map(client => ({
         ...client,
-        status: client.status || 'active',
+        status: 'active', // Set default status since it doesn't exist in the database
         criado_em: client.criado_em || client.created_at
       }));
       

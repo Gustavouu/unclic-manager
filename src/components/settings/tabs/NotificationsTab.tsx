@@ -25,52 +25,68 @@ import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 
 const formSchema = z.object({
-  pushEnabled: z.boolean().default(true),
-  emailEnabled: z.boolean().default(true),
-  smsEnabled: z.boolean().default(false),
-  newAppointmentAlert: z.boolean().default(true),
-  cancelAppointmentAlert: z.boolean().default(true),
-  clientFeedbackAlert: z.boolean().default(true),
-  quietHoursStart: z.string().min(1, "Horário inicial obrigatório"),
-  quietHoursEnd: z.string().min(1, "Horário final obrigatório"),
-  messageTemplate: z.string().min(10, "Modelo de mensagem deve ter pelo menos 10 caracteres"),
+  push_enabled: z.boolean().default(true),
+  email_enabled: z.boolean().default(true),
+  sms_enabled: z.boolean().default(false),
+  new_appointment_alert: z.boolean().default(true),
+  cancel_appointment_alert: z.boolean().default(true),
+  client_feedback_alert: z.boolean().default(true),
+  quiet_hours_start: z.string().min(1, "Horário inicial obrigatório"),
+  quiet_hours_end: z.string().min(1, "Horário final obrigatório"),
+  message_template: z.string().min(10, "Modelo de mensagem deve ter pelo menos 10 caracteres"),
 });
 
-// Only define the component once, as a function expression
 const NotificationsTab = () => {
   const { settings, loading, saving, saveSettings } = useNotificationSettings();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: settings,
+    defaultValues: {
+      push_enabled: settings.push_enabled,
+      email_enabled: settings.email_enabled,
+      sms_enabled: settings.sms_enabled,
+      new_appointment_alert: settings.new_appointment_alert,
+      cancel_appointment_alert: settings.cancel_appointment_alert,
+      client_feedback_alert: settings.client_feedback_alert,
+      quiet_hours_start: settings.quiet_hours_start,
+      quiet_hours_end: settings.quiet_hours_end,
+      message_template: settings.message_template,
+    },
   });
 
   // Update form when settings are loaded
   React.useEffect(() => {
     if (!loading && settings) {
-      form.reset(settings);
+      form.reset({
+        push_enabled: settings.push_enabled,
+        email_enabled: settings.email_enabled,
+        sms_enabled: settings.sms_enabled,
+        new_appointment_alert: settings.new_appointment_alert,
+        cancel_appointment_alert: settings.cancel_appointment_alert,
+        client_feedback_alert: settings.client_feedback_alert,
+        quiet_hours_start: settings.quiet_hours_start,
+        quiet_hours_end: settings.quiet_hours_end,
+        message_template: settings.message_template,
+      });
     }
   }, [loading, settings, form]);
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      // Ensure all required fields are present in the form data
       const formData: NotificationSettings = {
-        pushEnabled: data.pushEnabled,
-        emailEnabled: data.emailEnabled,
-        smsEnabled: data.smsEnabled,
-        newAppointmentAlert: data.newAppointmentAlert,
-        cancelAppointmentAlert: data.cancelAppointmentAlert,
-        clientFeedbackAlert: data.clientFeedbackAlert,
-        quietHoursStart: data.quietHoursStart,
-        quietHoursEnd: data.quietHoursEnd,
-        messageTemplate: data.messageTemplate
+        push_enabled: data.push_enabled,
+        email_enabled: data.email_enabled,
+        sms_enabled: data.sms_enabled,
+        new_appointment_alert: data.new_appointment_alert,
+        cancel_appointment_alert: data.cancel_appointment_alert,
+        client_feedback_alert: data.client_feedback_alert,
+        quiet_hours_start: data.quiet_hours_start,
+        quiet_hours_end: data.quiet_hours_end,
+        message_template: data.message_template
       };
       
-      const success = await saveSettings(formData);
-      if (success) {
-        toast.success("Configurações de notificação salvas com sucesso!");
-      }
+      await saveSettings(formData);
+      toast.success("Configurações de notificação salvas com sucesso!");
     } catch (error) {
       console.error("Error saving notification settings", error);
       toast.error("Erro ao salvar configurações de notificação");
@@ -106,7 +122,7 @@ const NotificationsTab = () => {
             <CardContent className="space-y-4">
               <FormField
                 control={form.control}
-                name="pushEnabled"
+                name="push_enabled"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
@@ -127,7 +143,7 @@ const NotificationsTab = () => {
 
               <FormField
                 control={form.control}
-                name="emailEnabled"
+                name="email_enabled"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
@@ -148,7 +164,7 @@ const NotificationsTab = () => {
 
               <FormField
                 control={form.control}
-                name="smsEnabled"
+                name="sms_enabled"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
@@ -164,7 +180,7 @@ const NotificationsTab = () => {
                       />
                     </FormControl>
                     {field.value && (
-                      <Alert variant="warning" className="mt-2">
+                      <Alert variant="default" className="mt-2">
                         <AlertDescription>
                           O serviço de SMS requer configurações adicionais e pode ter custos extras.
                         </AlertDescription>
@@ -359,6 +375,4 @@ const NotificationsTab = () => {
   );
 };
 
-// Use a single export pattern to avoid duplicate exports
-// Export as default
 export default NotificationsTab;

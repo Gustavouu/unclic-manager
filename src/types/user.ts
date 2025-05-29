@@ -34,6 +34,18 @@ export interface UserSession {
   expires: string;
 }
 
+export interface Permission {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface UserRole {
+  id: string;
+  name: string;
+  permissions: Permission[];
+}
+
 export const ROLE_PERMISSIONS = {
   admin: ['all'],
   manager: ['read', 'write'],

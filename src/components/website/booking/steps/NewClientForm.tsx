@@ -1,88 +1,66 @@
 
-import React, { useState } from 'react';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { validateRequired, validateEmail } from '@/utils/formUtils';
+
+const clientSchema = z.object({
+  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  email: z.string().email('Email inválido').optional(),
+  phone: z.string().min(10, 'Telefone deve ter pelo menos 10 caracteres'),
+  gender: z.string().optional(),
+  birthDate: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+});
+
+type ClientFormData = z.infer<typeof clientSchema>;
 
 interface NewClientFormProps {
-  phone: string;
-  onComplete: (clientData: any) => void;
-  onBack: () => void;
+  onSubmit: (data: ClientFormData) => void;
+  onCancel: () => void;
+  isLoading?: boolean;
 }
 
-export function NewClientForm({ phone, onComplete, onBack }: NewClientFormProps) {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: phone
+export function NewClientForm({ onSubmit, onCancel, isLoading = false }: NewClientFormProps) {
+  const form = useForm<ClientFormData>({
+    resolver: zodResolver(clientSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      gender: '',
+      birthDate: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+    },
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    
-    newErrors.firstName = validateRequired(formData.firstName);
-    newErrors.lastName = validateRequired(formData.lastName);
-    newErrors.email = validateEmail(formData.email);
-
-    setErrors(newErrors);
-
-    return Object.values(newErrors).every(error => error === '');
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (validateForm()) {
-      onComplete(formData);
-    }
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
-
   return (
-    <Card>
+    <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Complete seus dados</CardTitle>
+        <CardTitle>Cadastro de Cliente</CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <CardContent className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <Label htmlFor="firstName">Nome</Label>
+            <Label htmlFor="name">Nome *</Label>
             <Input
-              id="firstName"
-              value={formData.firstName}
-              onChange={(e) => handleInputChange('firstName', e.target.value)}
-              placeholder="Seu nome"
-              className={errors.firstName ? 'border-red-500' : ''}
+              id="name"
+              {...form.register('name')}
+              placeholder="Nome completo"
             />
-            {errors.firstName && (
-              <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="lastName">Sobrenome</Label>
-            <Input
-              id="lastName"
-              value={formData.lastName}
-              onChange={(e) => handleInputChange('lastName', e.target.value)}
-              placeholder="Seu sobrenome"
-              className={errors.lastName ? 'border-red-500' : ''}
-            />
-            {errors.lastName && (
-              <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
+            {form.formState.errors.name && (
+              <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
             )}
           </div>
 
@@ -91,32 +69,47 @@ export function NewClientForm({ phone, onComplete, onBack }: NewClientFormProps)
             <Input
               id="email"
               type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
+              {...form.register('email')}
               placeholder="seu@email.com"
-              className={errors.email ? 'border-red-500' : ''}
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            {form.formState.errors.email && (
+              <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
             )}
           </div>
 
           <div>
-            <Label htmlFor="phone">Telefone</Label>
+            <Label htmlFor="phone">Telefone *</Label>
             <Input
               id="phone"
-              value={formData.phone}
-              readOnly
-              className="bg-gray-100"
+              {...form.register('phone')}
+              placeholder="(11) 99999-9999"
             />
+            {form.formState.errors.phone && (
+              <p className="text-sm text-red-500">{form.formState.errors.phone.message}</p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="gender">Gênero</Label>
+            <Select onValueChange={(value) => form.setValue('gender', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o gênero" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="masculino">Masculino</SelectItem>
+                <SelectItem value="feminino">Feminino</SelectItem>
+                <SelectItem value="outro">Outro</SelectItem>
+                <SelectItem value="nao_informar">Prefiro não informar</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={onBack} className="flex-1">
-              Voltar
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancelar
             </Button>
-            <Button type="submit" className="flex-1">
-              Continuar
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Cadastrando...' : 'Cadastrar'}
             </Button>
           </div>
         </form>
