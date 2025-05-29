@@ -1,71 +1,35 @@
 
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
-} from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface ClientAcquisitionChartProps {
   dateRange: string;
 }
 
-const data = [
-  { name: 'Jan', novosClientes: 28 },
-  { name: 'Fev', novosClientes: 32 },
-  { name: 'Mar', novosClientes: 36 },
-  { name: 'Abr', novosClientes: 30 },
-  { name: 'Mai', novosClientes: 40 },
-  { name: 'Jun', novosClientes: 42 },
-];
-
 export function ClientAcquisitionChart({ dateRange }: ClientAcquisitionChartProps) {
-  // In a real application, we would use the dateRange to filter data
-  console.log(`Loading client acquisition data for range: ${dateRange}`);
+  const data = [
+    { name: 'Jan', novos: 8 },
+    { name: 'Fev', novos: 12 },
+    { name: 'Mar', novos: 15 },
+    { name: 'Abr', novos: 10 },
+    { name: 'Mai', novos: 18 },
+    { name: 'Jun', novos: 22 },
+  ];
   
-  const config = {
-    novosClientes: {
-      label: "Novos Clientes",
-      theme: { light: "#4f46e5", dark: "#818cf8" },
-    },
-  };
-
   return (
-    <ChartContainer config={config} className="h-[300px]">
-      <AreaChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
-        <defs>
-          <linearGradient id="colorClients" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--color-novosClientes)" stopOpacity={0.8}/>
-            <stop offset="95%" stopColor="var(--color-novosClientes)" stopOpacity={0.1}/>
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis 
-          dataKey="name" 
-          axisLine={false}
-          tickLine={false}
-          tick={{ fontSize: 12 }}
-          dy={10}
-        />
-        <YAxis 
-          axisLine={false}
-          tickLine={false}
-          tick={{ fontSize: 12 }}
-          width={30}
-        />
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <Area 
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 25 }}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+        <YAxis />
+        <Tooltip />
+        <Line 
           type="monotone" 
-          dataKey="novosClientes" 
-          stroke="var(--color-novosClientes)" 
-          fillOpacity={1} 
-          fill="url(#colorClients)" 
+          dataKey="novos" 
+          stroke="#3b82f6" 
+          strokeWidth={2}
+          dot={{ fill: '#3b82f6' }}
         />
-      </AreaChart>
-    </ChartContainer>
+      </LineChart>
+    </ResponsiveContainer>
   );
 }

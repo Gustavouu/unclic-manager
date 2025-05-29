@@ -25,7 +25,7 @@ export interface RevenueChartData {
   subscriptions?: number;
 }
 
-export const useFinancialMetrics = (period: string = 'month') => {
+export const useFinancialMetrics = (dateRange?: { start: Date; end: Date }) => {
   const [metrics, setMetrics] = useState<FinancialMetrics>({
     totalRevenue: 0,
     totalExpenses: 0,
@@ -53,30 +53,17 @@ export const useFinancialMetrics = (period: string = 'month') => {
     }
 
     try {
-      // Calculate date range based on period or provided range
+      // Calculate date range based on dateRange or provided range
       const now = new Date();
       let startDate: Date;
-      let endDate: Date = dateRangeParam?.end || now;
+      let endDate: Date = dateRangeParam?.end || dateRange?.end || now;
 
       if (dateRangeParam) {
         startDate = dateRangeParam.start;
+      } else if (dateRange) {
+        startDate = dateRange.start;
       } else {
-        switch (period) {
-          case 'week':
-            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            break;
-          case 'month':
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            break;
-          case 'quarter':
-            startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
-            break;
-          case 'year':
-            startDate = new Date(now.getFullYear(), 0, 1);
-            break;
-          default:
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        }
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
       }
 
       // Fetch revenue from bookings
@@ -172,7 +159,7 @@ export const useFinancialMetrics = (period: string = 'month') => {
 
   useEffect(() => {
     refreshMetrics();
-  }, [businessId, period]);
+  }, [businessId, dateRange]);
 
   return { metrics, revenueChartData, refreshMetrics, isLoading, error };
 };

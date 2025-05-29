@@ -1,81 +1,73 @@
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GeneralInfoSection } from "./GeneralInfoSection";
-import { LogoImagesSection } from "./LogoImagesSection";
-import { SocialMediaSection } from "./SocialMediaSection";
-import { WebsiteSection } from "./WebsiteSection";
-import { useBusinessProfileForm } from "@/hooks/useBusinessProfileForm";
-import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { useEffect, useRef } from "react";
 import { useTenant } from "@/contexts/TenantContext";
-import { toast } from "sonner";
+import { Building, Mail, Phone, MapPin } from "lucide-react";
 
-export const BusinessProfileCard = () => {
-  const { isSaving, handleSave, handleCancel, formProps, loadBusinessData } = useBusinessProfileForm();
-  const { loadProgress } = useOnboarding();
-  const { businessData, refreshBusinessData } = useTenant();
-  const initialized = useRef(false);
+export function BusinessProfileCard() {
+  const { businessName, businessId } = useTenant();
 
-  // Load onboarding and business data when the component mounts - only once
-  useEffect(() => {
-    const initializeData = async () => {
-      if (!initialized.current) {
-        try {
-          // First load onboarding progress data
-          await loadProgress();
-          
-          // Then load actual business data from the tenant context
-          if (businessData) {
-            loadBusinessData(businessData);
-          } else {
-            // If no business data is available yet, try to refresh it
-            await refreshBusinessData();
-            initialized.current = true;
-          }
-        } catch (error) {
-          console.error("Error loading business data:", error);
-          toast.error("Erro ao carregar dados do negócio");
-        }
-        
-        initialized.current = true;
-      }
-    };
-    
-    initializeData();
-  }, [loadProgress, businessData, loadBusinessData, refreshBusinessData]);
-
-  // Update form when business data changes
-  useEffect(() => {
-    if (businessData && initialized.current) {
-      loadBusinessData(businessData);
-    }
-  }, [businessData, loadBusinessData]);
+  // Mock business data for now
+  const businessData = {
+    name: businessName || "Meu Negócio",
+    email: "contato@meunegocio.com",
+    phone: "(11) 99999-9999",
+    address: "Rua Principal, 123 - Centro",
+    city: "São Paulo",
+    state: "SP",
+  };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Perfil do Negócio</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Building className="h-5 w-5" />
+          Perfil do Negócio
+        </CardTitle>
         <CardDescription>
-          Informações básicas sobre o seu negócio
+          Informações básicas sobre seu estabelecimento
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <GeneralInfoSection {...formProps} />
-          <LogoImagesSection />
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Nome do Negócio</label>
+            <p className="text-sm text-muted-foreground">{businessData.name}</p>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-1">
+              <Mail className="h-4 w-4" />
+              Email
+            </label>
+            <p className="text-sm text-muted-foreground">{businessData.email}</p>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-1">
+              <Phone className="h-4 w-4" />
+              Telefone
+            </label>
+            <p className="text-sm text-muted-foreground">{businessData.phone}</p>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-1">
+              <MapPin className="h-4 w-4" />
+              Endereço
+            </label>
+            <p className="text-sm text-muted-foreground">
+              {businessData.address}, {businessData.city} - {businessData.state}
+            </p>
+          </div>
         </div>
         
-        <WebsiteSection {...formProps} />
-        
-        <SocialMediaSection {...formProps} />
+        <div className="flex justify-end pt-4">
+          <Button variant="outline">
+            Editar Informações
+          </Button>
+        </div>
       </CardContent>
-      <CardFooter className="flex justify-end gap-2">
-        <Button variant="outline" onClick={handleCancel} type="button">Cancelar</Button>
-        <Button onClick={handleSave} disabled={isSaving} type="button">
-          {isSaving ? "Salvando..." : "Salvar Alterações"}
-        </Button>
-      </CardFooter>
     </Card>
   );
-};
+}

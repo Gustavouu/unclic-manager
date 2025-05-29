@@ -16,38 +16,30 @@ export const useProfessionalOperations = () => {
     setError(null);
 
     try {
-      // First try to fetch from 'professionals' table (modern schema)
-      let { data: professionalsData, error } = await supabase
-        .from("professionals")
-        .select("*")
-        .eq("business_id", businessId);
+      // Try to fetch from 'funcionarios' table (legacy schema)
+      const { data: funcionarios, error: funcionariosError } = await supabase
+        .from("funcionarios")
+        .select("id, nome, email, telefone, foto_url, cargo, comissao_percentual, status")
+        .eq("id_negocio", businessId);
 
-      // If that fails or returns empty, try 'funcionarios' table (legacy schema)
-      if (error || !professionalsData || professionalsData.length === 0) {
-        const { data: funcionarios, error: funcionariosError } = await supabase
-          .from("funcionarios")
-          .select("id, nome, email, telefone, foto_url, cargo, comissao_percentual, status")
-          .eq("id_negocio", businessId);
-
-        if (funcionariosError) {
-          console.error("Error fetching funcionarios:", funcionariosError);
-          throw funcionariosError;
-        }
-
-        // Map legacy schema to modern schema
-        professionalsData = funcionarios?.map((prof) => ({
-          id: prof.id,
-          name: prof.nome,
-          email: prof.email,
-          phone: prof.telefone,
-          photo_url: prof.foto_url,
-          position: prof.cargo,
-          specialties: [],
-          commission_percentage: prof.comissao_percentual,
-          status: prof.status === 'ativo' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
-          business_id: businessId,
-        })) || [];
+      if (funcionariosError) {
+        console.error("Error fetching funcionarios:", funcionariosError);
+        throw funcionariosError;
       }
+
+      // Map legacy schema to modern schema
+      const professionalsData = funcionarios?.map((prof) => ({
+        id: prof.id,
+        name: prof.nome,
+        email: prof.email,
+        phone: prof.telefone,
+        photo_url: prof.foto_url,
+        position: prof.cargo,
+        specialties: [],
+        commission_percentage: prof.comissao_percentual,
+        status: prof.status === 'ativo' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
+        business_id: businessId,
+      })) || [];
 
       setProfessionals(professionalsData);
       return professionalsData;
@@ -66,26 +58,20 @@ export const useProfessionalOperations = () => {
     setError(null);
 
     try {
-      // Add business ID to the professional data
-      const professionalData = {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        position: data.position,
-        photo_url: data.photo_url,
-        bio: data.bio,
-        specialties: data.specialties,
-        status: data.status,
-        commission_percentage: data.commission_percentage,
-        hire_date: data.hire_date,
-        working_hours: data.working_hours,
-        business_id: businessId,
-      };
-
-      // Insert the professional data
+      // Insert into funcionarios table using legacy schema
       const { data: newProfessional, error } = await supabase
-        .from("professionals")
-        .insert([professionalData])
+        .from("funcionarios")
+        .insert([{
+          nome: data.name,
+          email: data.email,
+          telefone: data.phone,
+          cargo: data.position,
+          foto_url: data.photo_url,
+          bio: data.bio,
+          comissao_percentual: data.commission_percentage,
+          status: data.status === ProfessionalStatus.ACTIVE ? 'ativo' : 'inativo',
+          id_negocio: businessId,
+        }])
         .select()
         .single();
 
@@ -94,10 +80,24 @@ export const useProfessionalOperations = () => {
       toast.success("Profissional adicionado com sucesso!");
 
       if (newProfessional) {
-        setProfessionals(prev => [...prev, newProfessional as Professional]);
+        const mappedProfessional: Professional = {
+          id: newProfessional.id,
+          name: newProfessional.nome,
+          email: newProfessional.email,
+          phone: newProfessional.telefone,
+          photo_url: newProfessional.foto_url,
+          position: newProfessional.cargo,
+          specialties: [],
+          commission_percentage: newProfessional.comissao_percentual,
+          status: newProfessional.status === 'ativo' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
+          business_id: businessId,
+        };
+        
+        setProfessionals(prev => [...prev, mappedProfessional]);
+        return mappedProfessional;
       }
 
-      return newProfessional as Professional;
+      return null;
     } catch (error: any) {
       setError(error);
       toast.error(`Erro ao criar profissional: ${error.message}`);
@@ -112,22 +112,17 @@ export const useProfessionalOperations = () => {
     setError(null);
 
     try {
-      // Update the professional data
+      // Update using funcionarios table schema
       const { data: updatedProfessional, error } = await supabase
-        .from("professionals")
+        .from("funcionarios")
         .update({
-          name: data.name,
+          nome: data.name,
           email: data.email,
-          phone: data.phone,
-          position: data.position,
-          photo_url: data.photo_url,
-          bio: data.bio,
-          specialties: data.specialties,
-          status: data.status,
-          commission_percentage: data.commission_percentage,
-          hire_date: data.hire_date,
-          working_hours: data.working_hours,
-          business_id: businessId,
+          telefone: data.phone,
+          cargo: data.position,
+          foto_url: data.photo_url,
+          comissao_percentual: data.commission_percentage,
+          status: data.status === ProfessionalStatus.ACTIVE ? 'ativo' : 'inativo',
         })
         .eq("id", id)
         .select()
@@ -138,12 +133,27 @@ export const useProfessionalOperations = () => {
       toast.success("Profissional atualizado com sucesso!");
 
       if (updatedProfessional) {
+        const mappedProfessional: Professional = {
+          id: updatedProfessional.id,
+          name: updatedProfessional.nome,
+          email: updatedProfessional.email,
+          phone: updatedProfessional.telefone,
+          photo_url: updatedProfessional.foto_url,
+          position: updatedProfessional.cargo,
+          specialties: [],
+          commission_percentage: updatedProfessional.comissao_percentual,
+          status: updatedProfessional.status === 'ativo' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
+          business_id: businessId,
+        };
+        
         setProfessionals(prev => 
-          prev.map(p => p.id === id ? updatedProfessional as Professional : p)
+          prev.map(p => p.id === id ? mappedProfessional : p)
         );
+        
+        return mappedProfessional;
       }
 
-      return updatedProfessional as Professional;
+      return null;
     } catch (error: any) {
       setError(error);
       toast.error(`Erro ao atualizar profissional: ${error.message}`);
@@ -159,7 +169,7 @@ export const useProfessionalOperations = () => {
 
     try {
       const { error } = await supabase
-        .from("professionals")
+        .from("funcionarios")
         .delete()
         .eq("id", id);
 

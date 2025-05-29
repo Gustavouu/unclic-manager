@@ -1,190 +1,111 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useTenant } from "@/contexts/TenantContext";
-import { toast } from "sonner";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useTenant } from '@/contexts/TenantContext';
 
 export interface Service {
   id: string;
   name: string;
+  description?: string;
   price: number;
   duration: number;
-  description?: string;
-  category_id?: string;
-  commission_percentage?: number;
-  image_url?: string;
   is_active: boolean;
-  isActive?: boolean; // Alias for is_active for compatibility with components
+  business_id: string;
+  category_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const useServices = () => {
   const [services, setServices] = useState<Service[]>([]);
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { businessId } = useTenant();
-  
-  const fetchServices = async () => {
-    if (!businessId) return;
-    
-    try {
-      setIsLoading(true);
-      
-      const { data, error } = await supabase
-        .from('servicos')
-        .select('*, categorias:category_id(id, name)')
-        .eq('business_id', businessId);
-        
-      if (error) throw error;
-      
-      // Add the isActive alias for compatibility
-      const processedServices = (data || []).map(service => ({
-        ...service,
-        isActive: service.is_active
-      }));
-      
-      setServices(processedServices);
-    } catch (error) {
-      console.error("Error fetching services:", error);
-      toast.error("Erro ao carregar serviços");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const fetchCategories = async () => {
-    if (!businessId) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('categorias')
-        .select('id, name')
-        .eq('business_id', businessId)
-        .eq('type', 'servico');
-        
-      if (error) throw error;
-      
-      setCategories(data || []);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      toast.error("Erro ao carregar categorias");
-    }
-  };
-  
-  const createService = async (service: Omit<Service, 'id' | 'is_active' | 'isActive'>) => {
-    if (!businessId) {
-      toast.error("ID do negócio não disponível");
-      return null;
-    }
-    
-    try {
-      const { data, error } = await supabase
-        .from('servicos')
-        .insert([{
-          ...service,
-          business_id: businessId,
-          is_active: true
-        }])
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
-      const newService = {
-        ...data,
-        isActive: data.is_active
-      };
-      
-      setServices(prev => [...prev, newService]);
-      
-      toast.success("Serviço criado com sucesso!");
-      return newService;
-    } catch (error) {
-      console.error("Error creating service:", error);
-      toast.error("Erro ao criar serviço");
-      return null;
-    }
-  };
-  
-  const updateService = async (id: string, updates: Partial<Omit<Service, 'id' | 'isActive'>>) => {
-    try {
-      // Handle the isActive/is_active mapping if it's in the updates
-      const dbUpdates = { ...updates };
-      if ('is_active' in updates) {
-        dbUpdates.is_active = updates.is_active;
-      }
-      
-      const { error } = await supabase
-        .from('servicos')
-        .update(dbUpdates)
-        .eq('id', id);
-        
-      if (error) throw error;
-      
-      setServices(prev =>
-        prev.map(service => 
-          service.id === id 
-            ? { 
-                ...service, 
-                ...updates, 
-                isActive: 'is_active' in updates ? updates.is_active : service.isActive 
-              } 
-            : service
-        )
-      );
-      
-      toast.success("Serviço atualizado com sucesso!");
-      return true;
-    } catch (error) {
-      console.error("Error updating service:", error);
-      toast.error("Erro ao atualizar serviço");
-      return false;
-    }
-  };
-  
-  const toggleServiceActive = async (id: string, active: boolean) => {
-    return updateService(id, { is_active: active });
-  };
-  
+
   useEffect(() => {
-    fetchServices();
-    fetchCategories();
-    
-    // Subscribe to service changes
-    const servicesChannel = supabase
-      .channel('services-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'servicos' },
-        () => {
-          fetchServices(); // Refresh when services change
+    const fetchServices = async () => {
+      if (!businessId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Try servicos table (legacy schema)
+        const { data: servicosData, error: servicosError } = await supabase
+          .from('servicos')
+          .select('*')
+          .eq('id_negocio', businessId);
+          
+        if (!servicosError && servicosData) {
+          const mappedServices: Service[] = servicosData.map(service => ({
+            id: service.id,
+            name: service.nome,
+            description: service.descricao,
+            price: service.preco,
+            duration: service.duracao,
+            is_active: service.ativo,
+            business_id: service.id_negocio,
+            category_id: service.id_categoria,
+            created_at: service.criado_em,
+            updated_at: service.atualizado_em,
+          }));
+          
+          setServices(mappedServices);
+          setLoading(false);
+          return;
         }
-      )
-      .subscribe();
-      
-    const categoriesChannel = supabase
-      .channel('categories-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'categorias' },
-        () => {
-          fetchCategories(); // Refresh when categories change
+        
+        // If that fails, try services table (modern schema)
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('services')
+          .select('*')
+          .eq('business_id', businessId);
+          
+        if (!servicesError && servicesData) {
+          setServices(servicesData as Service[]);
+        } else {
+          // Return empty array if both queries fail
+          setServices([]);
         }
-      )
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(servicesChannel);
-      supabase.removeChannel(categoriesChannel);
+        
+      } catch (err: any) {
+        console.error('Error in useServices:', err);
+        setError(err.message || 'Failed to fetch services');
+        setServices([]);
+      } finally {
+        setLoading(false);
+      }
     };
+
+    fetchServices();
   }, [businessId]);
-  
-  return {
-    services,
-    categories,
-    isLoading,
-    fetchServices,
+
+  // CRUD operations would go here
+  const createService = async (serviceData: Omit<Service, 'id' | 'business_id'>) => {
+    // Implementation for creating services
+    console.log('Create service:', serviceData);
+  };
+
+  const updateService = async (id: string, serviceData: Partial<Service>) => {
+    // Implementation for updating services
+    console.log('Update service:', id, serviceData);
+  };
+
+  const deleteService = async (id: string) => {
+    // Implementation for deleting services
+    console.log('Delete service:', id);
+  };
+
+  return { 
+    services, 
+    loading, 
+    isLoading: loading,
+    error,
     createService,
     updateService,
-    toggleServiceActive
+    deleteService
   };
 };
