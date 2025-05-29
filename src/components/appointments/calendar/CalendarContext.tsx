@@ -12,7 +12,8 @@ import {
   addWeeks,
   subWeeks
 } from "date-fns";
-import { CalendarViewType, ServiceType } from "./types";
+import { CalendarViewType } from "./types";
+import { ServiceType } from "@/hooks/appointments/types";
 import { toast } from "sonner";
 import { useAppointmentUpdate } from "@/hooks/appointments/useAppointmentUpdate";
 import { useAppointmentConflicts } from "@/hooks/appointments/useAppointmentConflicts";

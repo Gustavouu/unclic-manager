@@ -1,7 +1,6 @@
 
-import { AppointmentStatus } from "../types";
+import { AppointmentStatus, ServiceType } from "@/hooks/appointments/types";
 
-export type ServiceType = "all" | "haircut" | "barber" | "combo" | "treatment";
 export type CalendarViewType = "month" | "week" | "day";
 
 export interface AppointmentType {

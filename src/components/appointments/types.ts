@@ -43,12 +43,16 @@ export interface AppointmentType {
 }
 
 // Map service types to display names for barbershop
-export const SERVICE_TYPE_NAMES: Record<ServiceType, string> = {
+export const SERVICE_TYPE_NAMES: Record<import('@/hooks/appointments/types').ServiceType, string> = {
   all: "Todos os Serviços",
   haircut: "Corte de Cabelo",
   barber: "Barba",
   combo: "Corte e Barba",
-  treatment: "Tratamentos"
+  treatment: "Tratamentos",
+  hair: "Cabelo",
+  nails: "Unhas",
+  makeup: "Maquiagem",
+  skincare: "Cuidados com a Pele"
 };
 
 // Re-export everything from the main types file to maintain consistency

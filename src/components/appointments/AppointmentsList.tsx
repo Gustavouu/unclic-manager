@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -29,7 +28,7 @@ export const AppointmentsList = () => {
     setShowFilters,
     filteredAppointments,
     handleResetFilters
-  } = useAppointmentsFilter(appointments);
+  } = useAppointmentsFilter(appointments as Appointment[]);
 
   // Sort appointments chronologically
   const sortedAppointments = [...filteredAppointments].sort((a, b) => {
