@@ -7,7 +7,6 @@ export interface BusinessData {
   name: string;
   description?: string;
   logo_url?: string;
-  banner_url?: string;
   website_url?: string;
   instagram_url?: string;
   phone?: string;
@@ -107,7 +106,6 @@ export const useBusinessWebsite = (businessId?: string) => {
                 admin_email: legacyData.email_admin,
                 neighborhood: legacyData.bairro,
                 // Add missing required properties with defaults
-                banner_url: '',
                 website_url: '',
                 instagram_url: '',
                 country: 'BR',

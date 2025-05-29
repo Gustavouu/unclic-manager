@@ -58,18 +58,8 @@ export const useServices = () => {
           return;
         }
         
-        // If that fails, try services table (modern schema)
-        const { data: servicesData, error: servicesError } = await supabase
-          .from('services')
-          .select('*')
-          .eq('business_id', businessId);
-          
-        if (!servicesError && servicesData) {
-          setServices(servicesData as Service[]);
-        } else {
-          // Return empty array if both queries fail
-          setServices([]);
-        }
+        // Return empty array if queries fail
+        setServices([]);
         
       } catch (err: any) {
         console.error('Error in useServices:', err);

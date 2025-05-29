@@ -1,74 +1,91 @@
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-export const useBusinessWebsite = (slug: string) => {
+export interface BusinessData {
+  id: string;
+  name: string;
+  description?: string;
+  logo_url?: string;
+  website_url?: string;
+  instagram_url?: string;
+  phone?: string;
+  address?: string;
+  address_number?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  zip_code?: string;
+  admin_email?: string;
+  neighborhood?: string;
+  owner_id?: string;
+  theme?: string;
+  currency?: string;
+  timezone?: string;
+  business_type?: string;
+  working_hours?: any;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SimpleStaff {
+  id: string;
+  name: string;
+  bio?: string;
+  photo_url?: string;
+  business_id: string;
+  specialties?: string[];
+}
+
+export const useBusinessWebsite = (businessId?: string) => {
+  const [business, setBusiness] = useState<BusinessData | null>(null);
+  const [staff, setStaff] = useState<SimpleStaff[]>([]);
   const [loading, setLoading] = useState(true);
-  const [business, setBusiness] = useState<any>(null);
-  const [services, setServices] = useState<any[]>([]);
-  const [staff, setStaff] = useState<any[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    async function fetchBusinessData() {
-      if (!slug) return;
+    if (!businessId) {
+      setLoading(false);
+      return;
+    }
 
+    const fetchBusinessData = async () => {
       setLoading(true);
-      setError(null);
-
       try {
-        // Fetch business details
-        const { data: businessData, error: businessError } = await supabase
-          .from('businesses')
-          .select('*')
-          .eq('slug', slug)
-          .single();
-
-        if (businessError) throw businessError;
-        if (!businessData) throw new Error('Business not found');
-
-        setBusiness(businessData);
-
-        // Fetch services for this business
-        const { data: servicesData, error: servicesError } = await supabase
-          .from('services')
-          .select('*')
-          .eq('business_id', businessData.id)
-          .eq('is_active', true)
-          .order('price');
-
-        if (servicesError) throw servicesError;
-        setServices(servicesData || []);
-
-        // Fetch staff/professionals for this business
-        const { data: staffData, error: staffError } = await supabase
+        // Fetch staff from professionals table if it exists
+        const { data: professionalsData, error: professionalsError } = await supabase
           .from('professionals')
           .select('*')
-          .eq('business_id', businessData.id)
-          .eq('status', 'active');
+          .eq('business_id', businessId);
+          
+        let staffInfo: SimpleStaff[] = [];
+        if (!professionalsError && professionalsData?.length) {
+          staffInfo = professionalsData.map((staff: any) => ({
+            id: staff.id,
+            name: staff.name,
+            bio: staff.bio,
+            photo_url: staff.photo_url,
+            business_id: staff.business_id,
+            specialties: staff.specialties || []
+          }));
+        }
 
-        if (staffError) throw staffError;
-        
-        // Add position as role for backward compatibility
-        const staffWithRole = staffData?.map(person => ({
-          ...person,
-          role: person.position // Use position as role
-        })) || [];
-        
-        setStaff(staffWithRole);
-
-      } catch (error: any) {
-        console.error('Error fetching business website data:', error);
-        setError(error.message);
-        toast.error('Error loading business information');
+        setStaff(staffInfo);
+      } catch (err: any) {
+        console.error("Error loading website data:", err);
+        setError(err.message || 'Error loading data');
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     fetchBusinessData();
-  }, [slug]);
+  }, [businessId]);
 
-  return { business, services, staff, loading, error };
+  return {
+    business,
+    staff,
+    loading,
+    error
+  };
 };

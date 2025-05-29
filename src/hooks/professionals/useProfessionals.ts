@@ -2,32 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
-
-export interface Professional {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  position?: string;
-  photo_url?: string;
-  bio?: string;
-  specialties?: string[];
-  status?: string;
-  business_id?: string;
-  user_id?: string;
-  commission_percentage?: number;
-  hire_date?: string;
-  working_hours?: any;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export enum ProfessionalStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  ON_LEAVE = 'vacation',
-  PENDING = 'pending'
-}
+import { Professional, ProfessionalStatus } from './types';
 
 export const useProfessionals = (options?: { 
   activeOnly?: boolean, 

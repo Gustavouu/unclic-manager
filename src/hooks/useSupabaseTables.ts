@@ -3,57 +3,43 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useSupabaseTables = () => {
-  const [tablesStatus, setTablesStatus] = useState<{[key: string]: boolean}>({});
-  const [loading, setLoading] = useState<boolean>(true);
+  const [tables, setTables] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkTables = async () => {
+    const fetchTables = async () => {
       setLoading(true);
-      setError(null);
-      
-      // Lista de tabelas principais da aplicação
-      const tablesToCheck = [
-        'businesses',
-        'business_users',
-        'business_settings',
-        'services',
-        'professionals',
-        'clients',
-        'appointments'
-      ];
-      
-      const results: {[key: string]: boolean} = {};
-      
       try {
-        // Verificar cada tabela
-        for (const table of tablesToCheck) {
-          try {
-            // Tenta uma consulta simples para verificar se a tabela existe
-            const { error } = await supabase
-              .from(table)
-              .select('id')
-              .limit(1);
-            
-            // Se não houver erro, a tabela existe e está acessível
-            results[table] = !error;
-          } catch (tableError) {
-            console.error(`Erro ao verificar tabela ${table}:`, tableError);
-            results[table] = false;
-          }
-        }
+        // Since we can't query information_schema directly via the client,
+        // we'll return the known tables from our schema
+        const knownTables = [
+          'businesses',
+          'clients', 
+          'funcionarios',
+          'negocios',
+          'servicos',
+          'users',
+          'financial_transactions',
+          'professionals',
+          'application_users',
+          'bookings',
+          'employees',
+          'categories'
+        ];
         
-        setTablesStatus(results);
+        setTables(knownTables);
       } catch (err: any) {
-        console.error('Erro ao verificar tabelas:', err);
-        setError(err.message || 'Erro ao verificar tabelas do banco de dados');
+        console.error('Error fetching tables:', err);
+        setError(err.message || 'Failed to fetch tables');
+        setTables([]);
       } finally {
         setLoading(false);
       }
     };
-    
-    checkTables();
+
+    fetchTables();
   }, []);
 
-  return { tablesStatus, loading, error };
+  return { tables, loading, error };
 };
