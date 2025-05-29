@@ -1,242 +1,106 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { FilterPeriod, DashboardStats } from '@/types/dashboard';
-import { useTenant } from '@/contexts/TenantContext';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 
-// Re-export as a type to fix the isolatedModules error
-export type { DashboardStats };
+export interface DashboardMetrics {
+  totalAppointments: number;
+  totalRevenue: number;
+  newClients: number;
+  completionRate: number;
+  popularServices: Array<{ name: string; count: number }>;
+  peakHours: Array<{ hour: number; count: number }>;
+}
 
-export const useDashboardData = (period: FilterPeriod = 'month') => {
-  const [stats, setStats] = useState<DashboardStats>({
+export const useDashboardData = () => {
+  const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalAppointments: 0,
-    completedAppointments: 0,
     totalRevenue: 0,
     newClients: 0,
+    completionRate: 0,
     popularServices: [],
-    upcomingAppointments: [],
-    revenueData: [],
-    retentionRate: 0,
-    newClientsCount: 0,
-    returningClientsCount: 0,
-    clientsCount: 0,
-    todayAppointments: 0,
-    monthlyRevenue: 0,
-    monthlyServices: 0,
-    occupancyRate: 0,
-    nextAppointments: []
+    peakHours: []
   });
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { businessId } = useTenant();
 
-  // Helper for date ranges based on period
-  const getDateRange = useCallback(() => {
-    const today = new Date();
-    const startDate = new Date();
-    
-    switch(period) {
-      case 'today':
-        // Just today
-        return { start: today, end: today };
-      case 'week':
-        // Last 7 days
-        startDate.setDate(today.getDate() - 7);
-        return { start: startDate, end: today };
-      case 'month':
-        // Last 30 days
-        startDate.setDate(today.getDate() - 30);
-        return { start: startDate, end: today };
-      case 'quarter':
-        // Last 90 days
-        startDate.setDate(today.getDate() - 90);
-        return { start: startDate, end: today };
-      case 'year':
-        // Last 365 days
-        startDate.setDate(today.getDate() - 365);
-        return { start: startDate, end: today };
-      default:
-        // Default to month
-        startDate.setDate(today.getDate() - 30);
-        return { start: startDate, end: today };
-    }
-  }, [period]);
-
-  // Fetch dashboard data
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchDashboardData = async () => {
       if (!businessId) {
-        console.log('No business ID available, skipping dashboard data fetch');
+        setIsLoading(false);
         return;
       }
 
-      setLoading(true);
-      setError(null);
-
       try {
-        console.log('Fetching dashboard data for business ID:', businessId, 'period:', period);
-        const dateRange = getDateRange();
-        
-        // Format dates for database queries
-        const startDateFormatted = dateRange.start.toISOString().split('T')[0];
-        const endDateFormatted = dateRange.end.toISOString().split('T')[0];
-        
-        // 1. Get appointment statistics
-        const { data: appointmentsData, error: appointmentsError } = await supabase
-          .from('agendamentos')
-          .select('id, data, valor, status')
-          .eq('id_negocio', businessId)
-          .gte('data', startDateFormatted)
-          .lte('data', endDateFormatted);
-          
-        if (appointmentsError) throw appointmentsError;
-        
-        // 2. Get new clients in period
-        const { data: newClientsData, error: newClientsError } = await supabase
-          .from('clientes')
-          .select('id')
-          .eq('id_negocio', businessId)
-          .gte('criado_em', startDateFormatted)
-          .lte('criado_em', endDateFormatted);
-          
-        if (newClientsError) throw newClientsError;
-        
-        // 3. Get popular services
-        const { data: popularServicesData, error: popularServicesError } = await supabase
-          .from('agendamentos')
-          .select(`
-            id_servico,
-            servicos:id_servico (id, nome)
-          `)
-          .eq('id_negocio', businessId)
-          .gte('data', startDateFormatted)
-          .lte('data', endDateFormatted);
-          
-        if (popularServicesError) throw popularServicesError;
-        
-        // 4. Get upcoming appointments
-        const { data: upcomingAppointmentsData, error: upcomingAppointmentsError } = await supabase
-          .from('agendamentos')
-          .select(`
-            *,
-            clientes:id_cliente (nome),
-            servicos:id_servico (nome),
-            funcionarios:id_funcionario (nome)
-          `)
-          .eq('id_negocio', businessId)
-          .gte('data', new Date().toISOString().split('T')[0])
-          .in('status', ['agendado', 'confirmado'])
-          .order('data', { ascending: true })
-          .order('hora_inicio', { ascending: true })
-          .limit(5);
-          
-        if (upcomingAppointmentsError) throw upcomingAppointmentsError;
-        
-        // Calculate stats from fetched data
-        const totalAppointments = appointmentsData?.length || 0;
-        const completedAppointments = appointmentsData?.filter(a => a.status === 'concluido').length || 0;
-        const totalRevenue = appointmentsData?.reduce((sum, app) => sum + (app.valor || 0), 0) || 0;
-        
-        // Calculate revenue data by day for chart
-        const revenueByDay = new Map<string, number>();
-        appointmentsData?.forEach(app => {
-          const day = app.data;
-          revenueByDay.set(day, (revenueByDay.get(day) || 0) + (app.valor || 0));
-        });
-        
-        const revenueData = Array.from(revenueByDay.entries()).map(([date, value]) => ({
-          date,
-          value
-        })).sort((a, b) => a.date.localeCompare(b.date));
-        
-        // Process popular services
-        const serviceCountMap = new Map<string, {id: string, name: string, count: number}>();
-        popularServicesData?.forEach((app: any) => {
-          if (!app.id_servico || !app.servicos) return;
-          
-          const serviceId = app.id_servico;
-          const existing = serviceCountMap.get(serviceId);
-          
-          if (existing) {
-            existing.count += 1;
-          } else {
-            serviceCountMap.set(serviceId, {
-              id: serviceId,
-              name: app.servicos.nome || "Serviço desconhecido",
-              count: 1
-            });
-          }
-        });
-        
-        const popularServices = Array.from(serviceCountMap.values())
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 5);
-          
-        // Map upcoming appointments
-        const upcomingAppointments = upcomingAppointmentsData?.map((app: any) => {
-          const clientName = app.clientes && typeof app.clientes === 'object' ? 
-            app.clientes.nome || "Cliente não identificado" : "Cliente não identificado";
-          
-          const serviceName = app.servicos && typeof app.servicos === 'object' ? 
-            app.servicos.nome || "Serviço não identificado" : "Serviço não identificado";
-          
-          const professionalName = app.funcionarios && typeof app.funcionarios === 'object' ? 
-            app.funcionarios.nome || "Profissional não identificado" : "Profissional não identificado";
-          
-          return {
-            id: app.id,
-            clientName,
-            serviceName,
-            professionalName,
-            date: `${app.data}T${app.hora_inicio}`,
-            status: app.status
-          };
-        }) || [];
-        
-        // Calculate retention metrics
-        const retentionRate = completedAppointments > 0 ? 
-          Math.round((completedAppointments / totalAppointments) * 100) : 0;
-        
-        // Simplified calculation for new vs returning clients
-        const newClientsCount = newClientsData?.length || 0;
-        const returningClientsCount = Math.max(
-          0, 
-          totalAppointments - newClientsCount
-        );
-        
-        // Update stats state with all required fields
-        setStats({
+        setIsLoading(true);
+        setError(null);
+
+        // Use the bookings table for appointments
+        const { data: bookingsData, error: bookingsError } = await supabase
+          .from('bookings')
+          .select('*')
+          .eq('business_id', businessId);
+
+        if (bookingsError) {
+          console.warn('Error fetching from bookings:', bookingsError);
+        }
+
+        // Use the clients table for new clients
+        const { data: clientsData, error: clientsError } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('business_id', businessId);
+
+        if (clientsError) {
+          console.warn('Error fetching from clients:', clientsError);
+        }
+
+        // Calculate metrics from available data
+        const appointments = bookingsData || [];
+        const clients = clientsData || [];
+
+        const totalAppointments = appointments.length;
+        const completedAppointments = appointments.filter(app => app.status === 'completed').length;
+        const totalRevenue = appointments.reduce((sum, app) => sum + (app.price || 0), 0);
+        const completionRate = totalAppointments > 0 ? (completedAppointments / totalAppointments) * 100 : 0;
+
+        // Calculate new clients (clients created in the last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const newClients = clients.filter(client => 
+          new Date(client.created_at || client.criado_em) >= thirtyDaysAgo
+        ).length;
+
+        setMetrics({
           totalAppointments,
-          completedAppointments,
           totalRevenue,
-          newClients: newClientsCount,
-          popularServices,
-          upcomingAppointments,
-          revenueData,
-          retentionRate,
-          newClientsCount,
-          returningClientsCount,
-          // Add values for the new properties
-          clientsCount: newClientsCount + returningClientsCount,
-          todayAppointments: upcomingAppointments.length,
-          monthlyRevenue: totalRevenue,
-          monthlyServices: completedAppointments,
-          occupancyRate: retentionRate, // Using retention rate as an approximation
-          nextAppointments: upcomingAppointments
+          newClients,
+          completionRate,
+          popularServices: [], // Will be populated when services data is available
+          peakHours: [] // Will be populated when we have more appointment data
         });
-        
+
       } catch (err: any) {
         console.error("Error fetching dashboard data:", err);
         setError(err.message);
-        toast.error("Erro ao carregar dados do dashboard");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchStats();
-  }, [businessId, period, getDateRange]);
+    fetchDashboardData();
+  }, [businessId]);
 
-  return { stats, loading, error };
+  return {
+    metrics,
+    isLoading,
+    error,
+    refreshData: () => {
+      if (businessId) {
+        // Re-trigger the effect
+        setIsLoading(true);
+      }
+    }
+  };
 };

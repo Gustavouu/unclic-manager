@@ -58,72 +58,46 @@ export const useUserPermissions = () => {
       }
 
       try {
-        // First try to fetch from new table
-        const { data: userProfile, error: userError } = await supabase
-          .from('users')
-          .select('id, role')
-          .eq('id', user.id)
-          .maybeSingle();
+        // Try to get role from business_users table
+        const { data: businessUser, error: businessError } = await supabase
+          .from('business_users')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
 
-        if (userError) {
-          console.error('Error fetching user profile:', userError);
-          
-          // Try fallback to legacy table
-          const { data: legacyUserProfile, error: legacyError } = await supabase
-            .from('application_users')
-            .select('id, role')
-            .eq('id', user.id)
-            .maybeSingle();
-            
-          if (legacyError) {
-            console.error('Error fetching legacy user profile:', legacyError);
-            // In case of error, use default permissions
-            setPermissions(defaultPermissions);
-            return;
-          }
-          
-          if (legacyUserProfile) {
-            setPermissions({
-              isAdmin: legacyUserProfile.role === 'admin',
-              isProfessional: legacyUserProfile.role === 'professional',
-              canCreateService: legacyUserProfile.role === 'admin',
-              canEditService: legacyUserProfile.role === 'admin',
-              canDeleteService: legacyUserProfile.role === 'admin',
-              canManageUsers: legacyUserProfile.role === 'admin' || legacyUserProfile.role === 'owner',
-              canManageSecurityPolicies: legacyUserProfile.role === 'owner',
-              canManageDatabaseSchema: legacyUserProfile.role === 'owner',
-              canManageEdgeFunctions: legacyUserProfile.role === 'owner',
-              canManageAuthentication: legacyUserProfile.role === 'owner',
-              canManageBusiness: legacyUserProfile.role === 'admin' || legacyUserProfile.role === 'owner',
-              canViewAnalytics: legacyUserProfile.role === 'admin' || legacyUserProfile.role === 'owner',
-              canCreateClient: true,
-              canManageAppointments: true
-            });
-            return;
-          }
-        }
+        let userRole = 'staff'; // default role
 
-        if (userProfile) {
-          setPermissions({
-            isAdmin: userProfile.role === 'admin',
-            isProfessional: userProfile.role === 'professional',
-            canCreateService: userProfile.role === 'admin',
-            canEditService: userProfile.role === 'admin',
-            canDeleteService: userProfile.role === 'admin',
-            canManageUsers: userProfile.role === 'admin' || userProfile.role === 'owner',
-            canManageSecurityPolicies: userProfile.role === 'owner',
-            canManageDatabaseSchema: userProfile.role === 'owner',
-            canManageEdgeFunctions: userProfile.role === 'owner',
-            canManageAuthentication: userProfile.role === 'owner',
-            canManageBusiness: userProfile.role === 'admin' || userProfile.role === 'owner',
-            canViewAnalytics: userProfile.role === 'admin' || userProfile.role === 'owner',
-            canCreateClient: true,
-            canManageAppointments: true
-          });
+        if (!businessError && businessUser) {
+          userRole = businessUser.role;
         } else {
-          // If no user profile found, use default permissions
-          setPermissions(defaultPermissions);
+          // Fallback to application_users table
+          const { data: appUser, error: appUserError } = await supabase
+            .from('application_users')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+            
+          if (!appUserError && appUser && appUser.role) {
+            userRole = appUser.role;
+          }
         }
+
+        setPermissions({
+          isAdmin: userRole === 'admin' || userRole === 'owner',
+          isProfessional: userRole === 'professional' || userRole === 'staff',
+          canCreateService: userRole === 'admin' || userRole === 'owner',
+          canEditService: userRole === 'admin' || userRole === 'owner',
+          canDeleteService: userRole === 'admin' || userRole === 'owner',
+          canManageUsers: userRole === 'admin' || userRole === 'owner',
+          canManageSecurityPolicies: userRole === 'owner',
+          canManageDatabaseSchema: userRole === 'owner',
+          canManageEdgeFunctions: userRole === 'owner',
+          canManageAuthentication: userRole === 'owner',
+          canManageBusiness: userRole === 'admin' || userRole === 'owner',
+          canViewAnalytics: userRole === 'admin' || userRole === 'owner',
+          canCreateClient: true,
+          canManageAppointments: true
+        });
       } catch (error) {
         console.error('Error fetching permissions:', error);
         setPermissions(defaultPermissions);

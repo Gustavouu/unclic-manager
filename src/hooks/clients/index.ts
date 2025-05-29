@@ -1,8 +1,8 @@
 
-/**
- * Index file for all client-related hooks
- */
-export * from './useClientsList';
-export * from './useClientOperations';
-export * from './useClientSearch';
-export * from '@/types/client'; // Export client types from here too
+// Export the main client operations
+export { useClientsList } from './useClientsList';
+export { useClientOperations } from './useClientOperations';
+export { useClientSearch } from './useClientSearch';
+
+// Export the Client type with a specific name to avoid conflicts
+export type { Client as ClientType } from './useClientsList';
