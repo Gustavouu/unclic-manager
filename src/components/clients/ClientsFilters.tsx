@@ -37,9 +37,9 @@ export function ClientsFilters({
       client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.phone?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCity = !cityFilter || client.city === cityFilter;
+    const matchesCity = !cityFilter || cityFilter === 'all' || client.city === cityFilter;
 
-    const matchesSpent = !spentFilter || (() => {
+    const matchesSpent = !spentFilter || spentFilter === 'all' || (() => {
       const totalSpent = client.total_spent || 0;
       switch (spentFilter) {
         case 'low': return totalSpent < 100;
@@ -75,24 +75,24 @@ export function ClientsFilters({
           onChange={(e) => setSearchTerm(e.target.value)}
         />
         
-        <Select value={cityFilter} onValueChange={setCityFilter}>
+        <Select value={cityFilter || 'all'} onValueChange={setCityFilter}>
           <SelectTrigger>
             <SelectValue placeholder="Filtrar por cidade" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas as cidades</SelectItem>
+            <SelectItem value="all">Todas as cidades</SelectItem>
             {uniqueCities.map(city => (
-              <SelectItem key={city} value={city || ''}>{city}</SelectItem>
+              <SelectItem key={city} value={city || 'unknown'}>{city}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         
-        <Select value={spentFilter} onValueChange={setSpentFilter}>
+        <Select value={spentFilter || 'all'} onValueChange={setSpentFilter}>
           <SelectTrigger>
             <SelectValue placeholder="Filtrar por gasto" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os gastos</SelectItem>
+            <SelectItem value="all">Todos os gastos</SelectItem>
             <SelectItem value="low">Até R$ 100</SelectItem>
             <SelectItem value="medium">R$ 100 - R$ 500</SelectItem>
             <SelectItem value="high">Acima de R$ 500</SelectItem>

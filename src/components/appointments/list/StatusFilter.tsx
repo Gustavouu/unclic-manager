@@ -31,7 +31,7 @@ export const StatusFilter = ({ statusFilter, setStatusFilter }: StatusFilterProp
         <SelectContent>
           <SelectItem value="all">Todos os status</SelectItem>
           <SelectItem value="agendado">Agendado</SelectItem>
-          <SelectItem value="concluído">Concluído</SelectItem>
+          <SelectItem value="concluido">Concluído</SelectItem>
           <SelectItem value="cancelado">Cancelado</SelectItem>
         </SelectContent>
       </Select>

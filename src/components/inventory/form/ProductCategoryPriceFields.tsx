@@ -24,7 +24,7 @@ export const ProductCategoryPriceFields = () => {
             <FormLabel>Categoria</FormLabel>
             <Select 
               onValueChange={field.onChange} 
-              defaultValue={field.value || "default"}
+              defaultValue={field.value || "hair"}
             >
               <FormControl>
                 <SelectTrigger>
@@ -32,7 +32,6 @@ export const ProductCategoryPriceFields = () => {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="default" disabled>Selecione uma categoria</SelectItem>
                 <SelectItem value="hair">Cabelo</SelectItem>
                 <SelectItem value="makeup">Maquiagem</SelectItem>
                 <SelectItem value="skincare">Cuidados com a pele</SelectItem>
