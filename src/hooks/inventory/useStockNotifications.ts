@@ -29,8 +29,7 @@ export const useStockNotifications = () => {
         const { data, error } = await supabase
           .from('inventory')
           .select('id, name, quantity, min_quantity')
-          .eq('business_id', businessId)
-          .lte('quantity', supabase.rpc('min_quantity'));
+          .eq('business_id', businessId);
 
         if (error) {
           console.error('Error fetching inventory:', error);

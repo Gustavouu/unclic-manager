@@ -55,7 +55,7 @@ export const SERVICE_TYPE_NAMES: Record<import('@/hooks/appointments/types').Ser
   skincare: "Cuidados com a Pele"
 };
 
-// Re-export everything from the main types file to maintain consistency
+// Re-export everything from the main types file to avoid conflicts
 export * from '@/hooks/appointments/types';
 
 // Keep any component-specific types here if needed
