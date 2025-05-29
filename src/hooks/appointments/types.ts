@@ -60,13 +60,12 @@ export interface Appointment {
   };
 }
 
-// For backward compatibility, re-export with different names
-export type AppointmentType = Appointment;
+// Service types for appointments
 export type ServiceType = "all" | "haircut" | "barber" | "combo" | "treatment" | "hair" | "nails" | "makeup" | "skincare";
 export type DateFilter = "all" | "today" | "tomorrow" | "thisWeek" | "custom";
 export type CalendarViewType = "month" | "week" | "day";
 
-// Map service types to display names for barbershop
+// Map service types to display names
 export const SERVICE_TYPE_NAMES: Record<ServiceType, string> = {
   all: "Todos os Serviços",
   haircut: "Corte de Cabelo",
@@ -78,3 +77,6 @@ export const SERVICE_TYPE_NAMES: Record<ServiceType, string> = {
   makeup: "Maquiagem",
   skincare: "Cuidados com a Pele"
 };
+
+// For backward compatibility
+export type AppointmentType = Appointment;

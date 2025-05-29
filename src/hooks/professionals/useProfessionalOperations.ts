@@ -8,8 +8,7 @@ import { useState } from "react";
 export const useProfessionalOperations = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
-  const { currentBusiness } = useTenant();
-  const businessId = currentBusiness?.id;
+  const { businessId } = useTenant();
   const [professionals, setProfessionals] = useState<Professional[]>([]);
 
   const fetchProfessionals = async (): Promise<Professional[]> => {
@@ -23,30 +22,30 @@ export const useProfessionalOperations = () => {
         .select("*")
         .eq("business_id", businessId);
 
-      // If that fails or returns empty, try 'profissionais' table (legacy schema)
+      // If that fails or returns empty, try 'funcionarios' table (legacy schema)
       if (error || !professionalsData || professionalsData.length === 0) {
-        const { data: profissionais, error: profissionaisError } = await supabase
+        const { data: funcionarios, error: funcionariosError } = await supabase
           .from("funcionarios")
-          .select("*")
+          .select("id, nome, email, telefone, foto_url, cargo, comissao_percentual, status")
           .eq("id_negocio", businessId);
 
-        if (profissionaisError) {
-          console.error("Error fetching profissionais:", profissionaisError);
-          throw profissionaisError;
+        if (funcionariosError) {
+          console.error("Error fetching funcionarios:", funcionariosError);
+          throw funcionariosError;
         }
 
         // Map legacy schema to modern schema
-        professionalsData = profissionais?.map((prof) => ({
+        professionalsData = funcionarios?.map((prof) => ({
           id: prof.id,
           name: prof.nome,
           email: prof.email,
           phone: prof.telefone,
           photo_url: prof.foto_url,
           position: prof.cargo,
-          specialties: prof.especializacoes,
+          specialties: [],
           commission_percentage: prof.comissao_percentual,
           status: prof.status === 'ativo' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
-          business_id: prof.id_negocio,
+          business_id: businessId,
         })) || [];
       }
 
@@ -69,7 +68,17 @@ export const useProfessionalOperations = () => {
     try {
       // Add business ID to the professional data
       const professionalData = {
-        ...data,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        position: data.position,
+        photo_url: data.photo_url,
+        bio: data.bio,
+        specialties: data.specialties,
+        status: data.status,
+        commission_percentage: data.commission_percentage,
+        hire_date: data.hire_date,
+        working_hours: data.working_hours,
         business_id: businessId,
       };
 
@@ -107,8 +116,18 @@ export const useProfessionalOperations = () => {
       const { data: updatedProfessional, error } = await supabase
         .from("professionals")
         .update({
-          ...data,
-          business_id: businessId, // Ensure business_id is correct
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          position: data.position,
+          photo_url: data.photo_url,
+          bio: data.bio,
+          specialties: data.specialties,
+          status: data.status,
+          commission_percentage: data.commission_percentage,
+          hire_date: data.hire_date,
+          working_hours: data.working_hours,
+          business_id: businessId,
         })
         .eq("id", id)
         .select()

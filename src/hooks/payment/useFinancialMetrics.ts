@@ -10,7 +10,6 @@ interface FinancialMetrics {
   clientCount: number;
   averageTicket: number;
   monthlyGrowth: number;
-  // Add missing properties
   mrr: number;
   arr: number;
   activeSubscriptions: number;
@@ -47,7 +46,7 @@ export const useFinancialMetrics = (period: string = 'month') => {
   const [error, setError] = useState<string | null>(null);
   const { businessId } = useTenant();
 
-  const refreshMetrics = async (dateRange?: { start: Date; end: Date }) => {
+  const refreshMetrics = async (dateRangeParam?: { start: Date; end: Date }) => {
     if (!businessId) {
       setIsLoading(false);
       return;
@@ -57,10 +56,10 @@ export const useFinancialMetrics = (period: string = 'month') => {
       // Calculate date range based on period or provided range
       const now = new Date();
       let startDate: Date;
-      let endDate: Date = dateRange?.end || now;
+      let endDate: Date = dateRangeParam?.end || now;
 
-      if (dateRange) {
-        startDate = dateRange.start;
+      if (dateRangeParam) {
+        startDate = dateRangeParam.start;
       } else {
         switch (period) {
           case 'week':

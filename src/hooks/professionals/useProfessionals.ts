@@ -53,11 +53,11 @@ export const useProfessionals = (options?: {
           console.error('Error fetching professionals:', profError);
         }
         
-        // Try funcionarios table (legacy schema)
+        // Try funcionarios table (legacy schema) with correct columns
         try {
           let query = supabase
             .from('funcionarios')
-            .select('id, nome, cargo, foto_url, especialidades')
+            .select('id, nome, cargo, foto_url, comissao_percentual, status')
             .eq('id_negocio', businessId);
             
           if (activeOnly) {
@@ -72,9 +72,10 @@ export const useProfessionals = (options?: {
               name: item.nome,
               position: item.cargo,
               photo_url: item.foto_url,
-              specialties: item.especialidades,
+              specialties: [],
+              commission_percentage: item.comissao_percentual,
+              status: item.status === 'ativo' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
               business_id: businessId,
-              status: ProfessionalStatus.ACTIVE
             })) || [];
             
             setProfessionals(mappedData);

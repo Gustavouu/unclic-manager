@@ -1,10 +1,10 @@
 
-import { AppointmentStatus, ServiceType } from "@/hooks/appointments/types";
+import type { AppointmentStatus, ServiceType } from "@/hooks/appointments/types";
 
 export type CalendarViewType = "month" | "week" | "day";
 
 // Re-export ServiceType so it's available
-export { ServiceType };
+export type { ServiceType };
 
 export interface AppointmentType {
   id: string;
