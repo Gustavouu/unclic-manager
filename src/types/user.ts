@@ -1,31 +1,41 @@
 
-export type Permission = 
-  | 'manage_business'
-  | 'manage_professionals'
-  | 'manage_services'
-  | 'view_appointments'
-  | 'manage_appointments'
-  | 'view_clients'
-  | 'manage_clients'
-  | 'view_settings'
-  | 'manage_settings'
-  | 'view_reports'
-  | 'manage_reports'
-  | 'manage_users'
-  | 'view_financial'
-  | 'manage_financial';
-
-export interface UserRole {
-  id: string;
-  name: string;
-  permissions: Permission[];
-}
-
-export interface UserProfile {
+export interface User {
   id: string;
   email: string;
-  name?: string;
+  name: string;
+  role: string;
   avatar_url?: string;
-  role?: string;
-  business_id?: string;
+  created_at: string;
+  updated_at: string;
 }
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface PasswordReset {
+  email: string;
+}
+
+export interface PasswordChange {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
+
+export interface UserSession {
+  user: User;
+  token: string;
+  expires: string;
+}
+
+export const ROLE_PERMISSIONS = {
+  admin: ['all'],
+  manager: ['read', 'write'],
+  staff: ['read']
+};

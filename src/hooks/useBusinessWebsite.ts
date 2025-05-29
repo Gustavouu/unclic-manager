@@ -7,7 +7,6 @@ export interface BusinessData {
   name: string;
   description?: string;
   logo_url?: string;
-  website_url?: string;
   instagram_url?: string;
   phone?: string;
   address?: string;
@@ -45,6 +44,7 @@ export interface SimpleStaff {
   photo_url?: string;
   business_id: string;
   specialties?: string[];
+  role?: string;
 }
 
 export const useBusinessWebsite = (businessId?: string) => {
@@ -106,7 +106,6 @@ export const useBusinessWebsite = (businessId?: string) => {
                 admin_email: legacyData.email_admin,
                 neighborhood: legacyData.bairro,
                 // Add missing required properties with defaults
-                website_url: '',
                 instagram_url: '',
                 country: 'BR',
                 owner_id: '',
@@ -161,7 +160,8 @@ export const useBusinessWebsite = (businessId?: string) => {
             position: staff.cargo,
             photo_url: staff.foto_url,
             business_id: staff.id_negocio,
-            specialties: staff.especializacoes || []
+            specialties: staff.especializacoes || [],
+            role: staff.cargo || 'staff'
           }));
         }
 

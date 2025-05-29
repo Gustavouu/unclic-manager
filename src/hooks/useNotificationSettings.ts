@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 
-interface NotificationSettings {
+export interface NotificationSettings {
   push_enabled: boolean;
   email_enabled: boolean;
   sms_enabled: boolean;
@@ -29,6 +29,7 @@ const defaultSettings: NotificationSettings = {
 export const useNotificationSettings = () => {
   const [settings, setSettings] = useState<NotificationSettings>(defaultSettings);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { businessId } = useTenant();
 
@@ -54,7 +55,7 @@ export const useNotificationSettings = () => {
   }, [businessId]);
 
   const updateSettings = async (newSettings: Partial<NotificationSettings>) => {
-    setLoading(true);
+    setSaving(true);
     try {
       // Since notification_settings table doesn't exist in the schema,
       // we'll just update local state for now
@@ -64,14 +65,20 @@ export const useNotificationSettings = () => {
       console.error('Error updating notification settings:', err);
       setError(err.message || 'Failed to update notification settings');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
+  };
+
+  const saveSettings = async (newSettings: NotificationSettings) => {
+    await updateSettings(newSettings);
   };
 
   return {
     settings,
     updateSettings,
+    saveSettings,
     loading,
+    saving,
     error
   };
 };

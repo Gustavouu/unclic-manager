@@ -8,9 +8,13 @@ export const useNeedsOnboarding = () => {
   // In a real implementation, this would check onboarding status
   const needsOnboarding = false;
   const isLoading = false;
+  const loading = false;
+  const error = null;
   
   return {
     needsOnboarding,
-    isLoading
+    isLoading,
+    loading,
+    error
   };
 };

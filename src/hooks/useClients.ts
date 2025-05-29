@@ -21,6 +21,8 @@ export interface Client {
   notes?: string;
   created_at?: string;
   updated_at?: string;
+  status?: string;
+  criado_em?: string;
 }
 
 export interface ClientFormData {
@@ -41,11 +43,13 @@ export interface ClientFormData {
 export const useClients = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchClients = async () => {
     setLoading(true);
+    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('clients')
@@ -53,11 +57,20 @@ export const useClients = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setClients(data || []);
+      
+      // Map the data to ensure all required fields are present
+      const mappedClients: Client[] = (data || []).map(client => ({
+        ...client,
+        status: client.status || 'active',
+        criado_em: client.criado_em || client.created_at
+      }));
+      
+      setClients(mappedClients);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao buscar clientes');
     } finally {
       setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -122,6 +135,8 @@ export const useClients = () => {
         created_at: data.criado_em,
         updated_at: data.atualizado_em,
         business_id: data.id_negocio,
+        status: 'active',
+        criado_em: data.criado_em
       };
 
       setClients(prev => [clientForState, ...prev]);
@@ -144,6 +159,7 @@ export const useClients = () => {
   return {
     clients,
     loading,
+    isLoading,
     error,
     createClient,
     findClientByEmail,
