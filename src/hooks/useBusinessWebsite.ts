@@ -29,10 +29,29 @@ export interface BusinessData {
   updated_at?: string;
 }
 
+export interface SimpleService {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  duration: number;
+  business_id: string;
+  is_active: boolean;
+}
+
+export interface SimpleStaff {
+  id: string;
+  name: string;
+  position?: string;
+  photo_url?: string;
+  business_id: string;
+  specialties?: string[];
+}
+
 export const useBusinessWebsite = (businessId?: string) => {
   const [business, setBusiness] = useState<BusinessData | null>(null);
-  const [services, setServices] = useState<any[]>([]);
-  const [staff, setStaff] = useState<any[]>([]);
+  const [services, setServices] = useState<SimpleService[]>([]);
+  const [staff, setStaff] = useState<SimpleStaff[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -73,7 +92,7 @@ export const useBusinessWebsite = (businessId?: string) => {
             }
             
             if (legacyData) {
-              // Map legacy data to new format
+              // Map legacy data to new format with all required properties
               businessInfo = {
                 id: legacyData.id,
                 name: legacyData.nome,
@@ -86,7 +105,20 @@ export const useBusinessWebsite = (businessId?: string) => {
                 state: legacyData.estado,
                 zip_code: legacyData.cep,
                 admin_email: legacyData.email_admin,
-                neighborhood: legacyData.bairro
+                neighborhood: legacyData.bairro,
+                // Add missing required properties with defaults
+                banner_url: '',
+                website_url: '',
+                instagram_url: '',
+                country: 'BR',
+                owner_id: '',
+                theme: 'default',
+                currency: 'BRL',
+                timezone: 'America/Sao_Paulo',
+                business_type: 'salon',
+                working_hours: {},
+                created_at: legacyData.criado_em || new Date().toISOString(),
+                updated_at: legacyData.atualizado_em || new Date().toISOString()
               };
             }
           } catch (err) {
@@ -94,95 +126,51 @@ export const useBusinessWebsite = (businessId?: string) => {
           }
         }
 
-        // Fetch services
-        const { data: servicesData, error: servicesError } = await supabase
-          .from('services')
+        // Fetch services from servicos table
+        const { data: legacyServices, error: legacyServicesError } = await supabase
+          .from('servicos')
           .select('*')
-          .eq('business_id', businessId)
-          .eq('is_active', true);
+          .eq('id_negocio', businessId)
+          .eq('ativo', true);
           
-        if (servicesError && servicesError.code !== '42P01') {
-          console.error("Error fetching services:", servicesError);
+        let servicesInfo: SimpleService[] = [];
+        if (!legacyServicesError && legacyServices?.length) {
+          // Map legacy data to simple format
+          servicesInfo = legacyServices.map((service: any) => ({
+            id: service.id,
+            name: service.nome,
+            description: service.descricao,
+            price: service.preco,
+            duration: service.duracao,
+            business_id: service.id_negocio,
+            is_active: service.ativo
+          }));
         }
         
-        let servicesInfo = servicesData || [];
-        
-        // If no services found, try legacy table
-        if (!servicesInfo.length) {
-          try {
-            const { data: legacyServices, error: legacyServicesError } = await supabase
-              .from('servicos')
-              .select('*')
-              .eq('id_negocio', businessId)
-              .eq('ativo', true);
-              
-            if (legacyServicesError && legacyServicesError.code !== '42P01') {
-              console.error("Error fetching from legacy services:", legacyServicesError);
-            }
-            
-            if (legacyServices?.length) {
-              // Map legacy data to new format
-              servicesInfo = legacyServices.map((service: any) => ({
-                id: service.id,
-                name: service.nome,
-                description: service.descricao,
-                price: service.preco,
-                duration: service.duracao,
-                business_id: service.id_negocio,
-                is_active: service.ativo
-              }));
-            }
-          } catch (err) {
-            console.error("Error in legacy services fetch:", err);
-          }
-        }
-        
-        // Fetch staff
-        const { data: staffData, error: staffError } = await supabase
-          .from('professionals')
+        // Fetch staff from funcionarios table
+        const { data: legacyStaff, error: legacyStaffError } = await supabase
+          .from('funcionarios')
           .select('*')
-          .eq('business_id', businessId)
-          .eq('status', 'active');
+          .eq('id_negocio', businessId)
+          .eq('status', 'ativo');
           
-        if (staffError && staffError.code !== '42P01') {
-          console.error("Error fetching staff:", staffError);
-        }
-        
-        let staffInfo = staffData || [];
-        
-        // If no staff found, try legacy table
-        if (!staffInfo.length) {
-          try {
-            const { data: legacyStaff, error: legacyStaffError } = await supabase
-              .from('funcionarios')
-              .select('*')
-              .eq('id_negocio', businessId)
-              .eq('status', 'ativo');
-              
-            if (legacyStaffError && legacyStaffError.code !== '42P01') {
-              console.error("Error fetching from legacy staff:", legacyStaffError);
-            }
-            
-            if (legacyStaff?.length) {
-              // Map legacy data to new format
-              staffInfo = legacyStaff.map((staff: any) => ({
-                id: staff.id,
-                name: staff.nome,
-                position: staff.cargo,
-                photo_url: staff.foto_url,
-                business_id: staff.id_negocio,
-                specialties: staff.especializacoes
-              }));
-            }
-          } catch (err) {
-            console.error("Error in legacy staff fetch:", err);
-          }
+        let staffInfo: SimpleStaff[] = [];
+        if (!legacyStaffError && legacyStaff?.length) {
+          // Map legacy data to simple format
+          staffInfo = legacyStaff.map((staff: any) => ({
+            id: staff.id,
+            name: staff.nome,
+            position: staff.cargo,
+            photo_url: staff.foto_url,
+            business_id: staff.id_negocio,
+            specialties: staff.especializacoes || []
+          }));
         }
 
         // Update state with all data
         setBusiness(businessInfo || null);
-        setServices(servicesInfo || []);
-        setStaff(staffInfo || []);
+        setServices(servicesInfo);
+        setStaff(staffInfo);
       } catch (err: any) {
         console.error("Error loading website data:", err);
         setError(err.message || 'Error loading data');

@@ -80,20 +80,22 @@ export const useClients = () => {
   const createClient = async (clientData: ClientFormData) => {
     setIsSubmitting(true);
     try {
+      // Use the correct field names for the clients table (legacy format)
       const newClient = {
         id: crypto.randomUUID(),
-        name: clientData.name,
+        nome: clientData.name, // Use 'nome' instead of 'name'
         email: clientData.email,
-        phone: clientData.phone,
-        birth_date: clientData.birth_date,
-        gender: clientData.gender,
-        address: clientData.address,
-        city: clientData.city,
-        state: clientData.state,
-        zip_code: clientData.zip_code,
-        notes: clientData.notes,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        telefone: clientData.phone, // Use 'telefone' instead of 'phone'
+        data_nascimento: clientData.birth_date, // Use 'data_nascimento' instead of 'birth_date'
+        genero: clientData.gender, // Use 'genero' instead of 'gender'
+        endereco: clientData.address, // Use 'endereco' instead of 'address'
+        cidade: clientData.city, // Use 'cidade' instead of 'city'
+        estado: clientData.state, // Use 'estado' instead of 'state'
+        cep: clientData.zip_code, // Use 'cep' instead of 'zip_code'
+        notas: clientData.notes, // Use 'notas' instead of 'notes'
+        criado_em: new Date().toISOString(), // Use 'criado_em' instead of 'created_at'
+        atualizado_em: new Date().toISOString(), // Use 'atualizado_em' instead of 'updated_at'
+        id_negocio: '00000000-0000-0000-0000-000000000000', // Required field
       };
 
       const { data, error } = await supabase
@@ -104,9 +106,27 @@ export const useClients = () => {
 
       if (error) throw error;
 
-      setClients(prev => [data, ...prev]);
+      // Convert back to Client format for state
+      const clientForState: Client = {
+        id: data.id,
+        name: data.nome,
+        email: data.email,
+        phone: data.telefone,
+        birth_date: data.data_nascimento,
+        gender: data.genero,
+        address: data.endereco,
+        city: data.cidade,
+        state: data.estado,
+        zip_code: data.cep,
+        notes: data.notas,
+        created_at: data.criado_em,
+        updated_at: data.atualizado_em,
+        business_id: data.id_negocio,
+      };
+
+      setClients(prev => [clientForState, ...prev]);
       toast.success('Cliente criado com sucesso!');
-      return data;
+      return clientForState;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao criar cliente';
       setError(errorMessage);

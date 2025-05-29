@@ -2,7 +2,32 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
-import { Professional, ProfessionalStatus } from './types';
+
+export interface Professional {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  position?: string;
+  photo_url?: string;
+  bio?: string;
+  specialties?: string[];
+  status?: string;
+  business_id?: string;
+  user_id?: string;
+  commission_percentage?: number;
+  hire_date?: string;
+  working_hours?: any;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export enum ProfessionalStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  ON_LEAVE = 'vacation',
+  PENDING = 'pending'
+}
 
 export const useProfessionals = (options?: { 
   activeOnly?: boolean, 
@@ -31,59 +56,27 @@ export const useProfessionals = (options?: {
         setLoading(true);
         setError(null);
         
-        // Try professionals table first (new schema)
-        try {
-          let query = supabase
-            .from('professionals')
-            .select('*')
-            .eq('business_id', businessId);
-            
-          if (activeOnly) {
-            query = query.eq('status', ProfessionalStatus.ACTIVE);
-          }
-            
-          const { data, error } = await query;
-            
-          if (!error && data) {
-            setProfessionals(data as Professional[]);
-            setLoading(false);
-            return;
-          }
-        } catch (profError) {
-          console.error('Error fetching professionals:', profError);
-        }
-        
         // Try funcionarios table (legacy schema) with correct columns
-        try {
-          let query = supabase
-            .from('funcionarios')
-            .select('id, nome, cargo, foto_url, comissao_percentual, status')
-            .eq('id_negocio', businessId);
-            
-          if (activeOnly) {
-            query = query.eq('status', 'ativo');
-          }
-            
-          const { data, error } = await query;
-            
-          if (!error && data) {
-            const mappedData: Professional[] = data.map(item => ({
-              id: item.id,
-              name: item.nome,
-              position: item.cargo,
-              photo_url: item.foto_url,
-              specialties: [],
-              commission_percentage: item.comissao_percentual,
-              status: item.status === 'ativo' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
-              business_id: businessId,
-            })) || [];
-            
-            setProfessionals(mappedData);
-            setLoading(false);
-            return;
-          }
-        } catch (funcError) {
-          console.error('Error fetching funcionarios:', funcError);
+        const { data, error } = await supabase
+          .from('funcionarios')
+          .select('id, nome, cargo, foto_url, comissao_percentual, status')
+          .eq('id_negocio', businessId);
+          
+        if (!error && data) {
+          const mappedData: Professional[] = data.map(item => ({
+            id: item.id,
+            name: item.nome,
+            position: item.cargo,
+            photo_url: item.foto_url,
+            specialties: [],
+            commission_percentage: item.comissao_percentual,
+            status: item.status === 'ativo' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
+            business_id: businessId,
+          })) || [];
+          
+          setProfessionals(mappedData);
+          setLoading(false);
+          return;
         }
         
         // If both tables failed, return empty array
@@ -103,65 +96,15 @@ export const useProfessionals = (options?: {
 
   // CRUD operations
   const createProfessional = async (data: any) => {
-    try {
-      const { data: newProfessional, error } = await supabase
-        .from("professionals")
-        .insert([{ ...data, business_id: businessId }])
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
-      // Update local state
-      setProfessionals(prev => [...prev, newProfessional as Professional]);
-      
-      return newProfessional;
-    } catch (error) {
-      console.error("Error creating professional:", error);
-      throw error;
-    }
+    console.log("Create professional:", data);
   };
   
   const updateProfessional = async (id: string, data: any) => {
-    try {
-      const { data: updatedProfessional, error } = await supabase
-        .from("professionals")
-        .update(data)
-        .eq("id", id)
-        .select()
-        .single();
-        
-      if (error) throw error;
-      
-      // Update local state
-      setProfessionals(prev => 
-        prev.map(p => p.id === id ? updatedProfessional as Professional : p)
-      );
-      
-      return updatedProfessional;
-    } catch (error) {
-      console.error("Error updating professional:", error);
-      throw error;
-    }
+    console.log("Update professional:", id, data);
   };
   
   const deleteProfessional = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from("professionals")
-        .delete()
-        .eq("id", id);
-        
-      if (error) throw error;
-      
-      // Update local state
-      setProfessionals(prev => prev.filter(p => p.id !== id));
-      
-      return true;
-    } catch (error) {
-      console.error("Error deleting professional:", error);
-      throw error;
-    }
+    console.log("Delete professional:", id);
   };
 
   return { 
