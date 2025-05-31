@@ -90,7 +90,7 @@ export function FinancialCharts({ revenueData, loading = false }: FinancialChart
               />
               <YAxis 
                 tick={{ fontSize: 12 }} 
-                tickFormatter={(value) => formatCurrency(value, { notation: 'compact' })}
+                tickFormatter={(value) => formatCompactCurrency(value)}
               />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="value" fill="#2563eb" radius={[4, 4, 0, 0]} />
@@ -101,3 +101,14 @@ export function FinancialCharts({ revenueData, loading = false }: FinancialChart
     </Card>
   );
 }
+
+// Helper function for compact currency formatting
+const formatCompactCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    notation: 'compact',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  }).format(value);
+};

@@ -27,15 +27,16 @@ interface NewClientFormProps {
   onSubmit: (data: ClientFormData) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  phone?: string;
 }
 
-export function NewClientForm({ onSubmit, onCancel, isLoading = false }: NewClientFormProps) {
+export function NewClientForm({ onSubmit, onCancel, isLoading = false, phone }: NewClientFormProps) {
   const form = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       name: '',
       email: '',
-      phone: '',
+      phone: phone || '',
       gender: '',
       birthDate: '',
       address: '',

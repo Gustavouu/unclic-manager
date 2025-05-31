@@ -106,7 +106,6 @@ export const useBusinessWebsite = (businessId?: string) => {
                 admin_email: legacyData.email_admin,
                 neighborhood: legacyData.bairro,
                 // Add missing required properties with defaults
-                website_url: '',
                 country: 'BR',
                 owner_id: '',
                 theme: 'default',

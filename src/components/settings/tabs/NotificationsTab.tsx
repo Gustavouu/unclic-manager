@@ -202,7 +202,7 @@ const NotificationsTab = () => {
             <CardContent className="space-y-4">
               <FormField
                 control={form.control}
-                name="newAppointmentAlert"
+                name="new_appointment_alert"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
@@ -223,7 +223,7 @@ const NotificationsTab = () => {
 
               <FormField
                 control={form.control}
-                name="cancelAppointmentAlert"
+                name="cancel_appointment_alert"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
@@ -244,7 +244,7 @@ const NotificationsTab = () => {
 
               <FormField
                 control={form.control}
-                name="clientFeedbackAlert"
+                name="client_feedback_alert"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
@@ -276,7 +276,7 @@ const NotificationsTab = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="quietHoursStart"
+                  name="quiet_hours_start"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Início do Período Silencioso</FormLabel>
@@ -304,7 +304,7 @@ const NotificationsTab = () => {
 
                 <FormField
                   control={form.control}
-                  name="quietHoursEnd"
+                  name="quiet_hours_end"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Fim do Período Silencioso</FormLabel>
@@ -343,7 +343,7 @@ const NotificationsTab = () => {
             <CardContent className="space-y-4">
               <FormField
                 control={form.control}
-                name="messageTemplate"
+                name="message_template"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Mensagem padrão</FormLabel>
@@ -352,6 +352,7 @@ const NotificationsTab = () => {
                         placeholder="Digite o modelo de mensagem..."
                         className="resize-none min-h-[120px]"
                         {...field}
+                        value={field.value || ''}
                       />
                     </FormControl>
                     <FormDescription>
