@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { KpiCards } from '@/components/dashboard/KpiCards';
@@ -6,6 +5,10 @@ import { DashboardInsights } from '@/components/dashboard/DashboardInsights';
 import { RevenueChart } from '@/components/dashboard/RevenueChart';
 import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
 import { FilterPeriod, ChartData, DashboardStats } from '@/types/dashboard';
+import { DashboardStats as DashboardStatsComponent } from '@/components/dashboard/DashboardStats';
+import { RecentActivity } from '@/components/dashboard/RecentActivity';
+import { QuickActions } from '@/components/dashboard/QuickActions';
+import { OnboardingRedirect } from '@/components/auth/OnboardingRedirect';
 
 export default function Dashboard() {
   const [period, setPeriod] = useState<FilterPeriod>('month');
@@ -13,24 +16,28 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader className="h-16 bg-gray-200" />
-              <CardContent className="h-20 bg-gray-100" />
-            </Card>
-          ))}
+      <OnboardingRedirect>
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader className="h-16 bg-gray-200" />
+                <CardContent className="h-20 bg-gray-100" />
+              </Card>
+            ))}
+          </div>
         </div>
-      </div>
+      </OnboardingRedirect>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <p className="text-red-600">Erro ao carregar dados do dashboard: {error}</p>
-      </div>
+      <OnboardingRedirect>
+        <div className="text-center py-12">
+          <p className="text-red-600">Erro ao carregar dados do dashboard: {error}</p>
+        </div>
+      </OnboardingRedirect>
     );
   }
 
@@ -74,41 +81,59 @@ export default function Dashboard() {
     newClientsCount: metrics.newClients
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <div className="flex items-center space-x-2">
-          <select
-            value={period}
-            onChange={(e) => setPeriod(e.target.value as FilterPeriod)}
-            className="border rounded-md px-3 py-2 text-sm"
-          >
-            <option value="today">Hoje</option>
-            <option value="week">Esta Semana</option>
-            <option value="month">Este Mês</option>
-            <option value="quarter">Este Trimestre</option>
-            <option value="year">Este Ano</option>
-          </select>
-        </div>
-      </div>
+  const dashboardStatsProps = {
+    totalAppointments: metrics.totalAppointments,
+    totalRevenue: metrics.totalRevenue,
+    newClients: metrics.newClients,
+    completionRate: metrics.completionRate,
+  };
 
-      <KpiCards stats={stats} period={period} />
-      
-      <div className="grid gap-4 md:grid-cols-7">
-        <Card className="md:col-span-4">
-          <CardHeader>
-            <CardTitle>Receita do Período</CardTitle>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <RevenueChart data={chartData} />
-          </CardContent>
-        </Card>
+  return (
+    <OnboardingRedirect>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <div className="flex items-center space-x-2">
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value as FilterPeriod)}
+              className="border rounded-md px-3 py-2 text-sm"
+            >
+              <option value="today">Hoje</option>
+              <option value="week">Esta Semana</option>
+              <option value="month">Este Mês</option>
+              <option value="quarter">Este Trimestre</option>
+              <option value="year">Este Ano</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Main Stats */}
+        <DashboardStatsComponent stats={dashboardStatsProps} loading={isLoading} />
         
-        <div className="md:col-span-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {/* Revenue Chart */}
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>Receita do Período</CardTitle>
+            </CardHeader>
+            <CardContent className="pl-2">
+              <RevenueChart data={chartData} />
+            </CardContent>
+          </Card>
+          
+          {/* Quick Actions */}
+          <QuickActions />
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Recent Activity */}
+          <RecentActivity />
+          
+          {/* Insights */}
           <DashboardInsights stats={stats} />
         </div>
       </div>
-    </div>
+    </OnboardingRedirect>
   );
 }

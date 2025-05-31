@@ -1,60 +1,109 @@
 
-import { Routes, Route } from "react-router-dom";
-import { ThemeProvider } from './components/theme-provider';
-import { Toaster } from './components/ui/sonner';
-import Layout from "./components/layout/Layout";
-import Dashboard from "./pages/Dashboard";
-import Appointments from "./pages/Appointments";
-import Clients from "./pages/Clients";
-import Reports from "./pages/Reports";
-import Finance from "./pages/Finance";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import Index from "./pages/Index";
-import Inventory from "./pages/Inventory";
-import Professionals from "./pages/Professionals";
-import Services from "./pages/Services";
-import OnboardingPage from "./pages/Onboarding";
-import Login from "./pages/auth/Login";
-import SignUp from "./pages/auth/SignUp";
-import "./services/InitializationService"; // Import initialization service
-import { RequireAuth } from "./components/auth/RequireAuth";
-import Payments from "./pages/Payments";
+import { Suspense, lazy } from "react";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { TenantProvider } from "@/contexts/TenantContext";
+import { RequireAuth } from "@/components/auth/RequireAuth";
+import { OnboardingRedirect } from "@/components/auth/OnboardingRedirect";
+import { Loader } from "@/components/ui/loader";
+import { Layout } from "@/components/layout/Layout";
+
+// Lazy load pages
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const Appointments = lazy(() => import("./pages/Appointments"));
+const Clients = lazy(() => import("./pages/Clients"));
+const Services = lazy(() => import("./pages/Services"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const OnboardingFixed = lazy(() => import("./pages/OnboardingFixed"));
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+});
+
+const LoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <Loader size="lg" text="Carregando..." />
+  </div>
+);
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/onboarding" element={
-          <RequireAuth skipOnboardingCheck={true}>
-            <OnboardingPage />
-          </RequireAuth>
-        } />
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <TenantProvider>
+            <BrowserRouter>
+              <div className="min-h-screen bg-gray-50">
+                <Suspense fallback={<LoadingFallback />}>
+                  <Routes>
+                    {/* Public routes */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    
+                    {/* Onboarding routes */}
+                    <Route 
+                      path="/onboarding" 
+                      element={
+                        <RequireAuth skipOnboardingCheck>
+                          <Onboarding />
+                        </RequireAuth>
+                      } 
+                    />
+                    <Route 
+                      path="/onboarding-fixed" 
+                      element={
+                        <RequireAuth skipOnboardingCheck>
+                          <OnboardingFixed />
+                        </RequireAuth>
+                      } 
+                    />
 
-        {/* Rotas principais da aplicação */}
-        <Route path="/*" element={
-          <RequireAuth>
-            <Layout />
-          </RequireAuth>
-        }>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="appointments" element={<Appointments />} />
-          <Route path="clients" element={<Clients />} />
-          <Route path="services" element={<Services />} />
-          <Route path="professionals" element={<Professionals />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="finance" element={<Finance />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="payments" element={<Payments />} />
-          <Route path="settings/*" element={<Settings />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-      <Toaster richColors position="top-right" />
-    </ThemeProvider>
+                    {/* Protected routes with layout */}
+                    <Route
+                      path="/*"
+                      element={
+                        <RequireAuth>
+                          <OnboardingRedirect>
+                            <Layout>
+                              <Routes>
+                                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                                <Route path="/dashboard" element={<Dashboard />} />
+                                <Route path="/appointments" element={<Appointments />} />
+                                <Route path="/clients" element={<Clients />} />
+                                <Route path="/services" element={<Services />} />
+                                <Route path="/reports" element={<Reports />} />
+                                <Route path="/settings" element={<Settings />} />
+                                
+                                {/* Catch all route */}
+                                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                              </Routes>
+                            </Layout>
+                          </OnboardingRedirect>
+                        </RequireAuth>
+                      }
+                    />
+                  </Routes>
+                </Suspense>
+                <Toaster />
+              </div>
+            </BrowserRouter>
+          </TenantProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 
