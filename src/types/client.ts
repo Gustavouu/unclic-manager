@@ -36,6 +36,20 @@ export interface ClientFormData {
   notes?: string;
 }
 
+export interface ClientCreate extends ClientFormData {
+  business_id: string;
+}
+
+export interface ClientUpdate extends Partial<ClientFormData> {}
+
+export interface ClientStats {
+  totalSpent: number;
+  totalAppointments: number;
+  averageSpent: number;
+  lastVisit?: string;
+  favoriteServices: string[];
+}
+
 export interface ClientSearchParams {
   search?: string;
   city?: string;

@@ -2,6 +2,7 @@
 export interface AuthContextType {
   user: any;
   login: (email: string, password: string) => Promise<any>;
+  signIn: (email: string, password: string) => Promise<any>;
   signup: (email: string, password: string, userData?: any) => Promise<any>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<any>;

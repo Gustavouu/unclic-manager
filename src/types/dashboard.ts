@@ -19,6 +19,8 @@ export interface DashboardStats {
   monthlyRevenue: number;
   averageRating: number;
   totalClients: number;
+  monthlyServices: number;
+  newClientsCount: number;
 }
 
 export interface PopularService {
@@ -32,6 +34,21 @@ export interface RevenueDataPoint {
   date: string;
   revenue: number;
   appointments: number;
+}
+
+export interface DashboardWidgetProps {
+  title: string;
+  value: string | number;
+  icon?: React.ReactNode;
+  trend?: {
+    value: number;
+    isPositive: boolean;
+  };
+}
+
+export interface ChartData {
+  date: string;
+  value: number;
 }
 
 export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';

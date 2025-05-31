@@ -36,7 +36,7 @@ export const clientOperations = {
   },
 
   // Update client with error handling
-  async updateClient(clientId: string, clientData: Partial<ClientFormData>): Promise<ClientOperationResult> {
+  async updateClient(clientId: string, clientData: Partial<ClientFormData>, businessId: string): Promise<ClientOperationResult> {
     try {
       const client = await clientApi.updateClient(clientId, clientData);
       return {
@@ -78,5 +78,28 @@ export const clientOperations = {
         error: error.message || 'Failed to delete client'
       };
     }
+  }
+};
+
+// Export individual functions for backwards compatibility
+export const createClient = clientOperations.createClient;
+export const updateClient = clientOperations.updateClient;
+export const deleteClient = clientOperations.deleteClient;
+export const findClientByEmail = async (email: string, businessId: string): Promise<Client | null> => {
+  try {
+    const result = await clientApi.getClients(businessId, { search: email });
+    return result.data?.find(client => client.email === email) || null;
+  } catch (error) {
+    console.error('Error finding client by email:', error);
+    return null;
+  }
+};
+export const findClientByPhone = async (phone: string, businessId: string): Promise<Client | null> => {
+  try {
+    const result = await clientApi.getClients(businessId, { search: phone });
+    return result.data?.find(client => client.phone === phone) || null;
+  } catch (error) {
+    console.error('Error finding client by phone:', error);
+    return null;
   }
 };

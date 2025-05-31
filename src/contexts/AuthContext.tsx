@@ -38,6 +38,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signIn = async (email: string, password: string) => {
+    return await login(email, password);
+  };
+
   const signup = async (email: string, password: string, userData?: any) => {
     setLoading(true);
     try {
@@ -66,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user,
     login,
+    signIn,
     signup,
     logout,
     resetPassword,

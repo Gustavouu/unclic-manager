@@ -1,138 +1,79 @@
 
-import React, { useState } from 'react';
-import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { DashboardOverview } from '@/components/dashboard/DashboardOverview';
-import { KpiCards } from '@/components/dashboard/KpiCards';
-import { FinancialCharts } from '@/components/dashboard/FinancialCharts';
-import { PopularServices } from '@/components/dashboard/PopularServices';
-import { NextAppointments } from '@/components/dashboard/NextAppointments';
-import { ClientsComparisonChart } from '@/components/dashboard/ClientsComparisonChart';
-import { RetentionRateCard } from '@/components/common/RetentionRateCard';
-import { PerformanceMetrics } from '@/components/dashboard/PerformanceMetrics';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FilterPeriod, DashboardStats } from '@/types/dashboard';
+import { KpiCards } from '@/components/dashboard/KpiCards';
+import { DashboardInsights } from '@/components/dashboard/DashboardInsights';
+import { RevenueChart } from '@/components/dashboard/RevenueChart';
 import { useDashboardData } from '@/hooks/useDashboardData';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { FilterPeriod, ChartData } from '@/types/dashboard';
 
 export default function Dashboard() {
   const [period, setPeriod] = useState<FilterPeriod>('month');
-  const { stats, isLoading, error } = useDashboardData(period);
+  const { stats, loading, error } = useDashboardData(period);
 
-  const handleRefresh = () => {
-    window.location.reload();
-  };
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="h-16 bg-gray-200" />
+              <CardContent className="h-20 bg-gray-100" />
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-  // Create complete stats with all required properties
-  const defaultStats: DashboardStats = {
-    totalAppointments: 0,
-    completedAppointments: 0,
-    totalRevenue: 0,
-    newClients: 0,
-    clientsCount: 0,
-    averageTicket: 0,
-    retentionRate: 0,
-    popularServices: [],
-    revenueData: [],
-    appointmentsToday: 0,
-    pendingAppointments: 0,
-    cancellationRate: 0,
-    cancelledAppointments: 0,
-    growthRate: 0,
-    occupancyRate: 0,
-    todayAppointments: 0,
-    monthlyRevenue: 0,
-    averageRating: 0,
-    totalClients: 0,
-    ...stats
-  };
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600">Erro ao carregar dados do dashboard: {error}</p>
+      </div>
+    );
+  }
+
+  // Transform revenue data to chart data format
+  const chartData: ChartData[] = stats.revenueData?.map(item => ({
+    date: item.date,
+    value: item.revenue || 0
+  })) || [];
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Painel de Controle</h1>
-          <p className="text-gray-600 mt-1">Bem-vindo ao seu dashboard. Aqui você encontra os dados mais importantes do seu negócio.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Select value={period} onValueChange={(value) => setPeriod(value as FilterPeriod)}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Período" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Hoje</SelectItem>
-              <SelectItem value="week">Esta semana</SelectItem>
-              <SelectItem value="month">Último mês</SelectItem>
-              <SelectItem value="quarter">Último trimestre</SelectItem>
-              <SelectItem value="year">Último ano</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="icon" onClick={handleRefresh}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <div className="flex items-center space-x-2">
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as FilterPeriod)}
+            className="border rounded-md px-3 py-2 text-sm"
+          >
+            <option value="today">Hoje</option>
+            <option value="week">Esta Semana</option>
+            <option value="month">Este Mês</option>
+            <option value="quarter">Este Trimestre</option>
+            <option value="year">Este Ano</option>
+          </select>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <KpiCards stats={defaultStats} period={period} />
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Financial Chart */}
-        <Card className="lg:col-span-2">
+      <KpiCards stats={stats} period={period} />
+      
+      <div className="grid gap-4 md:grid-cols-7">
+        <Card className="md:col-span-4">
           <CardHeader>
-            <CardTitle>Desempenho Financeiro</CardTitle>
+            <CardTitle>Receita do Período</CardTitle>
           </CardHeader>
-          <CardContent>
-            <FinancialCharts revenueData={defaultStats.revenueData} loading={isLoading} />
+          <CardContent className="pl-2">
+            <RevenueChart data={chartData} />
           </CardContent>
         </Card>
-
-        {/* Popular Services */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Serviços Populares</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {defaultStats.popularServices && (
-              <div className="space-y-4">
-                {defaultStats.popularServices.map((service: any) => (
-                  <div key={service.id} className="flex items-center justify-between">
-                    <span>{service.name}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-600">{service.count} agendamentos</span>
-                      <div className="w-16 h-2 bg-gray-200 rounded-full">
-                        <div
-                          className="h-2 bg-blue-500 rounded-full"
-                          style={{ width: `${service.percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Retention Rate */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Taxa de Retenção</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RetentionRateCard 
-              retentionRate={defaultStats.retentionRate}
-              suggestions={[
-                "Envie mensagens pós-atendimento",
-                "Crie um programa de fidelidade",
-                "Ofereça descontos para clientes recorrentes"
-              ]}
-            />
-          </CardContent>
-        </Card>
+        
+        <div className="md:col-span-3">
+          <DashboardInsights stats={stats} />
+        </div>
       </div>
     </div>
   );

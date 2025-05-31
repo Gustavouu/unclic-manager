@@ -1,6 +1,7 @@
+
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthService } from '@/services/auth/authService';
+import { authService } from '@/services/auth/authService';
 
 export function PasswordResetForm() {
   const navigate = useNavigate();
@@ -25,7 +26,6 @@ export function PasswordResetForm() {
     setIsLoading(true);
 
     try {
-      const authService = AuthService.getInstance();
       await authService.requestPasswordReset(email);
       setIsSuccess(true);
     } catch (err) {
@@ -120,4 +120,4 @@ export function PasswordResetForm() {
       </div>
     </div>
   );
-} 
+}

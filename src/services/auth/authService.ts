@@ -34,6 +34,21 @@ export class AuthService {
     }
   }
 
+  // Request password reset
+  async requestPasswordReset(email: string): Promise<any> {
+    try {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Reset password error:', error);
+      throw error;
+    }
+  }
+
   // Get current session
   async getCurrentSession(): Promise<UserSession | null> {
     try {
@@ -93,17 +108,7 @@ export class AuthService {
 
   // Reset password
   async resetPassword(email: string): Promise<any> {
-    try {
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Reset password error:', error);
-      throw error;
-    }
+    return this.requestPasswordReset(email);
   }
 
   // Logout

@@ -53,7 +53,17 @@ export async function createClient(clientData: Partial<Client>, businessId: stri
     
     const dataToInsert = {
       ...clientData,
-      business_id: businessId
+      business_id: businessId,
+      id_negocio: businessId, // Also set legacy field
+      nome: clientData.name, // Set legacy field
+      telefone: clientData.phone, // Set legacy field
+      endereco: clientData.address, // Set legacy field
+      cidade: clientData.city, // Set legacy field
+      estado: clientData.state, // Set legacy field
+      cep: clientData.zip_code, // Set legacy field
+      notas: clientData.notes, // Set legacy field
+      genero: clientData.gender, // Set legacy field
+      data_nascimento: clientData.birth_date, // Set legacy field
     };
 
     const { data, error } = await supabase
