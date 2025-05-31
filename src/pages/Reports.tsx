@@ -11,7 +11,7 @@ const Reports = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <ReportsHeader />
+      <ReportsHeader dateRange={dateRange} onDateRangeChange={setDateRange} />
       <ReportsTabs dateRange={dateRange} onDateRangeChange={setDateRange} />
     </div>
   );

@@ -36,3 +36,13 @@ export interface ClientFormData {
   firstName?: string;
   lastName?: string;
 }
+
+export interface ClientSearchParams {
+  search?: string;
+  city?: string;
+  state?: string;
+  status?: string;
+  lastVisit?: string;
+  page?: number;
+  limit?: number;
+}

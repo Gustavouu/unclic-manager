@@ -1,8 +1,8 @@
 
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogoUpload } from "./LogoUpload";
-import { BannerUpload } from "./BannerUpload";
+import { LogoUploadFixed } from "./LogoUploadFixed";
+import { BannerUploadFixed } from "./BannerUploadFixed";
 
 export const BusinessMediaSection: React.FC = () => {
   return (
@@ -17,12 +17,12 @@ export const BusinessMediaSection: React.FC = () => {
         <div className="space-y-6">
           <div>
             <h3 className="text-sm font-medium mb-2">Logo</h3>
-            <LogoUpload />
+            <LogoUploadFixed />
           </div>
           
           <div>
             <h3 className="text-sm font-medium mb-2">Banner</h3>
-            <BannerUpload />
+            <BannerUploadFixed />
           </div>
         </div>
       </CardContent>

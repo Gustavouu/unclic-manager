@@ -37,7 +37,7 @@ export const prepareDataForStorage = async (data: BusinessData): Promise<Seriali
   };
   
   // Trata o arquivo de logo - converte para base64 se necessário
-  if (data.logo && typeof data.logo === 'object' && data.logo !== null && 'name' in data.logo) {
+  if (data.logo && data.logo !== null && typeof data.logo === 'object' && 'name' in data.logo) {
     try {
       // Converte arquivo para base64 para armazenamento
       preparedData.logoData = await fileToBase64(data.logo as File);
@@ -59,7 +59,7 @@ export const prepareDataForStorage = async (data: BusinessData): Promise<Seriali
   }
   
   // Trata o arquivo de banner - converte para base64 se necessário
-  if (data.banner && typeof data.banner === 'object' && data.banner !== null && 'name' in data.banner) {
+  if (data.banner && data.banner !== null && typeof data.banner === 'object' && 'name' in data.banner) {
     try {
       // Converte arquivo para base64 para armazenamento
       preparedData.bannerData = await fileToBase64(data.banner as File);

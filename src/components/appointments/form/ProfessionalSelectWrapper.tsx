@@ -15,16 +15,14 @@ interface Professional {
   name: string;
   photo_url?: string;
   foto_url?: string;
-  services?: { id: string }[];
+  services?: Array<{ id: string }>;
 }
 
-interface FormReturn {
-  control: any;
-  setValue: (name: string, value: any) => void;
-}
-
-export interface ProfessionalSelectWrapperProps {
-  form: FormReturn;
+interface ProfessionalSelectWrapperProps {
+  form: {
+    control: any;
+    setValue: (name: string, value: any) => void;
+  };
   serviceId?: string;
 }
 
