@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { EfiPayPlanService } from '@/services/payment/efiBank/EfiPayPlanService';
 import { SubscriptionPlan } from '@/services/payment/efiBank/types';
@@ -39,7 +40,18 @@ export function usePlans() {
     try {
       setIsLoading(true);
       setError(null);
-      const newPlan = await efiPayPlanService.createPlan(planData, businessId || undefined);
+      
+      // Ensure all required fields are provided
+      const completeData = {
+        name: planData.name,
+        description: planData.description || '',
+        price: planData.price,
+        interval: planData.interval,
+        interval_count: planData.interval_count || 1,
+        features: planData.features || [],
+      };
+      
+      const newPlan = await efiPayPlanService.createPlan(completeData, businessId || undefined);
       if (newPlan) {
         setPlans(prev => [newPlan, ...prev]);
       }
@@ -96,5 +108,8 @@ export function usePlans() {
     isLoading,
     error,
     fetchPlans,
+    createPlan,
+    updatePlan,
+    deactivatePlan,
   };
 }

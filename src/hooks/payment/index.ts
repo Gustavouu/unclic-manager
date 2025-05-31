@@ -2,5 +2,14 @@
 export * from './usePlans';
 export * from './useSubscriptions';
 export * from './useInvoices';
-export * from './usePaymentMethods';
-export * from './useFinancialMetrics';
+
+// Re-export common payment types
+export type { 
+  SubscriptionPlan, 
+  Subscription, 
+  Invoice,
+  PlanInterval,
+  PlanStatus,
+  SubscriptionStatus,
+  InvoiceStatus
+} from '@/services/payment/efiBank/types';

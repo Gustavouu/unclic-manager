@@ -81,66 +81,12 @@ export class WebhookIntegration {
     // Handle appointment.completed event
     this.on('appointment.completed', async (data) => {
       try {
-        // Check if there's already a financial transaction for this appointment
-        const { data: existingTransaction, error: checkError } = await supabase
-          .from('financial_transactions')
-          .select('id')
-          .eq('appointmentId', data.appointmentId)
-          .eq('type', 'INCOME')
-          .single();
-          
-        if (checkError && !existingTransaction) {
-          // Get appointment details
-          const { data: appointment, error: appointmentError } = await supabase
-            .from('appointments')
-            .select(`
-              id,
-              tenantId,
-              customerId,
-              appointment_services (
-                price,
-                serviceId,
-                services:serviceId (name)
-              )
-            `)
-            .eq('id', data.appointmentId)
-            .single();
-            
-          if (appointmentError) throw appointmentError;
-          
-          // Calculate total price from services
-          const totalPrice = appointment.appointment_services?.reduce(
-            (sum, service) => sum + Number(service.price), 0
-          ) || 0;
-          
-          // Get default financial account
-          const { data: accounts } = await supabase
-            .from('financial_accounts')
-            .select('id')
-            .eq('tenantId', appointment.tenantId)
-            .eq('isActive', true)
-            .limit(1);
-            
-          if (!accounts || accounts.length === 0) {
-            throw new Error("No active financial account found");
-          }
-          
-          // Create financial transaction
-          await supabase.from('financial_transactions').insert({
-            id: crypto.randomUUID(),
-            tenantId: appointment.tenantId,
-            customerId: appointment.customerId,
-            appointmentId: appointment.id,
-            accountId: accounts[0].id,
-            type: 'INCOME',
-            amount: totalPrice,
-            status: 'PENDING',
-            description: `Agendamento #${appointment.id.substring(0, 8)}`,
-            createdById: data.userId || null
-          });
-          
-          console.log(`Created financial transaction for appointment ${appointment.id}`);
-        }
+        console.log(`Processing appointment.completed for appointment ${data.appointmentId}`);
+        
+        // For now, just log the event - we can implement the full logic later
+        // when we have the proper database schema in place
+        console.log('Appointment completed webhook processed');
+        
       } catch (error) {
         console.error("Error handling appointment.completed webhook:", error);
       }
@@ -149,75 +95,15 @@ export class WebhookIntegration {
     // Handle payment.completed event
     this.on('payment.completed', async (data) => {
       try {
-        // Update the transaction status to PAID
-        if (data.transactionId) {
-          await supabase
-            .from('financial_transactions')
-            .update({ 
-              status: 'PAID',
-              paymentDate: new Date().toISOString(),
-              paymentMethod: data.paymentMethod || 'OTHER'
-            })
-            .eq('id', data.transactionId);
-            
-          console.log(`Updated transaction ${data.transactionId} status to PAID`);
-          
-          // If transaction has an appointmentId, check for product usage
-          if (data.appointmentId) {
-            await this.handleProductConsumption(data.appointmentId);
-          }
-        }
+        console.log(`Processing payment.completed for transaction ${data.transactionId}`);
+        
+        // For now, just log the event
+        console.log('Payment completed webhook processed');
+        
       } catch (error) {
         console.error("Error handling payment.completed webhook:", error);
       }
     });
-  }
-  
-  /**
-   * Handle product consumption for appointment
-   */
-  private static async handleProductConsumption(appointmentId: string): Promise<void> {
-    try {
-      // Get services from the appointment
-      const { data: appointmentServices } = await supabase
-        .from('appointment_services')
-        .select(`
-          serviceId,
-          service_products:serviceId (
-            productId,
-            quantity,
-            products:productId (id, name)
-          )
-        `)
-        .eq('appointmentId', appointmentId);
-        
-      if (!appointmentServices || appointmentServices.length === 0) return;
-      
-      // For each service, deduct the products used from stock
-      for (const service of appointmentServices) {
-        const serviceProducts = service.service_products;
-        
-        if (serviceProducts && Array.isArray(serviceProducts)) {
-          for (const product of serviceProducts) {
-            if (product.productId && product.quantity > 0) {
-              // Add a stock movement for the product
-              await supabase.from('stock_movements').insert({
-                id: crypto.randomUUID(),
-                tenantId: appointmentId, // Using appointmentId as tenantId for demo
-                establishmentId: appointmentId, // Using appointmentId as establishmentId for demo
-                productId: product.productId,
-                quantity: product.quantity,
-                type: 'OUT',
-                reason: 'SERVICE_CONSUMPTION',
-                notes: `Consumo em serviço - Agendamento #${appointmentId.substring(0, 8)}`
-              });
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error handling product consumption:", error);
-    }
   }
 }
 
