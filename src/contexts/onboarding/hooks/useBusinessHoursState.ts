@@ -2,41 +2,25 @@
 import { useState } from 'react';
 import { BusinessHours } from '../types';
 
-// Initialize default business hours
-const initializeDefaultHours = (): BusinessHours => {
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  
-  // Create an object with 7 days, where each workday (Mon-Sat) is open from 9 to 18
-  return days.reduce((acc: BusinessHours, day, index) => {
-    const isSunday = index === 0;
-    
-    acc[day] = {
-      open: !isSunday,
-      openTime: isSunday ? '' : '09:00',
-      closeTime: isSunday ? '' : '18:00',
-    };
-    
-    return acc;
-  }, {} as BusinessHours);
+const defaultHours: BusinessHours = {
+  segunda: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
+  terca: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
+  quarta: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
+  quinta: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
+  sexta: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
+  sabado: { start: '09:00', end: '13:00', isOpen: true, open: true, openTime: '09:00', closeTime: '13:00' },
+  domingo: { start: '09:00', end: '13:00', isOpen: false, open: false, openTime: '09:00', closeTime: '13:00' },
 };
 
 export const useBusinessHoursState = () => {
-  const [businessHours, setBusinessHours] = useState<BusinessHours>(initializeDefaultHours());
+  const [businessHours, setBusinessHours] = useState<BusinessHours | null>(defaultHours);
 
-  // Function to update business hours for a specific day
-  const updateBusinessHours = (day: string, data: Partial<BusinessHours[string]>) => {
-    setBusinessHours(prev => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        ...data
-      }
-    }));
+  const updateBusinessHours = (hours: BusinessHours) => {
+    setBusinessHours(hours);
   };
 
   return {
     businessHours,
-    setBusinessHours,
     updateBusinessHours,
   };
 };

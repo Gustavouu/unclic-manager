@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AppointmentFormValues } from "@/types/appointments";
 
 interface Professional {
   id: string;
@@ -17,15 +18,6 @@ interface Professional {
   photo_url?: string;
   foto_url?: string;
   services?: { id: string }[];
-}
-
-interface AppointmentFormValues {
-  professionalId: string;
-  serviceId?: string;
-  clientId?: string;
-  date?: Date;
-  time?: string;
-  notes?: string;
 }
 
 export type ProfessionalSelectWrapperProps = {

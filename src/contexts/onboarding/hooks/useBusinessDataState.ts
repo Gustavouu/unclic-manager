@@ -1,39 +1,30 @@
 
-import { MutableRefObject } from 'react';
+import { useState } from 'react';
 import { BusinessData } from '../types';
 
-export const useBusinessDataState = (
-  saveTimeoutRef: MutableRefObject<number | null>,
-  saveProgress: () => void,
-  businessData: BusinessData,
-  setBusinessData: React.Dispatch<React.SetStateAction<BusinessData>>
-) => {
-  // Function to update business data with auto-save functionality
-  const updateBusinessData = (newData: Partial<BusinessData>) => {
-    setBusinessData(prev => {
-      // For nested objects like socialMedia, merge them properly
-      const updatedData = {
-        ...prev,
-        ...newData,
-        socialMedia: {
-          ...prev.socialMedia,
-          ...newData.socialMedia
-        }
-      };
-      
-      // Clear existing timeout if any
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
+export const useBusinessDataState = (initialData: BusinessData) => {
+  const [businessData, setBusinessData] = useState<BusinessData>({
+    ...initialData,
+    socialMedia: initialData.socialMedia || {
+      facebook: '',
+      instagram: '',
+      website: ''
+    }
+  });
+
+  const updateBusinessData = (data: Partial<BusinessData>) => {
+    setBusinessData(prev => ({
+      ...prev,
+      ...data,
+      socialMedia: {
+        ...prev.socialMedia,
+        ...data.socialMedia
       }
-      
-      // Set a new timeout for auto-save
-      saveTimeoutRef.current = window.setTimeout(() => {
-        saveProgress();
-      }, 1000) as unknown as number;
-      
-      return updatedData;
-    });
+    }));
   };
 
-  return { updateBusinessData };
+  return {
+    businessData,
+    updateBusinessData,
+  };
 };

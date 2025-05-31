@@ -1,117 +1,47 @@
-import { MutableRefObject } from 'react';
+
+import { useCallback } from 'react';
 import { BusinessData, ServiceData, StaffData, BusinessHours, OnboardingMethod } from '../types';
 
-// Key for storing onboarding data in localStorage
-const STORAGE_KEY = 'unclic-manager-onboarding';
-
 export const usePersistence = (
+  currentStep: number,
   businessData: BusinessData,
   services: ServiceData[],
-  staffMembers: StaffData[],
-  businessHours: BusinessHours,
-  hasStaff: boolean,
-  currentStep: number,
-  onboardingMethod: OnboardingMethod,
-  hasLoaded: MutableRefObject<boolean>,
-  setBusinessData: React.Dispatch<React.SetStateAction<BusinessData>>,
-  setServices: React.Dispatch<React.SetStateAction<ServiceData[]>>,
-  setStaffMembers: React.Dispatch<React.SetStateAction<StaffData[]>>,
-  setBusinessHours: React.Dispatch<React.SetStateAction<BusinessHours>>,
-  setHasStaff: React.Dispatch<React.SetStateAction<boolean>>,
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>,
-  setOnboardingMethod: React.Dispatch<React.SetStateAction<OnboardingMethod>>
+  staff: StaffData[],
+  businessHours: BusinessHours | null,
+  onboardingMethod: OnboardingMethod
 ) => {
-  // Function to save current progress to localStorage with error handling
-  const saveProgress = () => {
+  const saveProgress = useCallback(() => {
     try {
-      const data = {
+      const progress = {
+        currentStep,
         businessData,
         services,
-        staffMembers,
+        staff,
         businessHours,
-        hasStaff,
-        currentStep,
         onboardingMethod,
-        lastUpdated: new Date().toISOString(),
+        timestamp: Date.now(),
       };
-      
-      // Clear previous data first to avoid quota issues
-      localStorage.removeItem(STORAGE_KEY);
-      
-      // Stringify and check size before saving
-      const dataString = JSON.stringify(data);
-      
-      // Check if data is too large (localStorage limit is typically 5-10MB)
-      if (dataString.length > 4 * 1024 * 1024) { // 4MB limit for safety
-        console.warn('Onboarding data too large, clearing old data');
-        // Keep only essential data
-        const essentialData = {
-          businessData,
-          currentStep,
-          onboardingMethod,
-          lastUpdated: new Date().toISOString(),
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(essentialData));
-      } else {
-        localStorage.setItem(STORAGE_KEY, dataString);
-      }
-      
-      console.log('Onboarding progress saved successfully');
-      return true;
-    } catch (error) {
-      console.error('Error saving onboarding progress:', error);
-      
-      // If quota exceeded, clear localStorage and try with minimal data
-      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-        try {
-          localStorage.clear();
-          const minimalData = {
-            currentStep,
-            onboardingMethod,
-            lastUpdated: new Date().toISOString(),
-          };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(minimalData));
-          console.log('Saved minimal onboarding data after quota exceeded');
-        } catch (secondError) {
-          console.error('Failed to save even minimal data:', secondError);
-        }
-      }
-      return false;
-    }
-  };
 
-  // Function to load saved progress from localStorage
-  const loadProgress = () => {
+      localStorage.setItem('onboarding-progress', JSON.stringify(progress));
+      console.log('Progress saved successfully');
+    } catch (error) {
+      console.error('Error saving progress:', error);
+    }
+  }, [currentStep, businessData, services, staff, businessHours, onboardingMethod]);
+
+  const loadProgress = useCallback(() => {
     try {
-      // Avoid loading data multiple times
-      if (hasLoaded.current) return;
-      
-      const savedData = localStorage.getItem(STORAGE_KEY);
-      
-      if (savedData) {
-        const parsedData = JSON.parse(savedData);
-        
-        // Update all state with fallbacks
-        setBusinessData(parsedData.businessData || businessData);
-        setServices(parsedData.services || []);
-        setStaffMembers(parsedData.staffMembers || []);
-        setBusinessHours(parsedData.businessHours || businessHours);
-        setHasStaff(parsedData.hasStaff !== undefined ? parsedData.hasStaff : false);
-        setCurrentStep(parsedData.currentStep || -1);
-        setOnboardingMethod(parsedData.onboardingMethod || null);
-        
-        console.log('Onboarding progress loaded successfully');
-        hasLoaded.current = true;
-        return true;
+      const saved = localStorage.getItem('onboarding-progress');
+      if (saved) {
+        const progress = JSON.parse(saved);
+        console.log('Progress loaded:', progress);
+        return progress;
       }
     } catch (error) {
-      console.error('Error loading onboarding progress:', error);
-      // Clear corrupted data
-      localStorage.removeItem(STORAGE_KEY);
+      console.error('Error loading progress:', error);
     }
-    
-    return false;
-  };
+    return null;
+  }, []);
 
   return {
     saveProgress,

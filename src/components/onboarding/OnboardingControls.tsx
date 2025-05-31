@@ -1,229 +1,88 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { Card, CardContent } from '@/components/ui/card';
 import { useOnboarding } from '@/contexts/onboarding/OnboardingContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
 
 interface OnboardingControlsProps {
-  currentStep?: string;
+  currentStep: string;
   onNext?: () => void;
   onPrevious?: () => void;
 }
 
-export function OnboardingControls({ currentStep, onNext, onPrevious }: OnboardingControlsProps) {
-  const { businessData, services, staffMembers: staff, businessHours } = useOnboarding();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [isCompleting, setIsCompleting] = useState(false);
-
-  const calculateProgress = () => {
-    let completed = 0;
-    let total = 4;
-
-    if (businessData.name) completed++;
-    if (services.length > 0) completed++;
-    if (staff.length > 0) completed++;
-    if (Object.values(businessHours).some(day => day.open)) completed++;
-
-    return (completed / total) * 100;
-  };
-
-  const completeOnboarding = async () => {
-    if (!user?.id) {
-      toast.error('Usuário não autenticado');
-      return;
-    }
-
-    setIsCompleting(true);
-
+export const OnboardingControls: React.FC<OnboardingControlsProps> = ({
+  currentStep,
+  onNext,
+  onPrevious,
+}) => {
+  const { businessData, businessHours, completeOnboarding } = useOnboarding();
+  
+  const handleComplete = async () => {
     try {
-      // Create business first - using the existing businesses table
-      const businessId = crypto.randomUUID();
-      
-      const { error: businessError } = await supabase
-        .from('businesses')
-        .upsert({
-          id: businessId,
-          name: businessData.name,
-          slug: businessData.name.toLowerCase().replace(/\s+/g, '-'),
-          admin_email: user.email || '',
-          description: businessData.description,
-          phone: businessData.phone,
-          address: businessData.address,
-          city: businessData.city,
-          state: businessData.state,
-          zip_code: businessData.zipCode,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-
-      if (businessError) {
-        console.error('Error creating business:', businessError);
-        toast.error('Erro ao criar negócio');
-        return;
-      }
-
-      // Create categories for services
-      if (services.length > 0) {
-        const categoryId = crypto.randomUUID();
-        const { error: categoriesError } = await supabase
-          .from('categories')
-          .insert({
-            id: categoryId,
-            business_id: businessId,
-            name: 'Serviços Gerais',
-            description: 'Categoria padrão para serviços',
-            type: 'service',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-
-        if (categoriesError) {
-          console.error('Error creating categories:', categoriesError);
-        }
-
-        // Create services - using the correct table structure with required fields
-        for (const service of services) {
-          const serviceRecord = {
-            id: crypto.randomUUID(),
-            tenantId: businessId,
-            name: service.name,
-            description: service.description,
-            duration: service.duration,
-            cost: service.price,
-            price: service.price, // Add the required price field
-            categoryId: categoryId,
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-
-          const { error: serviceError } = await supabase
-            .from('services')
-            .insert(serviceRecord);
-
-          if (serviceError) {
-            console.error('Error creating service:', serviceError);
-          }
-        }
-      }
-
-      // Create staff members - using the employees table
-      if (staff.length > 0) {
-        const staffRecords = staff.map(member => ({
-          id: crypto.randomUUID(),
-          business_id: businessId,
-          name: member.name,
-          email: member.email,
-          phone: member.phone,
-          position: member.position,
-          specialties: member.specialties,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }));
-
-        const { error: staffError } = await supabase
-          .from('employees')
-          .insert(staffRecords);
-
-        if (staffError) {
-          console.error('Error creating staff:', staffError);
-        }
-      }
-
-      // Create business settings
-      const { error: settingsError } = await supabase
-        .from('business_settings')
-        .insert({
-          id: crypto.randomUUID(),
-          business_id: businessId,
-          allow_online_booking: true,
-          minimum_notice_time: 30,
-          maximum_days_in_advance: 30,
-          require_advance_payment: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-
-      if (settingsError) {
-        console.error('Error creating settings:', settingsError);
-      }
-
-      toast.success('Configuração inicial concluída com sucesso!');
-      navigate('/dashboard');
+      await completeOnboarding();
+      console.log('Onboarding completed successfully');
     } catch (error) {
       console.error('Error completing onboarding:', error);
-      toast.error('Erro ao finalizar configuração');
-    } finally {
-      setIsCompleting(false);
     }
   };
 
-  const progress = calculateProgress();
-  const isComplete = progress === 100;
+  const isLastStep = currentStep === '4';
+  const isFirstStep = currentStep === '0';
+
+  // Check if business hours are properly configured
+  const hasValidBusinessHours = businessHours && Object.values(businessHours).some(day => {
+    return day.isOpen === true || day.open === true;
+  });
+
+  const canProceed = () => {
+    switch (currentStep) {
+      case '0':
+        return businessData.name && businessData.name.length > 0;
+      case '3':
+        return hasValidBusinessHours;
+      default:
+        return true;
+    }
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Progresso da Configuração</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <div className="flex justify-between text-sm mb-2">
-            <span>Progresso</span>
-            <span>{Math.round(progress)}%</span>
-          </div>
-          <Progress value={progress} />
-        </div>
-
-        <div className="space-y-2 text-sm">
-          <div className={`flex items-center gap-2 ${businessData.name ? 'text-green-600' : 'text-gray-500'}`}>
-            <div className={`w-2 h-2 rounded-full ${businessData.name ? 'bg-green-600' : 'bg-gray-300'}`} />
-            Informações do negócio
-          </div>
-          <div className={`flex items-center gap-2 ${services.length > 0 ? 'text-green-600' : 'text-gray-500'}`}>
-            <div className={`w-2 h-2 rounded-full ${services.length > 0 ? 'bg-green-600' : 'bg-gray-300'}`} />
-            Serviços ({services.length})
-          </div>
-          <div className={`flex items-center gap-2 ${staff.length > 0 ? 'text-green-600' : 'text-gray-500'}`}>
-            <div className={`w-2 h-2 rounded-full ${staff.length > 0 ? 'bg-green-600' : 'bg-gray-300'}`} />
-            Funcionários ({staff.length})
-          </div>
-          <div className={`flex items-center gap-2 ${Object.values(businessHours).some(day => day.open) ? 'text-green-600' : 'text-gray-500'}`}>
-            <div className={`w-2 h-2 rounded-full ${Object.values(businessHours).some(day => day.open) ? 'bg-green-600' : 'bg-gray-300'}`} />
-            Horários de funcionamento
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          {onPrevious && (
-            <Button variant="outline" onClick={onPrevious} className="flex-1">
+    <Card className="mt-8">
+      <CardContent className="flex justify-between items-center p-6">
+        <div className="flex items-center gap-2">
+          {!isFirstStep && (
+            <Button
+              variant="outline"
+              onClick={onPrevious}
+              disabled={!onPrevious}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
               Anterior
             </Button>
           )}
-          
-          {onNext && !isComplete && (
-            <Button onClick={onNext} className="flex-1">
-              Próximo
-            </Button>
-          )}
+        </div>
 
-          {isComplete && (
-            <Button 
-              onClick={completeOnboarding} 
-              className="flex-1"
-              disabled={isCompleting}
+        <div className="flex items-center gap-2">
+          {isLastStep ? (
+            <Button
+              onClick={handleComplete}
+              disabled={!canProceed()}
+              className="bg-green-600 hover:bg-green-700"
             >
-              {isCompleting ? 'Finalizando...' : 'Finalizar Configuração'}
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Finalizar Configuração
+            </Button>
+          ) : (
+            <Button
+              onClick={onNext}
+              disabled={!onNext || !canProceed()}
+            >
+              Próximo
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           )}
         </div>
       </CardContent>
     </Card>
   );
-}
+};

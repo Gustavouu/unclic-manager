@@ -1,32 +1,36 @@
 
-import { BusinessData, ServiceData, StaffData } from '../types';
+import { BusinessData, ServiceData, StaffData, BusinessHours } from '../types';
 
 export const useCompletion = (
   businessData: BusinessData,
   services: ServiceData[],
-  staffMembers: StaffData[],
-  hasStaff: boolean,
+  staff: StaffData[],
+  businessHours: BusinessHours | null
 ) => {
-  // Check if the onboarding process is complete
-  const isComplete = (): boolean => {
-    // Check if required business data is filled
-    const businessDataComplete = !!(
-      businessData.name &&
-      businessData.email &&
-      businessData.phone
-    );
-    
-    // Check if at least one service is defined
-    const servicesComplete = services.length > 0;
-    
-    // Check staff requirements
-    const staffComplete = hasStaff 
-      ? staffMembers.length > 0  // If business has staff, at least one must be added
-      : true;                   // If no staff (solo business), this step is complete
-    
-    // All required steps must be complete
-    return businessDataComplete && servicesComplete && staffComplete;
+  const completeOnboarding = async () => {
+    try {
+      // Validate required data
+      if (!businessData.name || !businessData.adminEmail) {
+        throw new Error('Dados obrigatórios não preenchidos');
+      }
+
+      console.log('Completing onboarding with data:', {
+        businessData,
+        services,
+        staff,
+        businessHours
+      });
+
+      // Here you would typically save to database
+      // For now, just mark as complete
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      throw error;
+    }
   };
 
-  return { isComplete };
+  return {
+    completeOnboarding,
+  };
 };

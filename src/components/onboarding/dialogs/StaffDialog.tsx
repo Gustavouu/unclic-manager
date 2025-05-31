@@ -1,189 +1,144 @@
 
-import React, { useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { StaffData } from "@/contexts/onboarding/types";
-import { MultiSelect } from "@/components/professionals/multiselect/ProfessionalsMultiSelect";
-import { Option } from "@/components/professionals/multiselect/types";
-
-const staffFormSchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
-  role: z.string().min(1, "Cargo é obrigatório"),
-  email: z.string().email("Email inválido").optional().or(z.literal("")),
-  phone: z.string().optional(),
-  specialties: z.array(z.string()).optional(),
-});
-
-type StaffFormData = z.infer<typeof staffFormSchema>;
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { StaffData } from '@/contexts/onboarding/types';
 
 interface StaffDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: StaffFormData) => void;
-  staff: StaffData | null;
+  staff?: StaffData;
+  onSave: (staff: StaffData) => void;
 }
 
 export const StaffDialog: React.FC<StaffDialogProps> = ({
   open,
   onOpenChange,
-  onSubmit,
   staff,
+  onSave,
 }) => {
-  const form = useForm<StaffFormData>({
-    resolver: zodResolver(staffFormSchema),
-    defaultValues: {
-      name: "",
-      role: "",
-      email: "",
-      phone: "",
-      specialties: [],
-    },
+  const [formData, setFormData] = useState<Partial<StaffData>>({
+    nome: '',
+    cargo: '',
+    email: '',
+    phone: '',
+    bio: '',
+    foto_url: '',
+    especializacoes: [],
   });
 
-  // Reset form when dialog opens/closes or staff changes
   useEffect(() => {
     if (staff) {
-      form.reset({
-        name: staff.name,
-        role: staff.role,
-        email: staff.email || "",
-        phone: staff.phone || "",
-        specialties: staff.specialties || [],
+      setFormData({
+        ...staff,
+        email: staff.email || '',
+        phone: staff.phone || '',
       });
-    } else if (!open) {
-      form.reset({
-        name: "",
-        role: "",
-        email: "",
-        phone: "",
-        specialties: [],
+    } else {
+      setFormData({
+        nome: '',
+        cargo: '',
+        email: '',
+        phone: '',
+        bio: '',
+        foto_url: '',
+        especializacoes: [],
       });
     }
-  }, [staff, open, form]);
+  }, [staff, open]);
 
-  const handleSubmit = (data: StaffFormData) => {
-    onSubmit(data);
+  const handleSave = () => {
+    if (!formData.nome?.trim()) return;
+
+    const staffData: StaffData = {
+      id: staff?.id || `staff_${Date.now()}`,
+      nome: formData.nome,
+      cargo: formData.cargo || 'Funcionário',
+      email: formData.email || '',
+      phone: formData.phone || '',
+      bio: formData.bio || '',
+      foto_url: formData.foto_url || '',
+      especializacoes: formData.especializacoes || [],
+    };
+
+    onSave(staffData);
+    onOpenChange(false);
   };
-
-  // Common specialty options
-  const specialtyOptions: Option[] = [
-    { label: "Corte", value: "Corte" },
-    { label: "Coloração", value: "Coloração" },
-    { label: "Manicure", value: "Manicure" },
-    { label: "Pedicure", value: "Pedicure" },
-    { label: "Depilação", value: "Depilação" },
-    { label: "Massagem", value: "Massagem" },
-    { label: "Maquiagem", value: "Maquiagem" },
-  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {staff ? "Editar Profissional" : "Adicionar Profissional"}
+            {staff ? 'Editar Funcionário' : 'Adicionar Funcionário'}
           </DialogTitle>
         </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nome do profissional" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cargo</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Cabeleireiro, Barbeiro, etc." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email (opcional)</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="Email do profissional" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone (opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Telefone do profissional" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="specialties"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Especialidades (opcional)</FormLabel>
-                    <FormControl>
-                      <MultiSelect
-                        options={specialtyOptions}
-                        selectedValues={field.value || []}
-                        onChange={field.onChange}
-                        placeholder="Selecione especialidades"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="flex justify-end space-x-2 mt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit">
-                {staff ? "Atualizar" : "Adicionar"}
-              </Button>
-            </div>
-          </form>
-        </Form>
+
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="nome">Nome *</Label>
+            <Input
+              id="nome"
+              value={formData.nome || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+              placeholder="Nome do funcionário"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="cargo">Cargo</Label>
+            <Input
+              id="cargo"
+              value={formData.cargo || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, cargo: e.target.value }))}
+              placeholder="Ex: Cabeleireiro, Manicure"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              placeholder="email@exemplo.com"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="phone">Telefone</Label>
+            <Input
+              id="phone"
+              value={formData.phone || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+              placeholder="(11) 99999-9999"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="bio">Biografia</Label>
+            <Textarea
+              id="bio"
+              value={formData.bio || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+              placeholder="Breve descrição sobre o funcionário"
+              rows={3}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} disabled={!formData.nome?.trim()}>
+              {staff ? 'Salvar' : 'Adicionar'}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

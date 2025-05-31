@@ -1,87 +1,62 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { DashboardStats } from '@/types/dashboard';
-import { formatCurrency } from '@/lib/format';
 
 interface PerformanceMetricsProps {
-  stats: DashboardStats | null;
+  stats: DashboardStats;
 }
 
-export function PerformanceMetrics({ stats }: PerformanceMetricsProps) {
-  if (!stats) {
-    return null;
-  }
+export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ stats }) => {
+  const completionRate = stats.totalAppointments > 0 
+    ? (stats.completedAppointments / stats.totalAppointments) * 100 
+    : 0;
 
-  const metrics = [
-    {
-      title: 'Taxa de Ocupação',
-      value: `${stats.occupancyRate}%`,
-      change: 5.2,
-      icon: TrendingUp,
-      color: 'text-green-600'
-    },
-    {
-      title: 'Ticket Médio',
-      value: formatCurrency(stats.totalRevenue / Math.max(stats.totalAppointments, 1)),
-      change: -2.1,
-      icon: TrendingDown,
-      color: 'text-red-600'
-    },
-    {
-      title: 'Agendamentos Concluídos',
-      value: `${stats.completedAppointments}`,
-      change: 0,
-      icon: Minus,
-      color: 'text-gray-600'
-    },
-    {
-      title: 'Taxa de Conversão',
-      value: `${Math.round((stats.completedAppointments / Math.max(stats.totalAppointments, 1)) * 100)}%`,
-      change: 3.4,
-      icon: TrendingUp,
-      color: 'text-green-600'
-    }
-  ];
+  const cancellationRate = stats.totalAppointments > 0
+    ? (stats.cancelledAppointments / stats.totalAppointments) * 100
+    : 0;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Métricas de Performance</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {metrics.map((metric, index) => {
-            const Icon = metric.icon;
-            const isPositive = metric.change > 0;
-            const isNegative = metric.change < 0;
-            
-            return (
-              <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-medium text-gray-600">{metric.title}</h4>
-                  <Icon className={`h-4 w-4 ${metric.color}`} />
-                </div>
-                
-                <div className="flex items-end justify-between">
-                  <span className="text-2xl font-bold text-gray-900">{metric.value}</span>
-                  
-                  {metric.change !== 0 && (
-                    <div className={`flex items-center text-xs ${
-                      isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-gray-600'
-                    }`}>
-                      {isPositive && <TrendingUp className="h-3 w-3 mr-1" />}
-                      {isNegative && <TrendingDown className="h-3 w-3 mr-1" />}
-                      <span>{Math.abs(metric.change)}%</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+      <CardContent className="space-y-6">
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">Taxa de Conclusão</span>
+            <span className="text-sm text-muted-foreground">
+              {stats.completedAppointments || 0}/{stats.totalAppointments || 0}
+            </span>
+          </div>
+          <Progress value={completionRate} className="h-2" />
+          <p className="text-xs text-muted-foreground mt-1">
+            {completionRate.toFixed(1)}% dos agendamentos foram concluídos
+          </p>
+        </div>
+
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">Taxa de Cancelamento</span>
+            <span className="text-sm text-muted-foreground">
+              {stats.cancelledAppointments || 0}/{stats.totalAppointments || 0}
+            </span>
+          </div>
+          <Progress value={cancellationRate} className="h-2" />
+          <p className="text-xs text-muted-foreground mt-1">
+            {cancellationRate.toFixed(1)}% dos agendamentos foram cancelados
+          </p>
+        </div>
+
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">Taxa de Ocupação</span>
+            <span className="text-sm text-muted-foreground">{stats.occupancyRate || 0}%</span>
+          </div>
+          <Progress value={stats.occupancyRate || 0} className="h-2" />
         </div>
       </CardContent>
     </Card>
   );
-}
+};

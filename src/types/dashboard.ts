@@ -10,6 +10,12 @@ export interface DashboardStats {
   retentionRate: number;
   growthRate: number;
   occupancyRate: number;
+  todayAppointments: number;
+  monthlyRevenue: number;
+  totalAppointments: number;
+  monthlyServices: number;
+  newClientsCount: number;
+  popularServices: Array<{ name: string; count: number; percentage: number }>;
 }
 
 export interface RevenueDataPoint {
@@ -21,4 +27,16 @@ export interface RevenueDataPoint {
 export interface FinancialChartsProps {
   data: RevenueDataPoint[];
   loading: boolean;
+}
+
+export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';
+
+export interface DashboardWidgetProps {
+  title: string;
+  value: string | number;
+  icon?: React.ReactNode;
+  trend?: {
+    value: number;
+    isPositive: boolean;
+  };
 }

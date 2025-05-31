@@ -1,86 +1,79 @@
 
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
-import { AppointmentFormValues } from '../schemas/appointmentFormSchema';
-import { DateTimeSelectWrapper } from './DateTimeSelectWrapper';
-import ServiceSelectWrapper from './ServiceSelectWrapper';
-import ProfessionalSelectWrapper from './ProfessionalSelectWrapper';
-import ClientSelectWrapper from './ClientSelectWrapper';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import NotificationOptions from './NotificationsOptions';
-import { useTenant } from '@/contexts/TenantContext';
+import { AppointmentFormValues } from '@/types/appointments';
+import ProfessionalSelectWrapper from './ProfessionalSelectWrapper';
+
+const appointmentSchema = z.object({
+  serviceId: z.string().optional(),
+  professionalId: z.string({
+    required_error: "Por favor selecione um profissional",
+  }),
+  clientId: z.string().optional(),
+  date: z.date().optional(),
+  time: z.string().optional(),
+  notes: z.string().optional(),
+  status: z.string().optional(),
+  duration: z.number().optional(),
+  price: z.number().optional(),
+  paymentMethod: z.string().optional(),
+  notifications: z.boolean().optional(),
+  reminderSent: z.boolean().optional(),
+  rating: z.number().optional(),
+  feedbackComment: z.string().optional(),
+  termsAccepted: z.boolean().optional(),
+});
 
 interface AppointmentFormProps {
-  form: UseFormReturn<AppointmentFormValues>;
-  onSubmit: (values: AppointmentFormValues) => void;
-  isSubmitting?: boolean;
-  className?: string;
+  onSubmit: (data: AppointmentFormValues) => void;
+  initialData?: Partial<AppointmentFormValues>;
 }
 
-const AppointmentForm = ({ form, onSubmit, isSubmitting = false, className }: AppointmentFormProps) => {
-  const { businessId } = useTenant();
-  
+export const AppointmentForm: React.FC<AppointmentFormProps> = ({
+  onSubmit,
+  initialData
+}) => {
+  const form = useForm<AppointmentFormValues>({
+    resolver: zodResolver(appointmentSchema),
+    defaultValues: {
+      professionalId: '',
+      serviceId: '',
+      clientId: '',
+      notifications: true,
+      ...initialData,
+    },
+  });
+
+  const handleSubmit = (data: AppointmentFormValues) => {
+    onSubmit(data);
+  };
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className={cn("space-y-6", className)}>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Service Selection */}
-        <ServiceSelectWrapper form={form} />
-        
-        {/* Professional Selection */}
-        <ProfessionalSelectWrapper 
-          form={form}
-          serviceId={form.watch('serviceId')}
-        />
-        
-        {/* Client Selection */}
-        <ClientSelectWrapper form={form} />
-        
-        {/* Date and Time Selection */}
-        <DateTimeSelectWrapper 
-          form={form}
-          serviceId={form.watch('serviceId')}
-          professionalId={form.watch('professionalId')}
-        />
-      </div>
-      
-      {/* Notes */}
-      <FormField
-        control={form.control}
-        name="notes"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Observações</FormLabel>
-            <FormControl>
-              <Textarea 
-                placeholder="Adicione observações importantes sobre o agendamento..." 
-                className="resize-none"
-                {...field}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      
-      {/* Notification Options */}
-      <div>
-        <h3 className="text-sm font-medium mb-2">Notificações</h3>
-        {businessId && <NotificationOptions businessId={businessId} />}
-      </div>
-      
-      <div className="flex justify-end">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Salvando..." : "Salvar Agendamento"}
-        </Button>
-      </div>
-    </form>
+    <Card>
+      <CardHeader>
+        <CardTitle>Novo Agendamento</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <ProfessionalSelectWrapper 
+              form={form}
+              serviceId={form.watch('serviceId')}
+            />
+            
+            <div className="flex justify-end space-x-2">
+              <Button type="submit">
+                Criar Agendamento
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 };
-
-export default AppointmentForm;

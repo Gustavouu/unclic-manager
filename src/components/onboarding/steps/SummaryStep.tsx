@@ -1,175 +1,174 @@
 
-import React from "react";
-import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { Card, CardContent } from "@/components/ui/card";
-import { Building, Scissors, Users, Clock, CheckCircle, AlertCircle, Globe } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useOnboarding } from '@/contexts/onboarding/OnboardingContext';
+import { CheckCircle, Building, Users, Clock, Briefcase } from 'lucide-react';
 
 export const SummaryStep: React.FC = () => {
-  const { businessData, services, staffMembers, businessHours, hasStaff, isComplete } = useOnboarding();
-  
-  // Check if each step is complete
-  const isBusinessComplete = 
-    businessData.name.trim() !== "" && 
-    businessData.email.trim() !== "" && 
-    businessData.phone.trim() !== "" &&
-    businessData.address.trim() !== "" &&
-    (businessData.cep || businessData.zipCode || "").trim() !== "";
-  
-  const isServicesComplete = services.length > 0;
-  
-  const isStaffComplete = !hasStaff || (hasStaff && staffMembers.length > 0);
-  
-  const isHoursComplete = Object.values(businessHours).some(day => day.open);
-  
-  // Format days for display
-  const formatDays = () => {
-    const dayNames: Record<string, string> = {
-      monday: "Segunda",
-      tuesday: "Terça",
-      wednesday: "Quarta",
-      thursday: "Quinta",
-      friday: "Sexta",
-      saturday: "Sábado",
-      sunday: "Domingo"
-    };
-    
-    return Object.entries(businessHours)
-      .filter(([_, data]) => data.open)
-      .map(([day, data]) => `${dayNames[day]}: ${data.openTime} - ${data.closeTime}`)
-      .join(", ");
+  const { businessData, services, staff, businessHours } = useOnboarding();
+
+  const formatTime = (time: string) => {
+    return time || '00:00';
   };
-  
+
+  const getOpenDays = () => {
+    if (!businessHours) return [];
+    
+    return Object.entries(businessHours).filter(([_, hours]) => {
+      return hours.isOpen === true || hours.open === true;
+    });
+  };
+
+  const openDays = getOpenDays();
+
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-medium">Revisão Final</h3>
-      
-      {!isComplete() && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Informações Incompletas</AlertTitle>
-          <AlertDescription>
-            Existem informações obrigatórias que ainda não foram preenchidas. Revise os itens destacados abaixo antes de finalizar.
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className={!isBusinessComplete ? "border-destructive" : ""}>
-          <CardContent className="pt-6">
-            <div className="flex items-start">
-              <Building className="h-5 w-5 mr-2 mt-0.5" />
-              <div>
-                <h3 className="font-medium">Dados do Estabelecimento</h3>
-                {!isBusinessComplete ? (
-                  <p className="text-destructive mt-1 text-sm">Informações incompletas</p>
-                ) : (
-                  <div className="mt-2 space-y-1 text-sm">
-                    <p><strong>Nome:</strong> {businessData.name}</p>
-                    <p><strong>Email:</strong> {businessData.email}</p>
-                    <p><strong>Telefone:</strong> {businessData.phone}</p>
-                    <p><strong>Endereço:</strong> {businessData.address}, {businessData.number || businessData.addressNumber} - {businessData.city}/{businessData.state}</p>
-                    <p><strong>CEP:</strong> {businessData.cep || businessData.zipCode}</p>
-                    {businessData.website && (
-                      <p className="flex items-center gap-1">
-                        <Globe className="h-3 w-3" />
-                        <strong>Site:</strong> https://{businessData.website}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
+      <div className="text-center">
+        <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
+        <h2 className="text-2xl font-bold mb-2">Configuração Concluída!</h2>
+        <p className="text-muted-foreground">
+          Revise as informações antes de finalizar
+        </p>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Business Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5" />
+              Informações do Negócio
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <p className="font-medium">{businessData.name}</p>
+              <p className="text-sm text-muted-foreground">{businessData.description}</p>
             </div>
+            
+            {businessData.phone && (
+              <p className="text-sm">📞 {businessData.phone}</p>
+            )}
+            
+            {businessData.adminEmail && (
+              <p className="text-sm">✉️ {businessData.adminEmail}</p>
+            )}
+            
+            {businessData.address && (
+              <p className="text-sm">📍 {businessData.address}, {businessData.city}</p>
+            )}
           </CardContent>
         </Card>
-        
-        <Card className={!isServicesComplete ? "border-destructive" : ""}>
-          <CardContent className="pt-6">
-            <div className="flex items-start">
-              <Scissors className="h-5 w-5 mr-2 mt-0.5" />
-              <div>
-                <h3 className="font-medium">Serviços</h3>
-                {!isServicesComplete ? (
-                  <p className="text-destructive mt-1 text-sm">Nenhum serviço cadastrado</p>
-                ) : (
-                  <div className="mt-2">
-                    <p className="text-sm mb-2">{services.length} serviço(s) cadastrado(s)</p>
-                    <div className="flex flex-wrap gap-1">
-                      {services.map(service => (
-                        <Badge key={service.id} variant="outline">
-                          {service.name}
-                        </Badge>
-                      ))}
-                    </div>
+
+        {/* Business Hours */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Horário de Funcionamento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {openDays.length > 0 ? (
+              <div className="space-y-2">
+                {openDays.map(([day, hours]) => (
+                  <div key={day} className="flex justify-between text-sm">
+                    <span className="capitalize">{day}</span>
+                    <span>
+                      {formatTime(hours.start || hours.openTime || '')} - {formatTime(hours.end || hours.closeTime || '')}
+                    </span>
                   </div>
-                )}
+                ))}
               </div>
-            </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Nenhum horário configurado
+              </p>
+            )}
           </CardContent>
         </Card>
-        
-        <Card className={hasStaff && !isStaffComplete ? "border-destructive" : ""}>
-          <CardContent className="pt-6">
-            <div className="flex items-start">
-              <Users className="h-5 w-5 mr-2 mt-0.5" />
-              <div>
-                <h3 className="font-medium">Profissionais</h3>
-                {!hasStaff ? (
-                  <p className="text-sm mt-1">Configurado como Autônomo</p>
-                ) : !isStaffComplete ? (
-                  <p className="text-destructive mt-1 text-sm">Nenhum profissional cadastrado</p>
-                ) : (
-                  <div className="mt-2">
-                    <p className="text-sm mb-2">{staffMembers.length} profissional(is) cadastrado(s)</p>
-                    <div className="flex flex-wrap gap-1">
-                      {staffMembers.map(staff => (
-                        <Badge key={staff.id} variant="outline">
-                          {staff.name}
-                        </Badge>
-                      ))}
-                    </div>
+
+        {/* Services */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Briefcase className="h-5 w-5" />
+              Serviços ({services.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {services.length > 0 ? (
+              <div className="space-y-2">
+                {services.slice(0, 3).map((service) => (
+                  <div key={service.id} className="flex justify-between items-center">
+                    <span className="text-sm">{service.nome || service.name}</span>
+                    <Badge variant="secondary">
+                      R$ {(service.preco || service.price || 0).toFixed(2)}
+                    </Badge>
                   </div>
+                ))}
+                {services.length > 3 && (
+                  <p className="text-xs text-muted-foreground">
+                    +{services.length - 3} serviços adicionais
+                  </p>
                 )}
               </div>
-            </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Nenhum serviço adicionado
+              </p>
+            )}
           </CardContent>
         </Card>
-        
-        <Card className={!isHoursComplete ? "border-destructive" : ""}>
-          <CardContent className="pt-6">
-            <div className="flex items-start">
-              <Clock className="h-5 w-5 mr-2 mt-0.5" />
-              <div>
-                <h3 className="font-medium">Horários de Funcionamento</h3>
-                {!isHoursComplete ? (
-                  <p className="text-destructive mt-1 text-sm">Horários não configurados</p>
-                ) : (
-                  <div className="mt-2">
-                    <p className="text-sm">
-                      {formatDays()}
-                    </p>
+
+        {/* Staff */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Equipe ({staff.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {staff.length > 0 ? (
+              <div className="space-y-2">
+                {staff.slice(0, 3).map((member) => (
+                  <div key={member.id} className="flex justify-between items-center">
+                    <span className="text-sm">{member.nome || member.name}</span>
+                    <Badge variant="outline">
+                      {member.cargo || member.role || 'Funcionário'}
+                    </Badge>
                   </div>
+                ))}
+                {staff.length > 3 && (
+                  <p className="text-xs text-muted-foreground">
+                    +{staff.length - 3} membros adicionais
+                  </p>
                 )}
               </div>
-            </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Nenhum funcionário adicionado
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
-      
-      <Separator />
-      
-      {isComplete() && (
-        <Alert>
-          <CheckCircle className="h-4 w-4" />
-          <AlertTitle>Tudo Pronto!</AlertTitle>
-          <AlertDescription>
-            Todas as informações básicas foram preenchidas. Você pode finalizar o processo de configuração. 
-            Você poderá ajustar essas configurações posteriormente nas configurações do sistema.
-          </AlertDescription>
-        </Alert>
-      )}
+
+      <Card className="bg-green-50 border-green-200">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="h-6 w-6 text-green-600" />
+            <div>
+              <p className="font-medium text-green-800">Tudo pronto!</p>
+              <p className="text-sm text-green-700">
+                Clique em "Finalizar Configuração" para começar a usar o sistema.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

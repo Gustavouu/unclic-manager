@@ -7,5 +7,7 @@ export type {
   ServiceData, 
   StaffData, 
   BusinessHours, 
-  OnboardingContextType 
+  OnboardingContextType,
+  OnboardingMethod,
+  OnboardingStatus
 } from "./onboarding/types";

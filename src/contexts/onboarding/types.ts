@@ -19,6 +19,15 @@ export interface BusinessData {
   logo_url?: string;
   address_number?: string;
   zip_code?: string;
+  email?: string;
+  cep?: string;
+  number?: string;
+  socialMedia?: {
+    facebook?: string;
+    instagram?: string;
+    website?: string;
+  };
+  bannerUrl?: string;
 }
 
 export interface ServiceData {
@@ -44,6 +53,8 @@ export interface StaffData {
   especializacoes?: string[];
   foto_url?: string;
   bio?: string;
+  email?: string;
+  phone?: string;
   // English equivalents
   name?: string;
   role?: string;
@@ -56,6 +67,9 @@ export interface BusinessHours {
     start: string;
     end: string;
     isOpen: boolean;
+    open?: boolean;
+    openTime?: string;
+    closeTime?: string;
   };
 }
 
@@ -73,5 +87,36 @@ export interface OnboardingState {
   staff: StaffData[];
   businessHours: BusinessHours | null;
   isComplete: boolean;
-  onboardingMethod?: 'import' | 'upload' | 'manual';
+  onboardingMethod?: OnboardingMethod;
+}
+
+export type OnboardingMethod = 'import' | 'upload' | 'manual' | null;
+
+export type OnboardingStatus = 'idle' | 'processing' | 'verifying' | 'saving' | 'complete' | 'error';
+
+export interface OnboardingContextType {
+  currentStep: number;
+  businessData: BusinessData;
+  services: ServiceData[];
+  staff: StaffData[];
+  businessHours: BusinessHours | null;
+  isComplete: boolean;
+  onboardingMethod: OnboardingMethod;
+  status: OnboardingStatus;
+  error: string | null;
+  
+  setCurrentStep: (step: number) => void;
+  updateBusinessData: (data: Partial<BusinessData>) => void;
+  addService: (service: ServiceData) => void;
+  updateService: (id: string, service: Partial<ServiceData>) => void;
+  removeService: (id: string) => void;
+  addStaff: (staff: StaffData) => void;
+  updateStaff: (id: string, staff: Partial<StaffData>) => void;
+  removeStaff: (id: string) => void;
+  updateBusinessHours: (hours: BusinessHours) => void;
+  setOnboardingMethod: (method: OnboardingMethod) => void;
+  completeOnboarding: () => Promise<void>;
+  saveProgress: () => void;
+  loadProgress: () => void;
+  resetOnboarding: () => void;
 }
