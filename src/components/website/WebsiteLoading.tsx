@@ -1,41 +1,31 @@
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import React from 'react';
+import { Loader } from '@/components/ui/loader';
 
-interface WebsiteLoadingProps {
-  type: "loading" | "not-found";
+export interface WebsiteLoadingProps {
+  type?: 'business' | 'services' | 'general';
+  message?: string;
 }
 
-export const WebsiteLoading: React.FC<WebsiteLoadingProps> = ({ type }) => {
-  const navigate = useNavigate();
-  
-  if (type === "loading") {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Carregando...</h1>
-          <p className="text-muted-foreground mt-2">Aguarde enquanto buscamos as informações do estabelecimento</p>
-        </div>
-      </div>
-    );
-  }
-  
+export function WebsiteLoading({ type = 'general', message }: WebsiteLoadingProps) {
+  const getMessage = () => {
+    if (message) return message;
+    
+    switch (type) {
+      case 'business':
+        return 'Carregando informações do negócio...';
+      case 'services':
+        return 'Carregando serviços...';
+      default:
+        return 'Carregando...';
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
-        <h1 className="text-2xl font-bold">Estabelecimento não encontrado</h1>
-        <p className="text-muted-foreground mt-2">
-          O estabelecimento que você está procurando não existe
-        </p>
-        <Button 
-          variant="outline" 
-          className="mt-4"
-          onClick={() => navigate("/")}
-        >
-          Voltar para página inicial
-        </Button>
+        <Loader size="lg" text={getMessage()} />
       </div>
     </div>
   );
-};
+}

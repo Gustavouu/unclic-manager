@@ -1,59 +1,76 @@
 
-import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calendar, CheckCircle } from "lucide-react";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BusinessData } from '@/hooks/useBusinessWebsite';
+import { Calendar, Clock, MapPin, Phone } from 'lucide-react';
 
-interface AppointmentSectionProps {
-  onStartBooking: () => void;
+export interface AppointmentSectionProps {
+  business: BusinessData;
+  onBookingClick: () => void;
 }
 
-export const AppointmentSection: React.FC<AppointmentSectionProps> = ({ onStartBooking }) => {
+export function AppointmentSection({ business, onBookingClick }: AppointmentSectionProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          Agendamento
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-muted/50 rounded-lg p-4">
-          <h3 className="font-medium text-lg mb-2">Por que agendar conosco?</h3>
-          <ul className="space-y-2">
-            <li className="flex items-start gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>Atendimento personalizado de alta qualidade</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>Profissionais experientes e qualificados</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>Ambiente confortável e acolhedor</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-              <span>Agendamento rápido e prático</span>
-            </li>
-          </ul>
+    <section className="py-16 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Agende Seu Horário</h2>
+          <p className="text-lg text-gray-600">
+            Faça seu agendamento de forma rápida e fácil
+          </p>
         </div>
         
-        <Button 
-          onClick={onStartBooking} 
-          className="w-full"
-          size="lg"
-        >
-          <Calendar className="mr-2 h-4 w-4" />
-          Agendar Serviço
-        </Button>
-        
-        <p className="text-sm text-muted-foreground text-center">
-          Clique no botão acima para agendar seu serviço conosco. Você 
-          poderá escolher a data, horário e o serviço desejado.
-        </p>
-      </CardContent>
-    </Card>
+        <Card className="max-w-2xl mx-auto">
+          <CardHeader>
+            <CardTitle className="text-center">Informações para Agendamento</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-primary/10 p-3 rounded-full">
+                <Calendar size={24} className="text-primary" />
+              </div>
+              <div>
+                <p className="font-medium">Horário de Funcionamento</p>
+                <p className="text-sm text-gray-500">Segunda a Sexta: 9:00 - 18:00</p>
+              </div>
+            </div>
+            
+            {business.phone && (
+              <div className="flex items-center gap-4">
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <Phone size={24} className="text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Contato</p>
+                  <p className="text-sm text-gray-500">{business.phone}</p>
+                </div>
+              </div>
+            )}
+            
+            {business.address && (
+              <div className="flex items-center gap-4">
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <MapPin size={24} className="text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Endereço</p>
+                  <p className="text-sm text-gray-500">
+                    {business.address}
+                    {business.address_number && `, ${business.address_number}`}
+                    {business.city && `, ${business.city}`}
+                    {business.state && ` - ${business.state}`}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <Button onClick={onBookingClick} size="lg" className="w-full mt-6">
+              Agendar Agora
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </section>
   );
-};
+}

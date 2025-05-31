@@ -1,41 +1,29 @@
 
-import React from "react";
-import { BusinessData } from "@/contexts/onboarding/types";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { BusinessData } from '@/hooks/useBusinessWebsite';
 
-interface WebsiteBannerProps {
-  businessData: BusinessData;
+export interface WebsiteBannerProps {
+  business: BusinessData;
+  onBookingClick: () => void;
 }
 
-export const WebsiteBanner: React.FC<WebsiteBannerProps> = ({ businessData }) => {
+export function WebsiteBanner({ business, onBookingClick }: WebsiteBannerProps) {
   return (
-    <div 
-      className="h-48 md:h-64 bg-gradient-to-r from-blue-500 to-purple-600 relative overflow-hidden"
-      style={{
-        backgroundImage: businessData.bannerUrl 
-          ? `url(${businessData.bannerUrl})` 
-          : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
-      }}
-    >
-      <div className="absolute inset-0 bg-black opacity-30"></div>
-      <div className="container mx-auto px-4 h-full flex items-end relative z-10">
-        <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-white rounded-full p-2 shadow-lg">
-          {businessData.logoUrl ? (
-            <img 
-              src={businessData.logoUrl} 
-              alt={`${businessData.name} logo`} 
-              className="w-24 h-24 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-              <span className="text-2xl font-bold text-gray-500">
-                {businessData.name ? businessData.name.charAt(0).toUpperCase() : ""}
-              </span>
-            </div>
-          )}
-        </div>
+    <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 className="text-4xl font-bold mb-4">{business.name}</h2>
+        {business.description && (
+          <p className="text-xl mb-8 max-w-2xl mx-auto">{business.description}</p>
+        )}
+        <Button 
+          onClick={onBookingClick}
+          size="lg"
+          variant="secondary"
+        >
+          Agende Seu Horário
+        </Button>
       </div>
-    </div>
+    </section>
   );
-};
+}

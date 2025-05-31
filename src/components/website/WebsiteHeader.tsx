@@ -1,58 +1,33 @@
 
-import React from "react";
-import { BusinessData } from "@/contexts/onboarding/types";
-import { MapPin, Phone, Mail, Calendar } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { BusinessData } from '@/hooks/useBusinessWebsite';
 
-interface WebsiteHeaderProps {
-  businessData: BusinessData;
-  onStartBooking: () => void;
+export interface WebsiteHeaderProps {
+  business: BusinessData;
+  onBookingClick: () => void;
 }
 
-export const WebsiteHeader: React.FC<WebsiteHeaderProps> = ({
-  businessData,
-  onStartBooking
-}) => {
+export function WebsiteHeader({ business, onBookingClick }: WebsiteHeaderProps) {
   return (
-    <div className="text-center mb-8">
-      <h1 className="text-3xl font-bold">{businessData.name}</h1>
-      
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-3">
-        {businessData.address && (
-          <p className="text-muted-foreground flex items-center gap-1">
-            <MapPin className="h-4 w-4" />
-            {businessData.address}
-            {(businessData.number || businessData.addressNumber) && `, ${businessData.number || businessData.addressNumber}`}
-            {businessData.city && ` - ${businessData.city}`}
-            {businessData.state && `/${businessData.state}`}
-          </p>
-        )}
-        
-        {businessData.phone && (
-          <p className="text-muted-foreground flex items-center gap-1">
-            <Phone className="h-4 w-4" />
-            {businessData.phone}
-          </p>
-        )}
-        
-        {businessData.email && (
-          <p className="text-muted-foreground flex items-center gap-1">
-            <Mail className="h-4 w-4" />
-            {businessData.email}
-          </p>
-        )}
+    <header className="bg-white shadow-sm border-b">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-4">
+          <div className="flex items-center">
+            {business.logo_url && (
+              <img 
+                src={business.logo_url} 
+                alt={business.name}
+                className="h-10 w-auto mr-4"
+              />
+            )}
+            <h1 className="text-2xl font-bold text-gray-900">{business.name}</h1>
+          </div>
+          <Button onClick={onBookingClick}>
+            Agendar Horário
+          </Button>
+        </div>
       </div>
-      
-      <div className="mt-6">
-        <Button 
-          size="lg" 
-          className="gap-2"
-          onClick={onStartBooking}
-        >
-          <Calendar className="h-5 w-5" />
-          Agendar Serviço
-        </Button>
-      </div>
-    </div>
+    </header>
   );
-};
+}

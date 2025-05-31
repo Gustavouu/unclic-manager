@@ -1,26 +1,23 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { DashboardOverview } from '@/components/dashboard/DashboardOverview';
-import { DashboardInsights } from '@/components/dashboard/DashboardInsights';
 import { KpiCards } from '@/components/dashboard/KpiCards';
-import { FinancialChart } from '@/components/dashboard/FinancialChart';
+import { FinancialCharts } from '@/components/dashboard/FinancialCharts';
 import { PopularServices } from '@/components/dashboard/PopularServices';
 import { NextAppointments } from '@/components/dashboard/NextAppointments';
 import { ClientsComparisonChart } from '@/components/dashboard/ClientsComparisonChart';
-import { RetentionRateCard } from '@/components/dashboard/RetentionRateCard';
+import { RetentionRateCard } from '@/components/common/RetentionRateCard';
 import { PerformanceMetrics } from '@/components/dashboard/PerformanceMetrics';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
-import { FilterPeriod } from '@/types/dashboard';
-import { useState } from 'react';
+import { FilterPeriod, useDashboardData } from '@/hooks/useDashboardData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
 export default function Dashboard() {
   const [period, setPeriod] = useState<FilterPeriod>('month');
-  const { stats, loading, error } = useDashboardData(period);
+  const { stats, isLoading, error } = useDashboardData(period);
 
   const handleRefresh = () => {
     window.location.reload();
@@ -64,7 +61,7 @@ export default function Dashboard() {
             <CardTitle>Desempenho Financeiro</CardTitle>
           </CardHeader>
           <CardContent>
-            <FinancialChart data={stats?.revenueData} />
+            <FinancialCharts data={stats?.revenueData} loading={isLoading} />
           </CardContent>
         </Card>
 
@@ -73,92 +70,45 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle>Serviços Populares</CardTitle>
           </CardHeader>
-          <PopularServices 
-            services={stats?.popularServices?.map((service, index) => ({
-              id: service.id,
-              name: service.name,
-              count: service.count,
-              percentage: stats.totalAppointments > 0 ? (service.count / stats.totalAppointments) * 100 : 0
-            })) || []} 
-            loading={loading} 
-          />
-        </Card>
-
-        {/* Next Appointments */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Próximos Agendamentos</CardTitle>
-          </CardHeader>
           <CardContent>
-            <NextAppointments appointments={stats?.nextAppointments || []} />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Bottom Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Business Insights */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Insights do Negócio</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3 p-3 bg-orange-50 rounded-lg">
-                <div className="w-2 h-2 bg-orange-400 rounded-full mt-2"></div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Receita abaixo da média</h4>
-                  <p className="text-sm text-gray-600">A receita está 10% abaixo da média dos últimos 3 meses</p>
-                </div>
+            {stats?.popularServices && (
+              <div className="space-y-4">
+                {stats.popularServices.map((service) => (
+                  <div key={service.id} className="flex items-center justify-between">
+                    <span>{service.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600">{service.count} agendamentos</span>
+                      <div className="w-16 h-2 bg-gray-200 rounded-full">
+                        <div
+                          className="h-2 bg-blue-500 rounded-full"
+                          style={{ width: `${service.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              
-              <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
-                <div className="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Serviço destaque</h4>
-                  <p className="text-sm text-gray-600">Monitore quais serviços estão com maior procura</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg">
-                <div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Base de clientes estável</h4>
-                  <p className="text-sm text-gray-600">Considere estratégias para atrair novos clientes</p>
-                </div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Retention Rate */}
-        <div className="space-y-6">
-          <RetentionRateCard 
-            retentionRate={stats?.retentionRate || 70}
-            monthlyGoal={90}
-            suggestions={[
-              "Enviar follow-ups após atendimentos",
-              "Oferecer descontos para clientes recorrentes", 
-              "Criar programa de fidelidade"
-            ]}
-          />
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Comparação de Clientes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ClientsComparisonChart 
-                newClients={stats?.newClientsCount || 0}
-                returningClients={stats?.returningClientsCount || 0}
-              />
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Taxa de Retenção</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RetentionRateCard 
+              retentionRate={stats?.retentionRate || 0}
+              suggestions={[
+                "Envie mensagens pós-atendimento",
+                "Crie um programa de fidelidade",
+                "Ofereça descontos para clientes recorrentes"
+              ]}
+            />
+          </CardContent>
+        </Card>
       </div>
-
-      {/* Performance Metrics */}
-      <PerformanceMetrics stats={stats} />
     </div>
   );
 }

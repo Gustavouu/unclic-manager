@@ -1,130 +1,46 @@
 
-import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, Mail, Phone } from "lucide-react";
-import { ExternalLink } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { BusinessData, BusinessHours } from "@/contexts/onboarding/types";
+import React from 'react';
+import { BusinessData } from '@/hooks/useBusinessWebsite';
 
-interface AboutSectionProps {
-  businessData: BusinessData;
-  businessHours: BusinessHours | null;
-  formatWeekday: (day: string) => string;
+export interface AboutSectionProps {
+  business: BusinessData;
 }
 
-export const AboutSection: React.FC<AboutSectionProps> = ({ 
-  businessData, 
-  businessHours,
-  formatWeekday 
-}) => {
+export function AboutSection({ business }: AboutSectionProps) {
   return (
-    <Card className="md:col-span-1">
-      <CardHeader>
-        <CardTitle className="text-xl">Sobre Nós</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p>
-          Bem-vindo a {businessData.name}! Somos especializados em 
-          oferecer os melhores serviços com qualidade e conforto para 
-          nossos clientes.
-        </p>
-        
-        <div className="space-y-2">
-          {businessData.phone && (
-            <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-muted-foreground" />
-              <span>{businessData.phone}</span>
-            </div>
-          )}
-          
-          {businessData.email && (
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              <span>{businessData.email}</span>
-            </div>
+    <section className="py-16 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Sobre Nós</h2>
+          {business.description && (
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              {business.description}
+            </p>
           )}
         </div>
         
-        {businessHours && Object.keys(businessHours).length > 0 && (
-          <>
-            <Separator />
-            
-            <div className="space-y-2">
-              <h3 className="font-medium flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                Horário de Funcionamento
-              </h3>
-              <div className="space-y-1 text-sm">
-                {Object.entries(businessHours).map(([day, hours]) => (
-                  <div key={day} className="flex justify-between">
-                    <span className="font-medium">{formatWeekday(day)}</span>
-                    {hours.open ? (
-                      <span>{hours.openTime} - {hours.closeTime}</span>
-                    ) : (
-                      <span className="text-muted-foreground">Fechado</span>
-                    )}
-                  </div>
-                ))}
+        {(business.phone || business.address) && (
+          <div className="grid md:grid-cols-2 gap-8 mt-12">
+            {business.phone && (
+              <div className="text-center">
+                <h3 className="text-xl font-semibold mb-2">Contato</h3>
+                <p className="text-gray-600">{business.phone}</p>
               </div>
-            </div>
-          </>
-        )}
-        
-        {businessData.socialMedia && (
-          <>
-            <Separator />
-            
-            <div className="space-y-2">
-              <h3 className="font-medium">Redes Sociais</h3>
-              <div className="flex flex-wrap gap-2">
-                {businessData.socialMedia?.facebook && (
-                  <a 
-                    href={businessData.socialMedia.facebook} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-blue-600 hover:underline"
-                  >
-                    Facebook <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-                
-                {businessData.socialMedia?.instagram && (
-                  <a 
-                    href={businessData.socialMedia.instagram} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-pink-600 hover:underline"
-                  >
-                    Instagram <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-                
-                {businessData.socialMedia?.linkedin && (
-                  <a 
-                    href={businessData.socialMedia.linkedin} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-blue-800 hover:underline"
-                  >
-                    LinkedIn <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-                
-                {businessData.socialMedia?.twitter && (
-                  <a 
-                    href={businessData.socialMedia.twitter} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-blue-400 hover:underline"
-                  >
-                    Twitter <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
+            )}
+            {business.address && (
+              <div className="text-center">
+                <h3 className="text-xl font-semibold mb-2">Localização</h3>
+                <p className="text-gray-600">
+                  {business.address}
+                  {business.address_number && `, ${business.address_number}`}
+                  {business.city && `, ${business.city}`}
+                  {business.state && ` - ${business.state}`}
+                </p>
               </div>
-            </div>
-          </>
+            )}
+          </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
-};
+}

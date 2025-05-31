@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -105,8 +104,8 @@ export const useBusinessWebsite = (businessId?: string) => {
                 zip_code: legacyData.cep,
                 admin_email: legacyData.email_admin,
                 neighborhood: legacyData.bairro,
-                // Add missing required properties with defaults
-                country: 'BR',
+                // Use properties that exist in the type
+                website_url: '',
                 owner_id: '',
                 theme: 'default',
                 currency: 'BRL',

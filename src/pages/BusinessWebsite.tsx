@@ -36,7 +36,7 @@ const BusinessWebsite = () => {
   } = useBusinessWebsite(businessId);
 
   if (loading) {
-    return <WebsiteLoading />;
+    return <WebsiteLoading type="business" />;
   }
 
   if (error || !business) {

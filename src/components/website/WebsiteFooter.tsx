@@ -1,72 +1,49 @@
 
-import React from "react";
-import { formatSocialMediaUrl } from "./WebsiteUtils";
-import { ExternalLink } from "lucide-react";
-import { BusinessData } from "@/contexts/onboarding/types";
+import React from 'react';
+import { BusinessData } from '@/hooks/useBusinessWebsite';
 
-interface WebsiteFooterProps {
-  businessName: string;
-  businessData?: BusinessData;
+export interface WebsiteFooterProps {
+  business: BusinessData;
 }
 
-export const WebsiteFooter: React.FC<WebsiteFooterProps> = ({ businessName, businessData }) => {
+export function WebsiteFooter({ business }: WebsiteFooterProps) {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <div className="mt-16 pt-8 border-t">
-      <div className="text-center">
-        <p className="text-lg font-medium">{businessName}</p>
-        
-        {businessData?.address && (
-          <p className="mt-1 text-muted-foreground">
-            {businessData.address}
-            {businessData.number || businessData.addressNumber ? `, ${businessData.number || businessData.addressNumber}` : ''}
-            {businessData.neighborhood ? ` - ${businessData.neighborhood}` : ''}
-            {businessData.city ? `, ${businessData.city}` : ''}
-            {businessData.state ? ` - ${businessData.state}` : ''}
-          </p>
-        )}
-        
-        {businessData?.socialMedia && Object.values(businessData.socialMedia).some(url => url) && (
-          <div className="flex justify-center gap-4 mt-4">
-            {businessData.socialMedia.facebook && (
-              <a 
-                href={formatSocialMediaUrl(businessData.socialMedia.facebook)}
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800"
-              >
-                <span className="flex items-center gap-1">Facebook <ExternalLink className="h-3 w-3" /></span>
-              </a>
-            )}
-            {businessData.socialMedia.instagram && (
-              <a 
-                href={formatSocialMediaUrl(businessData.socialMedia.instagram)}
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-pink-600 hover:text-pink-800"
-              >
-                <span className="flex items-center gap-1">Instagram <ExternalLink className="h-3 w-3" /></span>
-              </a>
-            )}
-            {businessData.socialMedia.twitter && (
-              <a 
-                href={formatSocialMediaUrl(businessData.socialMedia.twitter)}
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-600"
-              >
-                <span className="flex items-center gap-1">Twitter <ExternalLink className="h-3 w-3" /></span>
-              </a>
+    <footer className="bg-gray-800 text-white py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid md:grid-cols-3 gap-8">
+          <div>
+            <h3 className="text-lg font-bold mb-4">{business.name}</h3>
+            {business.description && (
+              <p className="text-gray-400 mb-4">{business.description}</p>
             )}
           </div>
-        )}
+          
+          <div>
+            <h3 className="text-lg font-bold mb-4">Contato</h3>
+            {business.phone && <p className="text-gray-400 mb-2">{business.phone}</p>}
+            {business.admin_email && <p className="text-gray-400">{business.admin_email}</p>}
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-bold mb-4">Endereço</h3>
+            <p className="text-gray-400">
+              {business.address}
+              {business.address_number && `, ${business.address_number}`}
+              <br />
+              {business.city && `${business.city}`}
+              {business.state && `, ${business.state}`}
+            </p>
+          </div>
+        </div>
+        
+        <div className="border-t border-gray-700 mt-8 pt-8 text-center">
+          <p className="text-gray-400">
+            &copy; {currentYear} {business.name}. Todos os direitos reservados.
+          </p>
+        </div>
       </div>
-      
-      <div className="mt-6 text-center text-sm text-muted-foreground">
-        <p>© {new Date().getFullYear()} {businessName}. Todos os direitos reservados.</p>
-        <p className="mt-1">
-          Criado com <a href="/" className="text-primary hover:underline">unclic</a>
-        </p>
-      </div>
-    </div>
+    </footer>
   );
-};
+}

@@ -1,67 +1,57 @@
 
-import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Scissors, Clock } from "lucide-react";
-import { ServiceData } from "@/contexts/onboarding/types";
-import { toast } from "sonner";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SimpleService } from '@/hooks/useBusinessWebsite';
+import { formatCurrency } from '@/lib/format';
 
-interface ServicesSectionProps {
-  services: ServiceData[];
-  formatPrice: (price: number) => string;
-  formatDuration: (minutes: number) => string;
+export interface ServicesSectionProps {
+  services: SimpleService[];
+  onBookingClick: () => void;
 }
 
-export const ServicesSection: React.FC<ServicesSectionProps> = ({ 
-  services,
-  formatPrice,
-  formatDuration
-}) => {
+export function ServicesSection({ services, onBookingClick }: ServicesSectionProps) {
+  if (!services.length) return null;
+
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-xl flex items-center gap-2">
-          <Scissors className="h-5 w-5" />
-          Nossos Serviços
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {services.slice(0, 6).map((service) => (
-            <div 
-              key={service.id} 
-              className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex justify-between items-start">
-                <h3 className="font-medium">{service.name}</h3>
-                <Badge variant="outline" className="ml-2">
-                  {formatPrice(service.price)}
-                </Badge>
-              </div>
-              
-              <div className="mt-2 flex items-center text-sm text-muted-foreground">
-                <Clock className="h-3 w-3 mr-1" />
-                {formatDuration(service.duration)}
-              </div>
-              
-              {service.description && (
-                <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                  {service.description}
-                </p>
-              )}
-            </div>
-          ))}
+    <section className="py-16 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Nossos Serviços</h2>
+          <p className="text-lg text-gray-600">
+            Conheça os serviços que oferecemos com qualidade e profissionalismo
+          </p>
         </div>
         
-        {services.length > 6 && (
-          <div className="mt-4 text-center">
-            <Button variant="outline" onClick={() => toast.info("Ver todos os serviços")}>
-              Ver todos os serviços ({services.length})
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {services.map((service) => (
+            <Card key={service.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-xl">{service.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {service.description && (
+                  <p className="text-gray-600 mb-4">{service.description}</p>
+                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-2xl font-bold text-primary">
+                    {formatCurrency(service.price, 'BRL')}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {service.duration} min
+                  </span>
+                </div>
+                <Button 
+                  onClick={onBookingClick}
+                  className="w-full mt-4"
+                >
+                  Agendar
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
   );
-};
+}
