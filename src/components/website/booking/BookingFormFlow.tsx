@@ -70,8 +70,6 @@ export function BookingFormFlow({ onComplete }: BookingFormFlowProps) {
   };
 
   const handleClientCreated = (clientData: any) => {
-    // In a real app, we would create the client in the database here
-    // and get back the client ID
     const mockClientId = "new-client-" + Date.now();
     
     setClientData({ 
@@ -107,7 +105,7 @@ export function BookingFormFlow({ onComplete }: BookingFormFlowProps) {
         {step === "new-client" && clientData?.phone && (
           <NewClientForm
             phone={clientData.phone}
-            onComplete={handleClientCreated}
+            onClientCreated={handleClientCreated}
             onBack={handleBack}
           />
         )}

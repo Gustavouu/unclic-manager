@@ -1,116 +1,83 @@
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-const clientSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  email: z.string().email('Email inválido').optional(),
-  phone: z.string().min(10, 'Telefone deve ter pelo menos 10 caracteres'),
-  gender: z.string().optional(),
-  birthDate: z.string().optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  zipCode: z.string().optional(),
-});
-
-type ClientFormData = z.infer<typeof clientSchema>;
-
-interface NewClientFormProps {
-  onSubmit: (data: ClientFormData) => void;
-  onCancel: () => void;
-  isLoading?: boolean;
-  phone?: string;
+export interface NewClientFormProps {
+  phone: string;
+  onClientCreated: (clientData: any) => void;
+  onBack: () => void;
 }
 
-export function NewClientForm({ onSubmit, onCancel, isLoading = false, phone }: NewClientFormProps) {
-  const form = useForm<ClientFormData>({
-    resolver: zodResolver(clientSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      phone: phone || '',
-      gender: '',
-      birthDate: '',
-      address: '',
-      city: '',
-      state: '',
-      zipCode: '',
-    },
+export function NewClientForm({ phone, onClientCreated, onBack }: NewClientFormProps) {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: phone
   });
 
-  return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Cadastro de Cliente</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Nome *</Label>
-            <Input
-              id="name"
-              {...form.register('name')}
-              placeholder="Nome completo"
-            />
-            {form.formState.errors.name && (
-              <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
-            )}
-          </div>
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onClientCreated(formData);
+  };
 
+  return (
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Criar Nova Conta</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="firstName">Nome</Label>
+            <Input
+              id="firstName"
+              value={formData.firstName}
+              onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+              required
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="lastName">Sobrenome</Label>
+            <Input
+              id="lastName"
+              value={formData.lastName}
+              onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+              required
+            />
+          </div>
+          
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              {...form.register('email')}
-              placeholder="seu@email.com"
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              required
             />
-            {form.formState.errors.email && (
-              <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
-            )}
           </div>
-
+          
           <div>
-            <Label htmlFor="phone">Telefone *</Label>
+            <Label htmlFor="phone">Telefone</Label>
             <Input
               id="phone"
-              {...form.register('phone')}
-              placeholder="(11) 99999-9999"
+              value={formData.phone}
+              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              required
             />
-            {form.formState.errors.phone && (
-              <p className="text-sm text-red-500">{form.formState.errors.phone.message}</p>
-            )}
           </div>
-
-          <div>
-            <Label htmlFor="gender">Gênero</Label>
-            <Select onValueChange={(value) => form.setValue('gender', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o gênero" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="masculino">Masculino</SelectItem>
-                <SelectItem value="feminino">Feminino</SelectItem>
-                <SelectItem value="outro">Outro</SelectItem>
-                <SelectItem value="nao_informar">Prefiro não informar</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
+          
           <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancelar
+            <Button type="button" variant="outline" onClick={onBack}>
+              Voltar
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Cadastrando...' : 'Cadastrar'}
+            <Button type="submit" className="flex-1">
+              Criar Conta
             </Button>
           </div>
         </form>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -6,7 +7,6 @@ export interface BusinessData {
   name: string;
   description?: string;
   logo_url?: string;
-  website_url?: string;
   phone?: string;
   address?: string;
   address_number?: string;
@@ -90,7 +90,7 @@ export const useBusinessWebsite = (businessId?: string) => {
             }
             
             if (legacyData) {
-              // Map legacy data to new format with all required properties
+              // Map legacy data to new format
               businessInfo = {
                 id: legacyData.id,
                 name: legacyData.nome,
@@ -104,8 +104,6 @@ export const useBusinessWebsite = (businessId?: string) => {
                 zip_code: legacyData.cep,
                 admin_email: legacyData.email_admin,
                 neighborhood: legacyData.bairro,
-                // Use properties that exist in the type
-                website_url: '',
                 owner_id: '',
                 theme: 'default',
                 currency: 'BRL',

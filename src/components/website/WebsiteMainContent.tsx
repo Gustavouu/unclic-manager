@@ -9,6 +9,7 @@ import { WebsiteFooter } from "./WebsiteFooter";
 import { formatWeekday, formatPrice, formatDuration } from "./WebsiteUtils";
 import { AppointmentSection } from "./AppointmentSection";
 import { WebsiteHeader } from "./WebsiteHeader";
+import { BusinessData as WebsiteBusinessData } from "@/hooks/useBusinessWebsite";
 
 interface WebsiteMainContentProps {
   businessData: BusinessData;
@@ -25,39 +26,73 @@ export const WebsiteMainContent: React.FC<WebsiteMainContentProps> = ({
   staff,
   onStartBooking
 }) => {
+  // Convert BusinessData to WebsiteBusinessData format
+  const websiteBusinessData: WebsiteBusinessData = {
+    id: businessData.id,
+    name: businessData.name,
+    description: businessData.description,
+    logo_url: businessData.logoUrl,
+    phone: businessData.phone,
+    address: businessData.address,
+    address_number: businessData.addressNumber,
+    city: businessData.city,
+    state: businessData.state,
+    zip_code: businessData.zipCode,
+    admin_email: businessData.adminEmail || '',
+    neighborhood: businessData.neighborhood
+  };
+
+  // Convert ServiceData to SimpleService format
+  const simpleServices = availableServices.map(service => ({
+    id: service.id,
+    name: service.nome,
+    description: service.descricao,
+    price: service.preco,
+    duration: service.duracao,
+    business_id: businessData.id,
+    is_active: service.ativo
+  }));
+
+  // Convert StaffData to website StaffData format
+  const websiteStaff = staff.map(member => ({
+    ...member,
+    business_id: businessData.id,
+    role: member.role || 'staff'
+  }));
+
   return (
     <>
-      {/* Use the WebsiteHeader component instead of duplicating code */}
       <WebsiteHeader
-        businessData={businessData}
-        onStartBooking={onStartBooking}
+        business={websiteBusinessData}
+        onBookingClick={onStartBooking}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {/* Left Column */}
         <div className="md:col-span-1 space-y-6">
           {/* About Section */}
-          <AboutSection 
-            businessData={businessData} 
-            businessHours={businessHours}
-            formatWeekday={formatWeekday}
-          />
+          <AboutSection business={websiteBusinessData} />
           
           {/* Appointment Section */}
-          <AppointmentSection onStartBooking={onStartBooking} />
+          <AppointmentSection 
+            business={websiteBusinessData}
+            onBookingClick={onStartBooking}
+          />
         </div>
         
         {/* Main Content Sections - Right Column */}
         <div className="md:col-span-2 space-y-6">
           {/* Services Section */}
           <ServicesSection 
-            services={availableServices} 
-            formatPrice={formatPrice}
-            formatDuration={formatDuration}
+            services={simpleServices}
+            onBookingClick={onStartBooking}
           />
           
           {/* Professionals Section */}
-          <ProfessionalsSection staff={staff} />
+          <ProfessionalsSection 
+            staff={websiteStaff}
+            onBookingClick={onStartBooking}
+          />
           
           {/* Payment Section */}
           <PaymentSection />
@@ -65,7 +100,7 @@ export const WebsiteMainContent: React.FC<WebsiteMainContentProps> = ({
       </div>
       
       {/* Footer */}
-      <WebsiteFooter businessName={businessData.name} businessData={businessData} />
+      <WebsiteFooter business={websiteBusinessData} />
     </>
   );
 };

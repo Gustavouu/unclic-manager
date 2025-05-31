@@ -11,7 +11,14 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { normalizeProfessionalData, tableExists } from "@/utils/databaseUtils";
+
+interface Professional {
+  id: string;
+  name: string;
+  photo_url?: string;
+  foto_url?: string;
+  services?: { id: string }[];
+}
 
 export type ProfessionalSelectWrapperProps = {
   form: UseFormReturn<AppointmentFormValues>;
@@ -19,7 +26,7 @@ export type ProfessionalSelectWrapperProps = {
 };
 
 export default function ProfessionalSelectWrapper({ form, serviceId }: ProfessionalSelectWrapperProps) {
-  const [professionals, setProfessionals] = useState<any[]>([]);
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const { businessId } = useTenant();
@@ -32,73 +39,39 @@ export default function ProfessionalSelectWrapper({ form, serviceId }: Professio
       setLoading(true);
       try {
         console.log('Fetching professionals for business ID:', businessId);
-        let professionalsData: any[] = [];
         
-        // First try professionals table
-        const hasProfessionalsTable = await tableExists('professionals');
-        
-        if (hasProfessionalsTable) {
-          console.log('Trying professionals table');
-          const { data, error } = await supabase
-            .from('professionals')
-            .select('*')
-            .eq('business_id', businessId);
-            
-          if (error) {
-            console.error('Error fetching from professionals:', error);
-          } else if (data && data.length > 0) {
-            console.log('Found professionals in professionals table:', data.length);
-            professionalsData = data.map(normalizeProfessionalData);
-          }
-        }
-        
-        // If no data found, try employees table
-        if (professionalsData.length === 0) {
-          const hasEmployeesTable = await tableExists('employees');
-          if (hasEmployeesTable) {
-            console.log('Trying employees table');
-            const { data, error } = await supabase
-              .from('employees')
-              .select('*')
-              .eq('business_id', businessId);
-              
-            if (error) {
-              console.error('Error fetching from employees:', error);
-            } else if (data && data.length > 0) {
-              console.log('Found professionals in employees table:', data.length);
-              professionalsData = data.map(normalizeProfessionalData);
-            }
-          }
-        }
-        
-        // Finally try funcionarios table
-        if (professionalsData.length === 0) {
-          const hasFuncionariosTable = await tableExists('funcionarios');
+        // Try professionals table first
+        const { data: professionalsData, error: professionalsError } = await supabase
+          .from('professionals')
+          .select('*')
+          .eq('business_id', businessId);
           
-          if (hasFuncionariosTable) {
-            console.log('Trying funcionarios table');
-            const { data, error } = await supabase
-              .from('funcionarios')
-              .select('*')
-              .eq('id_negocio', businessId);
-              
-            if (error) {
-              console.error('Error fetching from funcionarios:', error);
-            } else if (data && data.length > 0) {
-              console.log('Found professionals in funcionarios table:', data.length);
-              professionalsData = data.map(normalizeProfessionalData);
-            }
-          }
-        }
-        
-        if (professionalsData.length > 0) {
+        if (!professionalsError && professionalsData?.length) {
+          console.log('Found professionals in professionals table:', professionalsData.length);
           setProfessionals(professionalsData);
         } else {
-          console.log('No professionals found in any table');
-          setProfessionals([]);
+          // Try funcionarios table as fallback
+          const { data: funcionariosData, error: funcionariosError } = await supabase
+            .from('funcionarios')
+            .select('*')
+            .eq('id_negocio', businessId);
+            
+          if (!funcionariosError && funcionariosData?.length) {
+            console.log('Found professionals in funcionarios table:', funcionariosData.length);
+            const mappedData = funcionariosData.map((f: any) => ({
+              id: f.id,
+              name: f.nome,
+              photo_url: f.foto_url
+            }));
+            setProfessionals(mappedData);
+          } else {
+            console.log('No professionals found');
+            setProfessionals([]);
+          }
         }
       } catch (error) {
         console.error('Error fetching professionals:', error);
+        setProfessionals([]);
       } finally {
         setLoading(false);
       }
@@ -109,7 +82,7 @@ export default function ProfessionalSelectWrapper({ form, serviceId }: Professio
   
   // Filter professionals by service if a serviceId is provided
   const filteredProfessionals = serviceId 
-    ? professionals.filter(p => !p.services || (Array.isArray(p.services) && p.services.some((s: any) => s.id === serviceId)))
+    ? professionals.filter(p => !p.services || p.services.some(s => s.id === serviceId))
     : professionals;
     
   return (
