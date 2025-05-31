@@ -1,3 +1,4 @@
+
 import { BusinessData } from "../types";
 import { fileToBase64, createFilePreview } from "./fileUtils";
 
@@ -36,15 +37,15 @@ export const prepareDataForStorage = async (data: BusinessData): Promise<Seriali
   };
   
   // Trata o arquivo de logo - converte para base64 se necessário
-  if (data.logo instanceof File) {
+  if (data.logo && typeof data.logo === 'object' && 'name' in data.logo) {
     try {
       // Converte arquivo para base64 para armazenamento
-      preparedData.logoData = await fileToBase64(data.logo);
-      preparedData.logoName = data.logo.name;
+      preparedData.logoData = await fileToBase64(data.logo as File);
+      preparedData.logoName = (data.logo as File).name;
       
       // Mantém a URL do logo se já existir
       if (!preparedData.logoUrl) {
-        preparedData.logoUrl = createFilePreview(data.logo);
+        preparedData.logoUrl = createFilePreview(data.logo as File);
       }
     } catch (error) {
       console.error("Erro ao processar arquivo de logo:", error);
@@ -58,15 +59,15 @@ export const prepareDataForStorage = async (data: BusinessData): Promise<Seriali
   }
   
   // Trata o arquivo de banner - converte para base64 se necessário
-  if (data.banner instanceof File) {
+  if (data.banner && typeof data.banner === 'object' && 'name' in data.banner) {
     try {
       // Converte arquivo para base64 para armazenamento
-      preparedData.bannerData = await fileToBase64(data.banner);
-      preparedData.bannerName = data.banner.name;
+      preparedData.bannerData = await fileToBase64(data.banner as File);
+      preparedData.bannerName = (data.banner as File).name;
       
       // Mantém a URL do banner se já existir
       if (!preparedData.bannerUrl) {
-        preparedData.bannerUrl = createFilePreview(data.banner);
+        preparedData.bannerUrl = createFilePreview(data.banner as File);
       }
     } catch (error) {
       console.error("Erro ao processar arquivo de banner:", error);

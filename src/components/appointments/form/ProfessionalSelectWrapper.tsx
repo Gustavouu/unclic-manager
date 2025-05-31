@@ -18,15 +18,9 @@ interface Professional {
   services?: { id: string }[];
 }
 
-interface AppointmentFormValues {
-  professionalId: string;
-  serviceId?: string;
-  [key: string]: any;
-}
-
 interface FormReturn {
   control: any;
-  setValue: (name: keyof AppointmentFormValues, value: any) => void;
+  setValue: (name: string, value: any) => void;
 }
 
 export interface ProfessionalSelectWrapperProps {

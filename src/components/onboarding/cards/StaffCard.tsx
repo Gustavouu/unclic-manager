@@ -9,11 +9,11 @@ import { StaffData } from '@/contexts/onboarding/types';
 
 interface StaffCardProps {
   staff: StaffData;
-  onEdit: (staff: StaffData) => void;
-  onDelete: (id: string) => void;
+  onEdit: () => void;
+  onRemove: () => void;
 }
 
-export const StaffCard: React.FC<StaffCardProps> = ({ staff, onEdit, onDelete }) => {
+export const StaffCard: React.FC<StaffCardProps> = ({ staff, onEdit, onRemove }) => {
   const displayName = staff.nome || staff.name || 'Sem nome';
   const displayRole = staff.cargo || staff.role || 'Funcionário';
   const displaySpecialties = staff.especializacoes || staff.specialties || [];
@@ -38,14 +38,14 @@ export const StaffCard: React.FC<StaffCardProps> = ({ staff, onEdit, onDelete })
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onEdit(staff)}
+              onClick={onEdit}
             >
               <Edit className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onDelete(staff.id)}
+              onClick={onRemove}
             >
               <Trash2 className="h-4 w-4" />
             </Button>

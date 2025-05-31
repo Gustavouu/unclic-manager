@@ -3,13 +3,13 @@ import { useState } from 'react';
 import { BusinessHours } from '../types';
 
 const defaultHours: BusinessHours = {
-  segunda: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
-  terca: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
-  quarta: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
-  quinta: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
-  sexta: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
-  sabado: { start: '09:00', end: '13:00', isOpen: true, open: true, openTime: '09:00', closeTime: '13:00' },
-  domingo: { start: '09:00', end: '13:00', isOpen: false, open: false, openTime: '09:00', closeTime: '13:00' },
+  monday: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
+  tuesday: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
+  wednesday: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
+  thursday: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
+  friday: { start: '09:00', end: '18:00', isOpen: true, open: true, openTime: '09:00', closeTime: '18:00' },
+  saturday: { start: '09:00', end: '13:00', isOpen: true, open: true, openTime: '09:00', closeTime: '13:00' },
+  sunday: { start: '09:00', end: '13:00', isOpen: false, open: false, openTime: '09:00', closeTime: '13:00' },
 };
 
 export const useBusinessHoursState = () => {
@@ -19,14 +19,21 @@ export const useBusinessHoursState = () => {
     setBusinessHours(hours);
   };
 
-  // Legacy support - same function with different name
-  const updateHours = (hours: BusinessHours) => {
-    setBusinessHours(hours);
+  const updateHours = (day: string, updates: Partial<BusinessHours[string]>) => {
+    if (!businessHours) return;
+    
+    setBusinessHours(prev => ({
+      ...prev!,
+      [day]: {
+        ...prev![day],
+        ...updates
+      }
+    }));
   };
 
   return {
     businessHours,
     updateBusinessHours,
-    updateHours, // Legacy support
+    updateHours,
   };
 };

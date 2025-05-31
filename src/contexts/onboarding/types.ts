@@ -29,6 +29,8 @@ export interface BusinessData {
   banner?: string | null;
   logoData?: string;
   bannerData?: string;
+  logoName?: string;
+  bannerName?: string;
   socialMedia?: {
     facebook?: string;
     instagram?: string;

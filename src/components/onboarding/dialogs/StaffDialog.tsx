@@ -10,61 +10,67 @@ import { StaffData } from '@/contexts/onboarding/types';
 interface StaffDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  staff?: StaffData;
-  onSave: (staff: StaffData) => void;
+  onSubmit: (data: {
+    name: string;
+    role: string;
+    email?: string;
+    phone?: string;
+    specialties?: string[];
+  }) => void;
+  staff?: StaffData | null;
 }
 
 export const StaffDialog: React.FC<StaffDialogProps> = ({
   open,
   onOpenChange,
+  onSubmit,
   staff,
-  onSave,
 }) => {
-  const [formData, setFormData] = useState<Partial<StaffData>>({
-    nome: '',
-    cargo: '',
+  const [formData, setFormData] = useState({
+    name: '',
+    role: '',
     email: '',
     phone: '',
     bio: '',
-    foto_url: '',
-    especializacoes: [],
+    photo_url: '',
+    specialties: [] as string[],
   });
 
   useEffect(() => {
     if (staff) {
       setFormData({
-        ...staff,
+        name: staff.nome || staff.name || '',
+        role: staff.cargo || staff.role || '',
         email: staff.email || '',
         phone: staff.phone || '',
+        bio: staff.bio || '',
+        photo_url: staff.foto_url || staff.photo_url || '',
+        specialties: staff.especializacoes || staff.specialties || [],
       });
     } else {
       setFormData({
-        nome: '',
-        cargo: '',
+        name: '',
+        role: '',
         email: '',
         phone: '',
         bio: '',
-        foto_url: '',
-        especializacoes: [],
+        photo_url: '',
+        specialties: [],
       });
     }
   }, [staff, open]);
 
-  const handleSave = () => {
-    if (!formData.nome?.trim()) return;
+  const handleSubmit = () => {
+    if (!formData.name?.trim()) return;
 
-    const staffData: StaffData = {
-      id: staff?.id || `staff_${Date.now()}`,
-      nome: formData.nome,
-      cargo: formData.cargo || 'Funcionário',
-      email: formData.email || '',
-      phone: formData.phone || '',
-      bio: formData.bio || '',
-      foto_url: formData.foto_url || '',
-      especializacoes: formData.especializacoes || [],
-    };
-
-    onSave(staffData);
+    onSubmit({
+      name: formData.name,
+      role: formData.role || 'Funcionário',
+      email: formData.email,
+      phone: formData.phone,
+      specialties: formData.specialties,
+    });
+    
     onOpenChange(false);
   };
 
@@ -79,21 +85,21 @@ export const StaffDialog: React.FC<StaffDialogProps> = ({
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="nome">Nome *</Label>
+            <Label htmlFor="name">Nome *</Label>
             <Input
-              id="nome"
-              value={formData.nome || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Nome do funcionário"
             />
           </div>
 
           <div>
-            <Label htmlFor="cargo">Cargo</Label>
+            <Label htmlFor="role">Cargo</Label>
             <Input
-              id="cargo"
-              value={formData.cargo || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, cargo: e.target.value }))}
+              id="role"
+              value={formData.role}
+              onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
               placeholder="Ex: Cabeleireiro, Manicure"
             />
           </div>
@@ -103,7 +109,7 @@ export const StaffDialog: React.FC<StaffDialogProps> = ({
             <Input
               id="email"
               type="email"
-              value={formData.email || ''}
+              value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
               placeholder="email@exemplo.com"
             />
@@ -113,7 +119,7 @@ export const StaffDialog: React.FC<StaffDialogProps> = ({
             <Label htmlFor="phone">Telefone</Label>
             <Input
               id="phone"
-              value={formData.phone || ''}
+              value={formData.phone}
               onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
               placeholder="(11) 99999-9999"
             />
@@ -123,7 +129,7 @@ export const StaffDialog: React.FC<StaffDialogProps> = ({
             <Label htmlFor="bio">Biografia</Label>
             <Textarea
               id="bio"
-              value={formData.bio || ''}
+              value={formData.bio}
               onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
               placeholder="Breve descrição sobre o funcionário"
               rows={3}
@@ -134,7 +140,7 @@ export const StaffDialog: React.FC<StaffDialogProps> = ({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={!formData.nome?.trim()}>
+            <Button onClick={handleSubmit} disabled={!formData.name?.trim()}>
               {staff ? 'Salvar' : 'Adicionar'}
             </Button>
           </div>

@@ -28,12 +28,36 @@ export const HoursStep: React.FC = () => {
   ];
   
   const handleToggleDay = (day: string, checked: boolean) => {
-    updateBusinessHours(day, { open: checked });
+    if (!businessHours) return;
+    
+    const updatedHours = {
+      ...businessHours,
+      [day]: {
+        ...businessHours[day],
+        open: checked,
+        isOpen: checked
+      }
+    };
+    updateBusinessHours(updatedHours);
   };
   
   const handleTimeChange = (day: string, field: 'openTime' | 'closeTime', value: string) => {
-    updateBusinessHours(day, { [field]: value });
+    if (!businessHours) return;
+    
+    const updatedHours = {
+      ...businessHours,
+      [day]: {
+        ...businessHours[day],
+        [field]: value,
+        [field === 'openTime' ? 'start' : 'end']: value
+      }
+    };
+    updateBusinessHours(updatedHours);
   };
+  
+  if (!businessHours) {
+    return <div>Carregando...</div>;
+  }
   
   return (
     <div className="space-y-6">
@@ -49,7 +73,7 @@ export const HoursStep: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <Switch 
                   id={`day-${day.key}`} 
-                  checked={businessHours[day.key].open}
+                  checked={businessHours[day.key]?.open || false}
                   onCheckedChange={(checked) => handleToggleDay(day.key, checked)}
                 />
                 <Label htmlFor={`day-${day.key}`} className="font-medium">
@@ -58,16 +82,16 @@ export const HoursStep: React.FC = () => {
               </div>
               
               <div className="col-span-3 sm:col-span-6 grid grid-cols-2 gap-2">
-                {businessHours[day.key].open ? (
+                {businessHours[day.key]?.open ? (
                   <>
                     <div>
                       <Label htmlFor={`open-${day.key}`} className="text-sm text-muted-foreground mb-1 block">
                         Abertura
                       </Label>
                       <Select
-                        value={businessHours[day.key].openTime || "09:00"}
+                        value={businessHours[day.key]?.openTime || "09:00"}
                         onValueChange={(value) => handleTimeChange(day.key, 'openTime', value)}
-                        disabled={!businessHours[day.key].open}
+                        disabled={!businessHours[day.key]?.open}
                       >
                         <SelectTrigger id={`open-${day.key}`}>
                           <SelectValue />
@@ -87,9 +111,9 @@ export const HoursStep: React.FC = () => {
                         Fechamento
                       </Label>
                       <Select
-                        value={businessHours[day.key].closeTime || "18:00"}
+                        value={businessHours[day.key]?.closeTime || "18:00"}
                         onValueChange={(value) => handleTimeChange(day.key, 'closeTime', value)}
-                        disabled={!businessHours[day.key].open}
+                        disabled={!businessHours[day.key]?.open}
                       >
                         <SelectTrigger id={`close-${day.key}`}>
                           <SelectValue />
