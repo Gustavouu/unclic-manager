@@ -19,7 +19,7 @@ const Services = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<string>('all');
-  const { userRoles, permissions, isAdmin } = useUserPermissions();
+  const { permissions, isAdmin } = useUserPermissions();
 
   useEffect(() => {
     // Simular chamada à API
@@ -113,7 +113,7 @@ const Services = () => {
 
   // Check if user can manage services
   const hasServicesManagePermission = () => {
-    if (isAdmin) return true;
+    if (isAdmin()) return true;
     return permissions.some(permission => permission.name === 'services.manage');
   };
 

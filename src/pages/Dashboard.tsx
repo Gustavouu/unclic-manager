@@ -23,6 +23,23 @@ export default function Dashboard() {
     window.location.reload();
   };
 
+  // Create default stats if not available
+  const defaultStats = {
+    totalAppointments: 0,
+    completedAppointments: 0,
+    totalRevenue: 0,
+    newClients: 0,
+    clientsCount: 0,
+    averageTicket: 0,
+    retentionRate: 0,
+    popularServices: [],
+    revenueData: [],
+    appointmentsToday: 0,
+    pendingAppointments: 0,
+    cancellationRate: 0,
+    ...stats
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -51,7 +68,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <KpiCards stats={stats} period={period} />
+      <KpiCards stats={defaultStats} period={period} />
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -61,7 +78,7 @@ export default function Dashboard() {
             <CardTitle>Desempenho Financeiro</CardTitle>
           </CardHeader>
           <CardContent>
-            <FinancialCharts data={stats?.revenueData} loading={isLoading} />
+            <FinancialCharts revenueData={defaultStats?.revenueData || []} loading={isLoading} />
           </CardContent>
         </Card>
 
@@ -71,9 +88,9 @@ export default function Dashboard() {
             <CardTitle>Serviços Populares</CardTitle>
           </CardHeader>
           <CardContent>
-            {stats?.popularServices && (
+            {defaultStats?.popularServices && (
               <div className="space-y-4">
-                {stats.popularServices.map((service) => (
+                {defaultStats.popularServices.map((service: any) => (
                   <div key={service.id} className="flex items-center justify-between">
                     <span>{service.name}</span>
                     <div className="flex items-center gap-2">
@@ -99,7 +116,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <RetentionRateCard 
-              retentionRate={stats?.retentionRate || 0}
+              retentionRate={defaultStats?.retentionRate || 0}
               suggestions={[
                 "Envie mensagens pós-atendimento",
                 "Crie um programa de fidelidade",

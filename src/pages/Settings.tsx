@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Save, Rocket } from "lucide-react";
 import { SettingsTabs } from "@/components/settings/SettingsTabs";
@@ -9,18 +9,11 @@ import { useNavigate } from "react-router-dom";
 import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useTenant } from "@/contexts/TenantContext";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("business-profile");
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
-  const { refreshBusinessData } = useTenant();
-
-  // Refresh business data when the component mounts
-  useEffect(() => {
-    refreshBusinessData();
-  }, [refreshBusinessData]);
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);

@@ -14,7 +14,7 @@ import NotificationsTab from "@/components/settings/tabs/NotificationsTab";
 import { IntegrationsTab } from "@/components/settings/tabs/IntegrationsTab";
 import { PermissionsTab } from "@/components/settings/tabs/PermissionsTab";
 import { OtherTab } from "@/components/settings/tabs/OtherTab";
-import { mockSaveFunction, showSuccessToast, showErrorToast } from "@/utils/formUtils";
+import { showSuccessToast, showErrorToast } from "@/utils/formUtils";
 import { Toaster } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
@@ -117,13 +117,9 @@ const Settings = () => {
     setIsSaving(true);
     
     try {
-      const success = await mockSaveFunction();
-      
-      if (success) {
-        showSuccessToast("Todas as configurações foram salvas com sucesso!");
-      } else {
-        showErrorToast();
-      }
+      // Simulate save operation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      showSuccessToast("Todas as configurações foram salvas com sucesso!");
     } catch (error) {
       showErrorToast();
     } finally {

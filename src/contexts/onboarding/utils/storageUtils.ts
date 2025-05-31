@@ -53,9 +53,9 @@ export const prepareDataForStorage = async (data: BusinessData): Promise<Seriali
       preparedData.logoData = undefined;
       preparedData.logoName = undefined;
     }
-  } else if (!data.logo && data.logoData) {
+  } else if (!data.logo && (data as any).logoData) {
     // Se temos logoData mas não temos File, mantém os dados para persistência
-    preparedData.logoUrl = data.logoUrl || null;
+    preparedData.logoUrl = (data as any).logoUrl || null;
   }
   
   // Trata o arquivo de banner - converte para base64 se necessário
@@ -75,9 +75,9 @@ export const prepareDataForStorage = async (data: BusinessData): Promise<Seriali
       preparedData.bannerData = undefined;
       preparedData.bannerName = undefined;
     }
-  } else if (!data.banner && data.bannerData) {
+  } else if (!data.banner && (data as any).bannerData) {
     // Se temos bannerData mas não temos File, mantém os dados para persistência
-    preparedData.bannerUrl = data.bannerUrl || null;
+    preparedData.bannerUrl = (data as any).bannerUrl || null;
   }
   
   return preparedData;

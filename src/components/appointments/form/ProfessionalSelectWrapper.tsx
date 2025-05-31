@@ -19,10 +19,7 @@ interface Professional {
 }
 
 interface ProfessionalSelectWrapperProps {
-  form: {
-    control: any;
-    setValue: (name: string, value: any) => void;
-  };
+  form: any;
   serviceId?: string;
 }
 

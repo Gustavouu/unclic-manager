@@ -46,3 +46,52 @@ export interface ClientSearchParams {
   page?: number;
   limit?: number;
 }
+
+export interface ClientCreate {
+  name: string;
+  email?: string;
+  phone?: string;
+  birth_date?: string;
+  gender?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  notes?: string;
+  business_id: string;
+}
+
+export interface ClientUpdate {
+  name?: string;
+  email?: string;
+  phone?: string;
+  birth_date?: string;
+  gender?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  notes?: string;
+}
+
+export interface ClientStats {
+  total: number;
+  active: number;
+  new_this_month: number;
+  retention_rate: number;
+}
+
+export interface ClientOperationResult {
+  success: boolean;
+  data?: Client;
+  error?: string;
+}
+
+export interface ClientListResult {
+  success: boolean;
+  data?: Client[];
+  count?: number;
+  page?: number;
+  limit?: number;
+  error?: string;
+}
