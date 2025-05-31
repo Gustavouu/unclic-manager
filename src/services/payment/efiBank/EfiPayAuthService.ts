@@ -1,129 +1,91 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export interface EfiPayCredentials {
-  client_id: string;
-  client_secret: string;
-  sandbox: boolean;
-}
-
-export interface EfiPayToken {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  scope: string;
-  expires_at?: number;
-}
-
-/**
- * Service to handle EFI Pay authentication and token management
- */
 export class EfiPayAuthService {
   private static instance: EfiPayAuthService;
-  private tokenCache: Map<string, EfiPayToken> = new Map();
-  
-  private constructor() {
-    // Private constructor to enforce singleton
-  }
+  private accessToken: string | null = null;
+  private tokenExpiry: Date | null = null;
 
-  public static getInstance(): EfiPayAuthService {
+  private constructor() {}
+
+  static getInstance(): EfiPayAuthService {
     if (!EfiPayAuthService.instance) {
       EfiPayAuthService.instance = new EfiPayAuthService();
     }
     return EfiPayAuthService.instance;
   }
 
-  /**
-   * Get the current business configuration for EFI Pay
-   */
-  public async getBusinessConfiguration(businessId?: string): Promise<EfiPayCredentials | null> {
-    try {
-      const { data, error } = await supabase
-        .from('payment_providers')
-        .select('client_id, client_secret, configuration')
-        .eq('provider_name', 'efi_pay')
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (error || !data) {
-        console.error('Error fetching EFI Pay configuration:', error);
-        return null;
-      }
-
-      const sandbox = data.configuration?.sandbox === true || process.env.NODE_ENV !== 'production';
-
-      return {
-        client_id: data.client_id,
-        client_secret: data.client_secret,
-        sandbox
-      };
-    } catch (error) {
-      console.error('Error in getBusinessConfiguration:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Get a valid token for EFI Pay API
-   */
-  public async getToken(businessId?: string): Promise<string | null> {
-    const cacheKey = businessId || 'default';
-    const cachedToken = this.tokenCache.get(cacheKey);
-
-    // If we have a cached token and it's not expired, use it
-    if (cachedToken && cachedToken.expires_at && cachedToken.expires_at > Date.now()) {
-      return cachedToken.access_token;
+  async getAccessToken(): Promise<string> {
+    if (this.accessToken && this.tokenExpiry && new Date() < this.tokenExpiry) {
+      return this.accessToken;
     }
 
     try {
-      const credentials = await this.getBusinessConfiguration(businessId);
-      if (!credentials) {
-        console.error('No EFI Pay credentials found');
-        return null;
+      // Get credentials from business settings
+      const { data: settings, error } = await supabase
+        .from('business_settings')
+        .select('notes')
+        .single();
+
+      if (error || !settings?.notes) {
+        throw new Error('EfiPay credentials not found in business settings');
       }
 
-      // Base URL depends on sandbox mode
-      const baseUrl = credentials.sandbox
-        ? 'https://api-pix-h.gerencianet.com.br'
-        : 'https://api-pix.gerencianet.com.br';
+      const credentials = settings.notes as any;
+      const sandbox = typeof credentials === 'object' && credentials.sandbox === true;
+      
+      if (!credentials.client_id || !credentials.client_secret) {
+        throw new Error('EfiPay credentials incomplete');
+      }
 
-      // Get a new token
-      const auth = Buffer.from(
-        `${credentials.client_id}:${credentials.client_secret}`
-      ).toString('base64');
+      const baseUrl = sandbox 
+        ? 'https://pix-h.api.efipay.com.br'
+        : 'https://pix.api.efipay.com.br';
+
+      const auth = Buffer.from(`${credentials.client_id}:${credentials.client_secret}`).toString('base64');
 
       const response = await fetch(`${baseUrl}/oauth/token`, {
         method: 'POST',
         headers: {
+          'Authorization': `Basic ${auth}`,
           'Content-Type': 'application/json',
-          'Authorization': `Basic ${auth}`
         },
         body: JSON.stringify({
-          grant_type: 'client_credentials'
-        })
+          grant_type: 'client_credentials',
+        }),
       });
 
       if (!response.ok) {
-        throw new Error(`EFI Pay authentication failed: ${response.statusText}`);
+        throw new Error(`Failed to get access token: ${response.statusText}`);
       }
 
-      const tokenData = await response.json();
-      
-      // Add expiration time to token data for cache validation
-      const token: EfiPayToken = {
-        ...tokenData,
-        expires_at: Date.now() + (tokenData.expires_in * 1000 * 0.9) // 90% of expiration time to be safe
-      };
+      const data = await response.json();
+      this.accessToken = data.access_token;
+      this.tokenExpiry = new Date(Date.now() + (data.expires_in * 1000));
 
-      // Cache the token
-      this.tokenCache.set(cacheKey, token);
-      
-      return token.access_token;
+      return this.accessToken;
     } catch (error) {
-      console.error('Error getting EFI Pay token:', error);
-      return null;
+      console.error('Error getting EfiPay access token:', error);
+      throw error;
     }
   }
-}
 
-export const efiPayAuthService = EfiPayAuthService.getInstance();
+  async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
+    const token = await this.getAccessToken();
+    
+    const response = await fetch(endpoint, {
+      ...options,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Request failed: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+}

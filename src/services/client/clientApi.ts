@@ -77,26 +77,16 @@ export const clientApi = {
     try {
       const insertData = {
         business_id: businessId,
-        id_negocio: businessId, // Also set the legacy field
-        nome: clientData.name, // Set the legacy field
         name: clientData.name,
         email: clientData.email,
-        telefone: clientData.phone, // Set the legacy field
         phone: clientData.phone,
         birth_date: clientData.birth_date,
-        data_nascimento: clientData.birth_date, // Set the legacy field
         gender: clientData.gender,
-        genero: clientData.gender, // Set the legacy field
         address: clientData.address,
-        endereco: clientData.address, // Set the legacy field
         city: clientData.city,
-        cidade: clientData.city, // Set the legacy field
         state: clientData.state,
-        estado: clientData.state, // Set the legacy field
         zip_code: clientData.zip_code,
-        cep: clientData.zip_code, // Set the legacy field
         notes: clientData.notes,
-        notas: clientData.notes, // Set the legacy field
       };
 
       const { data, error } = await supabase
@@ -120,42 +110,33 @@ export const clientApi = {
       
       if (clientData.name !== undefined) {
         updateData.name = clientData.name;
-        updateData.nome = clientData.name; // Also update legacy field
       }
       if (clientData.email !== undefined) {
         updateData.email = clientData.email;
       }
       if (clientData.phone !== undefined) {
         updateData.phone = clientData.phone;
-        updateData.telefone = clientData.phone; // Also update legacy field
       }
       if (clientData.birth_date !== undefined) {
         updateData.birth_date = clientData.birth_date;
-        updateData.data_nascimento = clientData.birth_date; // Also update legacy field
       }
       if (clientData.gender !== undefined) {
         updateData.gender = clientData.gender;
-        updateData.genero = clientData.gender; // Also update legacy field
       }
       if (clientData.address !== undefined) {
         updateData.address = clientData.address;
-        updateData.endereco = clientData.address; // Also update legacy field
       }
       if (clientData.city !== undefined) {
         updateData.city = clientData.city;
-        updateData.cidade = clientData.city; // Also update legacy field
       }
       if (clientData.state !== undefined) {
         updateData.state = clientData.state;
-        updateData.estado = clientData.state; // Also update legacy field
       }
       if (clientData.zip_code !== undefined) {
         updateData.zip_code = clientData.zip_code;
-        updateData.cep = clientData.zip_code; // Also update legacy field
       }
       if (clientData.notes !== undefined) {
         updateData.notes = clientData.notes;
-        updateData.notas = clientData.notes; // Also update legacy field
       }
 
       const { data, error } = await supabase

@@ -1,84 +1,87 @@
 
-import { BusinessData } from "../types";
-import { fileToBase64, createFilePreview } from "./fileUtils";
+import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Interface para dados serializáveis do negócio
- * Exclui propriedades File pois não são serializáveis
- */
-export interface SerializableBusinessData extends Omit<BusinessData, 'logo' | 'banner'> {
-  logo: null;
-  banner: null;
-  logoData?: string;
-  logoName?: string;
-  logoUrl?: string;
-  bannerData?: string;
-  bannerName?: string;
-  bannerUrl?: string;
+export interface UploadedFile {
+  url: string;
+  path: string;
 }
 
-/**
- * Prepara os dados do negócio para armazenamento no localStorage
- * convertendo arquivos para base64 e criando URLs para previews
- * 
- * @param data Dados do negócio com possíveis arquivos
- * @returns Dados preparados para armazenamento sem objetos File
- */
-export const prepareDataForStorage = async (data: BusinessData): Promise<SerializableBusinessData> => {
-  if (!data) {
-    throw new Error("Dados do negócio não fornecidos");
-  }
-  
-  // Cria uma cópia para evitar modificar o original
-  const preparedData: SerializableBusinessData = {
-    ...data,
-    logo: null,
-    banner: null
-  };
-  
-  // Trata o arquivo de logo - converte para base64 se necessário
-  if (data.logo && data.logo !== null && typeof data.logo === 'object' && 'name' in data.logo) {
-    try {
-      // Converte arquivo para base64 para armazenamento
-      preparedData.logoData = await fileToBase64(data.logo as File);
-      preparedData.logoName = (data.logo as File).name;
-      
-      // Mantém a URL do logo se já existir
-      if (!preparedData.logoUrl) {
-        preparedData.logoUrl = createFilePreview(data.logo as File);
-      }
-    } catch (error) {
-      console.error("Erro ao processar arquivo de logo:", error);
-      // Em caso de erro, limpa os dados para evitar inconsistências
-      preparedData.logoData = undefined;
-      preparedData.logoName = undefined;
+export const uploadImage = async (
+  file: File,
+  bucket: string,
+  path?: string
+): Promise<UploadedFile> => {
+  try {
+    const fileName = `${Date.now()}-${file.name}`;
+    const filePath = path ? `${path}/${fileName}` : fileName;
+
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file);
+
+    if (error) {
+      throw error;
     }
-  } else if (!data.logo && (data as any).logoData) {
-    // Se temos logoData mas não temos File, mantém os dados para persistência
-    preparedData.logoUrl = (data as any).logoUrl || null;
+
+    const { data: urlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(filePath);
+
+    return {
+      url: urlData.publicUrl,
+      path: filePath,
+    };
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw error;
   }
-  
-  // Trata o arquivo de banner - converte para base64 se necessário
-  if (data.banner && data.banner !== null && typeof data.banner === 'object' && 'name' in data.banner) {
-    try {
-      // Converte arquivo para base64 para armazenamento
-      preparedData.bannerData = await fileToBase64(data.banner as File);
-      preparedData.bannerName = (data.banner as File).name;
-      
-      // Mantém a URL do banner se já existir
-      if (!preparedData.bannerUrl) {
-        preparedData.bannerUrl = createFilePreview(data.banner as File);
-      }
-    } catch (error) {
-      console.error("Erro ao processar arquivo de banner:", error);
-      // Em caso de erro, limpa os dados para evitar inconsistências
-      preparedData.bannerData = undefined;
-      preparedData.bannerName = undefined;
+};
+
+export const uploadLogo = async (file: File): Promise<string> => {
+  try {
+    const uploaded = await uploadImage(file, 'logos', 'business-logos');
+    
+    const { data, error } = await supabase.storage
+      .from('logos')
+      .getPublicUrl(uploaded.path);
+    
+    if (error) throw error;
+    
+    return data?.publicUrl || uploaded.url;
+  } catch (error) {
+    console.error('Error uploading logo:', error);
+    throw error;
+  }
+};
+
+export const uploadBanner = async (file: File): Promise<string> => {
+  try {
+    const uploaded = await uploadImage(file, 'banners', 'business-banners');
+    
+    const { data, error } = await supabase.storage
+      .from('banners')
+      .getPublicUrl(uploaded.path);
+    
+    if (error) throw error;
+    
+    return data?.publicUrl || uploaded.url;
+  } catch (error) {
+    console.error('Error uploading banner:', error);
+    throw error;
+  }
+};
+
+export const deleteFile = async (bucket: string, path: string): Promise<void> => {
+  try {
+    const { error } = await supabase.storage
+      .from(bucket)
+      .remove([path]);
+
+    if (error) {
+      throw error;
     }
-  } else if (!data.banner && (data as any).bannerData) {
-    // Se temos bannerData mas não temos File, mantém os dados para persistência
-    preparedData.bannerUrl = (data as any).bannerUrl || null;
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    throw error;
   }
-  
-  return preparedData;
 };

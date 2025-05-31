@@ -37,7 +37,7 @@ export default function ProfessionalSelectWrapper({ form, serviceId }: Professio
         console.log('Fetching professionals for business ID:', businessId);
         
         const { data: professionalsData, error } = await supabase
-          .from('professionals')
+          .from('employees')
           .select('id, name, photo_url')
           .eq('business_id', businessId);
           
@@ -104,7 +104,7 @@ export default function ProfessionalSelectWrapper({ form, serviceId }: Professio
                     >
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                          <AvatarImage src={professional.photo_url} alt={professional.name} />
+                          <AvatarImage src={professional.photo_url || undefined} alt={professional.name} />
                           <AvatarFallback>{professional.name?.charAt(0) || 'P'}</AvatarFallback>
                         </Avatar>
                         <span>{professional.name}</span>
