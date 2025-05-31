@@ -15,11 +15,10 @@ export async function fetchClients(businessId: string): Promise<Client[]> {
   try {
     console.log('Fetching clients for business ID:', businessId);
     
-    // Query using both field names to ensure compatibility
     const { data, error } = await supabase
-      .from('clientes')
+      .from('clients')
       .select('*')
-      .or(`id_negocio.eq.${businessId},tenant_id.eq.${businessId}`);
+      .eq('business_id', businessId);
 
     if (error) {
       console.error("Erro ao buscar clientes:", error);
@@ -27,25 +26,7 @@ export async function fetchClients(businessId: string): Promise<Client[]> {
       throw error;
     }
 
-    // Map the database columns to our client interface
-    return (data || []).map(client => ({
-      id: client.id,
-      name: client.nome,
-      nome: client.nome,
-      email: client.email,
-      phone: client.telefone,
-      telefone: client.telefone,
-      ultima_visita: client.ultima_visita,
-      valor_total_gasto: client.valor_total_gasto,
-      total_agendamentos: client.total_agendamentos,
-      status: client.status || 'active',
-      criado_em: client.criado_em,
-      cidade: client.cidade,
-      estado: client.estado,
-      notas: client.notas,
-      tenant_id: client.tenant_id,
-      id_negocio: client.id_negocio
-    }));
+    return data || [];
   } catch (err: any) {
     console.error("Erro inesperado ao buscar clientes:", err);
     throw err;
@@ -63,7 +44,6 @@ export async function createClient(clientData: Partial<Client>, businessId: stri
     
     console.log('Creating client for business ID:', businessId, clientData);
     
-    // Certifique-se de que o usuário esteja autenticado
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
@@ -71,15 +51,13 @@ export async function createClient(clientData: Partial<Client>, businessId: stri
       throw new Error("Usuário não autenticado");
     }
     
-    // Include both tenant_id and id_negocio for compatibility
     const dataToInsert = {
       ...clientData,
-      id_negocio: businessId,
-      tenant_id: businessId // Adding standard field
+      business_id: businessId
     };
 
     const { data, error } = await supabase
-      .from('clientes')
+      .from('clients')
       .insert([dataToInsert])
       .select()
       .single();
@@ -89,25 +67,7 @@ export async function createClient(clientData: Partial<Client>, businessId: stri
       throw error;
     }
 
-    // Map the database response to our client interface
-    return {
-      id: data.id,
-      name: data.nome,
-      nome: data.nome,
-      email: data.email,
-      phone: data.telefone,
-      telefone: data.telefone,
-      ultima_visita: data.ultima_visita,
-      valor_total_gasto: data.valor_total_gasto || 0,
-      total_agendamentos: data.total_agendamentos || 0,
-      status: data.status || 'active',
-      criado_em: data.criado_em,
-      cidade: data.cidade,
-      estado: data.estado,
-      notas: data.notas,
-      tenant_id: data.tenant_id,
-      id_negocio: data.id_negocio
-    };
+    return data;
     
   } catch (err: any) {
     console.error("Error creating client:", err);
@@ -127,34 +87,15 @@ export async function findClientByEmail(email: string, businessId: string): Prom
     console.log('Finding client by email for business ID:', businessId, email);
     
     const { data, error } = await supabase
-      .from('clientes')
+      .from('clients')
       .select('*')
       .eq('email', email)
-      .or(`id_negocio.eq.${businessId},tenant_id.eq.${businessId}`)
+      .eq('business_id', businessId)
       .maybeSingle();
 
     if (error) throw error;
     
-    if (!data) return null;
-    
-    // Map database fields to our client interface
-    return {
-      id: data.id,
-      name: data.nome,
-      nome: data.nome,
-      email: data.email,
-      phone: data.telefone,
-      telefone: data.telefone,
-      ultima_visita: data.ultima_visita,
-      valor_total_gasto: data.valor_total_gasto || 0,
-      status: data.status || 'active',
-      criado_em: data.criado_em,
-      cidade: data.cidade,
-      estado: data.estado,
-      notas: data.notas,
-      tenant_id: data.tenant_id,
-      id_negocio: data.id_negocio
-    };
+    return data;
     
   } catch (err: any) {
     console.error("Error finding client:", err);
@@ -174,34 +115,15 @@ export async function findClientByPhone(phone: string, businessId: string): Prom
     console.log('Finding client by phone for business ID:', businessId, phone);
     
     const { data, error } = await supabase
-      .from('clientes')
+      .from('clients')
       .select('*')
-      .eq('telefone', phone)
-      .or(`id_negocio.eq.${businessId},tenant_id.eq.${businessId}`)
+      .eq('phone', phone)
+      .eq('business_id', businessId)
       .maybeSingle();
 
     if (error) throw error;
     
-    if (!data) return null;
-    
-    // Map database fields to our client interface
-    return {
-      id: data.id,
-      name: data.nome,
-      nome: data.nome,
-      email: data.email,
-      phone: data.telefone,
-      telefone: data.telefone,
-      ultima_visita: data.ultima_visita,
-      valor_total_gasto: data.valor_total_gasto || 0,
-      status: data.status || 'active',
-      criado_em: data.criado_em,
-      cidade: data.cidade,
-      estado: data.estado,
-      notas: data.notas,
-      tenant_id: data.tenant_id, 
-      id_negocio: data.id_negocio
-    };
+    return data;
     
   } catch (err: any) {
     console.error("Error finding client by phone:", err);

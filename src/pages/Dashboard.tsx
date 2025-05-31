@@ -10,7 +10,8 @@ import { ClientsComparisonChart } from '@/components/dashboard/ClientsComparison
 import { RetentionRateCard } from '@/components/common/RetentionRateCard';
 import { PerformanceMetrics } from '@/components/dashboard/PerformanceMetrics';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FilterPeriod, useDashboardData } from '@/hooks/useDashboardData';
+import { FilterPeriod, DashboardStats } from '@/types/dashboard';
+import { useDashboardData } from '@/hooks/useDashboardData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
@@ -23,8 +24,8 @@ export default function Dashboard() {
     window.location.reload();
   };
 
-  // Create default stats if not available
-  const defaultStats = {
+  // Create complete stats with all required properties
+  const defaultStats: DashboardStats = {
     totalAppointments: 0,
     completedAppointments: 0,
     totalRevenue: 0,
@@ -37,6 +38,13 @@ export default function Dashboard() {
     appointmentsToday: 0,
     pendingAppointments: 0,
     cancellationRate: 0,
+    cancelledAppointments: 0,
+    growthRate: 0,
+    occupancyRate: 0,
+    todayAppointments: 0,
+    monthlyRevenue: 0,
+    averageRating: 0,
+    totalClients: 0,
     ...stats
   };
 
@@ -78,7 +86,7 @@ export default function Dashboard() {
             <CardTitle>Desempenho Financeiro</CardTitle>
           </CardHeader>
           <CardContent>
-            <FinancialCharts revenueData={defaultStats?.revenueData || []} loading={isLoading} />
+            <FinancialCharts revenueData={defaultStats.revenueData} loading={isLoading} />
           </CardContent>
         </Card>
 
@@ -88,7 +96,7 @@ export default function Dashboard() {
             <CardTitle>Serviços Populares</CardTitle>
           </CardHeader>
           <CardContent>
-            {defaultStats?.popularServices && (
+            {defaultStats.popularServices && (
               <div className="space-y-4">
                 {defaultStats.popularServices.map((service: any) => (
                   <div key={service.id} className="flex items-center justify-between">
@@ -116,7 +124,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <RetentionRateCard 
-              retentionRate={defaultStats?.retentionRate || 0}
+              retentionRate={defaultStats.retentionRate}
               suggestions={[
                 "Envie mensagens pós-atendimento",
                 "Crie um programa de fidelidade",

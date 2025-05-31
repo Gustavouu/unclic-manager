@@ -1,21 +1,31 @@
 
 export interface DashboardStats {
+  totalAppointments: number;
   completedAppointments: number;
   totalRevenue: number;
   newClients: number;
   clientsCount: number;
-  pendingAppointments: number;
-  cancelledAppointments: number;
   averageTicket: number;
   retentionRate: number;
+  popularServices: PopularService[];
+  revenueData: RevenueDataPoint[];
+  appointmentsToday: number;
+  pendingAppointments: number;
+  cancellationRate: number;
+  cancelledAppointments: number;
   growthRate: number;
   occupancyRate: number;
   todayAppointments: number;
   monthlyRevenue: number;
-  totalAppointments: number;
-  monthlyServices: number;
-  newClientsCount: number;
-  popularServices: Array<{ name: string; count: number; percentage: number }>;
+  averageRating: number;
+  totalClients: number;
+}
+
+export interface PopularService {
+  id: string;
+  name: string;
+  count: number;
+  percentage: number;
 }
 
 export interface RevenueDataPoint {
@@ -24,19 +34,4 @@ export interface RevenueDataPoint {
   appointments: number;
 }
 
-export interface FinancialChartsProps {
-  data: RevenueDataPoint[];
-  loading: boolean;
-}
-
 export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';
-
-export interface DashboardWidgetProps {
-  title: string;
-  value: string | number;
-  icon?: React.ReactNode;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-  };
-}

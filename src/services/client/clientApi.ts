@@ -75,34 +75,12 @@ export const clientApi = {
   // Create new client
   async createClient(businessId: string, clientData: ClientFormData) {
     try {
-      // Map the client data to the correct field names
-      const mappedData = {
-        business_id: businessId,
-        id_negocio: businessId,
-        nome: clientData.name,
-        name: clientData.name,
-        email: clientData.email,
-        phone: clientData.phone,
-        telefone: clientData.phone,
-        birth_date: clientData.birth_date,
-        data_nascimento: clientData.birth_date,
-        gender: clientData.gender,
-        genero: clientData.gender,
-        address: clientData.address,
-        endereco: clientData.address,
-        city: clientData.city,
-        cidade: clientData.city,
-        state: clientData.state,
-        estado: clientData.state,
-        zip_code: clientData.zip_code,
-        cep: clientData.zip_code,
-        notes: clientData.notes,
-        notas: clientData.notes,
-      };
-
       const { data, error } = await supabase
         .from('clients')
-        .insert(mappedData)
+        .insert({
+          business_id: businessId,
+          ...clientData
+        })
         .select()
         .single();
 

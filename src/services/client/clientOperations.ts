@@ -1,132 +1,82 @@
 
-/**
- * Business operations for clients
- */
-import { toast } from 'sonner';
-import { Client, ClientFormData, ClientOperationResult, ClientListResult, ClientSearchParams } from '@/types/client';
-import { 
-  fetchClientsApi, 
-  createClientApi, 
-  findClientApi,
-  updateClientApi,
-  deleteClientApi
-} from './clientApi';
-import { mapClientFromDatabase } from './clientUtils';
+import { clientApi } from './clientApi';
+import { Client, ClientFormData, ClientListResult, ClientOperationResult } from '@/types/client';
 
-/**
- * Fetch all clients for a business
- */
-export async function fetchClients(businessId: string): Promise<ClientListResult> {
-  try {
-    const { data, error } = await fetchClientsApi(businessId);
-    
-    if (error) {
-      console.error("Erro ao buscar clientes:", error);
-      return { success: false, error: error.message };
+export const clientOperations = {
+  // List clients with error handling
+  async listClients(businessId: string, params = {}): Promise<ClientListResult> {
+    try {
+      const result = await clientApi.getClients(businessId, params);
+      return {
+        success: true,
+        ...result
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch clients'
+      };
     }
-    
-    // Map the database columns to our client interface
-    const mappedClients = (data || []).map(mapClientFromDatabase);
-    
-    return { success: true, data: mappedClients };
-  } catch (err: any) {
-    console.error("Erro inesperado ao buscar clientes:", err);
-    return { success: false, error: err.message };
-  }
-}
+  },
 
-/**
- * Create a new client
- */
-export async function createClient(clientData: ClientFormData, businessId: string): Promise<ClientOperationResult> {
-  try {
-    const { data, error } = await createClientApi(clientData, businessId);
-    
-    if (error) {
-      console.error("Error creating client:", error);
-      return { success: false, error: error.message };
+  // Create client with error handling
+  async createClient(businessId: string, clientData: ClientFormData): Promise<ClientOperationResult> {
+    try {
+      const client = await clientApi.createClient(businessId, clientData);
+      return {
+        success: true,
+        data: client
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Failed to create client'
+      };
     }
-    
-    // Map database response to client interface
-    const newClient = mapClientFromDatabase(data);
-    
-    return { success: true, data: newClient };
-  } catch (err: any) {
-    console.error("Error creating client:", err);
-    return { success: false, error: err.message };
-  }
-}
+  },
 
-/**
- * Find a client by email
- */
-export async function findClientByEmail(email: string, businessId: string): Promise<Client | null> {
-  try {
-    const { data, error } = await findClientApi({ email }, businessId);
-    
-    if (error) throw error;
-    if (!data) return null;
-    
-    return mapClientFromDatabase(data);
-  } catch (err: any) {
-    console.error("Error finding client by email:", err);
-    return null;
-  }
-}
-
-/**
- * Find a client by phone
- */
-export async function findClientByPhone(phone: string, businessId: string): Promise<Client | null> {
-  try {
-    const { data, error } = await findClientApi({ telefone: phone }, businessId);
-    
-    if (error) throw error;
-    if (!data) return null;
-    
-    return mapClientFromDatabase(data);
-  } catch (err: any) {
-    console.error("Error finding client by phone:", err);
-    return null;
-  }
-}
-
-/**
- * Update an existing client
- */
-export async function updateClient(id: string, clientData: Partial<ClientFormData>, businessId: string): Promise<ClientOperationResult> {
-  try {
-    const { data, error } = await updateClientApi(id, clientData, businessId);
-    
-    if (error) {
-      console.error("Error updating client:", error);
-      return { success: false, error: error.message };
+  // Update client with error handling
+  async updateClient(clientId: string, clientData: Partial<ClientFormData>): Promise<ClientOperationResult> {
+    try {
+      const client = await clientApi.updateClient(clientId, clientData);
+      return {
+        success: true,
+        data: client
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Failed to update client'
+      };
     }
-    
-    const updatedClient = mapClientFromDatabase(data);
-    
-    return { success: true, data: updatedClient };
-  } catch (err: any) {
-    console.error("Error updating client:", err);
-    return { success: false, error: err.message };
-  }
-}
+  },
 
-/**
- * Delete a client
- */
-export async function deleteClient(id: string, businessId: string): Promise<ClientOperationResult> {
-  try {
-    const { error } = await deleteClientApi(id, businessId);
-    
-    if (error) {
-      console.error("Error deleting client:", error);
-      return { success: false, error: error.message };
+  // Get client with error handling
+  async getClient(clientId: string): Promise<ClientOperationResult> {
+    try {
+      const client = await clientApi.getClientById(clientId);
+      return {
+        success: true,
+        data: client
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Failed to fetch client'
+      };
     }
-    
-    return { success: true };
-  } catch (err: any) {
-    console.error("Error deleting client:", err);
-    return { success: false, error: err.message };
+  },
+
+  // Delete client with error handling
+  async deleteClient(clientId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      await clientApi.deleteClient(clientId);
+      return { success: true };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Failed to delete client'
+      };
+    }
   }
-}
+};

@@ -1,41 +1,24 @@
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  name?: string;
-  role?: string;
-}
-
 export interface AuthContextType {
-  user: AuthUser | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  user: any;
+  login: (email: string, password: string) => Promise<any>;
+  signup: (email: string, password: string, userData?: any) => Promise<any>;
   logout: () => Promise<void>;
-  signup: (email: string, password: string, name?: string) => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<any>;
+  loading: boolean;
+  isAuthenticated: boolean;
 }
 
-export interface Role {
-  id: string;
-  name: string;
-  permissions: string[];
+export interface UserSession {
+  user: any;
+  access_token: string;
+  refresh_token: string;
+  expires: number;
 }
 
-export interface Permission {
-  id: string;
-  name: string;
-  module: string;
-  action: string;
-}
-
-export interface UserPermissions {
-  role: Role;
-  permissions: Permission[];
-  isLoading: boolean;
-  error: string;
-  hasPermission: (permissionName: string) => boolean;
-  isAdmin: () => boolean;
-  isManager: () => boolean;
-  canAccess: (requiredPermissions: string[]) => boolean;
-  refreshPermissions: () => Promise<void>;
+export interface AuthResponse {
+  user: any;
+  session: UserSession;
+  access_token: string;
+  refresh_token: string;
 }

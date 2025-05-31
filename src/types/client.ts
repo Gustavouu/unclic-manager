@@ -17,6 +17,7 @@ export interface Client {
   gender?: string;
   notes?: string;
   created_at?: string;
+  updated_at?: string;
   business_id?: string;
   user_id?: string;
   preferences?: any;
@@ -33,8 +34,6 @@ export interface ClientFormData {
   state?: string;
   zip_code?: string;
   notes?: string;
-  firstName?: string;
-  lastName?: string;
 }
 
 export interface ClientSearchParams {
@@ -45,40 +44,6 @@ export interface ClientSearchParams {
   lastVisit?: string;
   page?: number;
   limit?: number;
-}
-
-export interface ClientCreate {
-  name: string;
-  email?: string;
-  phone?: string;
-  birth_date?: string;
-  gender?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  notes?: string;
-  business_id: string;
-}
-
-export interface ClientUpdate {
-  name?: string;
-  email?: string;
-  phone?: string;
-  birth_date?: string;
-  gender?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  notes?: string;
-}
-
-export interface ClientStats {
-  total: number;
-  active: number;
-  new_this_month: number;
-  retention_rate: number;
 }
 
 export interface ClientOperationResult {

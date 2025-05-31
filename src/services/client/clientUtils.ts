@@ -1,7 +1,4 @@
 
-/**
- * Utility functions for client data
- */
 import { Client } from '@/types/client';
 
 /**
@@ -12,21 +9,26 @@ export function mapClientFromDatabase(data: any): Client {
   
   return {
     id: data.id,
-    name: data.nome,
-    nome: data.nome,
+    name: data.name,
     email: data.email,
-    phone: data.telefone,
-    telefone: data.telefone,
-    ultima_visita: data.ultima_visita,
-    valor_total_gasto: data.valor_total_gasto || 0,
-    total_agendamentos: data.total_agendamentos || 0,
+    phone: data.phone,
+    birth_date: data.birth_date,
+    last_visit: data.last_visit,
+    total_spent: data.total_spent || 0,
+    total_appointments: data.total_appointments || 0,
     status: data.status || 'active',
-    criado_em: data.criado_em,
-    cidade: data.cidade,
-    estado: data.estado,
-    notas: data.notas,
-    tenant_id: data.tenant_id,
-    id_negocio: data.id_negocio
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    city: data.city,
+    state: data.state,
+    zip_code: data.zip_code,
+    address: data.address,
+    gender: data.gender,
+    notes: data.notes,
+    avatar: data.avatar,
+    business_id: data.business_id,
+    user_id: data.user_id,
+    preferences: data.preferences
   };
 }
 

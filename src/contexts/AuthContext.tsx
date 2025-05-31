@@ -1,153 +1,76 @@
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session, AuthError, AuthResponse } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import type { Permission } from '@/types/user';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { authService } from '@/services/auth/authService';
+import { AuthContextType, UserSession } from '@/types/auth';
 
-export interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<AuthResponse>;
-  signUp: (email: string, password: string, options?: { data?: any }) => Promise<AuthResponse>;
-  signOut: () => Promise<{ error: AuthError | null }>;
-  logout: () => Promise<void>;
-  hasPermission: (permission: Permission) => boolean;
-}
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  session: null,
-  loading: true,
-  signIn: async () => ({ data: { user: null, session: null }, error: null }),
-  signUp: async () => ({ data: { user: null, session: null }, error: null }),
-  signOut: async () => ({ error: null }),
-  logout: async () => {},
-  hasPermission: () => false,
-});
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
-        setSession(session);
-        setUser(session?.user ?? null);
+    // Check for existing session
+    const checkSession = async () => {
+      try {
+        const session = await authService.getCurrentSession();
+        if (session) {
+          setUser(session.user);
+        }
+      } catch (error) {
+        console.error('Session check error:', error);
+      } finally {
         setLoading(false);
       }
-    );
+    };
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session:', session?.user?.id);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    checkSession();
   }, []);
 
-  const signIn = async (email: string, password: string): Promise<AuthResponse> => {
+  const login = async (email: string, password: string) => {
+    setLoading(true);
     try {
-      const response = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (response.error) {
-        toast.error(response.error.message);
-      } else if (response.data.user) {
-        toast.success('Login realizado com sucesso!');
-      }
-      
-      return response;
-    } catch (error) {
-      console.error('Error signing in:', error);
-      const authError = new Error('Erro inesperado ao fazer login') as AuthError;
-      authError.name = 'AuthError';
-      return { data: { user: null, session: null }, error: authError };
+      const result = await authService.login(email, password);
+      setUser(result.user);
+      return result;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const signUp = async (email: string, password: string, options?: { data?: any }): Promise<AuthResponse> => {
+  const signup = async (email: string, password: string, userData?: any) => {
+    setLoading(true);
     try {
-      const response = await supabase.auth.signUp({
-        email,
-        password,
-        options,
-      });
-      
-      if (response.error) {
-        toast.error(response.error.message);
-      } else if (response.data.user) {
-        toast.success('Conta criada com sucesso!');
-      }
-      
-      return response;
-    } catch (error) {
-      console.error('Error signing up:', error);
-      const authError = new Error('Erro inesperado ao criar conta') as AuthError;
-      authError.name = 'AuthError';
-      return { data: { user: null, session: null }, error: authError };
+      const result = await authService.signUp(email, password, userData);
+      setUser(result.user);
+      return result;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const signOut = async (): Promise<{ error: AuthError | null }> => {
+  const logout = async () => {
+    setLoading(true);
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        toast.error(error.message);
-        return { error };
-      }
-      
-      toast.success('Logout realizado com sucesso!');
-      return { error: null };
-    } catch (error) {
-      console.error('Error signing out:', error);
-      const authError = new Error('Erro inesperado ao fazer logout') as AuthError;
-      authError.name = 'AuthError';
-      return { error: authError };
+      await authService.logout();
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const logout = async (): Promise<void> => {
-    await signOut();
-  };
-
-  const hasPermission = (permission: Permission): boolean => {
-    // For now, return true for all permissions when user is authenticated
-    // This can be extended later to check actual user permissions
-    return !!user;
+  const resetPassword = async (email: string) => {
+    return await authService.resetPassword(email);
   };
 
   const value: AuthContextType = {
     user,
-    session,
-    loading,
-    signIn,
-    signUp,
-    signOut,
+    login,
+    signup,
     logout,
-    hasPermission,
+    resetPassword,
+    loading,
+    isAuthenticated: !!user,
   };
 
   return (
@@ -155,4 +78,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
