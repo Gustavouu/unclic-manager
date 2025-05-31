@@ -1,8 +1,10 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
-import { efiPaySubscriptionService } from './EfiPaySubscriptionService';
+import { EfiPaySubscriptionService } from './EfiPaySubscriptionService';
 import crypto from 'crypto';
+
+const efiPaySubscriptionService = new EfiPaySubscriptionService();
 
 export interface WebhookEvent {
   id: string;

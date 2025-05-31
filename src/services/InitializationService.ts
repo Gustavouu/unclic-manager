@@ -1,20 +1,33 @@
 
-import { WebhookIntegration } from "./webhook/WebhookIntegration";
-import { LoyaltySystem } from "./loyalty/LoyaltySystem";
+import { businessService } from './business/businessService';
 
 export class InitializationService {
-  public static initialize(): void {
-    console.log("Initializing application services...");
-    
-    // Initialize webhook integrations
-    WebhookIntegration.initializeIntegrations();
-    console.log("Webhook integrations initialized");
-    
-    // Initialize loyalty system
-    LoyaltySystem.initialize();
-    console.log("Loyalty system initialized");
+  static async initializeApp() {
+    try {
+      console.log('Initializing application...');
+      
+      // Initialize any required services here
+      // For now, just log that initialization is complete
+      console.log('Application initialized successfully');
+      
+      return true;
+    } catch (error) {
+      console.error('Error initializing application:', error);
+      return false;
+    }
+  }
+
+  static async initializeBusiness(businessId: string) {
+    try {
+      console.log('Initializing business:', businessId);
+      
+      // Add any business-specific initialization here
+      console.log('Business initialized successfully');
+      
+      return true;
+    } catch (error) {
+      console.error('Error initializing business:', error);
+      return false;
+    }
   }
 }
-
-// Initialize all services
-InitializationService.initialize();

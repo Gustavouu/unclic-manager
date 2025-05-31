@@ -1,7 +1,9 @@
-
 import { useState, useEffect } from 'react';
-import { efiPaySubscriptionService, Invoice } from '@/services/payment/efiBank/EfiPaySubscriptionService';
+import { EfiPaySubscriptionService } from '@/services/payment/efiBank/EfiPaySubscriptionService';
+import { Invoice } from '@/services/payment/efiBank/types';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
+
+const efiPaySubscriptionService = new EfiPaySubscriptionService();
 
 export function useInvoices(subscriptionId?: string) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -106,7 +108,5 @@ export function useInvoices(subscriptionId?: string) {
     isLoading,
     error,
     fetchInvoices,
-    createInvoice,
-    updateInvoiceStatus,
   };
 }

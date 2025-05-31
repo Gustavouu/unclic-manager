@@ -17,7 +17,7 @@ export class EfiPayPlanService {
     interval: PlanInterval;
     interval_count: number;
     features: string[];
-  }): Promise<SubscriptionPlan> {
+  }, businessId?: string): Promise<SubscriptionPlan> {
     try {
       // Create plan in EfiPay
       const efiPlan = await this.createEfiPlan(planData);
@@ -34,6 +34,7 @@ export class EfiPayPlanService {
           status: 'active' as PlanStatus,
           features: planData.features,
           provider_plan_id: efiPlan.id,
+          tenant_id: businessId,
         })
         .select()
         .single();
@@ -59,13 +60,19 @@ export class EfiPayPlanService {
     }
   }
 
-  async getPlans(): Promise<SubscriptionPlan[]> {
+  async getPlans(businessId?: string): Promise<SubscriptionPlan[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('subscription_plans')
         .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: true });
+      
+      if (businessId) {
+        query = query.eq('tenant_id', businessId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -120,12 +127,19 @@ export class EfiPayPlanService {
 
   async updatePlan(planId: string, updates: Partial<SubscriptionPlan>): Promise<SubscriptionPlan> {
     try {
+      const updateData: any = {
+        ...updates,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Remove created_at if it exists in updates to avoid type errors
+      if (updateData.created_at) {
+        updateData.created_at = updateData.created_at.toISOString();
+      }
+
       const { data, error } = await supabase
         .from('subscription_plans')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', planId)
         .select()
         .single();
@@ -151,6 +165,21 @@ export class EfiPayPlanService {
     }
   }
 
+  async deactivatePlan(planId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('subscription_plans')
+        .update({ status: 'inactive' })
+        .eq('id', planId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error deactivating plan:', error);
+      return false;
+    }
+  }
+
   private async createEfiPlan(planData: any): Promise<any> {
     // Mock implementation - replace with actual EfiPay API call
     return {
@@ -159,3 +188,5 @@ export class EfiPayPlanService {
     };
   }
 }
+
+export const efiPayPlanService = new EfiPayPlanService();

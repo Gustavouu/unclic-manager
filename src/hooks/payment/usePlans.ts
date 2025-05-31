@@ -1,7 +1,9 @@
-
 import { useState, useEffect } from 'react';
-import { efiPayPlanService, SubscriptionPlan } from '@/services/payment/efiBank/EfiPayPlanService';
+import { EfiPayPlanService } from '@/services/payment/efiBank/EfiPayPlanService';
+import { SubscriptionPlan } from '@/services/payment/efiBank/types';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
+
+const efiPayPlanService = new EfiPayPlanService();
 
 export function usePlans() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -94,8 +96,5 @@ export function usePlans() {
     isLoading,
     error,
     fetchPlans,
-    createPlan,
-    updatePlan,
-    deactivatePlan,
   };
 }

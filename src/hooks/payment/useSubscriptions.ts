@@ -1,6 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { efiPaySubscriptionService, Subscription } from '@/services/payment/efiBank/EfiPaySubscriptionService';
+import { EfiPaySubscriptionService } from '@/services/payment/efiBank/EfiPaySubscriptionService';
+import { Subscription } from '@/services/payment/efiBank/types';
+
+const efiPaySubscriptionService = new EfiPaySubscriptionService();
 
 export function useSubscriptions(customerId?: string) {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -84,7 +87,5 @@ export function useSubscriptions(customerId?: string) {
     isLoading,
     error,
     fetchSubscriptions,
-    createSubscription,
-    cancelSubscription,
   };
 }

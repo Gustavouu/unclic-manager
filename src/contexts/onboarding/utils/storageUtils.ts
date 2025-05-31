@@ -41,11 +41,9 @@ export const uploadLogo = async (file: File): Promise<string> => {
   try {
     const uploaded = await uploadImage(file, 'logos', 'business-logos');
     
-    const { data, error } = await supabase.storage
+    const { data } = supabase.storage
       .from('logos')
       .getPublicUrl(uploaded.path);
-    
-    if (error) throw error;
     
     return data?.publicUrl || uploaded.url;
   } catch (error) {
@@ -58,11 +56,9 @@ export const uploadBanner = async (file: File): Promise<string> => {
   try {
     const uploaded = await uploadImage(file, 'banners', 'business-banners');
     
-    const { data, error } = await supabase.storage
+    const { data } = supabase.storage
       .from('banners')
       .getPublicUrl(uploaded.path);
-    
-    if (error) throw error;
     
     return data?.publicUrl || uploaded.url;
   } catch (error) {
@@ -84,4 +80,9 @@ export const deleteFile = async (bucket: string, path: string): Promise<void> =>
     console.error('Error deleting file:', error);
     throw error;
   }
+};
+
+export const prepareDataForStorage = (data: any) => {
+  // Simple utility to prepare data for storage
+  return JSON.stringify(data);
 };

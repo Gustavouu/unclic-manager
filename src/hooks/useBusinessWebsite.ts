@@ -34,13 +34,25 @@ export interface SimpleStaff {
   photo_url?: string;
   business_id: string;
   specialties?: string[];
+  role?: string;
+}
+
+export interface SimpleService {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  duration: number;
+  business_id: string;
 }
 
 export const useBusinessWebsite = (businessId?: string) => {
   const [business, setBusiness] = useState<BusinessData | null>(null);
   const [staff, setStaff] = useState<SimpleStaff[]>([]);
+  const [services, setServices] = useState<SimpleService[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
 
   useEffect(() => {
     if (!businessId) {
@@ -93,11 +105,15 @@ export const useBusinessWebsite = (businessId?: string) => {
             bio: staff.bio,
             photo_url: staff.photo_url,
             business_id: staff.business_id,
-            specialties: staff.specialties || []
+            specialties: staff.specialties || [],
+            role: staff.position || 'staff'
           }));
         }
 
         setStaff(staffInfo);
+
+        // Mock services data for now
+        setServices([]);
       } catch (err: any) {
         console.error("Error loading website data:", err);
         setError(err.message || 'Error loading data');
@@ -109,10 +125,22 @@ export const useBusinessWebsite = (businessId?: string) => {
     fetchBusinessData();
   }, [businessId]);
 
+  const startBooking = () => setIsBookingOpen(true);
+  const closeBooking = () => setIsBookingOpen(false);
+  
+  const checkIsCorrectBusiness = (id?: string) => {
+    return id === businessId;
+  };
+
   return {
     business,
     staff,
+    services,
     loading,
-    error
+    error,
+    isBookingOpen,
+    startBooking,
+    closeBooking,
+    checkIsCorrectBusiness
   };
 };
