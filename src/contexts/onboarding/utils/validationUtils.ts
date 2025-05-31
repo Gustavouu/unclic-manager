@@ -1,26 +1,31 @@
 
-import { BusinessData, ServiceData, StaffData } from "../types";
+import { BusinessData, ServiceData, StaffData, BusinessHours } from "../types";
 
 /**
- * Checks if all required onboarding data is complete
+ * Verifica se o onboarding está completo baseado nos dados fornecidos
  */
 export const checkOnboardingComplete = (
   businessData: BusinessData,
   services: ServiceData[],
-  staffMembers: StaffData[],
+  staff: StaffData[],
+  businessHours: BusinessHours | null,
   hasStaff: boolean
 ): boolean => {
-  // Verifica se os dados do negócio estão preenchidos
-  const businessComplete = 
-    !!businessData.name && 
-    !!businessData.email && 
-    !!businessData.phone;
-  
-  // Verifica se pelo menos um serviço foi adicionado
-  const servicesComplete = services.length > 0;
-  
-  // Verifica se há funcionários ou se o usuário indicou que não tem funcionários
-  const staffComplete = !hasStaff || (hasStaff && staffMembers.length > 0);
-  
-  return businessComplete && servicesComplete && staffComplete;
+  // Verifica dados básicos do negócio
+  const hasBasicBusinessInfo = !!(
+    businessData.name?.trim() &&
+    businessData.adminEmail?.trim() &&
+    businessData.phone?.trim()
+  );
+
+  // Verifica se tem pelo menos um serviço
+  const hasServices = services.length > 0;
+
+  // Verifica funcionários (apenas se indicou que tem funcionários)
+  const hasRequiredStaff = !hasStaff || staff.length > 0;
+
+  // Verifica horários de funcionamento
+  const hasBusinessHours = businessHours !== null;
+
+  return hasBasicBusinessInfo && hasServices && hasRequiredStaff && hasBusinessHours;
 };

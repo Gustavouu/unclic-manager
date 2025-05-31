@@ -32,11 +32,31 @@ export const HoursTab = () => {
   ];
   
   const handleToggleDay = (day: string, checked: boolean) => {
-    updateBusinessHours(day, { open: checked });
+    if (!businessHours) return;
+    
+    const updatedHours = {
+      ...businessHours,
+      [day]: {
+        ...businessHours[day],
+        open: checked,
+        isOpen: checked
+      }
+    };
+    updateBusinessHours(updatedHours);
   };
   
   const handleTimeChange = (day: string, field: 'openTime' | 'closeTime', value: string) => {
-    updateBusinessHours(day, { [field]: value });
+    if (!businessHours) return;
+    
+    const updatedHours = {
+      ...businessHours,
+      [day]: {
+        ...businessHours[day],
+        [field]: value,
+        [field === 'openTime' ? 'start' : 'end']: value
+      }
+    };
+    updateBusinessHours(updatedHours);
   };
   
   const handleSaveChanges = () => {
@@ -48,6 +68,10 @@ export const HoursTab = () => {
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
   };
+
+  if (!businessHours) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <Card>
@@ -76,7 +100,7 @@ export const HoursTab = () => {
               <div className="flex items-center space-x-2">
                 <Switch 
                   id={`day-${day.key}`} 
-                  checked={businessHours[day.key].open}
+                  checked={businessHours[day.key]?.open || false}
                   onCheckedChange={(checked) => handleToggleDay(day.key, checked)}
                   disabled={!isEditing}
                 />
@@ -86,16 +110,16 @@ export const HoursTab = () => {
               </div>
               
               <div className="col-span-3 sm:col-span-6 grid grid-cols-2 gap-2">
-                {businessHours[day.key].open ? (
+                {businessHours[day.key]?.open ? (
                   <>
                     <div>
                       <Label htmlFor={`open-${day.key}`} className="text-sm text-muted-foreground mb-1 block">
                         Abertura
                       </Label>
                       <Select
-                        value={businessHours[day.key].openTime}
+                        value={businessHours[day.key]?.openTime || "09:00"}
                         onValueChange={(value) => handleTimeChange(day.key, 'openTime', value)}
-                        disabled={!isEditing || !businessHours[day.key].open}
+                        disabled={!isEditing || !businessHours[day.key]?.open}
                       >
                         <SelectTrigger id={`open-${day.key}`}>
                           <SelectValue />
@@ -115,9 +139,9 @@ export const HoursTab = () => {
                         Fechamento
                       </Label>
                       <Select
-                        value={businessHours[day.key].closeTime}
+                        value={businessHours[day.key]?.closeTime || "18:00"}
                         onValueChange={(value) => handleTimeChange(day.key, 'closeTime', value)}
-                        disabled={!isEditing || !businessHours[day.key].open}
+                        disabled={!isEditing || !businessHours[day.key]?.open}
                       >
                         <SelectTrigger id={`close-${day.key}`}>
                           <SelectValue />

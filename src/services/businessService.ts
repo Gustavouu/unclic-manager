@@ -15,12 +15,17 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 // Types
 export type Business = {
   id: string;
-  nome: string;
+  nome?: string;
+  name?: string;
   slug: string;
-  email_admin: string;
+  email_admin?: string;
+  admin_email?: string;
   telefone?: string;
+  phone?: string;
   endereco?: string;
+  address?: string;
   url_logo?: string;
+  logo_url?: string;
   status: string;
 };
 
@@ -57,37 +62,40 @@ export const getBusinessData = async (userId: string, skipCache = false): Promis
     
     console.log(`Buscando dados do negócio para o usuário ${userId}`);
     
-    // Get the user's associated business
+    // Try application_users table first (standardized table)
     const { data: userData, error: userError } = await supabase
-      .from('usuarios')
-      .select('id_negocio')
+      .from('application_users')
+      .select('business_id')
       .eq('id', userId)
       .maybeSingle();
       
     if (userError) {
-      throw userError;
+      console.warn('Erro ao buscar em application_users:', userError);
     }
     
-    if (!userData?.id_negocio) {
-      console.log('Usuário não tem negócio associado');
+    let businessId = userData?.business_id;
+    
+    if (!businessId) {
+      console.log('Usuário não tem negócio associado em application_users');
       return null;
     }
     
-    console.log(`ID do negócio encontrado: ${userData.id_negocio}`);
+    console.log(`ID do negócio encontrado: ${businessId}`);
     
-    // Fetch the business details
+    // Fetch the business details from businesses table
     const { data: businessData, error: businessError } = await supabase
-      .from('negocios')
+      .from('businesses')
       .select('*')
-      .eq('id', userData.id_negocio)
+      .eq('id', businessId)
       .maybeSingle();
       
     if (businessError) {
-      throw businessError;
+      console.warn('Erro ao buscar em businesses:', businessError);
+      return null;
     }
     
     if (businessData) {
-      console.log(`Dados do negócio recuperados: ${businessData.nome}, status: ${businessData.status}`);
+      console.log(`Dados do negócio recuperados: ${businessData.name}, status: ${businessData.status}`);
     }
     
     // Store in cache
@@ -126,17 +134,17 @@ export const checkOnboardingStatus = async (userId: string, skipCache = false): 
     
     // Fetch user data
     const { data: userData, error: userError } = await supabase
-      .from('usuarios')
-      .select('id_negocio')
+      .from('application_users')
+      .select('business_id')
       .eq('id', userId)
       .maybeSingle();
       
     if (userError) {
-      throw userError;
+      console.warn('Erro ao buscar usuário:', userError);
     }
     
     // If no business is associated, they need onboarding
-    if (!userData || !userData.id_negocio) {
+    if (!userData || !userData.business_id) {
       console.log('Usuário não tem negócio associado, precisa de onboarding');
       const result = { needsOnboarding: true, businessId: null };
       localStorage.setItem(cacheKey, JSON.stringify(result));
@@ -144,21 +152,21 @@ export const checkOnboardingStatus = async (userId: string, skipCache = false): 
       return result;
     }
     
-    console.log(`Verificando status do negócio ${userData.id_negocio}`);
+    console.log(`Verificando status do negócio ${userData.business_id}`);
     
     // Check business status
     const { data: businessData, error: businessError } = await supabase
-      .from('negocios')
+      .from('businesses')
       .select('id, status')
-      .eq('id', userData.id_negocio)
+      .eq('id', userData.business_id)
       .maybeSingle();
       
     if (businessError) {
-      throw businessError;
+      console.warn('Erro ao buscar negócio:', businessError);
     }
     
-    // If business exists but status is 'pendente', they still need onboarding
-    const needsOnboarding = !businessData || businessData.status === 'pendente';
+    // If business exists but status is 'trial' or inactive, they still need onboarding
+    const needsOnboarding = !businessData || businessData.status === 'trial' || businessData.status === 'inactive';
     const result = { 
       needsOnboarding, 
       businessId: businessData?.id || null 
@@ -177,63 +185,27 @@ export const checkOnboardingStatus = async (userId: string, skipCache = false): 
   }
 };
 
-// Update business status - improved with better error handling for the update_atualizado_em trigger
+// Update business status
 export const updateBusinessStatus = async (businessId: string, newStatus: string): Promise<boolean> => {
   if (!businessId) return false;
   
   try {
     console.log(`Tentando atualizar status do negócio ${businessId} para ${newStatus}`);
     
-    // First attempt: Try using the RPC function (our primary method)
-    console.log("Método 1: Usando RPC function");
-    const { data: rpcData, error: rpcError } = await supabase.rpc('set_business_status', {
-      business_id: businessId,
-      new_status: newStatus
-    });
-    
-    if (!rpcError) {
-      console.log('Status atualizado com sucesso via RPC');
-      // Clear all related caches to ensure fresh data
-      clearBusinessCache();
-      return true;
-    }
-    
-    console.warn('Erro ao usar RPC, tentando update direto:', rpcError);
-    
-    // Second attempt: Update the business status directly with atualizado_em
-    console.log("Método 2: Usando update direto com atualizado_em");
     const { error } = await supabase
-      .from('negocios')
+      .from('businesses')
       .update({ 
-        status: newStatus
-        // Note: atualizado_em will be updated by the trigger we just created
+        status: newStatus,
+        updated_at: new Date().toISOString() 
       })
       .eq('id', businessId);
       
-    if (!error) {
-      console.log('Status atualizado com sucesso via update direto');
-      clearBusinessCache();
-      return true;
+    if (error) {
+      console.error('Erro ao atualizar status do negócio:', error);
+      throw error;
     }
     
-    console.warn('Erro no update direto, tentando método simplificado:', error);
-    
-    // Last attempt: Simplified update with current timestamp
-    console.log("Método 3: Usando update explícito com timestamp");
-    const { error: simpleError } = await supabase
-      .from('negocios')
-      .update({ 
-        status: newStatus,
-        atualizado_em: new Date().toISOString() 
-      })
-      .eq('id', businessId);
-    
-    if (simpleError) {
-      console.error('Todos os métodos de atualização falharam:', simpleError);
-      throw simpleError;
-    }
-    
-    console.log('Status atualizado com sucesso via update com timestamp explícito');
+    console.log('Status atualizado com sucesso');
     clearBusinessCache();
     return true;
   } catch (error: any) {
@@ -249,21 +221,21 @@ export const verifyAndRepairBusinessStatus = async (userId: string): Promise<boo
     
     // Get user's business
     const { data: userData, error: userError } = await supabase
-      .from('usuarios')
-      .select('id_negocio')
+      .from('application_users')
+      .select('business_id')
       .eq('id', userId)
       .maybeSingle();
       
-    if (userError || !userData?.id_negocio) {
+    if (userError || !userData?.business_id) {
       console.log('Usuário não tem negócio associado ou ocorreu um erro');
       return false;
     }
     
     // Check business status
     const { data: businessData, error: businessError } = await supabase
-      .from('negocios')
+      .from('businesses')
       .select('id, status')
-      .eq('id', userData.id_negocio)
+      .eq('id', userData.business_id)
       .maybeSingle();
       
     if (businessError || !businessData) {
@@ -271,10 +243,10 @@ export const verifyAndRepairBusinessStatus = async (userId: string): Promise<boo
       return false;
     }
     
-    // If status is "pendente", try to update it
-    if (businessData.status === 'pendente') {
-      console.log('Negócio encontrado com status pendente, tentando corrigir');
-      return await updateBusinessStatus(businessData.id, 'ativo');
+    // If status is "trial", try to update it
+    if (businessData.status === 'trial') {
+      console.log('Negócio encontrado com status trial, tentando corrigir');
+      return await updateBusinessStatus(businessData.id, 'active');
     }
     
     console.log(`Negócio já tem status correto: ${businessData.status}`);
