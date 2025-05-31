@@ -31,7 +31,7 @@ export function useClientOperations(onSuccess?: (client: Client) => void) {
     setError(null);
     
     try {
-      const result = await createClient(clientData, businessId);
+      const result = await createClient(businessId, clientData);
       
       if (result.success && result.data) {
         toast.success("Cliente criado com sucesso!");
@@ -101,7 +101,7 @@ export function useClientOperations(onSuccess?: (client: Client) => void) {
     setError(null);
     
     try {
-      const result = await deleteClient(id, businessId);
+      const result = await deleteClient(id);
       
       if (result.success) {
         toast.success("Cliente excluído com sucesso!");

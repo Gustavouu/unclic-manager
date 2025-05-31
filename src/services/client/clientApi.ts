@@ -8,7 +8,7 @@ export const clientApi = {
     try {
       let query = supabase
         .from('clients')
-        .select('*')
+        .select('id, name, email, phone, birth_date, gender, address, city, state, zip_code, notes, created_at, updated_at, business_id, user_id, last_visit, total_spent')
         .eq('business_id', businessId);
 
       // Apply search filter
@@ -60,7 +60,7 @@ export const clientApi = {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .select('*')
+        .select('id, name, email, phone, birth_date, gender, address, city, state, zip_code, notes, created_at, updated_at, business_id, user_id, last_visit, total_spent')
         .eq('id', clientId)
         .single();
 
@@ -102,7 +102,7 @@ export const clientApi = {
       const { data, error } = await supabase
         .from('clients')
         .insert(insertData)
-        .select()
+        .select('id, name, email, phone, birth_date, gender, address, city, state, zip_code, notes, created_at, updated_at, business_id, user_id, last_visit, total_spent')
         .single();
 
       if (error) throw error;
@@ -162,7 +162,7 @@ export const clientApi = {
         .from('clients')
         .update(updateData)
         .eq('id', clientId)
-        .select()
+        .select('id, name, email, phone, birth_date, gender, address, city, state, zip_code, notes, created_at, updated_at, business_id, user_id, last_visit, total_spent')
         .single();
 
       if (error) throw error;

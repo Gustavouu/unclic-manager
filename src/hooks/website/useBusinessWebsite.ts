@@ -19,7 +19,6 @@ export interface BusinessData {
   admin_email?: string;
   neighborhood?: string;
   owner_id?: string;
-  theme?: string;
   currency?: string;
   timezone?: string;
   business_type?: string;

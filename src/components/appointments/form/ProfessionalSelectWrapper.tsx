@@ -38,7 +38,7 @@ export default function ProfessionalSelectWrapper({ form, serviceId }: Professio
         
         const { data: professionalsData, error } = await supabase
           .from('professionals')
-          .select('*')
+          .select('id, name, photo_url')
           .eq('business_id', businessId);
           
         if (!error && professionalsData?.length) {
