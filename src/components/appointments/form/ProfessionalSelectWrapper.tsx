@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
@@ -10,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AppointmentFormValues } from "@/types/appointments";
 
 interface Professional {
   id: string;
@@ -20,10 +18,21 @@ interface Professional {
   services?: { id: string }[];
 }
 
-export type ProfessionalSelectWrapperProps = {
-  form: UseFormReturn<AppointmentFormValues>;
+interface AppointmentFormValues {
+  professionalId: string;
   serviceId?: string;
-};
+  [key: string]: any;
+}
+
+interface FormReturn {
+  control: any;
+  setValue: (name: keyof AppointmentFormValues, value: any) => void;
+}
+
+export interface ProfessionalSelectWrapperProps {
+  form: FormReturn;
+  serviceId?: string;
+}
 
 export default function ProfessionalSelectWrapper({ form, serviceId }: ProfessionalSelectWrapperProps) {
   const [professionals, setProfessionals] = useState<Professional[]>([]);

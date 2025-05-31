@@ -19,8 +19,14 @@ export const useBusinessHoursState = () => {
     setBusinessHours(hours);
   };
 
+  // Legacy support - same function with different name
+  const updateHours = (hours: BusinessHours) => {
+    setBusinessHours(hours);
+  };
+
   return {
     businessHours,
     updateBusinessHours,
+    updateHours, // Legacy support
   };
 };

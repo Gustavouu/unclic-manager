@@ -25,13 +25,23 @@ export const StaffStep: React.FC = () => {
   }) => {
     if (editingStaff) {
       // Atualizando funcionário existente
-      updateStaffMember(editingStaff, data);
+      updateStaffMember(editingStaff, {
+        nome: data.name,
+        cargo: data.role,
+        email: data.email,
+        phone: data.phone,
+        especializacoes: data.specialties,
+      });
       toast.success("Profissional atualizado com sucesso!");
     } else {
       // Adicionando novo funcionário
       const newStaff = {
         id: uuidv4(),
-        ...data
+        nome: data.name,
+        cargo: data.role,
+        email: data.email,
+        phone: data.phone,
+        especializacoes: data.specialties,
       };
       addStaffMember(newStaff);
       toast.success("Profissional adicionado com sucesso!");

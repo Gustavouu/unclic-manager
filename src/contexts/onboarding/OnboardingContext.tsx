@@ -27,6 +27,8 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
   const [onboardingMethod, setOnboardingMethod] = useState<OnboardingMethod>(null);
   const [status, setStatus] = useState<OnboardingStatus>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [processingStep, setProcessingStep] = useState<string | undefined>(undefined);
+  const [businessCreated, setBusinessCreated] = useState<{ id: string } | undefined>(undefined);
 
   const { businessData, updateBusinessData } = useBusinessDataState({
     id: '',
@@ -46,14 +48,14 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
   });
 
   const { services, addService, updateService, removeService } = useServicesState();
-  const { staff, addStaff, updateStaff, removeStaff } = useStaffState();
+  const { staffMembers, hasStaff, setHasStaff, addStaffMember, updateStaffMember, removeStaffMember } = useStaffState();
   const { businessHours, updateBusinessHours } = useBusinessHoursState();
-  const { completeOnboarding } = useCompletion(businessData, services, staff, businessHours);
+  const { completeOnboarding } = useCompletion(businessData, services, staffMembers, businessHours);
   const { saveProgress, loadProgress } = usePersistence(
     currentStep,
     businessData,
     services,
-    staff,
+    staffMembers,
     businessHours,
     onboardingMethod
   );
@@ -71,6 +73,8 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
     setOnboardingMethod(null);
     setStatus('idle');
     setError(null);
+    setProcessingStep(undefined);
+    setBusinessCreated(undefined);
     updateBusinessData({
       id: '',
       name: '',
@@ -93,20 +97,28 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
     currentStep,
     businessData: normalizedBusinessData,
     services,
-    staff,
+    staff: staffMembers, // Map to legacy property name
+    staffMembers,
     businessHours,
-    isComplete: status === 'complete',
+    isComplete: status === 'complete' || status === 'success',
     onboardingMethod,
     status,
     error,
+    hasStaff,
+    processingStep,
+    businessCreated,
     setCurrentStep,
     updateBusinessData,
     addService,
     updateService,
     removeService,
-    addStaff,
-    updateStaff,
-    removeStaff,
+    addStaff: addStaffMember, // Map to legacy method name
+    updateStaff: updateStaffMember, // Map to legacy method name
+    removeStaff: removeStaffMember, // Map to legacy method name
+    addStaffMember,
+    updateStaffMember,
+    removeStaffMember,
+    setHasStaff,
     updateBusinessHours,
     setOnboardingMethod,
     completeOnboarding,

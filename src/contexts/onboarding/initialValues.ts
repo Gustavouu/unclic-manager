@@ -3,6 +3,7 @@ import { BusinessData, BusinessHours } from "./types";
 
 // Initial business data
 export const initialBusinessData: BusinessData = {
+  id: '',
   name: "",
   email: "",
   phone: "",
@@ -19,18 +20,17 @@ export const initialBusinessData: BusinessData = {
   socialMedia: {
     facebook: "",
     instagram: "",
-    linkedin: "",
-    twitter: ""
+    website: "",
   }
 };
 
 // Initial business hours
 export const initialBusinessHours: BusinessHours = {
-  monday: { open: true, openTime: "09:00", closeTime: "18:00" },
-  tuesday: { open: true, openTime: "09:00", closeTime: "18:00" },
-  wednesday: { open: true, openTime: "09:00", closeTime: "18:00" },
-  thursday: { open: true, openTime: "09:00", closeTime: "18:00" },
-  friday: { open: true, openTime: "09:00", closeTime: "18:00" },
-  saturday: { open: true, openTime: "09:00", closeTime: "13:00" },
-  sunday: { open: false, openTime: "09:00", closeTime: "18:00" }
+  monday: { start: "09:00", end: "18:00", isOpen: true, open: true, openTime: "09:00", closeTime: "18:00" },
+  tuesday: { start: "09:00", end: "18:00", isOpen: true, open: true, openTime: "09:00", closeTime: "18:00" },
+  wednesday: { start: "09:00", end: "18:00", isOpen: true, open: true, openTime: "09:00", closeTime: "18:00" },
+  thursday: { start: "09:00", end: "18:00", isOpen: true, open: true, openTime: "09:00", closeTime: "18:00" },
+  friday: { start: "09:00", end: "18:00", isOpen: true, open: true, openTime: "09:00", closeTime: "18:00" },
+  saturday: { start: "09:00", end: "13:00", isOpen: true, open: true, openTime: "09:00", closeTime: "13:00" },
+  sunday: { start: "09:00", end: "18:00", isOpen: false, open: false, openTime: "09:00", closeTime: "18:00" }
 };

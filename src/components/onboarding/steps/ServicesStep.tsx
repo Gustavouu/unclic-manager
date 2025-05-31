@@ -1,15 +1,15 @@
 
 import React, { useState } from "react";
 import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
-import { ServiceCard } from "../cards/ServiceCard";
 import { Button } from "@/components/ui/button";
+import { ServiceCard } from "../cards/ServiceCard";
 import { ServiceDialog } from "../dialogs/ServiceDialog";
 import { PlusCircle } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 
 export const ServicesStep: React.FC = () => {
-  const { services, addService, removeService, updateService } = useOnboarding();
+  const { services, addService, updateService, removeService } = useOnboarding();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<string | null>(null);
   
@@ -21,13 +21,33 @@ export const ServicesStep: React.FC = () => {
   }) => {
     if (editingService) {
       // Atualizando serviço existente
-      updateService(editingService, data);
+      updateService(editingService, {
+        nome: data.name,
+        name: data.name,
+        duracao: data.duration,
+        duration: data.duration,
+        preco: data.price,
+        price: data.price,
+        descricao: data.description,
+        description: data.description,
+        ativo: true,
+        active: true,
+      });
       toast.success("Serviço atualizado com sucesso!");
     } else {
       // Adicionando novo serviço
       const newService = {
         id: uuidv4(),
-        ...data
+        nome: data.name,
+        name: data.name,
+        duracao: data.duration,
+        duration: data.duration,
+        preco: data.price,
+        price: data.price,
+        descricao: data.description,
+        description: data.description,
+        ativo: true,
+        active: true,
       };
       addService(newService);
       toast.success("Serviço adicionado com sucesso!");
@@ -60,7 +80,7 @@ export const ServicesStep: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Serviços Oferecidos</h3>
+        <h3 className="text-lg font-medium">Serviços</h3>
         <Button onClick={handleOpenDialog} className="flex items-center">
           <PlusCircle className="mr-2 h-4 w-4" />
           Adicionar Serviço
