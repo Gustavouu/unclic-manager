@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
@@ -18,6 +17,15 @@ interface Professional {
   photo_url?: string;
   foto_url?: string;
   services?: { id: string }[];
+}
+
+interface AppointmentFormValues {
+  professionalId: string;
+  serviceId?: string;
+  clientId?: string;
+  date?: Date;
+  time?: string;
+  notes?: string;
 }
 
 export type ProfessionalSelectWrapperProps = {

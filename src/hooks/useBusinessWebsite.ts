@@ -16,7 +16,6 @@ export interface BusinessData {
   zip_code?: string;
   admin_email?: string;
   neighborhood?: string;
-  owner_id?: string;
   theme?: string;
   currency?: string;
   timezone?: string;
@@ -104,7 +103,6 @@ export const useBusinessWebsite = (businessId?: string) => {
                 zip_code: legacyData.cep,
                 admin_email: legacyData.email_admin,
                 neighborhood: legacyData.bairro,
-                owner_id: '',
                 theme: 'default',
                 currency: 'BRL',
                 timezone: 'America/Sao_Paulo',
