@@ -1,12 +1,13 @@
+
 export interface Service {
   id: string;
   business_id: string;
   name: string;
-  description: string;
-  duration: number; // em minutos
+  description?: string;
+  duration: number;
   price: number;
   category: string;
-  image_url: string | null;
+  image_url?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -15,11 +16,11 @@ export interface Service {
 export interface ServiceCreate {
   business_id: string;
   name: string;
-  description: string;
+  description?: string;
   duration: number;
   price: number;
   category: string;
-  image_url?: string | null;
+  image_url?: string;
   is_active?: boolean;
 }
 
@@ -29,17 +30,8 @@ export interface ServiceUpdate {
   duration?: number;
   price?: number;
   category?: string;
-  image_url?: string | null;
+  image_url?: string;
   is_active?: boolean;
-}
-
-export interface ServiceStats {
-  totalAppointments: number;
-  totalRevenue: number;
-  averagePrice: number;
-  mostPopularProfessional: string | null;
-  busiestDay: string | null;
-  busiestTime: string | null;
 }
 
 export interface ServiceSearchParams {
@@ -53,12 +45,21 @@ export interface ServiceSearchParams {
   search?: string;
 }
 
+export interface ServiceStats {
+  totalAppointments: number;
+  totalRevenue: number;
+  averagePrice: number;
+  mostPopularProfessional: string;
+  busiestDay: string;
+  busiestTime: string;
+}
+
 export interface ServiceCategory {
   id: string;
   business_id: string;
   name: string;
-  description: string | null;
-  image_url: string | null;
+  description?: string;
+  image_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -66,14 +67,14 @@ export interface ServiceCategory {
 export interface ServiceCategoryCreate {
   business_id: string;
   name: string;
-  description?: string | null;
-  image_url?: string | null;
+  description?: string;
+  image_url?: string;
 }
 
 export interface ServiceCategoryUpdate {
   name?: string;
-  description?: string | null;
-  image_url?: string | null;
+  description?: string;
+  image_url?: string;
 }
 
 export interface ServiceCategoryStats {
@@ -81,6 +82,6 @@ export interface ServiceCategoryStats {
   totalAppointments: number;
   totalRevenue: number;
   averagePrice: number;
-  mostPopularService: string | null;
-  mostPopularProfessional: string | null;
-} 
+  mostPopularService: string;
+  mostPopularProfessional: string;
+}

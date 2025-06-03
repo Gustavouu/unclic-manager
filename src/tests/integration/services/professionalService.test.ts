@@ -174,4 +174,4 @@ describe('ProfessionalService Integration', () => {
     await serviceService.delete(testServiceId);
     await businessService.delete(testBusinessId);
   });
-}); 
+});

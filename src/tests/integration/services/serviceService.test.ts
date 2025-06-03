@@ -210,4 +210,4 @@ describe('ServiceService Integration', () => {
     await professionalService.delete(testProfessionalId);
     await businessService.delete(testBusinessId);
   });
-}); 
+});
