@@ -1,5 +1,5 @@
 
-import { businessService } from './business/businessService';
+import { BusinessService } from './business/businessService';
 
 export class InitializationService {
   static async initializeApp() {
