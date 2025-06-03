@@ -78,6 +78,7 @@ export function FinancialActions() {
       const { error } = await supabase
         .from('financial_transactions')
         .insert({
+          id: crypto.randomUUID(),
           type: data.type,
           amount: data.amount,
           description: data.description,
@@ -87,7 +88,8 @@ export function FinancialActions() {
           status: data.status as any,
           tenantId: businessId,
           accountId: accounts[0].id,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         });
       
       if (error) throw error;

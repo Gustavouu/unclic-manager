@@ -32,12 +32,12 @@ export const useServices = () => {
 
       const normalizedServices = data?.map(service => ({
         id: service.id,
-        name: service.name || '',
-        description: service.description || '',
-        price: service.price || 0,
-        duration: service.duration || 0,
-        category: service.category || '',
-        isActive: service.is_active !== false
+        name: service.nome || '',
+        description: service.descricao || '',
+        price: service.preco || 0,
+        duration: service.duracao || 0,
+        category: service.id_categoria || '',
+        isActive: service.ativo !== false
       })) || [];
 
       setServices(normalizedServices);

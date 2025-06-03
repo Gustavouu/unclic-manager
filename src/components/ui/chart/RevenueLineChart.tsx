@@ -1,7 +1,12 @@
 
 import React from 'react';
 import { Line, LineChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { RevenueChartData } from '@/hooks/payment/useFinancialMetrics';
+
+interface RevenueChartData {
+  month: string;
+  revenue: number;
+  subscriptions: number;
+}
 
 interface RevenueLineChartProps {
   data: RevenueChartData[];

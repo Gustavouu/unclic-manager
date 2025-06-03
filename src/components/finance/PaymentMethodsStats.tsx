@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,38 +23,38 @@ export function PaymentMethodsStats({ isLoading }: PaymentMethodsStatsProps) {
     const fetchPaymentMethods = async () => {
       try {
         const { data, error } = await supabase
-          .from('transacoes')
-          .select('metodo_pagamento, valor')
-          .eq('tipo', 'receita')
-          .eq('status', 'approved')
-          .eq('id_negocio', businessId);
+          .from('financial_transactions')
+          .select('paymentMethod, amount')
+          .eq('type', 'INCOME')
+          .eq('status', 'PAID')
+          .eq('tenantId', businessId);
         
         if (error) throw error;
         
         // Agrupar e somar por método de pagamento
         const methods: Record<string, number> = {};
         data.forEach(transaction => {
-          const method = transaction.metodo_pagamento || 'outro';
-          methods[method] = (methods[method] || 0) + Number(transaction.valor);
+          const method = transaction.paymentMethod || 'OTHER';
+          methods[method] = (methods[method] || 0) + Number(transaction.amount);
         });
         
         // Transformar em array para o gráfico
         const methodColors: Record<string, string> = {
-          credit_card: '#4f46e5',
-          debit_card: '#3b82f6', 
-          pix: '#0ea5e9',
-          bank_slip: '#6366f1',
-          cash: '#8b5cf6',
-          outro: '#a3a3a3'
+          CREDIT_CARD: '#4f46e5',
+          DEBIT_CARD: '#3b82f6', 
+          PIX: '#0ea5e9',
+          BANK_SLIP: '#6366f1',
+          CASH: '#8b5cf6',
+          OTHER: '#a3a3a3'
         };
         
         const methodNames: Record<string, string> = {
-          credit_card: 'Cartão de Crédito',
-          debit_card: 'Cartão de Débito',
-          pix: 'PIX',
-          bank_slip: 'Boleto',
-          cash: 'Dinheiro',
-          outro: 'Outro'
+          CREDIT_CARD: 'Cartão de Crédito',
+          DEBIT_CARD: 'Cartão de Débito',
+          PIX: 'PIX',
+          BANK_SLIP: 'Boleto',
+          CASH: 'Dinheiro',
+          OTHER: 'Outro'
         };
         
         const methodsArray = Object.entries(methods).map(([key, value]) => ({

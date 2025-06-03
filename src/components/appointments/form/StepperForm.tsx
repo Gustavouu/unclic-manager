@@ -96,8 +96,8 @@ export function AppointmentStepperForm({
         professionalId: data.professionalId,
         date: appointmentDate,
         time: data.time,
-        duration: service.duracao,
-        price: service.preco,
+        duration: service.duration,
+        price: service.price,
         status: data.status,
         paymentMethod: data.paymentMethod,
         notes: data.notes
@@ -150,7 +150,7 @@ export function AppointmentStepperForm({
             <option value="">Selecione um serviço</option>
             {services.map(service => (
               <option key={service.id} value={service.id}>
-                {service.nome} - {service.duracao}min - R${service.preco.toFixed(2)}
+                {service.name} - {service.duration}min - R${service.price.toFixed(2)}
               </option>
             ))}
           </select>
