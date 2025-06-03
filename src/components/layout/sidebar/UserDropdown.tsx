@@ -1,6 +1,7 @@
 
-import * as React from "react";
-import { LoadingButton } from "@/components/ui/loading-button";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { LogOut, Settings, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -9,91 +10,47 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { LogOut, Settings, User } from "lucide-react";
 
 export function UserDropdown() {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
-  
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      // Use the logout function from auth context
-      await logout();
-      // Navigate to login
-      navigate("/login");
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error);
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
+  const { user, signOut } = useAuth();
 
-  // Helper function to get user name from user object
-  const getUserName = () => {
-    if (!user) return "Usuário";
-    // Check user.user_metadata first, then raw_user_metadata, then fall back to email
-    return user.user_metadata?.name || 
-           user.user_metadata?.full_name || 
-           (user as any).name ||
-           user.email?.split('@')[0] || 
-           "Usuário";
-  };
-  
-  const getInitials = (name?: string) => {
-    if (!name) return "UN";
-    return name
-      .split(" ")
-      .map(n => n[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase();
-  };
+  if (!user) {
+    return null;
+  }
+
+  const userInitials = user.email?.substring(0, 2).toUpperCase() || "U";
+  const userName = user.user_metadata?.name || user.email || "Usuário";
 
   return (
-    <div className="mt-auto border-t">
+    <div className="p-4 border-t">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex h-14 w-full items-center p-3 text-left transition-colors hover:bg-accent/50 focus:outline-none">
-            <Avatar className="mr-2 h-8 w-8">
-              <AvatarImage src="/images/barber-avatar.png" alt="Avatar" />
-              <AvatarFallback>{getInitials(getUserName())}</AvatarFallback>
+          <Button variant="ghost" className="w-full justify-start gap-2 h-auto p-2">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={user.user_metadata?.avatar_url} />
+              <AvatarFallback>{userInitials}</AvatarFallback>
             </Avatar>
-            <span className="flex-1 overflow-hidden">
-              <span className="block truncate font-medium">
-                {getUserName()}
+            <div className="flex flex-col items-start text-sm">
+              <span className="font-medium">{userName}</span>
+              <span className="text-xs text-muted-foreground truncate">
+                {user.email}
               </span>
-              <span className="block truncate text-xs text-muted-foreground">
-                {user?.email || ""}
-              </span>
-            </span>
-          </button>
+            </div>
+          </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56" forceMount>
-          <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer">
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuItem>
             <User className="mr-2 h-4 w-4" />
             <span>Perfil</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer">
+          <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />
             <span>Configurações</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-            {isLoggingOut ? (
-              <LoadingButton isLoading variant="ghost" className="w-full justify-start p-0">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sair
-              </LoadingButton>
-            ) : (
-              <>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Sair</span>
-              </>
-            )}
+          <DropdownMenuItem onClick={() => signOut()}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Sair</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
