@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,7 +10,7 @@ import { AsyncFeedback } from "@/components/ui/async-feedback";
 import { LogIn, Lock, Mail, UserPlus } from "lucide-react";
 
 const Login = () => {
-  const { login, user, loading } = useAuth();
+  const { signIn, user, loading } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,9 +23,7 @@ const Login = () => {
     setErrorMessage("");
     
     try {
-      await login(email, password);
-      
-      // Let Index component handle the routing based on onboarding status
+      await signIn(email, password);
       navigate("/");
     } catch (error: any) {
       console.error("Erro de login:", error);
@@ -34,7 +33,6 @@ const Login = () => {
     }
   };
   
-  // Se já estiver autenticado, redirecionar para o index que decidirá o fluxo
   if (user && !loading) {
     return <Navigate to="/" replace />;
   }

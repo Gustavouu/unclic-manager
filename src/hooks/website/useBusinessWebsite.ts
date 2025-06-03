@@ -1,90 +1,65 @@
 
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from 'react';
 
-export interface BusinessData {
+interface BusinessWebsite {
   id: string;
+  slug: string;
   name: string;
-  description?: string;
+  description: string;
   logo_url?: string;
-  website_url?: string;
-  instagram_url?: string;
-  phone?: string;
-  address?: string;
-  address_number?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  zip_code?: string;
-  admin_email?: string;
-  neighborhood?: string;
-  owner_id?: string;
-  currency?: string;
-  timezone?: string;
-  business_type?: string;
-  working_hours?: any;
-  created_at?: string;
-  updated_at?: string;
+  banner_url?: string;
+  primary_color: string;
+  secondary_color: string;
+  allow_online_booking: boolean;
 }
 
-export interface SimpleStaff {
-  id: string;
-  name: string;
-  bio?: string;
-  photo_url?: string;
-  business_id: string;
-  specialties?: string[];
-}
+export const useBusinessWebsite = (slug?: string) => {
+  const [website, setWebsite] = useState<BusinessWebsite | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-export const useBusinessWebsite = (businessId?: string) => {
-  const [business, setBusiness] = useState<BusinessData | null>(null);
-  const [staff, setStaff] = useState<SimpleStaff[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
-
-  useEffect(() => {
-    if (!businessId) {
-      setLoading(false);
+  const fetchWebsite = async () => {
+    if (!slug) {
+      setWebsite(null);
+      setIsLoading(false);
       return;
     }
 
-    const fetchBusinessData = async () => {
-      setLoading(true);
-      try {
-        // Fetch staff from professionals table if it exists
-        const { data: professionalsData, error: professionalsError } = await supabase
-          .from('professionals')
-          .select('*')
-          .eq('business_id', businessId);
-          
-        let staffInfo: SimpleStaff[] = [];
-        if (!professionalsError && professionalsData?.length) {
-          staffInfo = professionalsData.map((staff: any) => ({
-            id: staff.id,
-            name: staff.name,
-            bio: staff.bio,
-            photo_url: staff.photo_url,
-            business_id: staff.business_id,
-            specialties: staff.specialties || []
-          }));
-        }
+    setIsLoading(true);
+    setError(null);
 
-        setStaff(staffInfo);
-      } catch (err: any) {
-        console.error("Error loading website data:", err);
-        setError(err.message || 'Error loading data');
-      } finally {
-        setLoading(false);
-      }
-    };
+    try {
+      // Mock data for now to avoid database complexities
+      const mockWebsite: BusinessWebsite = {
+        id: '1',
+        slug: slug,
+        name: 'Business Demo',
+        description: 'Demo business website',
+        logo_url: null,
+        banner_url: null,
+        primary_color: '#213858',
+        secondary_color: '#33c3f0',
+        allow_online_booking: true
+      };
 
-    fetchBusinessData();
-  }, [businessId]);
+      setWebsite(mockWebsite);
+    } catch (err) {
+      console.error('Error fetching business website:', err);
+      setError(err as Error);
+      setWebsite(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWebsite();
+  }, [slug]);
 
   return {
-    business,
-    staff,
-    loading,
-    error
+    website,
+    isLoading,
+    error,
+    refetch: fetchWebsite
   };
 };

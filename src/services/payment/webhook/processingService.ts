@@ -18,9 +18,7 @@ export const WebhookProcessingService = {
     try {
       console.log(`Recebida notificação de webhook de ${providerName}:`, payload);
       
-      // Check which payment provider is sending the notification
       if (providerName === 'efi-bank') {
-        // Process Efi Bank notification
         const paymentId = payload.payment_id;
         const status = payload.status;
         
@@ -31,13 +29,13 @@ export const WebhookProcessingService = {
           };
         }
         
-        // Update the transaction status in the database
+        // Update the transaction status in the financial_transactions table
         const { error } = await supabase
-          .from('transacoes')
+          .from('financial_transactions')
           .update({ 
             status: status,
-            data_pagamento: status === 'approved' ? new Date().toISOString() : null,
-            notas: JSON.stringify({
+            paymentDate: status === 'PAID' ? new Date().toISOString() : null,
+            notes: JSON.stringify({
               webhook_notification: {
                 provider: providerName,
                 received_at: new Date().toISOString(),
@@ -55,7 +53,6 @@ export const WebhookProcessingService = {
           };
         }
         
-        // Send notification to the client's webhook
         await WebhookNotificationService.sendWebhookNotification('payment.updated', {
           payment_id: paymentId,
           status,

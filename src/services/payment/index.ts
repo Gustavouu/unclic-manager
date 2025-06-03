@@ -30,27 +30,26 @@ export const PaymentService = {
    */
   async createPayment(request: PaymentRequest): Promise<PaymentResponse> {
     try {
-      // Generate a payment ID for this transaction
-      const paymentId = crypto.randomUUID(); // Using UUID instead of random string
+      const paymentId = crypto.randomUUID();
       
-      // Create a transaction record in the database
+      // Create transaction in financial_transactions table
       const { data, error } = await supabase
-        .from('transacoes')
+        .from('financial_transactions')
         .insert({
           id: paymentId,
-          tipo: 'receita',
-          valor: request.amount,
-          metodo_pagamento: request.paymentMethod,
-          status: request.paymentMethod === 'cash' ? 'approved' : 'pending',
-          descricao: request.description,
-          // Store service ID in notes as JSON since there's no direct column for it
-          notas: JSON.stringify({ 
+          type: 'INCOME',
+          amount: request.amount,
+          paymentMethod: request.paymentMethod as any,
+          status: request.paymentMethod === 'CASH' ? 'PAID' : 'PENDING',
+          description: request.description,
+          notes: JSON.stringify({ 
             serviceId: request.serviceId,
             source: 'payment_service' 
           }),
-          id_cliente: request.customerId,
-          id_agendamento: request.appointmentId,
-          id_negocio: request.businessId || "1" // Default to "1" if not provided
+          customerId: request.customerId,
+          appointmentId: request.appointmentId,
+          tenantId: request.businessId || "1",
+          accountId: "default-account"
         })
         .select()
         .single();
@@ -62,20 +61,16 @@ export const PaymentService = {
       
       let paymentUrl = null;
       
-      // For non-cash payments, generate appropriate payment URLs
-      if (request.paymentMethod === 'pix') {
-        // In a real implementation, we would generate a PIX code or URL
+      if (request.paymentMethod === 'PIX') {
         const webhookUrl = new URL(window.location.origin);
         webhookUrl.pathname = "/api/webhook-handler";
         paymentUrl = `https://efi-bank.com/payment/${paymentId}?callback=${encodeURIComponent(webhookUrl.toString())}`;
-      } else if (request.paymentMethod === 'credit_card') {
-        // In a real implementation, we would redirect to a credit card payment page
+      } else if (request.paymentMethod === 'CREDIT_CARD') {
         const webhookUrl = new URL(window.location.origin);
         webhookUrl.pathname = "/api/webhook-handler";
         paymentUrl = `https://efi-bank.com/payment/${paymentId}?callback=${encodeURIComponent(webhookUrl.toString())}`;
       }
       
-      // Notify our webhook handler about the new payment
       try {
         await fetch('/api/webhook-handler', {
           method: 'POST',
@@ -87,22 +82,21 @@ export const PaymentService = {
             data: {
               payment_id: paymentId,
               status: data.status,
-              amount: data.valor,
-              payment_method: data.metodo_pagamento
+              amount: data.amount,
+              payment_method: data.paymentMethod
             }
           })
         });
       } catch (webhookError) {
-        // Log but don't fail the transaction if webhook notification fails
         console.warn("Could not notify webhook about new payment:", webhookError);
       }
       
       return {
         id: paymentId,
-        status: data.status as "pending" | "approved" | "rejected" | "cancelled" | "processing",
-        amount: data.valor,
-        paymentMethod: data.metodo_pagamento,
-        createdAt: data.criado_em,
+        status: data.status as any,
+        amount: data.amount,
+        paymentMethod: data.paymentMethod,
+        createdAt: data.createdAt,
         paymentUrl: paymentUrl,
         transactionId: paymentId
       };
@@ -118,7 +112,7 @@ export const PaymentService = {
   async getPaymentStatus(paymentId: string): Promise<PaymentResponse> {
     try {
       const { data, error } = await supabase
-        .from('transacoes')
+        .from('financial_transactions')
         .select()
         .eq('id', paymentId)
         .single();
@@ -128,20 +122,17 @@ export const PaymentService = {
         throw new Error(`Erro ao consultar o status: ${error.message}`);
       }
       
-      // If successful, check if we need to simulate a status update for demo purposes
-      if (data && data.status === 'pending') {
-        // Randomly decide if we should update the status (for demo purposes)
+      if (data && data.status === 'PENDING') {
         const shouldUpdateStatus = Math.random() > 0.7;
         
         if (shouldUpdateStatus) {
-          const newStatus = Math.random() > 0.5 ? 'approved' : 'processing';
+          const newStatus = Math.random() > 0.5 ? 'PAID' : 'PROCESSING';
           
-          // Update the transaction status in the database
           const { error: updateError } = await supabase
-            .from('transacoes')
+            .from('financial_transactions')
             .update({ 
               status: newStatus,
-              data_pagamento: newStatus === 'approved' ? new Date().toISOString() : null
+              paymentDate: newStatus === 'PAID' ? new Date().toISOString() : null
             })
             .eq('id', paymentId);
           
@@ -151,7 +142,6 @@ export const PaymentService = {
             data.status = newStatus;
           }
           
-          // Notify webhook about the status change
           try {
             await fetch('/api/webhook-handler', {
               method: 'POST',
@@ -175,10 +165,10 @@ export const PaymentService = {
       
       return {
         id: data.id,
-        status: data.status as "pending" | "approved" | "rejected" | "cancelled" | "processing",
-        amount: data.valor,
-        paymentMethod: data.metodo_pagamento,
-        createdAt: data.criado_em,
+        status: data.status as any,
+        amount: data.amount,
+        paymentMethod: data.paymentMethod,
+        createdAt: data.createdAt,
         transactionId: data.id
       };
     } catch (error) {
