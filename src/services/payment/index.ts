@@ -31,6 +31,7 @@ export const PaymentService = {
   async createPayment(request: PaymentRequest): Promise<PaymentResponse> {
     try {
       const paymentId = crypto.randomUUID();
+      const now = new Date().toISOString();
       
       // Create transaction in financial_transactions table
       const { data, error } = await supabase
@@ -49,7 +50,9 @@ export const PaymentService = {
           customerId: request.customerId,
           appointmentId: request.appointmentId,
           tenantId: request.businessId || "1",
-          accountId: "default-account"
+          accountId: "default-account",
+          createdAt: now,
+          updatedAt: now
         })
         .select()
         .single();
@@ -126,13 +129,14 @@ export const PaymentService = {
         const shouldUpdateStatus = Math.random() > 0.7;
         
         if (shouldUpdateStatus) {
-          const newStatus = Math.random() > 0.5 ? 'PAID' : 'PROCESSING';
+          const newStatus = Math.random() > 0.5 ? 'PAID' : 'PENDING';
           
           const { error: updateError } = await supabase
             .from('financial_transactions')
             .update({ 
               status: newStatus,
-              paymentDate: newStatus === 'PAID' ? new Date().toISOString() : null
+              paymentDate: newStatus === 'PAID' ? new Date().toISOString() : null,
+              updatedAt: new Date().toISOString()
             })
             .eq('id', paymentId);
           
