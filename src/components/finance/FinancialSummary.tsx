@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/formatters";
@@ -29,45 +30,45 @@ export function FinancialSummary({ isLoading }: FinancialSummaryProps) {
         
         // Buscar receitas
         const { data: receitasData, error: receitasError } = await supabase
-          .from('transacoes')
-          .select('valor')
-          .eq('tipo', 'receita')
-          .eq('status', 'approved')
-          .eq('id_negocio', businessId)
-          .gte('criado_em', thirtyDaysAgo.toISOString());
+          .from('financial_transactions')
+          .select('amount')
+          .eq('type', 'INCOME')
+          .eq('status', 'PAID')
+          .eq('tenantId', businessId)
+          .gte('createdAt', thirtyDaysAgo.toISOString());
         
         if (receitasError) throw receitasError;
         
         // Buscar despesas
         const { data: despesasData, error: despesasError } = await supabase
-          .from('transacoes')
-          .select('valor')
-          .eq('tipo', 'despesa')
-          .eq('status', 'approved')
-          .eq('id_negocio', businessId)
-          .gte('criado_em', thirtyDaysAgo.toISOString());
+          .from('financial_transactions')
+          .select('amount')
+          .eq('type', 'EXPENSE')
+          .eq('status', 'PAID')
+          .eq('tenantId', businessId)
+          .gte('createdAt', thirtyDaysAgo.toISOString());
         
         if (despesasError) throw despesasError;
         
         // Buscar transações pendentes
         const { data: pendentesData, error: pendentesError } = await supabase
-          .from('transacoes')
+          .from('financial_transactions')
           .select('id')
-          .eq('status', 'pending')
-          .eq('id_negocio', businessId)
-          .gte('criado_em', thirtyDaysAgo.toISOString());
+          .eq('status', 'PENDING')
+          .eq('tenantId', businessId)
+          .gte('createdAt', thirtyDaysAgo.toISOString());
         
         if (pendentesError) throw pendentesError;
         
         // Calcular totais
-        const totalReceitas = receitasData.reduce((sum, item) => sum + Number(item.valor), 0);
-        const totalDespesas = despesasData.reduce((sum, item) => sum + Number(item.valor), 0);
+        const totalReceitas = receitasData?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
+        const totalDespesas = despesasData?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
         
         setSummaryData({
           receitas: totalReceitas,
           despesas: totalDespesas,
           saldo: totalReceitas - totalDespesas,
-          transacoesPendentes: pendentesData.length
+          transacoesPendentes: pendentesData?.length || 0
         });
       } catch (error) {
         console.error("Erro ao buscar dados do resumo financeiro:", error);

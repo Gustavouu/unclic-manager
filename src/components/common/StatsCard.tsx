@@ -1,51 +1,37 @@
 
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface StatsCardProps {
   title: string;
-  value: string | number;
+  value: string;
   description?: string;
   icon?: React.ReactNode;
   iconColor?: string;
   borderColor?: string;
-  isLoading?: boolean;
 }
 
-export function StatsCard({
+export const StatsCard: React.FC<StatsCardProps> = ({
   title,
   value,
   description,
   icon,
   iconColor = "bg-blue-50 text-blue-500",
-  borderColor = "border-l-blue-600",
-  isLoading = false
-}: StatsCardProps) {
+  borderColor = "border-l-blue-600"
+}) => {
   return (
-    <Card className={`overflow-hidden border-l-4 ${borderColor}`}>
+    <Card className={`border-l-4 ${borderColor}`}>
       <CardContent className="p-6">
-        <div className="flex justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              {title}
-            </p>
-            
-            {isLoading ? (
-              <Skeleton className="h-7 w-24 mt-1" />
-            ) : (
-              <p className="text-2xl font-bold mt-1">{value}</p>
-            )}
-            
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-600">{title}</p>
+            <p className="text-2xl font-bold text-gray-900">{value}</p>
             {description && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {description}
-              </p>
+              <p className="text-xs text-gray-500 mt-1">{description}</p>
             )}
           </div>
-          
           {icon && (
-            <div className={`p-2 rounded-full ${iconColor}`}>
+            <div className={`p-3 rounded-full ${iconColor}`}>
               {icon}
             </div>
           )}
@@ -53,4 +39,4 @@ export function StatsCard({
       </CardContent>
     </Card>
   );
-}
+};

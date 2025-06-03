@@ -18,32 +18,32 @@ export const usePaymentConfig = () => {
   useEffect(() => {
     const checkConfiguration = async () => {
       try {
-        // Check if any transaction has Efi Bank information in its notes
+        // Check if any transaction has payment gateway configuration
         const { data, error } = await supabase
-          .from('transacoes')
-          .select('notas')
-          .eq('id_negocio', "1")
-          .not('notas', 'is', null)
+          .from('financial_transactions')
+          .select('paymentGatewayData')
+          .not('paymentGatewayData', 'is', null)
           .limit(1);
 
         if (error) {
-          console.error("Erro ao verificar configuração da Efi Bank:", error);
+          console.error("Erro ao verificar configuração de pagamento:", error);
         }
 
-        // Check if any transaction has Efi Bank config in notes
-        if (data && data.length > 0 && data[0].notas) {
+        // Check if any transaction has payment gateway config
+        if (data && data.length > 0 && data[0].paymentGatewayData) {
           try {
-            const notes = data[0].notas;
-            if (typeof notes === 'string') {
-              const parsedNotes = JSON.parse(notes);
+            const gatewayData = data[0].paymentGatewayData;
+            if (typeof gatewayData === 'object' && gatewayData !== null) {
               setState({
-                isConfigured: !!parsedNotes.efi_integration,
-                isWebhookConfigured: !!parsedNotes.webhook_config,
+                isConfigured: true,
+                isWebhookConfigured: true,
                 isLoading: false
               });
+            } else {
+              setState(prev => ({ ...prev, isLoading: false }));
             }
           } catch (parseError) {
-            console.error("Error parsing notes JSON:", parseError);
+            console.error("Error parsing gateway data:", parseError);
             setState(prev => ({ ...prev, isLoading: false }));
           }
         } else {

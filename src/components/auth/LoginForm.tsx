@@ -1,13 +1,12 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Logo } from "@/components/common/Logo";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -27,17 +26,15 @@ export function LoginForm() {
     setIsLoading(true);
     
     try {
-      const { data, error } = await signIn(email, password);
+      const { error } = await signIn(email, password);
       
       if (error) {
         toast.error(error.message || "Erro ao fazer login");
         return;
       }
 
-      if (data.user) {
-        toast.success("Login realizado com sucesso!");
-        navigate("/dashboard");
-      }
+      toast.success("Login realizado com sucesso!");
+      navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Erro inesperado ao fazer login");
@@ -50,9 +47,6 @@ export function LoginForm() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            <Logo />
-          </div>
           <CardTitle className="text-2xl text-center">Fazer login</CardTitle>
           <CardDescription className="text-center">
             Entre com seu email e senha para acessar sua conta

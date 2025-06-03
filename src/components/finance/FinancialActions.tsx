@@ -1,11 +1,11 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+  DialogTitle 
 } from "@/components/ui/dialog";
 import { 
   Form, 
@@ -34,54 +34,65 @@ import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 // Definindo os schemas para os formulários
 const transactionSchema = z.object({
-  tipo: z.enum(["receita", "despesa"]),
-  valor: z.coerce.number().positive("O valor deve ser maior que zero"),
-  metodo_pagamento: z.string().min(1, "Selecione um método de pagamento"),
-  descricao: z.string().min(3, "Adicione uma descrição para a transação"),
-  id_categoria: z.string().optional(),
-  data_pagamento: z.string().optional(),
-  status: z.string().default("approved")
+  type: z.enum(["INCOME", "EXPENSE"]),
+  amount: z.coerce.number().positive("O valor deve ser maior que zero"),
+  paymentMethod: z.string().min(1, "Selecione um método de pagamento"),
+  description: z.string().min(3, "Adicione uma descrição para a transação"),
+  categoryId: z.string().optional(),
+  paymentDate: z.string().optional(),
+  status: z.string().default("PAID")
 });
 
 export function FinancialActions() {
   const [isOpen, setIsOpen] = useState(false);
-  const [transactionType, setTransactionType] = useState<"receita" | "despesa" | null>(null);
+  const [transactionType, setTransactionType] = useState<"INCOME" | "EXPENSE" | null>(null);
   const { businessId } = useCurrentBusiness();
   
   const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      tipo: "receita",
-      valor: undefined,
-      metodo_pagamento: "",
-      descricao: "",
-      status: "approved"
+      type: "INCOME",
+      amount: undefined,
+      paymentMethod: "",
+      description: "",
+      status: "PAID"
     }
   });
   
   const onSubmit = async (data: z.infer<typeof transactionSchema>) => {
     try {
-      // Ensure valor is a number
-      const valor = typeof data.valor === 'number' ? data.valor : 0;
+      // Get a default financial account
+      const { data: accounts } = await supabase
+        .from('financial_accounts')
+        .select('id')
+        .eq('tenantId', businessId)
+        .eq('isActive', true)
+        .limit(1);
       
-      // Registrar a transação no banco de dados
+      if (!accounts || accounts.length === 0) {
+        toast.error("Nenhuma conta financeira configurada");
+        return;
+      }
+      
+      // Register the transaction in the database
       const { error } = await supabase
-        .from('transacoes')
+        .from('financial_transactions')
         .insert({
-          tipo: data.tipo,
-          valor: valor,
-          descricao: data.descricao,
-          metodo_pagamento: data.metodo_pagamento,
-          id_categoria: data.id_categoria,
-          data_pagamento: data.data_pagamento,
-          status: data.status,
-          id_negocio: businessId,
-          criado_em: new Date().toISOString()
+          type: data.type,
+          amount: data.amount,
+          description: data.description,
+          paymentMethod: data.paymentMethod as any,
+          categoryId: data.categoryId,
+          paymentDate: data.paymentDate,
+          status: data.status as any,
+          tenantId: businessId,
+          accountId: accounts[0].id,
+          createdAt: new Date().toISOString()
         });
       
       if (error) throw error;
       
-      toast.success(`${data.tipo === "receita" ? "Receita" : "Despesa"} registrada com sucesso!`);
+      toast.success(`${data.type === "INCOME" ? "Receita" : "Despesa"} registrada com sucesso!`);
       form.reset();
       setIsOpen(false);
     } catch (error) {
@@ -90,14 +101,14 @@ export function FinancialActions() {
     }
   };
   
-  const openDialog = (type: "receita" | "despesa") => {
+  const openDialog = (type: "INCOME" | "EXPENSE") => {
     setTransactionType(type);
     form.reset({
-      tipo: type,
-      valor: undefined,
-      metodo_pagamento: "",
-      descricao: "",
-      status: "approved"
+      type: type,
+      amount: undefined,
+      paymentMethod: "",
+      description: "",
+      status: "PAID"
     });
     setIsOpen(true);
   };
@@ -107,7 +118,7 @@ export function FinancialActions() {
       <Button
         variant="outline"
         className="gap-2 text-green-600"
-        onClick={() => openDialog("receita")}
+        onClick={() => openDialog("INCOME")}
       >
         <ArrowUpCircle className="h-4 w-4" />
         Nova Receita
@@ -116,7 +127,7 @@ export function FinancialActions() {
       <Button
         variant="outline"
         className="gap-2 text-red-600"
-        onClick={() => openDialog("despesa")}
+        onClick={() => openDialog("EXPENSE")}
       >
         <ArrowDownCircle className="h-4 w-4" />
         Nova Despesa
@@ -132,7 +143,7 @@ export function FinancialActions() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {transactionType === "receita" ? "Adicionar Receita" : "Adicionar Despesa"}
+              {transactionType === "INCOME" ? "Adicionar Receita" : "Adicionar Despesa"}
             </DialogTitle>
           </DialogHeader>
           
@@ -140,7 +151,7 @@ export function FinancialActions() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="valor"
+                name="amount"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Valor</FormLabel>
@@ -162,14 +173,14 @@ export function FinancialActions() {
               
               <FormField
                 control={form.control}
-                name="descricao"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Descrição</FormLabel>
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder={`Descreva ${transactionType === "receita" ? "a receita" : "a despesa"}`}
+                        placeholder={`Descreva ${transactionType === "INCOME" ? "a receita" : "a despesa"}`}
                       />
                     </FormControl>
                   </FormItem>
@@ -178,7 +189,7 @@ export function FinancialActions() {
               
               <FormField
                 control={form.control}
-                name="metodo_pagamento"
+                name="paymentMethod"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Método de Pagamento</FormLabel>
@@ -189,11 +200,11 @@ export function FinancialActions() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
-                        <SelectItem value="debit_card">Cartão de Débito</SelectItem>
-                        <SelectItem value="pix">PIX</SelectItem>
-                        <SelectItem value="bank_slip">Boleto</SelectItem>
-                        <SelectItem value="cash">Dinheiro</SelectItem>
+                        <SelectItem value="CREDIT_CARD">Cartão de Crédito</SelectItem>
+                        <SelectItem value="DEBIT_CARD">Cartão de Débito</SelectItem>
+                        <SelectItem value="PIX">PIX</SelectItem>
+                        <SelectItem value="BANK_SLIP">Boleto</SelectItem>
+                        <SelectItem value="CASH">Dinheiro</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>
@@ -205,7 +216,7 @@ export function FinancialActions() {
               
               <FormField
                 control={form.control}
-                name="data_pagamento"
+                name="paymentDate"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Data do Pagamento</FormLabel>

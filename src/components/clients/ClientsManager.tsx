@@ -12,7 +12,8 @@ import {
   Phone, 
   Mail, 
   MapPin,
-  Calendar
+  Calendar,
+  Users
 } from 'lucide-react';
 import { 
   DropdownMenu,

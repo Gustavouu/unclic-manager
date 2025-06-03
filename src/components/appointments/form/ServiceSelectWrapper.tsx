@@ -1,109 +1,37 @@
 
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UseFormReturn } from "react-hook-form";
-import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import React from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-type ServiceSelectWrapperProps = {
-  form: UseFormReturn<AppointmentFormValues>;
-  availableServices?: any[];
-};
+interface ServiceSelectWrapperProps {
+  value?: string;
+  onValueChange?: (value: string) => void;
+  placeholder?: string;
+}
 
-const ServiceSelectWrapper = ({ form, availableServices }: ServiceSelectWrapperProps) => {
-  const [selectedService, setSelectedService] = useState<{
-    id: string;
-    name: string;
-    duration: number;
-    price: number;
-  } | null>(null);
-  const [services, setServices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  // Use provided services or fetch from the database
-  useEffect(() => {
-    if (availableServices && availableServices.length > 0) {
-      setServices(availableServices);
-      return;
-    }
-
-    const fetchServices = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('servicos')
-          .select('id, nome, duracao, preco')
-          .eq('ativo', true);
-        
-        if (error) throw error;
-        setServices(data || []);
-      } catch (error) {
-        console.error('Error fetching services:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchServices();
-  }, [availableServices]);
-
-  const handleServiceSelect = (serviceId: string) => {
-    const service = services.find(s => s.id === serviceId);
-    if (service) {
-      setSelectedService({
-        id: service.id,
-        name: service.nome,
-        duration: service.duracao,
-        price: service.preco
-      });
-    }
-  };
+export const ServiceSelectWrapper: React.FC<ServiceSelectWrapperProps> = ({
+  value,
+  onValueChange,
+  placeholder = "Selecione um serviço"
+}) => {
+  // Temporary placeholder services until we implement proper service management
+  const services = [
+    { id: '1', name: 'Corte de Cabelo', price: 30 },
+    { id: '2', name: 'Barba', price: 20 },
+    { id: '3', name: 'Sobrancelha', price: 15 },
+  ];
 
   return (
-    <FormField
-      control={form.control}
-      name="serviceId"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Serviço</FormLabel>
-          <Select 
-            onValueChange={(value) => {
-              field.onChange(value);
-              handleServiceSelect(value);
-            }} 
-            defaultValue={field.value}
-            disabled={loading}
-          >
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder={loading ? "Carregando serviços..." : "Selecione um serviço"} />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {services.length > 0 ? (
-                services.map((service) => (
-                  <SelectItem key={service.id} value={service.id}>
-                    {service.nome} - {service.duracao}min - R${service.preco}
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="loading" disabled>
-                  {loading ? "Carregando serviços..." : "Nenhum serviço encontrado"}
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
-          {selectedService && (
-            <FormDescription>
-              Duração: {selectedService.duration} minutos | Valor: R${selectedService.price}
-            </FormDescription>
-          )}
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {services.map((service) => (
+          <SelectItem key={service.id} value={service.id}>
+            {service.name} - R$ {service.price}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 };
-
-export default ServiceSelectWrapper;
