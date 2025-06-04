@@ -12,9 +12,9 @@ export function MobileSidebar() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
-          className="md:hidden absolute left-4 top-3 z-10"
+          className="md:hidden"
         >
           <Menu className="h-5 w-5" />
           <span className="sr-only">Abrir menu</span>

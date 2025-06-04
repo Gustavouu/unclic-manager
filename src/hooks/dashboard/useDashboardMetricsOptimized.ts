@@ -125,7 +125,7 @@ export const useDashboardMetricsOptimized = () => {
     const today = now.toISOString().split('T')[0];
 
     // Queries paralelas para melhor performance
-    const [clientsData, appointmentsData] = await Promise.all([
+    const [clientsResponse, appointmentsResponse] = await Promise.all([
       monitor.measureAsync('clients_query', () =>
         supabase
           .from('clients_unified')
@@ -142,21 +142,21 @@ export const useDashboardMetricsOptimized = () => {
       )
     ]);
 
-    if (clientsData.error) {
-      monitor.trackQuery('clients_unified_select', 0, false, clientsData.error.message);
-      throw clientsData.error;
+    if (clientsResponse.error) {
+      monitor.trackQuery('clients_unified_select', 0, false, clientsResponse.error.message);
+      throw clientsResponse.error;
     }
     
-    if (appointmentsData.error) {
-      monitor.trackQuery('appointments_unified_select', 0, false, appointmentsData.error.message);
-      throw appointmentsData.error;
+    if (appointmentsResponse.error) {
+      monitor.trackQuery('appointments_unified_select', 0, false, appointmentsResponse.error.message);
+      throw appointmentsResponse.error;
     }
 
     monitor.trackQuery('clients_unified_select', 0, true);
     monitor.trackQuery('appointments_unified_select', 0, true);
 
-    const clients = clientsData.data || [];
-    const appointments = appointmentsData.data || [];
+    const clients = clientsResponse.data || [];
+    const appointments = appointmentsResponse.data || [];
 
     const activeClients = clients.filter(client => client.status === 'active');
     
