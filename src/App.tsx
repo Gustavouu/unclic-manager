@@ -14,13 +14,27 @@ import Payments from '@/pages/Payments';
 import ReportsPage from '@/pages/ReportsPage';
 import Settings from '@/pages/Settings';
 import { ThemeProvider } from '@/components/theme-provider';
+import { initializeGlobalErrorHandler } from '@/services/error/GlobalErrorHandler';
 import './App.css';
+
+// Inicializar o manipulador de erros global
+initializeGlobalErrorHandler();
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 10, // 10 minutes (renamed from cacheTime)
+      retry: (failureCount, error: any) => {
+        // Não tentar novamente para erros 4xx (exceto 401/403)
+        if (error?.status >= 400 && error?.status < 500 && ![401, 403].includes(error?.status)) {
+          return false;
+        }
+        return failureCount < 3;
+      },
+    },
+    mutations: {
+      retry: false, // Não tentar novamente mutations automaticamente
     },
   },
 });
@@ -45,7 +59,7 @@ function App() {
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </Layout>
-          <Toaster position="top-right" />
+          <Toaster position="top-right" richColors closeButton />
         </Router>
       </QueryClientProvider>
     </ThemeProvider>
