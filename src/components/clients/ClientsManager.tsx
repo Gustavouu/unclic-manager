@@ -13,12 +13,16 @@ import {
   Mail, 
   MapPin,
   Calendar,
-  Users
+  Users,
+  Edit,
+  Eye,
+  Trash2
 } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useClientsList } from '@/hooks/clients/useClientsList';
@@ -27,12 +31,14 @@ interface ClientsManagerProps {
   onNewClient?: () => void;
   onEditClient?: (clientId: string) => void;
   onViewClient?: (clientId: string) => void;
+  onDeleteClient?: (clientId: string) => void;
 }
 
 export const ClientsManager: React.FC<ClientsManagerProps> = ({
   onNewClient,
   onEditClient,
   onViewClient,
+  onDeleteClient,
 }) => {
   const { clients, isLoading, searchClients } = useClientsList();
   const [searchTerm, setSearchTerm] = useState('');
@@ -169,7 +175,7 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({
                     </div>
                     
                     <Badge variant="secondary">
-                      {client.status}
+                      {client.status || 'Ativo'}
                     </Badge>
                     
                     <DropdownMenu>
@@ -180,15 +186,23 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => onViewClient?.(client.id)}>
+                          <Eye className="mr-2 h-4 w-4" />
                           Ver detalhes
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onEditClient?.(client.id)}>
+                          <Edit className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem>
+                          <Calendar className="mr-2 h-4 w-4" />
                           Novo agendamento
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="text-red-600"
+                          onClick={() => onDeleteClient?.(client.id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
                           Excluir
                         </DropdownMenuItem>
                       </DropdownMenuContent>
