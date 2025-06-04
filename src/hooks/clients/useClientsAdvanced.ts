@@ -1,6 +1,7 @@
+
 import { useState } from 'react';
 import { useClientsData } from './useClientsData';
-import { fetchClients, createClient, updateClient, deleteClient } from '@/services/clientService';
+import { fetchClients, updateClient, deleteClient } from '@/services/clientService';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import type { Client, ClientStats } from '@/types/client';
 

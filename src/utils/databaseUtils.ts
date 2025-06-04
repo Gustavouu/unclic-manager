@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const normalizeClientData = (client: any) => {
@@ -7,7 +6,7 @@ export const normalizeClientData = (client: any) => {
     name: client.name || client.nome || '',
     email: client.email || '',
     phone: client.phone || client.telefone || '',
-    birth_date: client.birth_date || client.data_nascimento,
+    birth_date: client.birth_date || client.data_nascimento || '',
     last_visit: client.last_visit || client.ultima_visita,
     total_spent: client.total_spent || client.valor_total_gasto || 0,
     total_appointments: client.total_appointments || client.total_agendamentos || 0,
@@ -20,8 +19,10 @@ export const normalizeClientData = (client: any) => {
     gender: client.gender || client.genero || '',
     notes: client.notes || client.notas || '',
     created_at: client.created_at || client.criado_em,
+    updated_at: client.updated_at || client.atualizado_em || client.created_at || client.criado_em,
     business_id: client.business_id || client.id_negocio,
-    user_id: client.user_id || client.id_usuario
+    user_id: client.user_id || client.id_usuario,
+    preferences: client.preferences || client.preferencias || {}
   };
 };
 

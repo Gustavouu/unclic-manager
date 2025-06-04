@@ -2,10 +2,14 @@
 // Export main services
 export { authService } from './auth/authService';
 
-// Export legacy client service functions
+// Export client service functions
 export { 
   fetchClients, 
-  createClient, 
+  createClient,
+  updateClient,
+  deleteClient,
+  searchClients,
+  getClientById,
   findClientByEmail, 
   findClientByPhone 
 } from './clientService';

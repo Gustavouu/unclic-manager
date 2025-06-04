@@ -1,28 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { normalizeClientData } from '@/utils/databaseUtils';
-
-export interface Client {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  birth_date?: string;
-  last_visit?: string;
-  total_spent?: number;
-  total_appointments?: number;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  avatar?: string;
-  status: string;
-  address?: string;
-  gender?: string;
-  notes?: string;
-  created_at?: string;
-  business_id: string;
-  user_id?: string;
-}
+import type { Client } from '@/types/client';
 
 export const fetchClients = async (businessId: string): Promise<Client[]> => {
   try {
@@ -113,6 +92,185 @@ export const createClient = async (clientData: Partial<Client>): Promise<Client>
   } catch (error) {
     console.error('Error creating client:', error);
     throw error;
+  }
+};
+
+export const updateClient = async (id: string, clientData: Partial<Client>): Promise<Client> => {
+  try {
+    // Try unified table first
+    const { data: unifiedClient, error: unifiedError } = await supabase
+      .from('clients_unified')
+      .update({
+        name: clientData.name,
+        email: clientData.email,
+        phone: clientData.phone,
+        birth_date: clientData.birth_date,
+        gender: clientData.gender,
+        address: clientData.address,
+        city: clientData.city,
+        state: clientData.state,
+        zip_code: clientData.zip_code,
+        notes: clientData.notes,
+        status: clientData.status
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (!unifiedError && unifiedClient) {
+      return normalizeClientData(unifiedClient);
+    }
+
+    // Fallback to original clients table
+    const { data: fallbackClient, error: fallbackError } = await supabase
+      .from('clients')
+      .update({
+        nome: clientData.name,
+        email: clientData.email,
+        telefone: clientData.phone,
+        data_nascimento: clientData.birth_date,
+        genero: clientData.gender,
+        endereco: clientData.address,
+        cidade: clientData.city,
+        estado: clientData.state,
+        cep: clientData.zip_code,
+        notas: clientData.notes,
+        status: clientData.status
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (fallbackError) {
+      console.error('Error updating client in fallback table:', fallbackError);
+      throw fallbackError;
+    }
+
+    return normalizeClientData(fallbackClient);
+  } catch (error) {
+    console.error('Error updating client:', error);
+    throw error;
+  }
+};
+
+export const deleteClient = async (id: string): Promise<void> => {
+  try {
+    // Try unified table first
+    const { error: unifiedError } = await supabase
+      .from('clients_unified')
+      .delete()
+      .eq('id', id);
+
+    if (!unifiedError) {
+      return;
+    }
+
+    // Fallback to original clients table
+    const { error: fallbackError } = await supabase
+      .from('clients')
+      .delete()
+      .eq('id', id);
+
+    if (fallbackError) {
+      console.error('Error deleting client from fallback table:', fallbackError);
+      throw fallbackError;
+    }
+  } catch (error) {
+    console.error('Error deleting client:', error);
+    throw error;
+  }
+};
+
+export const searchClients = async (params: { search?: string; business_id?: string; limit?: number; offset?: number }): Promise<Client[]> => {
+  try {
+    if (!params.business_id) {
+      return [];
+    }
+
+    let query = supabase
+      .from('clients_unified')
+      .select('*')
+      .eq('business_id', params.business_id);
+
+    if (params.search) {
+      query = query.or(`name.ilike.%${params.search}%,email.ilike.%${params.search}%,phone.ilike.%${params.search}%`);
+    }
+
+    if (params.limit) {
+      query = query.limit(params.limit);
+    }
+
+    if (params.offset) {
+      query = query.range(params.offset, params.offset + (params.limit || 10) - 1);
+    }
+
+    const { data: unifiedClients, error: unifiedError } = await query;
+
+    if (!unifiedError && unifiedClients) {
+      return unifiedClients.map(normalizeClientData);
+    }
+
+    // Fallback to original clients table
+    let fallbackQuery = supabase
+      .from('clients')
+      .select('*')
+      .eq('id_negocio', params.business_id);
+
+    if (params.search) {
+      fallbackQuery = fallbackQuery.or(`nome.ilike.%${params.search}%,email.ilike.%${params.search}%,telefone.ilike.%${params.search}%`);
+    }
+
+    if (params.limit) {
+      fallbackQuery = fallbackQuery.limit(params.limit);
+    }
+
+    if (params.offset) {
+      fallbackQuery = fallbackQuery.range(params.offset, params.offset + (params.limit || 10) - 1);
+    }
+
+    const { data: fallbackClients, error: fallbackError } = await fallbackQuery;
+
+    if (fallbackError) {
+      console.error('Error searching clients:', fallbackError);
+      throw fallbackError;
+    }
+
+    return (fallbackClients || []).map(normalizeClientData);
+  } catch (error) {
+    console.error('Error searching clients:', error);
+    return [];
+  }
+};
+
+export const getClientById = async (id: string): Promise<Client | null> => {
+  try {
+    // Try unified table first
+    const { data: unifiedClient, error: unifiedError } = await supabase
+      .from('clients_unified')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (!unifiedError && unifiedClient) {
+      return normalizeClientData(unifiedClient);
+    }
+
+    // Fallback to original table
+    const { data: fallbackClient, error: fallbackError } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fallbackError && fallbackError.code !== 'PGRST116') {
+      console.error('Error getting client by ID:', fallbackError);
+      return null;
+    }
+
+    return fallbackClient ? normalizeClientData(fallbackClient) : null;
+  } catch (error) {
+    console.error('Error getting client by ID:', error);
+    return null;
   }
 };
 

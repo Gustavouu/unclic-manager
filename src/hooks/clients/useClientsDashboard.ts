@@ -92,7 +92,8 @@ export function useClientsDashboard() {
     }
 
     try {
-      const newClient = await createClient(clientData, businessId);
+      const clientWithBusinessId = { ...clientData, business_id: businessId };
+      const newClient = await createClient(clientWithBusinessId);
       setClients(prev => [...prev, newClient]);
       await loadClients(); // Refresh the list
       return newClient;
