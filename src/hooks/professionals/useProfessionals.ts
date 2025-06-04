@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'sonner';
+import { ProfessionalStatus } from '@/hooks/professionals/types';
 
 export interface Professional {
   id: string;
@@ -13,7 +14,7 @@ export interface Professional {
   bio?: string;
   photoUrl?: string;
   specialties?: string[];
-  status?: string;
+  status?: ProfessionalStatus;
   businessId: string;
 }
 
@@ -25,7 +26,7 @@ export interface ProfessionalFormData {
   bio?: string;
   photoUrl?: string;
   specialties?: string[];
-  status?: string;
+  status?: ProfessionalStatus;
 }
 
 // Dados de exemplo para profissionais
@@ -39,7 +40,7 @@ const createSampleProfessionals = (businessId: string): Professional[] => [
     bio: 'Especialista em cortes femininos e tratamentos capilares',
     photoUrl: '',
     specialties: ['Cortes Femininos', 'Coloração', 'Tratamentos'],
-    status: 'active',
+    status: ProfessionalStatus.ACTIVE,
     businessId,
   },
   {
@@ -51,7 +52,7 @@ const createSampleProfessionals = (businessId: string): Professional[] => [
     bio: 'Especialista em cortes masculinos e barba',
     photoUrl: '',
     specialties: ['Cortes Masculinos', 'Barba', 'Bigode'],
-    status: 'active',
+    status: ProfessionalStatus.ACTIVE,
     businessId,
   },
   {
@@ -63,7 +64,7 @@ const createSampleProfessionals = (businessId: string): Professional[] => [
     bio: 'Especialista em cuidados com unhas e nail art',
     photoUrl: '',
     specialties: ['Manicure', 'Pedicure', 'Nail Art'],
-    status: 'active',
+    status: ProfessionalStatus.ACTIVE,
     businessId,
   },
 ];
@@ -117,7 +118,7 @@ export const useProfessionals = () => {
             bio: professional.bio,
             photoUrl: professional.foto_url,
             specialties: professional.especializacoes || [],
-            status: professional.status,
+            status: ProfessionalStatus.ACTIVE,
             businessId: professional.id_negocio,
           }));
           setProfessionals(mappedProfessionals);
@@ -135,7 +136,7 @@ export const useProfessionals = () => {
           bio: professional.bio,
           photoUrl: professional.photo_url,
           specialties: professional.specialties || [],
-          status: professional.status,
+          status: ProfessionalStatus.ACTIVE,
           businessId: professional.business_id,
         }));
         setProfessionals(mappedProfessionals);

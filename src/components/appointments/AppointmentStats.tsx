@@ -1,11 +1,10 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, CheckCircle, Clock, XCircle, Users, TrendingUp, AlertCircle } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, TrendingUp, AlertCircle } from 'lucide-react';
 import { useAppointments } from '@/hooks/appointments/useAppointments';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/format';
-import { Badge } from '@/components/ui/badge';
+import { StatsCard } from '@/components/common/StatsCard';
 
 export function AppointmentStats() {
   const { appointments, isLoading } = useAppointments();
@@ -14,15 +13,7 @@ export function AppointmentStats() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="pb-2">
-              <Skeleton className="h-4 w-20" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16 mb-2" />
-              <Skeleton className="h-3 w-24" />
-            </CardContent>
-          </Card>
+          <Skeleton key={i} className="h-[120px] w-full" />
         ))}
       </div>
     );
@@ -57,49 +48,6 @@ export function AppointmentStats() {
       .reduce((sum, apt) => sum + apt.price, 0),
   };
 
-  const statCards = [
-    {
-      title: 'Agendamentos Hoje',
-      value: stats.hoje,
-      icon: Clock,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      description: `${stats.total} no mês`,
-      badge: stats.hoje > 0 ? 'Ativo' : 'Sem agendamentos',
-      badgeVariant: stats.hoje > 0 ? 'default' : 'secondary' as const
-    },
-    {
-      title: 'Concluídos no Mês',
-      value: stats.concluidos,
-      icon: CheckCircle,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      description: `${stats.total > 0 ? Math.round((stats.concluidos / stats.total) * 100) : 0}% do total`,
-      badge: stats.concluidos > 0 ? 'Produtivo' : 'Baixa',
-      badgeVariant: stats.concluidos > 0 ? 'default' : 'secondary' as const
-    },
-    {
-      title: 'Agendados',
-      value: stats.agendados,
-      icon: Calendar,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-      description: `${stats.cancelados} cancelados`,
-      badge: stats.agendados > 0 ? 'Agenda Cheia' : 'Disponível',
-      badgeVariant: stats.agendados > 5 ? 'default' : 'secondary' as const
-    },
-    {
-      title: 'Receita do Mês',
-      value: formatCurrency(stats.receita),
-      icon: TrendingUp,
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50',
-      description: `${formatCurrency(stats.receitaHoje)} hoje`,
-      badge: stats.receita > 1000 ? 'Excelente' : stats.receita > 500 ? 'Bom' : 'Baixo',
-      badgeVariant: stats.receita > 1000 ? 'default' : stats.receita > 500 ? 'secondary' : 'outline' as const
-    }
-  ];
-
   // Detectar se estamos usando dados de exemplo
   const isUsingSampleData = appointments.some(apt => apt.id.startsWith('sample-'));
 
@@ -115,31 +63,41 @@ export function AppointmentStats() {
       )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat, index) => (
-          <Card key={index} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`p-1 rounded ${stat.bgColor}`}>
-                    <stat.icon size={16} className={stat.color} />
-                  </div>
-                  {stat.title}
-                </div>
-                <Badge variant={stat.badgeVariant} className="text-xs">
-                  {stat.badge}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900 mb-1">
-                {stat.value}
-              </div>
-              <p className="text-xs text-gray-500">
-                {stat.description}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+        <StatsCard 
+          title="Agendamentos Hoje"
+          value={stats.hoje.toString()}
+          description={`${stats.total} no mês`}
+          icon={<Clock size={18} />}
+          iconColor="bg-blue-50 text-blue-500"
+          borderColor="border-l-blue-600"
+        />
+        
+        <StatsCard 
+          title="Concluídos no Mês"
+          value={stats.concluidos.toString()}
+          description={`${stats.total > 0 ? Math.round((stats.concluidos / stats.total) * 100) : 0}% do total`}
+          icon={<CheckCircle size={18} />}
+          iconColor="bg-green-50 text-green-500"
+          borderColor="border-l-green-600"
+        />
+        
+        <StatsCard 
+          title="Agendados"
+          value={stats.agendados.toString()}
+          description={`${stats.cancelados} cancelados`}
+          icon={<Calendar size={18} />}
+          iconColor="bg-orange-50 text-orange-500"
+          borderColor="border-l-orange-600"
+        />
+        
+        <StatsCard 
+          title="Receita do Mês"
+          value={formatCurrency(stats.receita)}
+          description={`${formatCurrency(stats.receitaHoje)} hoje`}
+          icon={<TrendingUp size={18} />}
+          iconColor="bg-emerald-50 text-emerald-500"
+          borderColor="border-l-emerald-600"
+        />
       </div>
     </div>
   );
