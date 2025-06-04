@@ -16,9 +16,10 @@ interface Service {
 interface ServicesSectionProps {
   services: Service[];
   onServiceSelect?: (service: Service) => void;
+  onBookingClick?: () => void;
 }
 
-export function ServicesSection({ services, onServiceSelect }: ServicesSectionProps) {
+export function ServicesSection({ services, onServiceSelect, onBookingClick }: ServicesSectionProps) {
   const groupedServices = services.reduce((acc, service) => {
     const category = service.category || 'Geral';
     if (!acc[category]) {
@@ -38,6 +39,14 @@ export function ServicesSection({ services, onServiceSelect }: ServicesSectionPr
       return `${hours}h`;
     }
     return `${hours}h ${remainingMinutes}min`;
+  };
+
+  const handleServiceClick = (service: Service) => {
+    if (onServiceSelect) {
+      onServiceSelect(service);
+    } else if (onBookingClick) {
+      onBookingClick();
+    }
   };
 
   return (
@@ -63,7 +72,7 @@ export function ServicesSection({ services, onServiceSelect }: ServicesSectionPr
                   <Card 
                     key={service.id} 
                     className="hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => onServiceSelect?.(service)}
+                    onClick={() => handleServiceClick(service)}
                   >
                     <CardHeader>
                       <div className="flex justify-between items-start">
@@ -85,7 +94,13 @@ export function ServicesSection({ services, onServiceSelect }: ServicesSectionPr
                         <span className="text-2xl font-bold text-blue-600">
                           {formatCurrency(service.price)}
                         </span>
-                        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <button 
+                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleServiceClick(service);
+                          }}
+                        >
                           Agendar
                         </button>
                       </div>

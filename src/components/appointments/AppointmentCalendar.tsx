@@ -4,6 +4,7 @@ import { CalendarView } from './calendar/CalendarView';
 import { AppointmentDetailsDialog } from './dialogs/AppointmentDetailsDialog';
 import { useAppointments } from '@/hooks/useAppointments';
 import { UnifiedAppointment, normalizeStatus } from '@/types/appointment-unified';
+import { Appointment } from './types';
 import { CalendarViewType } from '@/types/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -20,23 +21,32 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
   const [selectedAppointment, setSelectedAppointment] = useState<UnifiedAppointment | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-  // Convert appointments to unified format
-  const unifiedAppointments: UnifiedAppointment[] = appointments.map(apt => ({
-    ...apt,
-    // Ensure legacy compatibility fields
+  // Convert UnifiedAppointment to Appointment format for calendar compatibility
+  const calendarAppointments: Appointment[] = appointments.map(apt => ({
+    id: apt.id,
     clientId: apt.client_id,
     clientName: apt.client_name || 'Cliente',
-    serviceId: apt.service_id, 
+    serviceId: apt.service_id,
     serviceName: apt.service_name || 'Serviço',
+    serviceType: apt.service_type || 'general',
     professionalId: apt.professional_id,
     professionalName: apt.professional_name || 'Profissional',
-    // Normalize date if needed
-    date: typeof apt.date === 'string' ? new Date(apt.date) : apt.date
+    date: typeof apt.date === 'string' ? new Date(apt.date) : apt.date,
+    duration: apt.duration,
+    price: apt.price,
+    status: normalizeStatus(apt.status) as any,
+    notes: apt.notes || '',
+    paymentMethod: apt.payment_method,
+    businessId: apt.business_id
   }));
 
-  const handleSelectAppointment = (appointment: UnifiedAppointment) => {
-    setSelectedAppointment(appointment);
-    setShowDetailsDialog(true);
+  const handleSelectAppointment = (appointment: Appointment) => {
+    // Find the original unified appointment
+    const unifiedAppointment = appointments.find(apt => apt.id === appointment.id);
+    if (unifiedAppointment) {
+      setSelectedAppointment(unifiedAppointment);
+      setShowDetailsDialog(true);
+    }
   };
 
   const handleNewAppointment = () => {
@@ -50,7 +60,8 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
 
   const handleCancelAppointment = async (appointment: UnifiedAppointment) => {
     try {
-      await updateAppointment(appointment.id, { status: normalizeStatus('cancelado') });
+      // Use Portuguese status for backend compatibility
+      await updateAppointment(appointment.id, { status: 'cancelado' });
       setShowDetailsDialog(false);
     } catch (error) {
       console.error('Erro ao cancelar agendamento:', error);
@@ -87,7 +98,7 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
   return (
     <div className="h-full">
       <CalendarView
-        appointments={unifiedAppointments}
+        appointments={calendarAppointments}
         onNewAppointment={handleNewAppointment}
         onSelectAppointment={handleSelectAppointment}
       />
