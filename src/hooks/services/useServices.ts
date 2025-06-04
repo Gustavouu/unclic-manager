@@ -1,22 +1,17 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { ServiceService } from '@/services/service/serviceService';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
-
-interface Service {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  duration: number;
-  category: string;
-  isActive: boolean;
-}
+import type { Service, ServiceCreate, ServiceUpdate } from '@/types/service';
 
 export const useServices = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { businessId } = useCurrentBusiness();
+
+  const serviceService = ServiceService.getInstance();
 
   const fetchServices = async () => {
     if (!businessId) {
@@ -24,34 +19,16 @@ export const useServices = () => {
       setIsLoading(false);
       return;
     }
-    
-    setIsLoading(true);
-    try {
-      // For now, return mock services to avoid database schema issues
-      const mockServices: Service[] = [
-        {
-          id: '1',
-          name: 'Corte de Cabelo',
-          description: 'Corte moderno e estiloso',
-          price: 50,
-          duration: 30,
-          category: 'Cabelo',
-          isActive: true,
-        },
-        {
-          id: '2',
-          name: 'Barba',
-          description: 'Aparar e modelar barba',
-          price: 25,
-          duration: 20,
-          category: 'Barba',
-          isActive: true,
-        },
-      ];
 
-      setServices(mockServices);
-    } catch (error) {
-      console.error('Error fetching services:', error);
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const data = await serviceService.getByBusinessId(businessId);
+      setServices(data);
+    } catch (err) {
+      console.error('Error fetching services:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch services');
       setServices([]);
     } finally {
       setIsLoading(false);
@@ -62,9 +39,52 @@ export const useServices = () => {
     fetchServices();
   }, [businessId]);
 
+  const createService = async (data: Omit<ServiceCreate, 'business_id'>) => {
+    if (!businessId) throw new Error('No business selected');
+    
+    setIsSubmitting(true);
+    try {
+      const newService = await serviceService.create({
+        ...data,
+        business_id: businessId,
+      });
+      
+      await fetchServices();
+      return newService;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const updateService = async (id: string, data: ServiceUpdate) => {
+    await serviceService.update(id, data);
+    await fetchServices();
+  };
+
+  const deleteService = async (id: string) => {
+    await serviceService.delete(id);
+    await fetchServices();
+  };
+
+  const searchServices = async (searchTerm: string) => {
+    if (!businessId) return [];
+    return serviceService.search({ 
+      business_id: businessId, 
+      search: searchTerm 
+    });
+  };
+
   return {
     services,
     isLoading,
-    refetch: fetchServices
+    isSubmitting,
+    error,
+    refetch: fetchServices,
+    createService,
+    updateService,
+    deleteService,
+    searchServices,
   };
 };
+
+export type { Service, ServiceCreate, ServiceUpdate } from '@/types/service';

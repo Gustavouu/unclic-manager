@@ -1,11 +1,9 @@
-import { useState } from 'react';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { KpiCards } from '@/components/dashboard/KpiCards';
-import { DashboardInsights } from '@/components/dashboard/DashboardInsights';
+import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { RevenueChart } from '@/components/dashboard/RevenueChart';
-import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
-import { FilterPeriod, ChartData, DashboardStats } from '@/types/dashboard';
-import { DashboardStats as DashboardStatsComponent } from '@/components/dashboard/DashboardStats';
+import { useDashboardData, FilterPeriod } from '@/hooks/dashboard/useDashboardData';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { OnboardingRedirect } from '@/components/auth/OnboardingRedirect';
@@ -13,23 +11,6 @@ import { OnboardingRedirect } from '@/components/auth/OnboardingRedirect';
 export default function Dashboard() {
   const [period, setPeriod] = useState<FilterPeriod>('month');
   const { metrics, isLoading, error } = useDashboardData();
-
-  if (isLoading) {
-    return (
-      <OnboardingRedirect>
-        <div className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader className="h-16 bg-gray-200" />
-                <CardContent className="h-20 bg-gray-100" />
-              </Card>
-            ))}
-          </div>
-        </div>
-      </OnboardingRedirect>
-    );
-  }
 
   if (error) {
     return (
@@ -41,52 +22,11 @@ export default function Dashboard() {
     );
   }
 
-  // Transform metrics to chart data format (simple mock data for now)
-  const chartData: ChartData[] = Array.from({ length: 7 }, (_, i) => ({
+  // Transform metrics to chart data format
+  const chartData = Array.from({ length: 7 }, (_, i) => ({
     date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
     value: Math.floor(Math.random() * 1000) + 500
   }));
-
-  // Map metrics to DashboardStats format
-  const stats: DashboardStats = {
-    totalAppointments: metrics.totalAppointments,
-    completedAppointments: Math.floor(metrics.totalAppointments * (metrics.completionRate / 100)),
-    totalRevenue: metrics.totalRevenue,
-    newClients: metrics.newClients,
-    clientsCount: metrics.newClients * 5, // Mock estimate
-    averageTicket: metrics.totalRevenue / Math.max(metrics.totalAppointments, 1),
-    retentionRate: 85, // Mock value
-    popularServices: metrics.popularServices.map(service => ({
-      id: service.name,
-      name: service.name,
-      count: service.count,
-      percentage: (service.count / metrics.totalAppointments) * 100
-    })),
-    revenueData: chartData.map(item => ({
-      date: item.date,
-      revenue: item.value,
-      appointments: Math.floor(Math.random() * 10) + 5
-    })),
-    appointmentsToday: Math.floor(metrics.totalAppointments / 30),
-    pendingAppointments: Math.floor(metrics.totalAppointments * 0.1),
-    cancellationRate: 5, // Mock value
-    cancelledAppointments: Math.floor(metrics.totalAppointments * 0.05),
-    growthRate: 15, // Mock value
-    occupancyRate: metrics.completionRate,
-    todayAppointments: Math.floor(metrics.totalAppointments / 30),
-    monthlyRevenue: metrics.totalRevenue,
-    averageRating: 4.5, // Mock value
-    totalClients: metrics.newClients * 5, // Mock estimate
-    monthlyServices: metrics.totalAppointments,
-    newClientsCount: metrics.newClients
-  };
-
-  const dashboardStatsProps = {
-    totalAppointments: metrics.totalAppointments,
-    totalRevenue: metrics.totalRevenue,
-    newClients: metrics.newClients,
-    completionRate: metrics.completionRate,
-  };
 
   return (
     <OnboardingRedirect>
@@ -109,7 +49,17 @@ export default function Dashboard() {
         </div>
 
         {/* Main Stats */}
-        <DashboardStatsComponent stats={dashboardStatsProps} loading={isLoading} />
+        <DashboardStats 
+          stats={{
+            totalClients: metrics.totalClients,
+            totalServices: metrics.totalServices,
+            totalAppointments: metrics.totalAppointments,
+            totalRevenue: metrics.totalRevenue,
+            newClients: metrics.newClients,
+            completionRate: metrics.completionRate,
+          }} 
+          loading={isLoading} 
+        />
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Revenue Chart */}
@@ -130,8 +80,28 @@ export default function Dashboard() {
           {/* Recent Activity */}
           <RecentActivity />
           
-          {/* Insights */}
-          <DashboardInsights stats={stats} />
+          {/* Popular Services */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Serviços Populares</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {metrics.popularServices.length > 0 ? (
+                <div className="space-y-3">
+                  {metrics.popularServices.map((service, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span className="font-medium">{service.name}</span>
+                      <span className="text-sm text-gray-600">{service.count} agendamentos</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>Nenhum dado de serviços disponível</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </OnboardingRedirect>
