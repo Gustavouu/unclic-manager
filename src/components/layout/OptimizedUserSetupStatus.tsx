@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTenant } from '@/contexts/TenantContext';
+import { useOptimizedTenant } from '@/contexts/OptimizedTenantContext';
 import { usePermissions } from '@/hooks/security/usePermissions';
 import { useOptimizedDashboard } from '@/hooks/data/useOptimizedDashboard';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +30,7 @@ interface SetupStep {
 
 export const OptimizedUserSetupStatus = () => {
   const { user } = useAuth();
-  const { businessId, currentBusiness } = useTenant();
+  const { businessId, currentBusiness } = useOptimizedTenant();
   const { permissions, isAdmin, loading } = usePermissions();
   const { metrics } = useOptimizedDashboard();
   const navigate = useNavigate();
