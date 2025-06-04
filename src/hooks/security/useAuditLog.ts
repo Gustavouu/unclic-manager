@@ -12,10 +12,10 @@ export interface AuditLogEntry {
   record_id: string;
   old_values: any;
   new_values: any;
-  ip_address: string;
-  user_agent: string;
+  ip_address: string | null;
+  user_agent: string | null;
   success: boolean;
-  error_message: string;
+  error_message: string | null;
   created_at: string;
 }
 
@@ -48,7 +48,24 @@ export const useAuditLog = (limit: number = 50) => {
           throw fetchError;
         }
 
-        setLogs(data || []);
+        // Type-safe mapping to ensure proper types
+        const typedLogs: AuditLogEntry[] = (data || []).map(log => ({
+          id: log.id,
+          business_id: log.business_id,
+          user_id: log.user_id,
+          action: log.action,
+          table_name: log.table_name || '',
+          record_id: log.record_id || '',
+          old_values: log.old_values,
+          new_values: log.new_values,
+          ip_address: log.ip_address ? String(log.ip_address) : null,
+          user_agent: log.user_agent || null,
+          success: log.success,
+          error_message: log.error_message || null,
+          created_at: log.created_at,
+        }));
+
+        setLogs(typedLogs);
       } catch (err) {
         console.error('Error fetching audit logs:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
