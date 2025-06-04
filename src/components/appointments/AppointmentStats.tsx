@@ -5,6 +5,7 @@ import { Calendar, CheckCircle, Clock, XCircle, Users, TrendingUp } from 'lucide
 import { useAppointments } from '@/hooks/useAppointments';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/format';
+import { isCompletedStatus, isScheduledStatus, isCanceledStatus } from '@/types/appointment-unified';
 
 export function AppointmentStats() {
   const { appointments, isLoading } = useAppointments();
@@ -39,11 +40,11 @@ export function AppointmentStats() {
 
   const stats = {
     total: monthAppointments.length,
-    concluidos: monthAppointments.filter(apt => apt.status === 'concluido' || apt.status === 'completed').length,
-    agendados: monthAppointments.filter(apt => apt.status === 'agendado' || apt.status === 'scheduled').length,
-    cancelados: monthAppointments.filter(apt => apt.status === 'cancelado' || apt.status === 'canceled').length,
+    concluidos: monthAppointments.filter(apt => isCompletedStatus(apt.status)).length,
+    agendados: monthAppointments.filter(apt => isScheduledStatus(apt.status)).length,
+    cancelados: monthAppointments.filter(apt => isCanceledStatus(apt.status)).length,
     receita: monthAppointments
-      .filter(apt => apt.status === 'concluido' || apt.status === 'completed')
+      .filter(apt => isCompletedStatus(apt.status))
       .reduce((sum, apt) => sum + apt.price, 0),
   };
 

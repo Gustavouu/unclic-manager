@@ -29,3 +29,11 @@ export function formatTime(date: Date | string): string {
     minute: '2-digit'
   }).format(dateObj);
 }
+
+export function formatPercentage(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'percent',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  }).format(value / 100);
+}

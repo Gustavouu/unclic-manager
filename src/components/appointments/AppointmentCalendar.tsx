@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { CalendarView } from './calendar/CalendarView';
 import { AppointmentDetailsDialog } from './dialogs/AppointmentDetailsDialog';
 import { useAppointments } from '@/hooks/useAppointments';
-import { Appointment } from '@/types/appointment';
+import { UnifiedAppointment, normalizeStatus } from '@/types/appointment-unified';
 import { CalendarViewType } from '@/types/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -17,29 +17,40 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
   initialView = 'month' 
 }) => {
   const { appointments, isLoading, error, updateAppointment } = useAppointments();
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<UnifiedAppointment | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-  const handleSelectAppointment = (appointment: Appointment) => {
+  // Convert appointments to unified format
+  const unifiedAppointments: UnifiedAppointment[] = appointments.map(apt => ({
+    ...apt,
+    // Ensure legacy compatibility fields
+    clientId: apt.client_id,
+    clientName: apt.client_name || 'Cliente',
+    serviceId: apt.service_id, 
+    serviceName: apt.service_name || 'Serviço',
+    professionalId: apt.professional_id,
+    professionalName: apt.professional_name || 'Profissional',
+    // Normalize date if needed
+    date: typeof apt.date === 'string' ? new Date(apt.date) : apt.date
+  }));
+
+  const handleSelectAppointment = (appointment: UnifiedAppointment) => {
     setSelectedAppointment(appointment);
     setShowDetailsDialog(true);
   };
 
   const handleNewAppointment = () => {
-    // Esta função será chamada quando o usuário clicar em "Novo Agendamento"
-    // Por enquanto, apenas um log - pode ser conectado ao dialog de novo agendamento
     console.log('Novo agendamento');
   };
 
-  const handleEditAppointment = (appointment: Appointment) => {
-    // Função para editar agendamento
+  const handleEditAppointment = (appointment: UnifiedAppointment) => {
     console.log('Editar agendamento:', appointment.id);
     setShowDetailsDialog(false);
   };
 
-  const handleCancelAppointment = async (appointment: Appointment) => {
+  const handleCancelAppointment = async (appointment: UnifiedAppointment) => {
     try {
-      await updateAppointment(appointment.id, { status: 'canceled' });
+      await updateAppointment(appointment.id, { status: normalizeStatus('cancelado') });
       setShowDetailsDialog(false);
     } catch (error) {
       console.error('Erro ao cancelar agendamento:', error);
@@ -76,7 +87,7 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
   return (
     <div className="h-full">
       <CalendarView
-        appointments={appointments}
+        appointments={unifiedAppointments}
         onNewAppointment={handleNewAppointment}
         onSelectAppointment={handleSelectAppointment}
       />
