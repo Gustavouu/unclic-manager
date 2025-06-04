@@ -1,3 +1,5 @@
+
+import React from 'react';
 import {
   Table,
   TableBody,
@@ -5,200 +7,182 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Eye, Filter, MoreHorizontal, Phone, Mail } from "lucide-react";
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
-import { ClientDetails } from "./ClientDetails";
-import type { Client } from "@/types/client";
+} from '@/components/ui/dropdown-menu';
+import { 
+  MoreHorizontal, 
+  Edit, 
+  Eye, 
+  Trash2, 
+  Calendar,
+  Phone,
+  Mail,
+  MapPin
+} from 'lucide-react';
+import type { Client } from '@/types/client';
 
 interface ClientsTableProps {
   clients: Client[];
-  isLoading: boolean;
-  showFiltersButton?: boolean;
-  onToggleFilters?: () => void;
+  onEditClient: (clientId: string) => void;
+  onViewClient: (clientId: string) => void;
+  onDeleteClient: (clientId: string) => void;
+  onCreateAppointment?: (clientId: string) => void;
 }
 
-export function ClientsTable({
+export const ClientsTable: React.FC<ClientsTableProps> = ({
   clients,
-  isLoading,
-  showFiltersButton = false,
-  onToggleFilters,
-}: ClientsTableProps) {
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  
-  const formatCurrency = (value: number) => {
+  onEditClient,
+  onViewClient,
+  onDeleteClient,
+  onCreateAppointment,
+}) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const formatPhone = (phone?: string) => {
+    if (!phone) return '';
+    return phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  };
+
+  const formatCurrency = (value: number = 0) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'BRL',
+      currency: 'BRL'
     }).format(value);
   };
 
-  const formatDate = (date: Date | string | undefined) => {
-    if (!date) return "Nunca";
-    return new Date(date).toLocaleDateString('pt-BR');
-  };
-
-  const handleViewClient = (client: Client) => {
-    setSelectedClient(client);
-  };
+  if (clients.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">Nenhum cliente encontrado</p>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-md border">
-      <div className="flex items-center justify-between px-4 py-3 border-b">
-        <h3 className="text-sm font-semibold">Lista de Clientes</h3>
-        {showFiltersButton && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleFilters}
-            className="lg:hidden"
-          >
-            <Filter size={16} className="mr-2" />
-            Filtros
-          </Button>
-        )}
-      </div>
-      
-      <div className="relative overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead className="hidden md:table-cell">Contato</TableHead>
-              <TableHead className="hidden md:table-cell">Última Visita</TableHead>
-              <TableHead className="hidden lg:table-cell">Total Gasto</TableHead>
-              <TableHead className="hidden lg:table-cell">Cidade</TableHead>
-              <TableHead className="w-[60px]"></TableHead>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Contato</TableHead>
+            <TableHead>Localização</TableHead>
+            <TableHead>Última Visita</TableHead>
+            <TableHead>Total Gasto</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="w-[50px]">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {clients.map((client) => (
+            <TableRow key={client.id}>
+              <TableCell>
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 font-medium text-sm">
+                      {client.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="font-medium">{client.name}</div>
+                    <div className="text-sm text-gray-500">
+                      {client.birth_date && `${new Date().getFullYear() - new Date(client.birth_date).getFullYear()} anos`}
+                    </div>
+                  </div>
+                </div>
+              </TableCell>
+              
+              <TableCell>
+                <div className="space-y-1">
+                  {client.email && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Mail className="h-3 w-3 mr-1" />
+                      {client.email}
+                    </div>
+                  )}
+                  {client.phone && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Phone className="h-3 w-3 mr-1" />
+                      {formatPhone(client.phone)}
+                    </div>
+                  )}
+                </div>
+              </TableCell>
+              
+              <TableCell>
+                {client.city && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <MapPin className="h-3 w-3 mr-1" />
+                    {client.city}{client.state && `, ${client.state}`}
+                  </div>
+                )}
+              </TableCell>
+              
+              <TableCell>
+                <div className="text-sm">
+                  {formatDate(client.last_visit)}
+                </div>
+              </TableCell>
+              
+              <TableCell>
+                <div className="font-medium">
+                  {formatCurrency(client.total_spent)}
+                </div>
+              </TableCell>
+              
+              <TableCell>
+                <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
+                  {client.status === 'active' ? 'Ativo' : 'Inativo'}
+                </Badge>
+              </TableCell>
+              
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onViewClient(client.id)}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Ver detalhes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEditClient(client.id)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Editar
+                    </DropdownMenuItem>
+                    {onCreateAppointment && (
+                      <DropdownMenuItem onClick={() => onCreateAppointment(client.id)}>
+                        <Calendar className="mr-2 h-4 w-4" />
+                        Novo agendamento
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      className="text-red-600"
+                      onClick={() => onDeleteClient(client.id)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array(5)
-                .fill(0)
-                .map((_, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <Skeleton className="h-8 w-8 rounded-full mr-2" />
-                        <Skeleton className="h-4 w-[120px]" />
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <Skeleton className="h-4 w-[150px]" />
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <Skeleton className="h-4 w-[80px]" />
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <Skeleton className="h-4 w-[80px]" />
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <Skeleton className="h-4 w-[80px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-8 w-8 rounded-md" />
-                    </TableCell>
-                  </TableRow>
-                ))
-            ) : clients.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  Nenhum cliente encontrado.
-                </TableCell>
-              </TableRow>
-            ) : (
-              clients.map((client) => (
-                <TableRow key={client.id}>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-2 text-xs font-medium uppercase">
-                        {client.name.charAt(0)}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{client.name}</span>
-                        <span className="text-xs text-muted-foreground md:hidden">
-                          {client.email || client.phone || "Sem contato"}
-                        </span>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="flex flex-col">
-                      {client.email && (
-                        <div className="flex items-center">
-                          <Mail size={14} className="mr-1 text-muted-foreground" />
-                          <span className="text-sm">{client.email}</span>
-                        </div>
-                      )}
-                      {client.phone && (
-                        <div className="flex items-center">
-                          <Phone size={14} className="mr-1 text-muted-foreground" />
-                          <span className="text-sm">{client.phone}</span>
-                        </div>
-                      )}
-                      {!client.email && !client.phone && (
-                        <span className="text-sm text-muted-foreground">Sem contato</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <span className="text-sm">{formatDate(client.last_visit)}</span>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <span className="text-sm">{formatCurrency(client.total_spent || 0)}</span>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <span className="text-sm">{client.city || "-"}</span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleViewClient(client)}
-                      >
-                        <Eye size={16} />
-                        <span className="sr-only">Ver cliente</span>
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal size={16} />
-                            <span className="sr-only">Opções</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleViewClient(client)}>
-                            Visualizar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
-                          <DropdownMenuItem>Agendar</DropdownMenuItem>
-                          <DropdownMenuItem>Enviar mensagem</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      
-      {selectedClient && (
-        <ClientDetails
-          client={selectedClient}
-          onClose={() => setSelectedClient(null)}
-        />
-      )}
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
-}
+};
