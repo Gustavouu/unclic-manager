@@ -10,7 +10,7 @@ import { ImprovedAppointmentForm } from './form/ImprovedAppointmentForm';
 import { useAppointments } from '@/hooks/appointments/useAppointments';
 import { toast } from 'sonner';
 import { AppointmentFormValues } from './schemas/appointmentFormSchema';
-import { CreateAppointmentData } from '@/hooks/appointments/types';
+import { CreateAppointmentData, AppointmentStatus } from '@/hooks/appointments/types';
 import { useServices } from '@/hooks/useServices';
 import { useProfessionals } from '@/hooks/professionals/useProfessionals';
 
@@ -57,6 +57,9 @@ export function NewAppointmentDialogImproved({
       const endTime = new Date(appointmentDate.getTime() + (data.duration || service.duration || 60) * 60000);
       const endTimeString = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`;
       
+      // Ensure status is properly typed as AppointmentStatus
+      const appointmentStatus: AppointmentStatus = (data.status as AppointmentStatus) || 'scheduled';
+      
       const appointmentData: CreateAppointmentData = {
         clientId: data.clientId,
         serviceId: data.serviceId,
@@ -66,7 +69,7 @@ export function NewAppointmentDialogImproved({
         endTime: endTimeString,
         duration: data.duration || service.duration || 60,
         price: data.price || service.price || 0,
-        status: data.status || 'scheduled',
+        status: appointmentStatus,
         paymentMethod: data.paymentMethod || 'cash',
         notes: data.notes || '',
         // Additional data for better UX
