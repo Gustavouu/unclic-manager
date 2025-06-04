@@ -28,7 +28,7 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     clientName: apt.client_name || 'Cliente',
     serviceId: apt.service_id,
     serviceName: apt.service_name || 'Serviço',
-    serviceType: apt.service_type || 'general',
+    serviceType: apt.service_type || 'general', // Add default serviceType
     professionalId: apt.professional_id,
     professionalName: apt.professional_name || 'Profissional',
     date: typeof apt.date === 'string' ? new Date(apt.date) : apt.date,
@@ -53,20 +53,55 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     console.log('Novo agendamento');
   };
 
-  const handleEditAppointment = (appointment: UnifiedAppointment) => {
-    console.log('Editar agendamento:', appointment.id);
+  // Convert UnifiedAppointment to Appointment for the handlers
+  const handleEditAppointment = (unifiedAppointment: UnifiedAppointment) => {
+    console.log('Editar agendamento:', unifiedAppointment.id);
     setShowDetailsDialog(false);
   };
 
-  const handleCancelAppointment = async (appointment: UnifiedAppointment) => {
+  const handleCancelAppointment = async (unifiedAppointment: UnifiedAppointment) => {
     try {
       // Use Portuguese status for backend compatibility
-      await updateAppointment(appointment.id, { status: 'cancelado' });
+      await updateAppointment(unifiedAppointment.id, { status: 'cancelado' });
       setShowDetailsDialog(false);
     } catch (error) {
       console.error('Erro ao cancelar agendamento:', error);
     }
   };
+
+  // Create wrapper functions that convert between types
+  const handleEditAppointmentWrapper = (appointment: Appointment) => {
+    const unifiedAppointment = appointments.find(apt => apt.id === appointment.id);
+    if (unifiedAppointment) {
+      handleEditAppointment(unifiedAppointment);
+    }
+  };
+
+  const handleCancelAppointmentWrapper = (appointment: Appointment) => {
+    const unifiedAppointment = appointments.find(apt => apt.id === appointment.id);
+    if (unifiedAppointment) {
+      handleCancelAppointment(unifiedAppointment);
+    }
+  };
+
+  // Convert UnifiedAppointment to Appointment for the dialog
+  const selectedAppointmentForDialog: Appointment | null = selectedAppointment ? {
+    id: selectedAppointment.id,
+    clientId: selectedAppointment.client_id,
+    clientName: selectedAppointment.client_name || 'Cliente',
+    serviceId: selectedAppointment.service_id,
+    serviceName: selectedAppointment.service_name || 'Serviço',
+    serviceType: selectedAppointment.service_type || 'general',
+    professionalId: selectedAppointment.professional_id,
+    professionalName: selectedAppointment.professional_name || 'Profissional',
+    date: typeof selectedAppointment.date === 'string' ? new Date(selectedAppointment.date) : selectedAppointment.date,
+    duration: selectedAppointment.duration,
+    price: selectedAppointment.price,
+    status: normalizeStatus(selectedAppointment.status) as any,
+    notes: selectedAppointment.notes || '',
+    paymentMethod: selectedAppointment.payment_method,
+    businessId: selectedAppointment.business_id
+  } : null;
 
   if (isLoading) {
     return (
@@ -104,11 +139,11 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
       />
 
       <AppointmentDetailsDialog
-        appointment={selectedAppointment}
+        appointment={selectedAppointmentForDialog}
         open={showDetailsDialog}
         onOpenChange={setShowDetailsDialog}
-        onEdit={handleEditAppointment}
-        onCancel={handleCancelAppointment}
+        onEdit={handleEditAppointmentWrapper}
+        onCancel={handleCancelAppointmentWrapper}
       />
     </div>
   );
