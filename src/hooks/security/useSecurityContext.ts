@@ -1,6 +1,6 @@
 
 import { createContext, useContext } from 'react';
-import { Permission } from './usePermissions';
+import type { Permission } from './usePermissions';
 
 interface SecurityContextType {
   hasPermission: (permission: Permission) => boolean;

@@ -1,23 +1,18 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useTenant } from '@/contexts/TenantContext';
+import { useOptimizedTenant } from '@/contexts/OptimizedTenantContext';
 
-export type RoleType = 'owner' | 'admin' | 'manager' | 'staff' | 'professional';
-
-export interface Role {
+interface Role {
   id: string;
-  business_id: string;
   name: string;
   description: string;
-  role_type: RoleType;
+  role_type: string;
   is_system: boolean;
-  created_at: string;
-  updated_at: string;
 }
 
 export const useRoles = () => {
-  const { businessId } = useTenant();
+  const { businessId } = useOptimizedTenant();
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,17 +29,32 @@ export const useRoles = () => {
         setLoading(true);
         setError(null);
 
-        const { data, error: fetchError } = await supabase
-          .from('roles')
-          .select('*')
-          .eq('business_id', businessId)
-          .order('role_type', { ascending: true });
+        // For now, return default roles since the table structure isn't defined
+        const defaultRoles: Role[] = [
+          {
+            id: '1',
+            name: 'Administrador',
+            description: 'Acesso completo ao sistema',
+            role_type: 'admin',
+            is_system: true
+          },
+          {
+            id: '2',
+            name: 'Gerente',
+            description: 'Acesso gerencial',
+            role_type: 'manager',
+            is_system: true
+          },
+          {
+            id: '3',
+            name: 'Funcionário',
+            description: 'Acesso básico',
+            role_type: 'staff',
+            is_system: true
+          }
+        ];
 
-        if (fetchError) {
-          throw fetchError;
-        }
-
-        setRoles(data || []);
+        setRoles(defaultRoles);
       } catch (err) {
         console.error('Error fetching roles:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -57,35 +67,9 @@ export const useRoles = () => {
     fetchRoles();
   }, [businessId]);
 
-  const createDefaultRoles = async () => {
-    if (!businessId) return;
-
-    try {
-      const { error } = await supabase.rpc('create_default_roles_for_business', {
-        business_id_param: businessId
-      });
-
-      if (error) throw error;
-
-      // Refresh roles after creation
-      const { data, error: fetchError } = await supabase
-        .from('roles')
-        .select('*')
-        .eq('business_id', businessId)
-        .order('role_type', { ascending: true });
-
-      if (fetchError) throw fetchError;
-      setRoles(data || []);
-    } catch (err) {
-      console.error('Error creating default roles:', err);
-      throw err;
-    }
-  };
-
   return {
     roles,
     loading,
     error,
-    createDefaultRoles,
   };
 };

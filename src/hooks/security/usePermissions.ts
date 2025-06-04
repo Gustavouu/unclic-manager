@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useTenant } from '@/contexts/TenantContext';
+import { useOptimizedTenant } from '@/contexts/OptimizedTenantContext';
 
 export type Permission = 
   | 'appointments.view'
@@ -36,7 +36,7 @@ export type Permission =
 
 export const usePermissions = () => {
   const { user } = useAuth();
-  const { businessId } = useTenant();
+  const { businessId } = useOptimizedTenant();
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
