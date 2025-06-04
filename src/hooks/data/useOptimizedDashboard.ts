@@ -47,10 +47,17 @@ export const useOptimizedDashboard = () => {
       const upcomingAppointments = appointments.filter(apt => apt.booking_date > today).length;
       const activeClients = clients.filter(client => client.status === 'active').length;
       
-      // Calculate popular services
+      // Create service mapping for popular services calculation
+      const serviceMap = services.reduce((acc, service) => {
+        acc[service.id] = service.name;
+        return acc;
+      }, {} as Record<string, string>);
+
+      // Calculate popular services using service_id
       const serviceCount = appointments.reduce((acc, apt) => {
-        if (apt.service_name) {
-          acc[apt.service_name] = (acc[apt.service_name] || 0) + 1;
+        if (apt.service_id && serviceMap[apt.service_id]) {
+          const serviceName = serviceMap[apt.service_id];
+          acc[serviceName] = (acc[serviceName] || 0) + 1;
         }
         return acc;
       }, {} as Record<string, number>);

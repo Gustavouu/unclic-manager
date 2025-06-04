@@ -28,7 +28,7 @@ export const Layout = ({ children, breadcrumb }: LayoutProps) => {
       {/* Main Content Area */}
       <div className="flex flex-col md:pl-60">
         {/* Header */}
-        <Header breadcrumb={breadcrumb} />
+        <Header />
         
         {/* Page Content */}
         <main className="flex-1 py-6">
