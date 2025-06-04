@@ -1,6 +1,7 @@
 
-export { useProfessionals } from "./useProfessionals";
-export * from "./types";
-export * from "./professionalUtils";
-export * from "./usePagination";
-export * from "./useProfessionalOperations";
+// Re-export all professional-related hooks
+export { useProfessionalsList } from './useProfessionalsList';
+export { useProfessionalOperations } from './useProfessionalOperations';
+
+// Re-export types from the main types file
+export type { Professional, ProfessionalFormData } from '@/types/professional';

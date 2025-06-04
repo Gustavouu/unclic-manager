@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { 
+import React from "react";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -8,49 +8,57 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { useServiceOperations } from "@/hooks/services/useServiceOperations";
+import type { Service } from "@/types/service";
 
 interface DeleteServiceDialogProps {
-  serviceId: string;
-  serviceName: string;
-  onServiceDeleted: (serviceId: string) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  service: Service | null;
+  onServiceDeleted?: () => void;
 }
 
-export function DeleteServiceDialog({ serviceId, serviceName, onServiceDeleted }: DeleteServiceDialogProps) {
-  const [open, setOpen] = useState(false);
+export const DeleteServiceDialog: React.FC<DeleteServiceDialogProps> = ({
+  open,
+  onOpenChange,
+  service,
+  onServiceDeleted
+}) => {
+  const { deleteService, isSubmitting } = useServiceOperations();
 
-  const handleDelete = () => {
-    onServiceDeleted(serviceId);
-    setOpen(false);
+  const handleDelete = async () => {
+    if (!service) return;
+    
+    const success = await deleteService(service.id);
+    if (success) {
+      onServiceDeleted?.();
+      onOpenChange(false);
+    }
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
-        <Trash2 className="h-4 w-4" />
-      </Button>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+          <AlertDialogTitle>Excluir Serviço</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir o serviço <span className="font-medium">{serviceName}</span>?
-            <br /><br />
+            Tem certeza que deseja excluir o serviço <strong>{service?.nome || service?.name}</strong>?
             Esta ação não pode ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction 
+          <AlertDialogAction
             onClick={handleDelete}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={isSubmitting}
+            className="bg-red-600 hover:bg-red-700"
           >
-            Excluir
+            {isSubmitting ? "Excluindo..." : "Excluir"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
-}
+};

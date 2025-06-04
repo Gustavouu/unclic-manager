@@ -10,7 +10,7 @@ import { OnboardingRedirect } from '@/components/auth/OnboardingRedirect';
 
 export default function Dashboard() {
   const [period, setPeriod] = useState<FilterPeriod>('month');
-  const { metrics, isLoading, error } = useDashboardData();
+  const { metrics, isLoading, error } = useDashboardData(period);
 
   if (error) {
     return (
@@ -89,7 +89,7 @@ export default function Dashboard() {
               {metrics.popularServices.length > 0 ? (
                 <div className="space-y-3">
                   {metrics.popularServices.map((service, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <div key={service.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                       <span className="font-medium">{service.name}</span>
                       <span className="text-sm text-gray-600">{service.count} agendamentos</span>
                     </div>

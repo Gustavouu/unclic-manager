@@ -1,80 +1,41 @@
+
 export interface Professional {
   id: string;
-  business_id: string;
-  user_id: string;
-  name: string;
+  id_negocio: string;
+  nome: string;
   email?: string;
-  phone?: string;
-  avatar_url?: string;
+  telefone?: string;
+  cargo?: string;
   bio?: string;
-  specialties: string[];
-  working_hours: {
-    [key: string]: TimeSlot[];
-  };
-  status: 'active' | 'inactive' | 'on_leave';
-  rating: number;
-  total_reviews: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TimeSlot {
-  start: string;
-  end: string;
-}
-
-export interface ProfessionalCreate {
-  business_id: string;
-  user_id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  avatar_url?: string;
-  bio?: string;
-  specialties: string[];
-  working_hours: {
-    [key: string]: TimeSlot[];
-  };
-  status?: 'active' | 'inactive' | 'on_leave';
-}
-
-export interface ProfessionalUpdate {
+  foto_url?: string;
+  especializacoes?: string[];
+  comissao_percentual?: number;
+  data_contratacao?: string;
+  status: string;
+  criado_em: string;
+  atualizado_em: string;
+  // English aliases for compatibility
+  business_id?: string;
   name?: string;
+  phone?: string;
+  position?: string;
+  photo_url?: string;
+  specialties?: string[];
+  commission_percentage?: number;
+  hire_date?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProfessionalFormData {
+  name: string;
   email?: string;
   phone?: string;
-  avatar_url?: string;
+  position?: string;
   bio?: string;
+  photo_url?: string;
   specialties?: string[];
-  working_hours?: {
-    [key: string]: TimeSlot[];
-  };
-  status?: 'active' | 'inactive' | 'on_leave';
-  rating?: number;
-  total_reviews?: number;
-}
-
-export interface ProfessionalSearchParams {
-  business_id: string;
-  status?: 'active' | 'inactive' | 'on_leave';
-  specialty?: string;
-  rating?: number;
-  search?: string;
-}
-
-export interface ProfessionalStats {
-  totalAppointments: number;
-  completedAppointments: number;
-  cancelledAppointments: number;
-  noShowAppointments: number;
-  averageRating: number;
-  totalRevenue: number;
-  mostPopularService: string;
-  busiestDay: string;
-  busiestTime: string;
-}
-
-export interface ProfessionalAvailability {
-  date: string;
-  available_slots: TimeSlot[];
-  unavailable_slots: TimeSlot[];
+  commission_percentage?: number;
+  hire_date?: string;
+  status?: string;
 }

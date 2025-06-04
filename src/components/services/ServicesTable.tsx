@@ -1,198 +1,174 @@
 
-import { useState } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import React, { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger 
+import { Badge } from "@/components/ui/badge";
+import { Edit, Trash2, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Trash, Eye } from "lucide-react";
-import { ServiceData } from "./servicesData";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LoadingState } from "@/hooks/use-loading-state";
+import { ServiceFormDialog } from "./ServiceFormDialog";
+import { DeleteServiceDialog } from "./DeleteServiceDialog";
+import type { Service } from "@/types/service";
 
 interface ServicesTableProps {
-  services: ServiceData[];
-  onServiceUpdated?: (service: ServiceData) => void;
-  onServiceDeleted?: (id: string) => void;
-  readonly?: boolean;
-  state?: LoadingState;
-  error?: string;
+  services: Service[];
+  isLoading: boolean;
+  onRefresh: () => void;
 }
 
-export function ServicesTable({ 
-  services, 
-  onServiceUpdated, 
-  onServiceDeleted,
-  readonly = false,
-  state = 'success',
-  error
-}: ServicesTableProps) {
-  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+export const ServicesTable: React.FC<ServicesTableProps> = ({
+  services,
+  isLoading,
+  onRefresh
+}) => {
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [deletingService, setDeletingService] = useState<Service | null>(null);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     
-    if (hours === 0) {
-      return `${mins} min`;
-    } else if (mins === 0) {
-      return `${hours}h`;
-    } else {
-      return `${hours}h ${mins}min`;
+    if (hours > 0) {
+      return `${hours}h${mins > 0 ? ` ${mins}min` : ''}`;
     }
+    return `${mins}min`;
   };
 
-  const formatPrice = (price: number | string) => {
-    // Ensure price is a number before formatting
-    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
-    
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(numericPrice);
+  const handleServiceSaved = () => {
+    setEditingService(null);
+    onRefresh();
   };
 
-  // Render loading state
-  if (state === 'loading') {
-    return (
-      <div>
-        {[...Array(5)].map((_, index) => (
-          <div key={index} className="flex items-center space-x-4 py-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-[200px]" />
-              <Skeleton className="h-4 w-[160px]" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  // Render error state
-  if (state === 'error') {
-    return (
-      <div className="p-8 text-center">
-        <p className="text-red-500">{error || "Erro ao carregar os serviços"}</p>
-      </div>
-    );
-  }
+  const handleServiceDeleted = () => {
+    setDeletingService(null);
+    onRefresh();
+  };
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nome</TableHead>
-            <TableHead>Duração</TableHead>
-            <TableHead>Preço</TableHead>
-            <TableHead>Status</TableHead>
-            {!readonly && <TableHead className="text-right">Ações</TableHead>}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {services.length === 0 ? (
+    <>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={readonly ? 4 : 5} className="text-center py-10 text-muted-foreground">
-                Nenhum serviço encontrado
-              </TableCell>
+              <TableHead>Nome</TableHead>
+              <TableHead>Categoria</TableHead>
+              <TableHead>Duração</TableHead>
+              <TableHead>Preço</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-[60px]"></TableHead>
             </TableRow>
-          ) : (
-            services.map((service) => (
-              <>
-                <TableRow 
-                  key={service.id} 
-                  className={expandedRow === service.id ? "bg-muted/50" : "hover:bg-muted/50"}
-                  onClick={() => setExpandedRow(expandedRow === service.id ? null : service.id)}
-                >
-                  <TableCell className="font-medium">
-                    {service.name}
-                    {service.isPopular && (
-                      <Badge variant="secondary" className="ml-2">Popular</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{formatDuration(service.duration)}</TableCell>
-                  <TableCell>{formatPrice(service.price)}</TableCell>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              Array(5)
+                .fill(0)
+                .map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-[60px]" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8 rounded-md" /></TableCell>
+                  </TableRow>
+                ))
+            ) : services.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  Nenhum serviço encontrado.
+                </TableCell>
+              </TableRow>
+            ) : (
+              services.map((service) => (
+                <TableRow key={service.id}>
                   <TableCell>
-                    <Badge variant={service.isActive !== false ? "default" : "outline"}>
-                      {service.isActive !== false ? "Ativo" : "Inativo"}
+                    <div>
+                      <div className="font-medium">{service.nome || service.name}</div>
+                      {(service.descricao || service.description) && (
+                        <div className="text-sm text-muted-foreground truncate max-w-[200px]">
+                          {service.descricao || service.description}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">
+                      {service.categoria || service.category}
                     </Badge>
                   </TableCell>
-                  {!readonly && (
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Abrir menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            console.log("Visualizar detalhes", service.id);
-                          }}>
-                            <Eye className="mr-2 h-4 w-4" /> Visualizar detalhes
-                          </DropdownMenuItem>
-                          {onServiceUpdated && (
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              // Simulação de edição
-                              onServiceUpdated({...service, name: `${service.name} (Editado)`});
-                            }}>
-                              <Pencil className="mr-2 h-4 w-4" /> Editar
-                            </DropdownMenuItem>
-                          )}
-                          {onServiceDeleted && (
-                            <DropdownMenuItem 
-                              className="text-red-600" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onServiceDeleted(service.id);
-                              }}
-                            >
-                              <Trash className="mr-2 h-4 w-4" /> Excluir
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  )}
+                  <TableCell>
+                    {formatDuration(service.duracao || service.duration || 0)}
+                  </TableCell>
+                  <TableCell>
+                    {formatCurrency(service.preco || service.price || 0)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={service.ativo || service.is_active ? "default" : "secondary"}>
+                      {service.ativo || service.is_active ? "Ativo" : "Inativo"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal size={16} />
+                          <span className="sr-only">Opções</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditingService(service)}>
+                          <Edit size={14} className="mr-2" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => setDeletingService(service)}
+                          className="text-red-600"
+                        >
+                          <Trash2 size={14} className="mr-2" />
+                          Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
-                {expandedRow === service.id && (
-                  <TableRow>
-                    <TableCell colSpan={readonly ? 4 : 5} className="bg-muted/30 p-4">
-                      <div className="space-y-2">
-                        {service.description && (
-                          <div>
-                            <h4 className="text-sm font-medium">Descrição</h4>
-                            <p className="text-sm text-muted-foreground">{service.description}</p>
-                          </div>
-                        )}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <h4 className="text-sm font-medium">Detalhes</h4>
-                            <ul className="text-sm text-muted-foreground">
-                              {service.isFeatured && <li>Serviço em destaque</li>}
-                              {service.isPopular && <li>Serviço popular</li>}
-                              <li>Duração: {formatDuration(service.duration)}</li>
-                              <li>Preço: {formatPrice(service.price)}</li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <ServiceFormDialog
+        open={!!editingService}
+        onOpenChange={(open) => !open && setEditingService(null)}
+        service={editingService}
+        onServiceSaved={handleServiceSaved}
+      />
+
+      <DeleteServiceDialog
+        open={!!deletingService}
+        onOpenChange={(open) => !open && setDeletingService(null)}
+        service={deletingService}
+        onServiceDeleted={handleServiceDeleted}
+      />
+    </>
   );
-}
+};

@@ -1,102 +1,128 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   LayoutDashboard, 
-  Calendar, 
   Users, 
-  Settings, 
-  BarChart3,
+  Calendar, 
   Scissors,
-  Menu,
-  X
+  UserCheck,
+  DollarSign, 
+  BarChart3, 
+  Settings,
+  LogOut
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Agendamentos', href: '/appointments', icon: Calendar },
-  { name: 'Clientes', href: '/clients', icon: Users },
-  { name: 'Serviços', href: '/services', icon: Scissors },
-  { name: 'Relatórios', href: '/reports', icon: BarChart3 },
-  { name: 'Configurações', href: '/settings', icon: Settings },
-];
+interface SidebarProps {
+  className?: string;
+}
 
-export const Sidebar: React.FC = () => {
+export function Sidebar({ className }: SidebarProps) {
+  const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const menuItems = [
+    {
+      title: 'Dashboard',
+      icon: LayoutDashboard,
+      href: '/dashboard',
+    },
+    {
+      title: 'Clientes',
+      icon: Users,
+      href: '/clients',
+    },
+    {
+      title: 'Agendamentos',
+      icon: Calendar,
+      href: '/appointments',
+    },
+    {
+      title: 'Serviços',
+      icon: Scissors,
+      href: '/services',
+    },
+    {
+      title: 'Profissionais',
+      icon: UserCheck,
+      href: '/professionals',
+    },
+    {
+      title: 'Financeiro',
+      icon: DollarSign,
+      href: '/finance',
+    },
+    {
+      title: 'Relatórios',
+      icon: BarChart3,
+      href: '/reports',
+    },
+    {
+      title: 'Configurações',
+      icon: Settings,
+      href: '/settings',
+    },
+  ];
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/auth');
+      toast.success('Logout realizado com sucesso!');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast.error('Erro ao fazer logout');
+    }
+  };
 
   return (
-    <>
-      {/* Mobile menu button */}
-      <div className="lg:hidden">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="fixed top-4 left-4 z-50"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </Button>
-      </div>
-
-      {/* Sidebar backdrop (mobile) */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 lg:hidden bg-black bg-opacity-50"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <div className="flex h-full flex-col">
-          {/* Logo */}
-          <div className="flex h-16 items-center justify-center border-b border-gray-200">
-            <h1 className="text-xl font-bold text-blue-600">Unclic</h1>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 space-y-1 p-4">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={cn(
-                    "group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                  )}
-                >
-                  <item.icon
+    <div className={cn('pb-12', className)}>
+      <div className="space-y-4 py-4">
+        <div className="px-3 py-2">
+          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            Menu
+          </h2>
+          <div className="space-y-1">
+            <ScrollArea className="h-[300px] px-1">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.href;
+                
+                return (
+                  <Button
+                    key={item.href}
+                    variant={isActive ? 'secondary' : 'ghost'}
                     className={cn(
-                      "mr-3 h-5 w-5 flex-shrink-0",
-                      isActive ? "text-blue-700" : "text-gray-400 group-hover:text-gray-500"
+                      'w-full justify-start',
+                      isActive && 'bg-muted font-medium'
                     )}
-                  />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Footer */}
-          <div className="border-t border-gray-200 p-4">
-            <div className="text-xs text-gray-500 text-center">
-              Unclic v1.0.0
-            </div>
+                    onClick={() => navigate(item.href)}
+                  >
+                    <Icon className="mr-2 h-4 w-4" />
+                    {item.title}
+                  </Button>
+                );
+              })}
+            </ScrollArea>
           </div>
         </div>
       </div>
-    </>
+      
+      <div className="absolute bottom-4 left-3 right-3">
+        <Button 
+          variant="outline" 
+          className="w-full justify-start" 
+          onClick={handleLogout}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sair
+        </Button>
+      </div>
+    </div>
   );
-};
+}
