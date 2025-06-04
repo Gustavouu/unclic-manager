@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface TenantContextType {
   businessId: string | null;
   businessName: string | null;
+  currentBusiness: { id: string; name: string } | null;
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
@@ -114,9 +115,15 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
     }
   }, [user, authLoading]);
 
+  // Create currentBusiness object for compatibility
+  const currentBusiness = businessId && businessName 
+    ? { id: businessId, name: businessName }
+    : null;
+
   const value = {
     businessId,
     businessName,
+    currentBusiness,
     isLoading: isLoading || authLoading,
     error,
     refetch,
