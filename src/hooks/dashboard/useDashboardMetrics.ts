@@ -2,10 +2,14 @@
 // Re-export do hook otimizado
 export { useDashboardMetricsOptimized as useDashboardMetrics } from './useDashboardMetricsOptimized';
 
-// Manter compatibilidade com exports existentes
+// Export dos tipos
 export type {
-  FilterPeriod
-} from './useDashboardMetricsOptimized';
+  FilterPeriod,
+  DashboardMetrics,
+  RevenueDataPoint,
+  PopularService,
+  UseDashboardMetricsReturn
+} from './types';
 
 // Note: Este arquivo agora usa a versão otimizada com cache e monitoramento
-console.log('Dashboard metrics hook upgraded to optimized version with caching and performance monitoring');
+console.log('Dashboard metrics hook upgraded to optimized version with improved TypeScript types');

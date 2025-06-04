@@ -1,16 +1,39 @@
 
-import { UserMenu } from "@/components/auth/UserMenu";
+import React from 'react';
+import { MobileSidebar } from './sidebar/MobileSidebar';
+import { Breadcrumb } from './Breadcrumb';
 
-export function Header() {
+interface BreadcrumbItem {
+  label: string;
+  path?: string;
+}
+
+interface HeaderProps {
+  breadcrumb?: BreadcrumbItem[];
+}
+
+export const Header = ({ breadcrumb }: HeaderProps) => {
   return (
-    <header className="h-16 border-b bg-white flex items-center justify-between px-6">
-      <div className="flex items-center space-x-4">
-        <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-      </div>
-      
-      <div className="flex items-center space-x-4">
-        <UserMenu />
+    <header className="sticky top-0 z-40 bg-white border-b border-gray-200 dark:bg-background dark:border-gray-800">
+      <div className="flex h-16 items-center gap-4 px-4 sm:px-6 lg:px-8">
+        {/* Mobile menu button - only visible on mobile */}
+        <div className="md:hidden">
+          <MobileSidebar />
+        </div>
+        
+        {/* Header content */}
+        <div className="flex flex-1 items-center justify-between">
+          <div className="flex items-center gap-4">
+            {breadcrumb && breadcrumb.length > 0 && (
+              <Breadcrumb items={breadcrumb.map(item => ({ ...item, active: false }))} />
+            )}
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* User menu, notifications, etc. could go here */}
+          </div>
+        </div>
       </div>
     </header>
   );
-}
+};

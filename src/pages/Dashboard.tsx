@@ -9,6 +9,7 @@ import { OnboardingBannerFixed } from '@/components/dashboard/OnboardingBannerFi
 import { PerformanceMonitorWidget } from '@/components/monitoring/PerformanceMonitorWidget';
 import { OnboardingRedirect } from '@/components/auth/OnboardingRedirect';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useDashboardMetricsOptimized } from '@/hooks/dashboard/useDashboardMetricsOptimized';
 
 // Lazy load do componente de monitoramento para não afetar o carregamento inicial
 const LazyPerformanceMonitor = React.lazy(() => 
@@ -37,6 +38,15 @@ const DashboardSkeleton = () => (
 );
 
 export default function Dashboard() {
+  const { popularServices, isLoading } = useDashboardMetricsOptimized();
+
+  // Mock data para appointments
+  const mockAppointments = [
+    { id: '1', clientName: 'João Silva', serviceName: 'Corte de Cabelo', time: '14:00', status: 'confirmed' as const },
+    { id: '2', clientName: 'Maria Santos', serviceName: 'Manicure', time: '15:30', status: 'scheduled' as const },
+    { id: '3', clientName: 'Pedro Costa', serviceName: 'Barba', time: '16:00', status: 'pending' as const },
+  ];
+
   return (
     <OnboardingRedirect>
       <div className="space-y-6">
@@ -56,12 +66,12 @@ export default function Dashboard() {
           {/* Gráficos e visualizações */}
           <div className="grid gap-6 md:grid-cols-2">
             <DashboardChartsUnified />
-            <PopularServices />
+            <PopularServices services={isLoading ? [] : popularServices} />
           </div>
 
           {/* Seção inferior */}
           <div className="grid gap-6 md:grid-cols-3">
-            <NextAppointments />
+            <NextAppointments appointments={mockAppointments} />
             <BirthdayClients />
             <div className="space-y-4">
               {/* Espaço para widgets adicionais */}

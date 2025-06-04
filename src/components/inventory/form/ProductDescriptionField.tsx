@@ -6,6 +6,9 @@ import { useFormContext } from "react-hook-form";
 
 export const ProductDescriptionField = () => {
   const form = useFormContext();
+  const description = form.watch('description');
+  const maxLength = 500;
+  const currentLength = description?.length || 0;
   
   return (
     <FormField
@@ -16,15 +19,25 @@ export const ProductDescriptionField = () => {
           <FormLabel>Descrição</FormLabel>
           <FormControl>
             <Textarea 
-              placeholder="Descrição detalhada do produto" 
-              className="min-h-24 resize-none" 
+              placeholder="Descrição detalhada do produto, características, uso recomendado, etc." 
+              className="min-h-20 resize-none" 
+              maxLength={maxLength}
+              aria-describedby="description-help description-count"
               {...field} 
               value={field.value || ''}
             />
           </FormControl>
-          <FormDescription>
-            Inclua informações relevantes sobre o produto como características, uso recomendado, etc.
-          </FormDescription>
+          <div className="flex justify-between items-start">
+            <FormDescription id="description-help">
+              Opcional - Informações adicionais sobre o produto
+            </FormDescription>
+            <span 
+              className={`text-xs ${currentLength > maxLength * 0.9 ? 'text-orange-600' : 'text-muted-foreground'}`}
+              id="description-count"
+            >
+              {currentLength}/{maxLength}
+            </span>
+          </div>
           <FormMessage />
         </FormItem>
       )}
