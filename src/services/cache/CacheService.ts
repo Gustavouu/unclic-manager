@@ -5,10 +5,20 @@ interface CacheEntry<T> {
   ttl: number;
 }
 
+interface CacheStats {
+  totalHits: number;
+  totalMisses: number;
+  hitRate: number;
+  memoryUsage: number;
+  totalEntries: number;
+}
+
 export class CacheService {
   private static instance: CacheService;
   private cache = new Map<string, CacheEntry<any>>();
   private maxSize = 500; // Reduzido para evitar problemas de memória
+  private hits = 0;
+  private misses = 0;
 
   private constructor() {}
 
@@ -41,14 +51,19 @@ export class CacheService {
   get<T>(key: string): T | null {
     const entry = this.cache.get(key);
     
-    if (!entry) return null;
+    if (!entry) {
+      this.misses++;
+      return null;
+    }
     
     const now = Date.now();
     if (now - entry.timestamp > entry.ttl) {
       this.cache.delete(key);
+      this.misses++;
       return null;
     }
     
+    this.hits++;
     return entry.data;
   }
 
@@ -58,6 +73,24 @@ export class CacheService {
 
   clear(): void {
     this.cache.clear();
+    this.hits = 0;
+    this.misses = 0;
+  }
+
+  getStats(): CacheStats {
+    const totalRequests = this.hits + this.misses;
+    const hitRate = totalRequests > 0 ? (this.hits / totalRequests) * 100 : 0;
+    
+    // Estimate memory usage (rough calculation)
+    const memoryUsage = JSON.stringify(Array.from(this.cache.entries())).length;
+    
+    return {
+      totalHits: this.hits,
+      totalMisses: this.misses,
+      hitRate,
+      memoryUsage,
+      totalEntries: this.cache.size
+    };
   }
 
   private clearExpired(): void {

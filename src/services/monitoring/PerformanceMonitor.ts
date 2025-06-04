@@ -6,6 +6,21 @@ interface MetricData {
   metadata?: Record<string, any>;
 }
 
+interface PerformanceReport {
+  summary: {
+    avgResponseTime: number;
+    p95ResponseTime: number;
+    totalQueries: number;
+    errorRate: number;
+  };
+  criticalMetrics: MetricData[];
+  slowQueries: Array<{
+    query: string;
+    duration: number;
+    timestamp: number;
+  }>;
+}
+
 export class PerformanceMonitor {
   private static instance: PerformanceMonitor;
   private metrics: MetricData[] = [];
@@ -63,6 +78,52 @@ export class PerformanceMonitor {
     if (error && process.env.NODE_ENV === 'development') {
       console.error(`[Query Error] ${tableName}:`, error);
     }
+  }
+
+  generateReport(): PerformanceReport {
+    const now = Date.now();
+    const recentMetrics = this.metrics.filter(m => now - m.timestamp < 5 * 60 * 1000); // Last 5 minutes
+
+    // Calculate average response time
+    const durationMetrics = recentMetrics.filter(m => m.name.includes('_duration'));
+    const avgResponseTime = durationMetrics.length > 0 
+      ? durationMetrics.reduce((sum, m) => sum + m.value, 0) / durationMetrics.length 
+      : 0;
+
+    // Calculate P95 response time
+    const sortedDurations = durationMetrics.map(m => m.value).sort((a, b) => a - b);
+    const p95Index = Math.floor(sortedDurations.length * 0.95);
+    const p95ResponseTime = sortedDurations[p95Index] || 0;
+
+    // Find critical metrics (> 1000ms)
+    const criticalMetrics = durationMetrics.filter(m => m.value > 1000);
+
+    // Find slow queries
+    const slowQueries = durationMetrics
+      .filter(m => m.value > 500 && m.name.includes('query_'))
+      .map(m => ({
+        query: m.name.replace('_duration', ''),
+        duration: m.value,
+        timestamp: m.timestamp
+      }))
+      .slice(0, 10);
+
+    // Calculate error rate
+    const successMetrics = recentMetrics.filter(m => m.name.includes('_success'));
+    const errorMetrics = recentMetrics.filter(m => m.name.includes('_error'));
+    const totalRequests = successMetrics.length + errorMetrics.length;
+    const errorRate = totalRequests > 0 ? (errorMetrics.length / totalRequests) * 100 : 0;
+
+    return {
+      summary: {
+        avgResponseTime,
+        p95ResponseTime,
+        totalQueries: durationMetrics.length,
+        errorRate
+      },
+      criticalMetrics,
+      slowQueries
+    };
   }
 
   getMetrics(): MetricData[] {

@@ -1,160 +1,116 @@
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useOnboarding } from '@/contexts/onboarding/OnboardingContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Building2, MapPin, Phone } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface BusinessBasicInfoSectionProps {
+  businessName: string;
+  setBusinessName: (name: string) => void;
+  businessDescription: string;
+  setBusinessDescription: (description: string) => void;
+  businessPhone: string;
+  setBusinessPhone: (phone: string) => void;
+  businessAddress: string;
+  setBusinessAddress: (address: string) => void;
   onNext: () => void;
 }
 
-export function BusinessBasicInfoSection({ onNext }: BusinessBasicInfoSectionProps) {
-  const { businessData, updateBusinessData } = useOnboarding();
+export const BusinessBasicInfoSection: React.FC<BusinessBasicInfoSectionProps> = ({
+  businessName,
+  setBusinessName,
+  businessDescription,
+  setBusinessDescription,
+  businessPhone,
+  setBusinessPhone,
+  businessAddress,
+  setBusinessAddress,
+  onNext,
+}) => {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleInputChange = (field: string, value: string) => {
-    updateBusinessData({ [field]: value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!user?.id) {
-      toast.error('Usuário não autenticado');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Save business data
-      const businessId = crypto.randomUUID();
-      const { error: businessError } = await supabase
-        .from('businesses')
-        .upsert({
-          id: businessId,
-          name: businessData.name,
-          slug: businessData.name.toLowerCase().replace(/\s+/g, '-'),
-          admin_email: user.email || '',
-          description: businessData.description,
-          phone: businessData.phone,
-          address: businessData.address,
-          city: businessData.city,
-          state: businessData.state,
-          zip_code: businessData.zipCode,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-
-      if (businessError) {
-        console.error('Error saving business:', businessError);
-        toast.error('Erro ao salvar dados do negócio');
-        return;
-      }
-
-      toast.success('Informações básicas salvas com sucesso!');
+    if (businessName.trim()) {
       onNext();
-    } catch (error) {
-      console.error('Error in handleSubmit:', error);
-      toast.error('Erro inesperado ao salvar dados');
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Informações Básicas do Negócio</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Building2 className="h-5 w-5" />
+          Informações Básicas do Negócio
+        </CardTitle>
+        <CardDescription>
+          Vamos começar com as informações principais do seu negócio
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Nome do Negócio</Label>
+          <div className="space-y-2">
+            <Label htmlFor="business-name">Nome do Negócio *</Label>
             <Input
-              id="name"
-              value={businessData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
+              id="business-name"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
               placeholder="Digite o nome do seu negócio"
               required
             />
           </div>
-          
-          <div>
-            <Label htmlFor="description">Descrição</Label>
+
+          <div className="space-y-2">
+            <Label htmlFor="business-description">Descrição</Label>
             <Textarea
-              id="description"
-              value={businessData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Descreva seu negócio"
+              id="business-description"
+              value={businessDescription}
+              onChange={(e) => setBusinessDescription(e.target.value)}
+              placeholder="Descreva brevemente o seu negócio"
               rows={3}
             />
           </div>
-          
-          <div>
-            <Label htmlFor="phone">Telefone</Label>
+
+          <div className="space-y-2">
+            <Label htmlFor="business-phone" className="flex items-center gap-2">
+              <Phone className="h-4 w-4" />
+              Telefone
+            </Label>
             <Input
-              id="phone"
-              value={businessData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="(11) 99999-9999"
+              id="business-phone"
+              value={businessPhone}
+              onChange={(e) => setBusinessPhone(e.target.value)}
+              placeholder="(00) 00000-0000"
+              type="tel"
             />
           </div>
-          
-          <div>
-            <Label htmlFor="address">Endereço</Label>
+
+          <div className="space-y-2">
+            <Label htmlFor="business-address" className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Endereço
+            </Label>
             <Input
-              id="address"
-              value={businessData.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
-              placeholder="Rua, número"
+              id="business-address"
+              value={businessAddress}
+              onChange={(e) => setBusinessAddress(e.target.value)}
+              placeholder="Endereço completo do negócio"
             />
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="city">Cidade</Label>
-              <Input
-                id="city"
-                value={businessData.city}
-                onChange={(e) => handleInputChange('city', e.target.value)}
-                placeholder="Cidade"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="state">Estado</Label>
-              <Input
-                id="state"
-                value={businessData.state}
-                onChange={(e) => handleInputChange('state', e.target.value)}
-                placeholder="SP"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <Label htmlFor="zipCode">CEP</Label>
-            <Input
-              id="zipCode"
-              value={businessData.zipCode}
-              onChange={(e) => handleInputChange('zipCode', e.target.value)}
-              placeholder="00000-000"
-            />
-          </div>
-          
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Salvando...' : 'Continuar'}
+
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={!businessName.trim()}
+          >
+            Continuar
           </Button>
         </form>
       </CardContent>
     </Card>
   );
-}
+};
