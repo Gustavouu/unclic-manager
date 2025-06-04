@@ -4,11 +4,17 @@ import { Sidebar } from "@/components/layout/sidebar/Sidebar";
 import { Header } from "./Header";
 import { MobileSidebar } from "./sidebar/MobileSidebar";
 
+interface BreadcrumbItem {
+  label: string;
+  path?: string;
+}
+
 type LayoutProps = {
   children: ReactNode;
+  breadcrumb?: BreadcrumbItem[];
 };
 
-export const Layout = ({ children }: LayoutProps) => {
+export const Layout = ({ children, breadcrumb }: LayoutProps) => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background">
       {/* Mobile Sidebar */}
@@ -22,7 +28,7 @@ export const Layout = ({ children }: LayoutProps) => {
       {/* Main Content Area */}
       <div className="flex flex-col md:pl-60">
         {/* Header */}
-        <Header />
+        <Header breadcrumb={breadcrumb} />
         
         {/* Page Content */}
         <main className="flex-1 py-6">

@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { Layout } from '@/components/layout/Layout';
@@ -41,6 +41,76 @@ const queryClient = new QueryClient({
   },
 });
 
+// Helper function to get breadcrumb based on pathname
+const getBreadcrumb = (pathname: string) => {
+  const breadcrumbMap: Record<string, { label: string; path?: string }[]> = {
+    '/dashboard': [
+      { label: "Início", path: "/dashboard" }
+    ],
+    '/appointments': [
+      { label: "Início", path: "/dashboard" },
+      { label: "Agendamentos" }
+    ],
+    '/clients': [
+      { label: "Início", path: "/dashboard" },
+      { label: "Clientes" }
+    ],
+    '/services': [
+      { label: "Início", path: "/dashboard" },
+      { label: "Serviços" }
+    ],
+    '/professionals': [
+      { label: "Início", path: "/dashboard" },
+      { label: "Profissionais" }
+    ],
+    '/inventory': [
+      { label: "Início", path: "/dashboard" },
+      { label: "Estoque" }
+    ],
+    '/finance': [
+      { label: "Início", path: "/dashboard" },
+      { label: "Financeiro" }
+    ],
+    '/payments': [
+      { label: "Início", path: "/dashboard" },
+      { label: "Pagamentos" }
+    ],
+    '/reports': [
+      { label: "Início", path: "/dashboard" },
+      { label: "Relatórios" }
+    ],
+    '/settings': [
+      { label: "Início", path: "/dashboard" },
+      { label: "Configurações" }
+    ],
+  };
+
+  return breadcrumbMap[pathname] || [];
+};
+
+function AppRoutes() {
+  const location = useLocation();
+  const breadcrumb = getBreadcrumb(location.pathname);
+
+  return (
+    <Layout breadcrumb={breadcrumb}>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/appointments" element={<Appointments />} />
+        <Route path="/clients" element={<Clients />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/professionals" element={<Professionals />} />
+        <Route path="/inventory" element={<Inventory />} />
+        <Route path="/finance" element={<Finance />} />
+        <Route path="/payments" element={<Payments />} />
+        <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/settings" element={<Settings />} />
+      </Routes>
+    </Layout>
+  );
+}
+
 function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="beauty-app-theme">
@@ -48,21 +118,7 @@ function App() {
         <TenantProvider>
           <QueryClientProvider client={queryClient}>
             <Router>
-              <Layout>
-                <Routes>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/appointments" element={<Appointments />} />
-                  <Route path="/clients" element={<Clients />} />
-                  <Route path="/services" element={<Services />} />
-                  <Route path="/professionals" element={<Professionals />} />
-                  <Route path="/inventory" element={<Inventory />} />
-                  <Route path="/finance" element={<Finance />} />
-                  <Route path="/payments" element={<Payments />} />
-                  <Route path="/reports" element={<ReportsPage />} />
-                  <Route path="/settings" element={<Settings />} />
-                </Routes>
-              </Layout>
+              <AppRoutes />
               <Toaster position="top-right" richColors closeButton />
             </Router>
           </QueryClientProvider>

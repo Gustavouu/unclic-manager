@@ -8,10 +8,6 @@ export default function Inventory() {
       <PageHeader 
         title="Estoque"
         description="Visualize e gerencie seu inventário"
-        breadcrumb={[
-          { label: "Início", path: "/" },
-          { label: "Estoque" }
-        ]}
       />
       <InventoryContent />
     </>
