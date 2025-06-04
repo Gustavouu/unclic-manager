@@ -20,15 +20,15 @@ export const useServiceOperations = () => {
       console.log('Creating service:', serviceData);
       
       const { data, error } = await supabase
-        .from('servicos')
+        .from('services')
         .insert([{
-          id_negocio: businessId,
-          nome: serviceData.name,
-          descricao: serviceData.description || null,
-          duracao: serviceData.duration,
-          preco: serviceData.price,
-          categoria: serviceData.category || 'Geral',
-          ativo: true,
+          business_id: businessId,
+          name: serviceData.name,
+          description: serviceData.description || null,
+          duration: serviceData.duration,
+          price: serviceData.price,
+          category: serviceData.category || 'Geral',
+          is_active: true,
         }])
         .select()
         .single();
@@ -54,14 +54,14 @@ export const useServiceOperations = () => {
       console.log('Updating service:', serviceId, serviceData);
       
       const { data, error } = await supabase
-        .from('servicos')
+        .from('services')
         .update({
-          nome: serviceData.name,
-          descricao: serviceData.description || null,
-          duracao: serviceData.duration,
-          preco: serviceData.price,
-          categoria: serviceData.category || 'Geral',
-          atualizado_em: new Date().toISOString(),
+          name: serviceData.name,
+          description: serviceData.description || null,
+          duration: serviceData.duration,
+          price: serviceData.price,
+          category: serviceData.category || 'Geral',
+          updated_at: new Date().toISOString(),
         })
         .eq('id', serviceId)
         .select()
@@ -88,7 +88,7 @@ export const useServiceOperations = () => {
       console.log('Deleting service:', serviceId);
       
       const { error } = await supabase
-        .from('servicos')
+        .from('services')
         .delete()
         .eq('id', serviceId);
 

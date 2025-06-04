@@ -44,7 +44,7 @@ export const DeleteServiceDialog: React.FC<DeleteServiceDialogProps> = ({
         <AlertDialogHeader>
           <AlertDialogTitle>Excluir Serviço</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir o serviço <strong>{service?.nome || service?.name}</strong>?
+            Tem certeza que deseja excluir o serviço <strong>{service?.name}</strong>?
             Esta ação não pode ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>

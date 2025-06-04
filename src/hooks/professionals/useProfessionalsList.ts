@@ -23,6 +23,7 @@ export const useProfessionalsList = () => {
     try {
       console.log('Fetching professionals for business:', businessId);
       
+      // Try funcionarios table first, then fallback to professionals if it exists
       const { data: professionalsData, error: professionalsError } = await supabase
         .from('funcionarios')
         .select('*')

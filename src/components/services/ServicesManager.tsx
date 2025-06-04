@@ -14,9 +14,9 @@ export const ServicesManager: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredServices = services.filter(service => {
-    const name = service.nome || service.name || '';
-    const description = service.descricao || service.description || '';
-    const category = service.categoria || service.category || '';
+    const name = service.name || '';
+    const description = service.description || '';
+    const category = service.category || '';
     
     return name.toLowerCase().includes(searchTerm.toLowerCase()) ||
            description.toLowerCase().includes(searchTerm.toLowerCase()) ||

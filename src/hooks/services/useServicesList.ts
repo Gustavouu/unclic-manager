@@ -24,10 +24,10 @@ export const useServicesList = () => {
       console.log('Fetching services for business:', businessId);
       
       const { data: servicesData, error: servicesError } = await supabase
-        .from('servicos')
+        .from('services')
         .select('*')
-        .eq('id_negocio', businessId)
-        .order('criado_em', { ascending: false });
+        .eq('business_id', businessId)
+        .order('created_at', { ascending: false });
 
       if (servicesError) {
         console.log('Error from services table:', servicesError);
@@ -56,11 +56,11 @@ export const useServicesList = () => {
 
     try {
       const { data, error } = await supabase
-        .from('servicos')
+        .from('services')
         .select('*')
-        .eq('id_negocio', businessId)
-        .or(`nome.ilike.%${searchTerm}%,descricao.ilike.%${searchTerm}%,categoria.ilike.%${searchTerm}%`)
-        .order('criado_em', { ascending: false });
+        .eq('business_id', businessId)
+        .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`)
+        .order('created_at', { ascending: false });
 
       if (error) {
         throw error;
