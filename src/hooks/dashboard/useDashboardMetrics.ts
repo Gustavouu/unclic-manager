@@ -98,13 +98,13 @@ export const useDashboardMetrics = () => {
         const appointmentService = AppointmentService.getInstance();
         const stats = await appointmentService.getStats(businessId, startOfMonth, endOfMonth);
         
-        // Handle the actual return type from AppointmentService and map to our expected format
+        // Map the actual AppointmentStats properties to our expected format
         appointmentStats = {
           total: stats.total || 0,
-          total_revenue: stats.totalRevenue || stats.total_revenue || 0,
-          today_count: stats.todayCount || stats.today_count || 0,
-          pending_count: stats.pendingCount || stats.pending_count || 0,
-          completed_count: stats.completedCount || stats.completed_count || 0
+          total_revenue: stats.total_revenue || 0,
+          today_count: 0, // This needs to be calculated separately as it's not in AppointmentStats
+          pending_count: stats.scheduled || 0, // Use 'scheduled' as pending
+          completed_count: stats.completed || 0
         };
       } catch (appointmentError) {
         console.warn('Could not fetch appointment stats, using defaults:', appointmentError);
