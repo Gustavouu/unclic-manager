@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -22,7 +21,8 @@ export const useServiceOperations = () => {
       const { data, error } = await supabase
         .from('services')
         .insert({
-          id_negocio: businessId,
+          business_id: businessId, // Required by TypeScript schema
+          id_negocio: businessId,  // Required by database
           nome: serviceData.name,
           descricao: serviceData.description || null,
           duracao: serviceData.duration,

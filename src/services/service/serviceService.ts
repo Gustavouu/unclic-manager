@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Service, ServiceFormData } from '@/types/service';
 
@@ -18,7 +17,8 @@ export class ServiceService {
     const { data: service, error } = await supabase
       .from('services')
       .insert({
-        id_negocio: data.business_id,
+        business_id: data.business_id, // Required by TypeScript schema
+        id_negocio: data.business_id,  // Required by database
         nome: data.name,
         descricao: data.description || null,
         duracao: data.duration,
