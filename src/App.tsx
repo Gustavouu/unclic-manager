@@ -14,6 +14,7 @@ import Payments from '@/pages/Payments';
 import ReportsPage from '@/pages/ReportsPage';
 import Settings from '@/pages/Settings';
 import { ThemeProvider } from '@/components/theme-provider';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { initializeGlobalErrorHandler } from '@/services/error/GlobalErrorHandler';
 import './App.css';
 
@@ -42,26 +43,28 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="beauty-app-theme">
-      <QueryClientProvider client={queryClient}>
-        <Router>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/appointments" element={<Appointments />} />
-              <Route path="/clients" element={<Clients />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/professionals" element={<Professionals />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/finance" element={<Finance />} />
-              <Route path="/payments" element={<Payments />} />
-              <Route path="/reports" element={<ReportsPage />} />
-              <Route path="/settings" element={<Settings />} />
-            </Routes>
-          </Layout>
-          <Toaster position="top-right" richColors closeButton />
-        </Router>
-      </QueryClientProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <Router>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/appointments" element={<Appointments />} />
+                <Route path="/clients" element={<Clients />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/professionals" element={<Professionals />} />
+                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/finance" element={<Finance />} />
+                <Route path="/payments" element={<Payments />} />
+                <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/settings" element={<Settings />} />
+              </Routes>
+            </Layout>
+            <Toaster position="top-right" richColors closeButton />
+          </Router>
+        </QueryClientProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

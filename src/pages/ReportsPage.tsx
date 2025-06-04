@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ import { OnboardingRedirect } from '@/components/auth/OnboardingRedirect';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { DateRange } from 'react-day-picker';
 
 type PeriodType = 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
 
@@ -36,13 +36,7 @@ interface MetricCard {
 
 const ReportsPage = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('month');
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({
-    from: undefined,
-    to: undefined,
-  });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   // Mock data - em produção viria da API
   const metricsData: MetricCard[] = [

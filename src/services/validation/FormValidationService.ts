@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { ValidationService, ValidationRule } from './ValidationService';
 
 export interface FormFieldConfig {
