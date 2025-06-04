@@ -4,8 +4,10 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface OptimizedTenantContextType {
   businessId: string | null;
+  businessName: string | null;
   currentBusiness: any;
   isLoading: boolean;
+  error: string | null;
 }
 
 const OptimizedTenantContext = createContext<OptimizedTenantContextType | undefined>(undefined);
@@ -27,11 +29,16 @@ export const OptimizedTenantProvider: React.FC<OptimizedTenantProviderProps> = (
   const [businessId] = useState<string | null>(user?.id || null);
   const [currentBusiness] = useState<any>({ name: 'Demo Business' });
   const [isLoading] = useState(false);
+  const [error] = useState<string | null>(null);
+
+  const businessName = currentBusiness?.name || null;
 
   const value = {
     businessId,
+    businessName,
     currentBusiness,
     isLoading,
+    error,
   };
 
   return (

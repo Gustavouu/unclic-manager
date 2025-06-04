@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { PageHeader } from '@/components/ui/page-header';
-import { OptimizedUserSetupStatus } from './OptimizedUserSetupStatus';
+import OptimizedUserSetupStatus from './OptimizedUserSetupStatus';
 import { useOptimizedTenant } from '@/contexts/OptimizedTenantContext';
 import { usePermissions } from '@/hooks/security/usePermissions';
 import { useOptimizedDashboard } from '@/hooks/data/useOptimizedDashboard';

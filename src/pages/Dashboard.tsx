@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { PageHeader } from '@/components/ui/page-header';
-import { UserSetupStatus } from '@/components/layout/UserSetupStatus';
+import UserSetupStatus from '@/components/layout/UserSetupStatus';
 import { SetupGuide } from '@/components/dashboard/SetupGuide';
 import { usePermissions } from '@/hooks/security/usePermissions';
 import { useTenant } from '@/contexts/TenantContext';
