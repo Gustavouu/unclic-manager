@@ -18,7 +18,7 @@ export class ServiceService {
     const { data: service, error } = await supabase
       .from('services')
       .insert({
-        id_negocio: data.business_id,
+        business_id: data.business_id,
         nome: data.name,
         descricao: data.description || null,
         duracao: data.duration,
@@ -34,6 +34,7 @@ export class ServiceService {
     // Map the response to include both Portuguese and English field names
     return {
       ...service,
+      id_negocio: service.business_id,
       categoria: service.category || 'Geral',
       name: service.nome,
       description: service.descricao,
@@ -68,6 +69,7 @@ export class ServiceService {
     // Map the response to include both Portuguese and English field names
     return {
       ...service,
+      id_negocio: service.business_id,
       categoria: service.category || 'Geral',
       name: service.nome,
       description: service.descricao,
@@ -91,6 +93,7 @@ export class ServiceService {
     // Map the response to include both Portuguese and English field names
     return {
       ...service,
+      id_negocio: service.business_id,
       categoria: service.category || 'Geral',
       name: service.nome,
       description: service.descricao,
@@ -106,7 +109,7 @@ export class ServiceService {
     const { data: services, error } = await supabase
       .from('services')
       .select()
-      .eq('id_negocio', businessId)
+      .eq('business_id', businessId)
       .eq('ativo', true)
       .order('nome');
 
@@ -115,6 +118,7 @@ export class ServiceService {
     // Map the response to include both Portuguese and English field names
     return (services || []).map(service => ({
       ...service,
+      id_negocio: service.business_id,
       categoria: service.category || 'Geral',
       name: service.nome,
       description: service.descricao,
@@ -139,7 +143,7 @@ export class ServiceService {
     const { data: services, error } = await supabase
       .from('services')
       .select()
-      .eq('id_negocio', params.business_id)
+      .eq('business_id', params.business_id)
       .or(`nome.ilike.%${params.search}%,descricao.ilike.%${params.search}%,category.ilike.%${params.search}%`)
       .order('nome');
 
@@ -148,6 +152,7 @@ export class ServiceService {
     // Map the response to include both Portuguese and English field names
     return (services || []).map(service => ({
       ...service,
+      id_negocio: service.business_id,
       categoria: service.category || 'Geral',
       name: service.nome,
       description: service.descricao,
@@ -171,6 +176,7 @@ export class ServiceService {
     
     return {
       ...service,
+      id_negocio: service.business_id,
       categoria: service.category || 'Geral',
       name: service.nome,
       description: service.descricao,

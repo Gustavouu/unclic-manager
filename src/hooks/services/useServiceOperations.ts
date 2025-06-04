@@ -22,7 +22,7 @@ export const useServiceOperations = () => {
       const { data, error } = await supabase
         .from('services')
         .insert({
-          id_negocio: businessId,
+          business_id: businessId,
           nome: serviceData.name,
           descricao: serviceData.description || null,
           duracao: serviceData.duration,
@@ -40,6 +40,7 @@ export const useServiceOperations = () => {
       // Map the response to include both Portuguese and English field names
       const serviceResult: Service = {
         ...data,
+        id_negocio: data.business_id,
         categoria: data.category || 'Geral',
         name: data.nome,
         description: data.descricao,
@@ -87,6 +88,7 @@ export const useServiceOperations = () => {
       // Map the response to include both Portuguese and English field names
       const serviceResult: Service = {
         ...data,
+        id_negocio: data.business_id,
         categoria: data.category || 'Geral',
         name: data.nome,
         description: data.descricao,
