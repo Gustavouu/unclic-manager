@@ -31,7 +31,11 @@ export class UnifiedDataService {
 
     if (error) throw error;
 
-    const clients = data || [];
+    const clients = (data || []).map(client => ({
+      ...client,
+      status: (client.status as 'active' | 'inactive') || 'active'
+    })) as UnifiedClient[];
+    
     this.cache.set(cacheKey, clients, 5 * 60 * 1000); // 5 minutes
     return clients;
   }
@@ -50,24 +54,46 @@ export class UnifiedDataService {
 
     if (error) throw error;
 
-    this.cache.set(cacheKey, data, 5 * 60 * 1000);
-    return data;
+    const client = {
+      ...data,
+      status: (data.status as 'active' | 'inactive') || 'active'
+    } as UnifiedClient;
+
+    this.cache.set(cacheKey, client, 5 * 60 * 1000);
+    return client;
   }
 
   async createClient(businessId: string, clientData: Partial<UnifiedClient>): Promise<UnifiedClient> {
     const { data, error } = await supabase
       .from('clients_unified')
       .insert({
-        ...clientData,
         business_id: businessId,
+        name: clientData.name || '',
+        email: clientData.email,
+        phone: clientData.phone,
+        birth_date: clientData.birth_date,
+        gender: clientData.gender,
+        address: clientData.address,
+        city: clientData.city,
+        state: clientData.state,
+        zip_code: clientData.zip_code,
+        notes: clientData.notes,
+        status: clientData.status || 'active',
+        total_spent: clientData.total_spent || 0,
+        preferences: clientData.preferences || {},
       })
       .select()
       .single();
 
     if (error) throw error;
 
+    const client = {
+      ...data,
+      status: (data.status as 'active' | 'inactive') || 'active'
+    } as UnifiedClient;
+
     this.invalidateClients(businessId);
-    return data;
+    return client;
   }
 
   // Appointment operations
@@ -90,7 +116,11 @@ export class UnifiedDataService {
 
     if (error) throw error;
 
-    const appointments = data || [];
+    const appointments = (data || []).map(appointment => ({
+      ...appointment,
+      status: (appointment.status as 'scheduled' | 'confirmed' | 'completed' | 'canceled' | 'no_show') || 'scheduled'
+    })) as UnifiedAppointment[];
+    
     this.cache.set(cacheKey, appointments, 2 * 60 * 1000); // 2 minutes for real-time data
     return appointments;
   }
@@ -145,7 +175,11 @@ export class UnifiedDataService {
 
     if (error) throw error;
 
-    const employees = data || [];
+    const employees = (data || []).map(employee => ({
+      ...employee,
+      status: (employee.status as 'active' | 'inactive') || 'active'
+    })) as UnifiedEmployee[];
+    
     this.cache.set(cacheKey, employees, 10 * 60 * 1000); // 10 minutes
     return employees;
   }
