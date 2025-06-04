@@ -16,7 +16,7 @@ export interface AppointmentCalendarProps {
 export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({ 
   initialView = 'month' 
 }) => {
-  const { appointments, isLoading, error, updateAppointment } = useAppointments();
+  const { appointments, isLoading, updateAppointmentStatus } = useAppointments();
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
@@ -39,7 +39,7 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
 
   const handleCancelAppointment = async (appointment: Appointment) => {
     try {
-      await updateAppointment(appointment.id, { status: 'cancelado' });
+      await updateAppointmentStatus(appointment.id, 'cancelado');
       setShowDetailsDialog(false);
     } catch (error) {
       console.error('Erro ao cancelar agendamento:', error);
@@ -59,17 +59,6 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
           ))}
         </div>
       </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert className="m-4">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Erro ao carregar agendamentos: {error}
-        </AlertDescription>
-      </Alert>
     );
   }
 
