@@ -52,6 +52,8 @@ export interface ClientStats {
   completedAppointments?: number;
   cancelledAppointments?: number;
   totalSpent?: number;
+  lastVisit?: string | null;
+  loyaltyPoints?: number;
 }
 
 export interface ClientSearchParams {
