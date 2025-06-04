@@ -34,6 +34,14 @@ interface PopularService {
   percentage: number;
 }
 
+// Type for Supabase response
+interface SupabaseResponse<T> {
+  data: T[] | null;
+  error: {
+    message: string;
+  } | null;
+}
+
 export const useDashboardMetricsOptimized = () => {
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalAppointments: 0,
@@ -124,32 +132,34 @@ export const useDashboardMetricsOptimized = () => {
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
     const today = now.toISOString().split('T')[0];
 
-    // Queries paralelas para melhor performance
+    // Queries paralelas para melhor performance com tipos corretos
     const [clientsResponse, appointmentsResponse] = await Promise.all([
-      monitor.measureAsync('clients_query', () =>
-        supabase
+      monitor.measureAsync('clients_query', async () => {
+        const result = await supabase
           .from('clients_unified')
           .select('*')
-          .eq('business_id', businessId)
-      ),
-      monitor.measureAsync('appointments_query', () =>
-        supabase
+          .eq('business_id', businessId);
+        return result as SupabaseResponse<any>;
+      }),
+      monitor.measureAsync('appointments_query', async () => {
+        const result = await supabase
           .from('appointments_unified')
           .select('*')
           .eq('business_id', businessId)
           .gte('booking_date', startOfMonth)
-          .lte('booking_date', endOfMonth)
-      )
+          .lte('booking_date', endOfMonth);
+        return result as SupabaseResponse<any>;
+      })
     ]);
 
     if (clientsResponse.error) {
       monitor.trackQuery('clients_unified_select', 0, false, clientsResponse.error.message);
-      throw clientsResponse.error;
+      throw new Error(clientsResponse.error.message);
     }
     
     if (appointmentsResponse.error) {
       monitor.trackQuery('appointments_unified_select', 0, false, appointmentsResponse.error.message);
-      throw appointmentsResponse.error;
+      throw new Error(appointmentsResponse.error.message);
     }
 
     monitor.trackQuery('clients_unified_select', 0, true);
