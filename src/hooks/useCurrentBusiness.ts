@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 export const useCurrentBusiness = () => {
-  const { user } = useAuth();
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuthContext();
 
   useEffect(() => {
     const fetchBusinessId = async () => {
@@ -17,33 +18,64 @@ export const useCurrentBusiness = () => {
       }
 
       try {
-        // Try to get business from business_users table
-        const { data: businessUser, error: businessUserError } = await supabase
+        setIsLoading(true);
+        setError(null);
+
+        // First, try to get business ID from business_users table
+        const { data: businessUserData, error: businessUserError } = await supabase
           .from('business_users')
           .select('business_id')
           .eq('user_id', user.id)
-          .single();
+          .limit(1)
+          .maybeSingle();
 
-        if (!businessUserError && businessUser) {
-          setBusinessId(businessUser.business_id);
+        if (businessUserError && businessUserError.code !== 'PGRST116') {
+          throw businessUserError;
+        }
+
+        if (businessUserData?.business_id) {
+          setBusinessId(businessUserData.business_id);
           setIsLoading(false);
           return;
         }
 
-        // If not found, try to get from businesses table directly
-        const { data: business, error: businessError } = await supabase
-          .from('businesses')
-          .select('id')
-          .eq('admin_email', user.email)
-          .single();
+        // If not found, check if user has a business through application_users
+        const { data: appUserData, error: appUserError } = await supabase
+          .from('application_users')
+          .select('business_id')
+          .eq('id', user.id)
+          .limit(1)
+          .maybeSingle();
 
-        if (!businessError && business) {
-          setBusinessId(business.id);
-        } else {
-          setBusinessId(null);
+        if (appUserError && appUserError.code !== 'PGRST116') {
+          throw appUserError;
         }
-      } catch (error) {
-        console.error('Error fetching business:', error);
+
+        if (appUserData?.business_id) {
+          setBusinessId(appUserData.business_id);
+        } else {
+          // Try to find any business where the user is the admin
+          const { data: businessData, error: businessError } = await supabase
+            .from('businesses')
+            .select('id')
+            .eq('admin_email', user.email)
+            .limit(1)
+            .maybeSingle();
+
+          if (businessError && businessError.code !== 'PGRST116') {
+            throw businessError;
+          }
+
+          if (businessData?.id) {
+            setBusinessId(businessData.id);
+          } else {
+            console.warn('No business found for user:', user.id);
+            setBusinessId(null);
+          }
+        }
+      } catch (err: any) {
+        console.error('Error fetching business ID:', err);
+        setError(err.message || 'Failed to fetch business information');
         setBusinessId(null);
       } finally {
         setIsLoading(false);
@@ -53,5 +85,9 @@ export const useCurrentBusiness = () => {
     fetchBusinessId();
   }, [user]);
 
-  return { businessId, isLoading };
+  return {
+    businessId,
+    isLoading,
+    error,
+  };
 };

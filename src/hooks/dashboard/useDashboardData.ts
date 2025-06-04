@@ -70,103 +70,96 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           startDate = new Date(now.getFullYear(), now.getMonth(), 1);
       }
 
-      // Fetch all data in parallel
-      const [
-        clientsResponse,
-        servicesResponse,
-        professionalsResponse,
-        appointmentsResponse
-      ] = await Promise.all([
-        // Total clients
-        supabase
-          .from('clients')
-          .select('id, criado_em')
-          .eq('id_negocio', businessId),
-        
-        // Total services - try services table first
-        supabase
-          .from('services')
-          .select('id, nome')
-          .eq('business_id', businessId)
-          .eq('ativo', true),
-        
-        // Total professionals
-        supabase
-          .from('funcionarios')
-          .select('id')
-          .eq('id_negocio', businessId)
-          .eq('status', 'ativo'),
-        
-        // Appointments
-        supabase
-          .from('Appointments')
-          .select('id, valor, status, criado_em, id_servico')
-          .eq('id_negocio', businessId)
-          .gte('criado_em', startDate.toISOString())
-      ]);
+      console.log(`Loading dashboard data for business ${businessId}, period: ${period}`);
 
-      // Handle clients
-      const totalClients = clientsResponse.data?.length || 0;
-      const newClients = clientsResponse.data?.filter(client => 
-        new Date(client.criado_em) >= startDate
+      // Fetch total clients
+      const { data: clientsData, error: clientsError } = await supabase
+        .from('clients')
+        .select('id, criado_em, created_at')
+        .eq('id_negocio', businessId);
+
+      if (clientsError) {
+        console.error('Error fetching clients:', clientsError);
+      }
+
+      const totalClients = clientsData?.length || 0;
+      const newClients = clientsData?.filter(client => {
+        const createdDate = new Date(client.criado_em || client.created_at);
+        return createdDate >= startDate;
+      }).length || 0;
+
+      // Fetch services
+      const { data: servicesData, error: servicesError } = await supabase
+        .from('servicos')
+        .select('id, nome')
+        .eq('id_negocio', businessId)
+        .eq('ativo', true);
+
+      if (servicesError) {
+        console.error('Error fetching services:', servicesError);
+      }
+
+      const totalServices = servicesData?.length || 0;
+
+      // Fetch professionals/funcionarios
+      const { data: professionalsData, error: professionalsError } = await supabase
+        .from('funcionarios')
+        .select('id')
+        .eq('id_negocio', businessId)
+        .eq('status', 'ativo');
+
+      if (professionalsError) {
+        console.error('Error fetching professionals:', professionalsError);
+      }
+
+      const totalProfessionals = professionalsData?.length || 0;
+
+      // Fetch appointments
+      const { data: appointmentsData, error: appointmentsError } = await supabase
+        .from('Appointments')
+        .select('id, valor, status, criado_em, created_at, id_servico')
+        .eq('id_negocio', businessId)
+        .gte('criado_em', startDate.toISOString());
+
+      if (appointmentsError) {
+        console.error('Error fetching appointments:', appointmentsError);
+      }
+
+      const totalAppointments = appointmentsData?.length || 0;
+      const completedAppointments = appointmentsData?.filter(apt => 
+        apt.status === 'concluido' || apt.status === 'completed'
       ).length || 0;
-
-      // Handle services
-      const totalServices = servicesResponse.data?.length || 0;
-
-      // Handle professionals
-      const totalProfessionals = professionalsResponse.data?.length || 0;
-
-      // Handle appointments
-      let totalAppointments = 0;
-      let totalRevenue = 0;
-      let completedAppointments = 0;
-      let popularServicesMap: Record<string, number> = {};
-
-      if (appointmentsResponse.data) {
-        totalAppointments = appointmentsResponse.data.length;
-        completedAppointments = appointmentsResponse.data.filter(apt => 
-          apt.status === 'concluido' || apt.status === 'completed'
-        ).length;
-        
-        totalRevenue = appointmentsResponse.data.reduce((sum, apt) => {
-          if (apt.status === 'concluido' || apt.status === 'completed') {
-            return sum + (apt.valor || 0);
-          }
-          return sum;
-        }, 0);
-
-        // Count popular services
-        appointmentsResponse.data.forEach(apt => {
-          if (apt.id_servico) {
-            popularServicesMap[apt.id_servico] = (popularServicesMap[apt.id_servico] || 0) + 1;
-          }
-        });
-      }
-
-      // Get service names for popular services
-      const popularServices: Array<{id: string, name: string, count: number}> = [];
       
-      if (Object.keys(popularServicesMap).length > 0 && servicesResponse.data) {
-        const sortedServices = Object.entries(popularServicesMap)
-          .sort(([,a], [,b]) => b - a)
-          .slice(0, 5);
-
-        for (const [serviceId, count] of sortedServices) {
-          const service = servicesResponse.data.find(s => s.id === serviceId);
-          if (service) {
-            popularServices.push({
-              id: serviceId,
-              name: service.nome,
-              count
-            });
-          }
+      const totalRevenue = appointmentsData?.reduce((sum, apt) => {
+        if (apt.status === 'concluido' || apt.status === 'completed') {
+          return sum + (apt.valor || 0);
         }
-      }
+        return sum;
+      }, 0) || 0;
 
       const completionRate = totalAppointments > 0 
         ? (completedAppointments / totalAppointments) * 100 
         : 0;
+
+      // Calculate popular services
+      const serviceCount: Record<string, number> = {};
+      appointmentsData?.forEach(apt => {
+        if (apt.id_servico) {
+          serviceCount[apt.id_servico] = (serviceCount[apt.id_servico] || 0) + 1;
+        }
+      });
+
+      const popularServices = Object.entries(serviceCount)
+        .map(([serviceId, count]) => {
+          const service = servicesData?.find(s => s.id === serviceId);
+          return {
+            id: serviceId,
+            name: service?.nome || 'Serviço',
+            count
+          };
+        })
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
 
       setMetrics({
         totalClients,
