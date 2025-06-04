@@ -2940,7 +2940,9 @@ export type Database = {
       professionals: {
         Row: {
           avatar: string | null
+          avatar_url: string | null
           bio: string | null
+          business_id: string
           createdAt: string
           email: string | null
           establishmentId: string
@@ -2948,14 +2950,20 @@ export type Database = {
           isActive: boolean
           name: string
           phone: string | null
+          rating: number | null
+          status: string | null
           tenantId: string
+          total_reviews: number | null
           updatedAt: string
           userId: string | null
+          working_hours: Json | null
           workingHours: Json | null
         }
         Insert: {
           avatar?: string | null
+          avatar_url?: string | null
           bio?: string | null
+          business_id: string
           createdAt?: string
           email?: string | null
           establishmentId: string
@@ -2963,14 +2971,20 @@ export type Database = {
           isActive?: boolean
           name: string
           phone?: string | null
+          rating?: number | null
+          status?: string | null
           tenantId: string
+          total_reviews?: number | null
           updatedAt: string
           userId?: string | null
+          working_hours?: Json | null
           workingHours?: Json | null
         }
         Update: {
           avatar?: string | null
+          avatar_url?: string | null
           bio?: string | null
+          business_id?: string
           createdAt?: string
           email?: string | null
           establishmentId?: string
@@ -2978,12 +2992,23 @@ export type Database = {
           isActive?: boolean
           name?: string
           phone?: string | null
+          rating?: number | null
+          status?: string | null
           tenantId?: string
+          total_reviews?: number | null
           updatedAt?: string
           userId?: string | null
+          working_hours?: Json | null
           workingHours?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "professionals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "professionals_establishmentId_fkey"
             columns: ["establishmentId"]
@@ -3160,6 +3185,8 @@ export type Database = {
         Row: {
           ativo: boolean | null
           atualizado_em: string | null
+          business_id: string
+          category: string | null
           comissao_percentual: number | null
           criado_em: string | null
           descricao: string | null
@@ -3168,7 +3195,9 @@ export type Database = {
           id_categoria: string | null
           id_negocio: string
           ids_equipamentos: string[] | null
+          image_url: string | null
           imagem_url: string | null
+          is_active: boolean | null
           nome: string
           preco: number
           requer_equipamento: boolean | null
@@ -3176,6 +3205,8 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           atualizado_em?: string | null
+          business_id: string
+          category?: string | null
           comissao_percentual?: number | null
           criado_em?: string | null
           descricao?: string | null
@@ -3184,7 +3215,9 @@ export type Database = {
           id_categoria?: string | null
           id_negocio: string
           ids_equipamentos?: string[] | null
+          image_url?: string | null
           imagem_url?: string | null
+          is_active?: boolean | null
           nome: string
           preco: number
           requer_equipamento?: boolean | null
@@ -3192,6 +3225,8 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           atualizado_em?: string | null
+          business_id?: string
+          category?: string | null
           comissao_percentual?: number | null
           criado_em?: string | null
           descricao?: string | null
@@ -3200,12 +3235,22 @@ export type Database = {
           id_categoria?: string | null
           id_negocio?: string
           ids_equipamentos?: string[] | null
+          image_url?: string | null
           imagem_url?: string | null
+          is_active?: boolean | null
           nome?: string
           preco?: number
           requer_equipamento?: boolean | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "services_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       services_backup: {
         Row: {

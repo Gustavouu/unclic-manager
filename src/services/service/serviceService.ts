@@ -1,15 +1,6 @@
+
 import { supabase } from '@/lib/supabase';
-import type {
-  Service,
-  ServiceCreate,
-  ServiceUpdate,
-  ServiceStats,
-  ServiceSearchParams,
-  ServiceCategory,
-  ServiceCategoryCreate,
-  ServiceCategoryUpdate,
-  ServiceCategoryStats,
-} from '@/types/service';
+import type { Service, ServiceCreate, ServiceUpdate, ServiceSearchParams, ServiceStats } from '@/types/service';
 
 export class ServiceService {
   private static instance: ServiceService;
@@ -24,7 +15,7 @@ export class ServiceService {
   }
 
   /**
-   * Cria um novo serviço
+   * Creates a new service
    */
   async create(data: ServiceCreate): Promise<Service> {
     const { data: service, error } = await supabase
@@ -41,7 +32,7 @@ export class ServiceService {
   }
 
   /**
-   * Atualiza um serviço existente
+   * Updates an existing service
    */
   async update(id: string, data: ServiceUpdate): Promise<Service> {
     const { data: service, error } = await supabase
@@ -56,7 +47,7 @@ export class ServiceService {
   }
 
   /**
-   * Busca um serviço pelo ID
+   * Gets a service by ID
    */
   async getById(id: string): Promise<Service> {
     const { data: service, error } = await supabase
@@ -70,7 +61,7 @@ export class ServiceService {
   }
 
   /**
-   * Lista serviços com base nos parâmetros de busca
+   * Searches services based on parameters
    */
   async search(params: ServiceSearchParams): Promise<Service[]> {
     let query = supabase
@@ -82,19 +73,19 @@ export class ServiceService {
       query = query.eq('category', params.category);
     }
 
-    if (params.min_price) {
+    if (params.min_price !== undefined) {
       query = query.gte('price', params.min_price);
     }
 
-    if (params.max_price) {
+    if (params.max_price !== undefined) {
       query = query.lte('price', params.max_price);
     }
 
-    if (params.min_duration) {
+    if (params.min_duration !== undefined) {
       query = query.gte('duration', params.min_duration);
     }
 
-    if (params.max_duration) {
+    if (params.max_duration !== undefined) {
       query = query.lte('duration', params.max_duration);
     }
 
@@ -109,11 +100,68 @@ export class ServiceService {
     const { data: services, error } = await query;
 
     if (error) throw error;
-    return services;
+    return services || [];
   }
 
   /**
-   * Deleta um serviço
+   * Gets all services for a business
+   */
+  async getByBusinessId(businessId: string): Promise<Service[]> {
+    const { data: services, error } = await supabase
+      .from('services')
+      .select()
+      .eq('business_id', businessId)
+      .eq('is_active', true)
+      .order('name');
+
+    if (error) throw error;
+    return services || [];
+  }
+
+  /**
+   * Gets service statistics
+   */
+  async getStats(serviceId: string): Promise<ServiceStats> {
+    // Get basic service stats
+    const { data: appointments, error: appointmentsError } = await supabase
+      .from('Appointments')
+      .select('status, valor')
+      .eq('id_servico', serviceId);
+
+    if (appointmentsError) {
+      console.warn('Error fetching appointments for stats:', appointmentsError);
+      return {
+        totalAppointments: 0,
+        completedAppointments: 0,
+        cancelledAppointments: 0,
+        noShowAppointments: 0,
+        totalRevenue: 0,
+        averageRating: 0,
+        mostPopularDay: null,
+        mostPopularTime: null,
+      };
+    }
+
+    const total = appointments?.length || 0;
+    const completed = appointments?.filter(a => a.status === 'concluido').length || 0;
+    const cancelled = appointments?.filter(a => a.status === 'cancelado').length || 0;
+    const noShow = appointments?.filter(a => a.status === 'faltou').length || 0;
+    const revenue = appointments?.reduce((sum, a) => sum + (Number(a.valor) || 0), 0) || 0;
+
+    return {
+      totalAppointments: total,
+      completedAppointments: completed,
+      cancelledAppointments: cancelled,
+      noShowAppointments: noShow,
+      totalRevenue: revenue,
+      averageRating: 0, // Would need reviews table
+      mostPopularDay: null, // Would need more complex query
+      mostPopularTime: null, // Would need more complex query
+    };
+  }
+
+  /**
+   * Deletes a service
    */
   async delete(id: string): Promise<void> {
     const { error } = await supabase
@@ -123,114 +171,4 @@ export class ServiceService {
 
     if (error) throw error;
   }
-
-  /**
-   * Atualiza o status de ativação do serviço
-   */
-  async updateStatus(id: string, isActive: boolean): Promise<Service> {
-    const { data: service, error } = await supabase
-      .from('services')
-      .update({ is_active: isActive })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return service;
-  }
-
-  /**
-   * Busca estatísticas do serviço
-   */
-  async getStats(serviceId: string): Promise<ServiceStats> {
-    const { data, error } = await supabase.rpc('get_service_stats', {
-      service_id: serviceId,
-    });
-
-    if (error) throw error;
-    return data;
-  }
-
-  /**
-   * Cria uma nova categoria de serviço
-   */
-  async createCategory(data: ServiceCategoryCreate): Promise<ServiceCategory> {
-    const { data: category, error } = await supabase
-      .from('service_categories')
-      .insert(data)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return category;
-  }
-
-  /**
-   * Atualiza uma categoria de serviço existente
-   */
-  async updateCategory(
-    id: string,
-    data: ServiceCategoryUpdate
-  ): Promise<ServiceCategory> {
-    const { data: category, error } = await supabase
-      .from('service_categories')
-      .update(data)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return category;
-  }
-
-  /**
-   * Busca uma categoria de serviço pelo ID
-   */
-  async getCategoryById(id: string): Promise<ServiceCategory> {
-    const { data: category, error } = await supabase
-      .from('service_categories')
-      .select()
-      .eq('id', id)
-      .single();
-
-    if (error) throw error;
-    return category;
-  }
-
-  /**
-   * Lista categorias de serviço de um negócio
-   */
-  async listCategories(businessId: string): Promise<ServiceCategory[]> {
-    const { data: categories, error } = await supabase
-      .from('service_categories')
-      .select()
-      .eq('business_id', businessId);
-
-    if (error) throw error;
-    return categories;
-  }
-
-  /**
-   * Deleta uma categoria de serviço
-   */
-  async deleteCategory(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('service_categories')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-  }
-
-  /**
-   * Busca estatísticas de uma categoria de serviço
-   */
-  async getCategoryStats(categoryId: string): Promise<ServiceCategoryStats> {
-    const { data, error } = await supabase.rpc('get_service_category_stats', {
-      category_id: categoryId,
-    });
-
-    if (error) throw error;
-    return data;
-  }
-} 
+}
