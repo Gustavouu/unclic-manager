@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AppointmentService } from '../appointmentService';
 import { supabase } from '@/lib/supabase';
@@ -180,7 +181,7 @@ describe('AppointmentService', () => {
         client_id: '1',
         professional_id: '1',
         service_id: '1',
-        status: 'agendado' as const,
+        status: 'scheduled' as const,
         date_from: '2024-01-01',
         date_to: '2024-01-31',
         start_time: '10:00',
