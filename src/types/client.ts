@@ -16,6 +16,7 @@ export interface Client {
   last_visit?: string;
   total_spent: number;
   total_appointments?: number;
+  status?: string; // Added status property
   created_at: string;
   updated_at: string;
 }

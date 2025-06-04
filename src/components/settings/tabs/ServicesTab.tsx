@@ -20,6 +20,7 @@ export const ServicesTab = () => {
   const [services, setServices] = useState<ServiceData[]>(initialServices);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [showNewServiceDialog, setShowNewServiceDialog] = useState(false);
   
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -63,7 +64,9 @@ export const ServicesTab = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium">Serviços Oferecidos</h3>
-            <NewServiceDialog onServiceCreated={handleServiceCreated} />
+            <Button onClick={() => setShowNewServiceDialog(true)}>
+              Adicionar Serviço
+            </Button>
           </div>
           
           <div className="border rounded-md overflow-hidden">
@@ -150,6 +153,12 @@ export const ServicesTab = () => {
           />
         </div>
       </CardContent>
+      
+      <NewServiceDialog
+        open={showNewServiceDialog}
+        onOpenChange={setShowNewServiceDialog}
+        onServiceCreated={handleServiceCreated}
+      />
     </Card>
   );
 };
