@@ -124,6 +124,89 @@ export const normalizeBusinessData = (business: any) => {
   };
 };
 
+// Validation utilities
+export const validateEmail = (email: string): boolean => {
+  if (!email || email.trim() === '') return false;
+  return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$/.test(email);
+};
+
+export const validatePhone = (phone: string): boolean => {
+  if (!phone || phone.trim() === '') return true; // Optional field
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  return cleanPhone.length === 10 || cleanPhone.length === 11;
+};
+
+export const validateZipCode = (zipCode: string): boolean => {
+  if (!zipCode || zipCode.trim() === '') return true; // Optional field
+  const cleanZip = zipCode.replace(/[^0-9]/g, '');
+  return cleanZip.length === 8;
+};
+
+export const normalizeClientInput = (clientData: any) => {
+  return {
+    ...clientData,
+    name: clientData.name?.trim() || '',
+    email: clientData.email?.toLowerCase().trim() || '',
+    city: clientData.city?.trim() || '',
+    state: clientData.state?.toUpperCase().trim() || '',
+    phone: clientData.phone?.replace(/[^0-9+\-\(\)\s]/g, '') || '',
+    zip_code: clientData.zip_code?.replace(/[^0-9]/g, '') || ''
+  };
+};
+
+// Data integrity check function
+export const checkDataIntegrity = async (): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase.rpc('check_data_integrity');
+    
+    if (error) {
+      console.error('Error checking data integrity:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error calling integrity check function:', error);
+    return [];
+  }
+};
+
+// Error message formatter for validation errors
+export const formatValidationError = (error: any): string => {
+  if (error?.message) {
+    const message = error.message;
+    
+    // Handle specific validation error messages
+    if (message.includes('Email inválido')) {
+      return 'Por favor, insira um email válido.';
+    }
+    if (message.includes('Telefone inválido')) {
+      return 'Por favor, insira um telefone válido (10 ou 11 dígitos).';
+    }
+    if (message.includes('CEP inválido')) {
+      return 'Por favor, insira um CEP válido (8 dígitos).';
+    }
+    if (message.includes('Nome do cliente é obrigatório')) {
+      return 'O nome do cliente é obrigatório.';
+    }
+    if (message.includes('Data de agendamento não pode ser no passado')) {
+      return 'A data do agendamento deve ser no futuro.';
+    }
+    if (message.includes('Horário de início deve ser anterior')) {
+      return 'O horário de início deve ser anterior ao horário de fim.';
+    }
+    if (message.includes('Preço não pode ser negativo')) {
+      return 'O preço deve ser um valor positivo.';
+    }
+    if (message.includes('Duração deve ser positiva')) {
+      return 'A duração deve ser maior que zero.';
+    }
+  }
+  
+  return 'Erro de validação. Verifique os dados inseridos.';
+};
+
+// Legacy functions maintained for compatibility
 export const tableExists = async (tableName: string): Promise<boolean> => {
   try {
     const { error } = await supabase

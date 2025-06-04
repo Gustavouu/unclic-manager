@@ -306,7 +306,22 @@ export type Database = {
           status?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_appointments_business"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_appointments_client"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients_unified"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_logs: {
         Row: {
@@ -893,7 +908,15 @@ export type Database = {
           updated_at?: string | null
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_clients_business"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       commission_rules: {
         Row: {
@@ -3893,6 +3916,19 @@ export type Database = {
         Args: { tenant_id: string }
         Returns: boolean
       }
+      check_data_integrity: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          table_name: string
+          issue_type: string
+          issue_count: number
+          description: string
+        }[]
+      }
+      clean_existing_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       clear_tenant_context: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -3937,6 +3973,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      normalize_status: {
+        Args: { status_value: string }
+        Returns: string
+      }
       obter_metricas_periodo: {
         Args:
           | { business_id_param: string; periodo?: string }
@@ -3973,6 +4013,18 @@ export type Database = {
       }
       usuario_tem_acesso_ao_negocio: {
         Args: { id_negocio_verificar: string }
+        Returns: boolean
+      }
+      validate_email: {
+        Args: { email_text: string }
+        Returns: boolean
+      }
+      validate_phone: {
+        Args: { phone_text: string }
+        Returns: boolean
+      }
+      validate_zip_code: {
+        Args: { zip_text: string }
         Returns: boolean
       }
       verificar_completar_onboarding: {
