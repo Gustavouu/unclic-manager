@@ -1,20 +1,25 @@
 
 import { useState, useEffect } from 'react';
 import { useOptimizedTenant } from '@/contexts/OptimizedTenantContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 export const useNeedsOnboarding = () => {
   const { user } = useAuth();
-  const { businessId, currentBusiness } = useOptimizedTenant();
+  const { businessId, currentBusiness, isLoading: tenantLoading } = useOptimizedTenant();
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkOnboardingStatus = async () => {
+    const checkOnboardingStatus = () => {
       if (!user) {
         setNeedsOnboarding(false);
         setLoading(false);
+        return;
+      }
+
+      // Wait for tenant loading to complete
+      if (tenantLoading) {
         return;
       }
 
@@ -36,7 +41,7 @@ export const useNeedsOnboarding = () => {
     };
 
     checkOnboardingStatus();
-  }, [user, businessId, currentBusiness]);
+  }, [user, businessId, currentBusiness, tenantLoading]);
 
   return {
     needsOnboarding,

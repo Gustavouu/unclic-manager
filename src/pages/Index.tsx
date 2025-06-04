@@ -11,8 +11,6 @@ const Index = () => {
   
   useEffect(() => {
     document.title = "Unclic Manager";
-    
-    // No redundant refreshes here - data fetching is now centralized in TenantContext
   }, []);
   
   if (loading || (user && onboardingLoading)) {
@@ -28,7 +26,7 @@ const Index = () => {
     return <Navigate to="/login" replace />;
   }
   
-  // Even if onboarding is needed, send to dashboard instead of forcing onboarding
+  // Always redirect to dashboard (which will show the optimized dashboard)
   return <Navigate to="/dashboard" replace />;
 };
 

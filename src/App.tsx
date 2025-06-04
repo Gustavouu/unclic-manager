@@ -7,9 +7,9 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Toaster } from 'sonner';
 
 // Pages
+import Index from '@/pages/Index';
 import Login from '@/pages/Login';
 import OptimizedDashboard from '@/pages/OptimizedDashboard';
-import Dashboard from '@/pages/Dashboard';
 import Onboarding from '@/pages/Onboarding';
 import OnboardingFixed from '@/pages/OnboardingFixed';
 
@@ -46,9 +46,9 @@ function App() {
                 <OptimizedLayout />
               </ProtectedRoute>
             }>
-              <Route index element={<OptimizedDashboard />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route index element={<Index />} />
+              <Route path="dashboard" element={<OptimizedDashboard />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Routes>
           <Toaster position="top-right" />
