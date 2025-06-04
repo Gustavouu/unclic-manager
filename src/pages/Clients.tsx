@@ -16,23 +16,13 @@ const Clients = () => {
   
   const { clients, refetch } = useClients();
 
-  const handleNewClient = () => {
-    setShowNewClientDialog(true);
-  };
-
-  const handleEditClient = (clientId: string) => {
-    setEditingClientId(clientId);
-  };
-
   const handleViewClient = (clientId: string) => {
     setViewingClientId(clientId);
   };
 
-  const handleDeleteClient = (clientId: string) => {
-    const client = clients.find(c => c.id === clientId);
-    if (client) {
-      setDeletingClient({ id: clientId, name: client.name });
-    }
+  const handleCreateAppointment = (clientId: string) => {
+    // This would navigate to appointment creation with pre-selected client
+    console.log('Creating appointment for client:', clientId);
   };
 
   const handleClientCreated = () => {
@@ -54,10 +44,8 @@ const Clients = () => {
     <OnboardingRedirect>
       <div className="container mx-auto py-6 px-4">
         <ClientsManager
-          onNewClient={handleNewClient}
-          onEditClient={handleEditClient}
           onViewClient={handleViewClient}
-          onDeleteClient={handleDeleteClient}
+          onCreateAppointment={handleCreateAppointment}
         />
         
         <NewClientDialog

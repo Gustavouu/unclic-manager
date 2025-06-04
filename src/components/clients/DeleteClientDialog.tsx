@@ -28,12 +28,12 @@ export const DeleteClientDialog: React.FC<DeleteClientDialogProps> = ({
   clientName,
   onClientDeleted
 }) => {
-  const { deleteClient, isSubmitting } = useClientOperations();
+  const { handleDeleteClient, isSubmitting } = useClientOperations();
 
   const handleDelete = async () => {
     if (!clientId) return;
     
-    const success = await deleteClient(clientId);
+    const success = await handleDeleteClient(clientId);
     if (success) {
       onClientDeleted?.();
       onOpenChange(false);
