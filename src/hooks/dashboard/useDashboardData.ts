@@ -1,5 +1,5 @@
 
-// Type definitions for backward compatibility with existing components
+// Unified dashboard data types for backward compatibility
 export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';
 
 export interface DashboardMetrics {
@@ -16,6 +16,8 @@ export interface DashboardMetrics {
   averageTicket: number;
   retentionRate: number;
   growthRate: number;
+  newClientsThisMonth: number;
+  servicesCompleted: number;
 }
 
 export interface RevenueDataPoint {
@@ -39,7 +41,14 @@ export interface DashboardStats {
   popularServices: PopularService[];
   nextAppointments: any[];
   retentionRate: number;
+  newClients: number;
+  completionRate: number;
+  totalServices: number;
+  totalRevenue: number;
 }
 
-// Re-export the main hook
+// Re-export the main hook with improved typing
 export { useDashboardMetrics } from './useDashboardMetrics';
+
+// Legacy compatibility export
+export { useDashboardMetrics as useDashboardData } from './useDashboardMetrics';
