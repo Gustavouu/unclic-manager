@@ -1,5 +1,5 @@
 
-// Legacy hook - now redirects to the new unified dashboard metrics hook
+// Legacy hook - now redirects to the new refactored dashboard metrics hook
 // This file is kept for backward compatibility
 export { useDashboardMetrics as useDashboardData } from './dashboard/useDashboardMetrics';
 
@@ -14,5 +14,5 @@ export type {
 // Keep the DashboardStats type from the original interface for full compatibility
 export type { DashboardStats } from './dashboard/useDashboardData';
 
-// Note: This hook has been refactored to use the new unified metrics system
+// Note: This hook has been refactored to use smaller, more focused modules
 console.warn('useDashboardData is deprecated. Please use useDashboardMetrics from @/hooks/dashboard/useDashboardMetrics');
