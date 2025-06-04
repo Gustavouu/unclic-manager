@@ -7,7 +7,13 @@ export * from './client/clientApi';
 // Export legacy client service functions
 export { 
   fetchClients, 
-  createClientApi as createClient, 
+  createClient, 
   findClientByEmail, 
   findClientByPhone 
 } from './clientService';
+
+// Export client API functions with aliases for backward compatibility
+export { 
+  createClientApi, 
+  fetchClients as fetchClientsApi 
+} from './client/clientApi';
