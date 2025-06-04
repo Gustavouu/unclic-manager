@@ -18,7 +18,7 @@ export class ServiceService {
     const { data: service, error } = await supabase
       .from('services')
       .insert({
-        business_id: data.business_id,
+        id_negocio: data.business_id,
         nome: data.name,
         descricao: data.description || null,
         duracao: data.duration,
@@ -106,7 +106,7 @@ export class ServiceService {
     const { data: services, error } = await supabase
       .from('services')
       .select()
-      .eq('business_id', businessId)
+      .eq('id_negocio', businessId)
       .eq('ativo', true)
       .order('nome');
 
@@ -139,7 +139,7 @@ export class ServiceService {
     const { data: services, error } = await supabase
       .from('services')
       .select()
-      .eq('business_id', params.business_id)
+      .eq('id_negocio', params.business_id)
       .or(`nome.ilike.%${params.search}%,descricao.ilike.%${params.search}%,category.ilike.%${params.search}%`)
       .order('nome');
 
@@ -157,5 +157,72 @@ export class ServiceService {
       created_at: service.criado_em,
       updated_at: service.atualizado_em,
     }));
+  }
+
+  async updateStatus(id: string, status: boolean): Promise<Service> {
+    const { data: service, error } = await supabase
+      .from('services')
+      .update({ ativo: status, atualizado_em: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    return {
+      ...service,
+      categoria: service.category || 'Geral',
+      name: service.nome,
+      description: service.descricao,
+      duration: service.duracao,
+      price: service.preco,
+      is_active: service.ativo,
+      created_at: service.criado_em,
+      updated_at: service.atualizado_em,
+    };
+  }
+
+  async getStats(id: string): Promise<any> {
+    // Return mock stats for now
+    return {
+      totalAppointments: 0,
+      completedAppointments: 0,
+      cancelledAppointments: 0,
+      noShowAppointments: 0,
+      totalRevenue: 0,
+      averageRating: 0,
+      mostPopularDay: null,
+      mostPopularTime: null,
+    };
+  }
+
+  // Category management methods
+  async createCategory(data: any): Promise<any> {
+    // Mock implementation
+    return { id: 'mock-id', ...data };
+  }
+
+  async updateCategory(id: string, data: any): Promise<any> {
+    // Mock implementation
+    return { id, ...data };
+  }
+
+  async getCategoryById(id: string): Promise<any> {
+    // Mock implementation
+    return { id, name: 'Mock Category' };
+  }
+
+  async listCategories(businessId: string): Promise<any[]> {
+    // Mock implementation
+    return [];
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    // Mock implementation
+  }
+
+  async getCategoryStats(id: string): Promise<any> {
+    // Mock implementation
+    return { totalServices: 0, totalRevenue: 0 };
   }
 }

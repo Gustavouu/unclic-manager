@@ -22,7 +22,7 @@ export const useServiceOperations = () => {
       const { data, error } = await supabase
         .from('services')
         .insert({
-          business_id: businessId,
+          id_negocio: businessId,
           nome: serviceData.name,
           descricao: serviceData.description || null,
           duracao: serviceData.duration,

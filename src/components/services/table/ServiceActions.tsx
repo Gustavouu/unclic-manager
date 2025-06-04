@@ -22,13 +22,6 @@ export const ServiceActions = ({
     setShowDeleteDialog(false);
   };
 
-  // Create a mock service object for the delete dialog
-  const serviceForDialog = {
-    id: service.id,
-    nome: service.name,
-    name: service.name,
-  };
-
   return (
     <div className="flex items-center justify-end gap-2">
       <EditServiceDialog 
@@ -38,7 +31,7 @@ export const ServiceActions = ({
       <DeleteServiceDialog 
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
-        service={serviceForDialog}
+        service={service}
         onServiceDeleted={handleServiceDeleted} 
       />
     </div>

@@ -170,11 +170,7 @@ export const ServicesTab = () => {
         <DeleteServiceDialog
           open={!!deleteDialogService}
           onOpenChange={(open) => !open && setDeleteDialogService(null)}
-          service={{
-            id: deleteDialogService.id,
-            nome: deleteDialogService.name,
-            name: deleteDialogService.name,
-          }}
+          service={deleteDialogService}
           onServiceDeleted={handleServiceDeleted}
         />
       )}

@@ -16,7 +16,7 @@ import type { Service } from "@/types/service";
 interface DeleteServiceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  service: Service | null;
+  service: Service | { id: string; nome?: string; name?: string } | null;
   onServiceDeleted?: () => void;
 }
 
@@ -38,13 +38,15 @@ export const DeleteServiceDialog: React.FC<DeleteServiceDialogProps> = ({
     }
   };
 
+  const serviceName = service?.nome || service?.name || 'Serviço';
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Excluir Serviço</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir o serviço <strong>{service?.nome || service?.name}</strong>?
+            Tem certeza que deseja excluir o serviço <strong>{serviceName}</strong>?
             Esta ação não pode ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>
