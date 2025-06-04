@@ -16,6 +16,7 @@ export interface Client {
   updated_at: string;
   last_visit?: string | null;
   total_spent: number;
+  total_appointments?: number;
   status: string;
   preferences: Record<string, any>;
 }
@@ -40,4 +41,44 @@ export interface ClientFilters {
   gender: string;
   dateRange: string;
   spendingRange: string;
+}
+
+export interface ClientStats {
+  totalClients: number;
+  newThisMonth: number;
+  activeClients: number;
+  retentionRate: number;
+}
+
+export interface ClientSearchParams {
+  search?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface ClientCreate {
+  name: string;
+  email?: string;
+  phone?: string;
+  birth_date?: string;
+  gender?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  notes?: string;
+}
+
+export interface ClientUpdate extends Partial<ClientCreate> {}
+
+export interface ClientListResult {
+  clients: Client[];
+  total: number;
+}
+
+export interface ClientOperationResult {
+  success: boolean;
+  client?: Client;
+  error?: string;
 }

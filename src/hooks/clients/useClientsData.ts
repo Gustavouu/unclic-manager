@@ -56,7 +56,9 @@ export const useClientsData = () => {
         last_visit: client.ultima_visita || client.last_visit,
         total_spent: client.valor_total_gasto || client.total_spent || 0,
         status: client.status || 'active',
-        preferences: client.preferencias || {}
+        preferences: typeof client.preferencias === 'object' && client.preferencias !== null 
+          ? client.preferencias as Record<string, any>
+          : {}
       }));
 
       console.log('Mapped clients:', mappedClients);
@@ -127,7 +129,9 @@ export const useClientsData = () => {
       last_visit: data.ultima_visita,
       total_spent: data.valor_total_gasto || 0,
       status: data.status || 'active',
-      preferences: data.preferencias || {}
+      preferences: typeof data.preferencias === 'object' && data.preferencias !== null 
+        ? data.preferencias as Record<string, any>
+        : {}
     };
 
     // Update local state
@@ -184,7 +188,9 @@ export const useClientsData = () => {
       last_visit: data.ultima_visita,
       total_spent: data.valor_total_gasto || 0,
       status: data.status || 'active',
-      preferences: data.preferencias || {}
+      preferences: typeof data.preferencias === 'object' && data.preferencias !== null 
+        ? data.preferencias as Record<string, any>
+        : {}
     };
 
     // Update local state
