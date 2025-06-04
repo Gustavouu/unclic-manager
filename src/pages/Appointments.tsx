@@ -6,7 +6,7 @@ import { CalendarIcon, List, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppointmentCalendar } from "@/components/appointments/AppointmentCalendar";
 import { AppointmentsList } from "@/components/appointments/AppointmentsList";
-import { NewAppointmentDialog } from "@/components/appointments/NewAppointmentDialog";
+import { NewAppointmentDialogImproved } from "@/components/appointments/NewAppointmentDialogImproved";
 import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { AppointmentStats } from "@/components/appointments/AppointmentStats";
 import { Calendar, Grid3X3 } from "lucide-react";
@@ -104,8 +104,8 @@ const Appointments = () => {
           </Tabs>
         </Card>
 
-        {/* Dialog de novo agendamento */}
-        <NewAppointmentDialog 
+        {/* Dialog de novo agendamento melhorado */}
+        <NewAppointmentDialogImproved 
           open={showNewAppointmentDialog}
           onOpenChange={setShowNewAppointmentDialog}
         />

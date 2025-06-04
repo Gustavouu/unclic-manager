@@ -15,11 +15,11 @@ import { NewClientDialog } from "@/components/clients/NewClientDialog";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export type ClientSelectWrapperProps = {
+export type EnhancedClientSelectWrapperProps = {
   form: UseFormReturn<AppointmentFormValues>;
 };
 
-export default function ClientSelectWrapper({ form }: ClientSelectWrapperProps) {
+export default function EnhancedClientSelectWrapper({ form }: EnhancedClientSelectWrapperProps) {
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -35,7 +35,6 @@ export default function ClientSelectWrapper({ form }: ClientSelectWrapperProps) 
       try {
         console.log('Fetching clients for business ID:', businessId);
         
-        // Use the migrated clients table
         const { data, error } = await supabase
           .from('clients')
           .select('*')
