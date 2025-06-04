@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { RevenueChart } from '@/components/dashboard/RevenueChart';
 import { ClientDashboardWidget } from '@/components/clients/ClientDashboardWidget';
-import { useDashboardData, FilterPeriod } from '@/hooks/useDashboardData';
+import { useDashboardData, FilterPeriod } from '@/hooks/dashboard/useDashboardData';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { OnboardingRedirect } from '@/components/auth/OnboardingRedirect';
@@ -67,11 +67,11 @@ export default function Dashboard() {
         <DashboardStats 
           stats={{
             totalClients: metrics.totalClients,
-            totalServices: metrics.totalServices || 0,
+            totalServices: metrics.totalServices,
             totalAppointments: metrics.totalAppointments,
             totalRevenue: metrics.totalRevenue,
-            newClients: metrics.newClients || 0,
-            completionRate: metrics.completionRate || 0,
+            newClients: metrics.newClients,
+            completionRate: metrics.completionRate,
           }} 
           loading={isLoading} 
         />
