@@ -15,8 +15,22 @@ export interface Client {
   preferences?: any;
   last_visit?: string;
   total_spent: number;
+  total_appointments?: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface ClientFormData {
+  name: string;
+  email?: string;
+  phone?: string;
+  birth_date?: string;
+  gender?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  notes?: string;
 }
 
 export interface ClientCreate {
@@ -51,6 +65,21 @@ export interface ClientSearchParams {
   search?: string;
   city?: string;
   state?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ClientListResult {
+  clients: Client[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface ClientOperationResult {
+  success: boolean;
+  data?: Client;
+  error?: string;
 }
 
 export interface ClientStats {

@@ -130,6 +130,69 @@ export class ClientService {
   }
 
   /**
+   * Lists clients by business (alias for getByBusinessId)
+   */
+  async listByBusiness(businessId: string): Promise<Client[]> {
+    return this.getByBusinessId(businessId);
+  }
+
+  /**
+   * Updates client status
+   */
+  async updateStatus(id: string, status: string): Promise<Client> {
+    const { data: client, error } = await supabase
+      .from('clients')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return this.mapToClient(client);
+  }
+
+  /**
+   * Updates client preferences
+   */
+  async updatePreferences(id: string, preferences: any): Promise<Client> {
+    const { data: client, error } = await supabase
+      .from('clients')
+      .update({ preferencias: preferences })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return this.mapToClient(client);
+  }
+
+  /**
+   * Lists clients by preferred professional
+   */
+  async listByPreferredProfessional(professionalId: string): Promise<Client[]> {
+    const { data: clients, error } = await supabase
+      .from('clients')
+      .select()
+      .contains('preferencias', { preferred_professional: professionalId });
+
+    if (error) throw error;
+    return clients?.map(client => this.mapToClient(client)) || [];
+  }
+
+  /**
+   * Lists clients by preferred service
+   */
+  async listByPreferredService(serviceId: string): Promise<Client[]> {
+    const { data: clients, error } = await supabase
+      .from('clients')
+      .select()
+      .contains('preferencias', { preferred_service: serviceId });
+
+    if (error) throw error;
+    return clients?.map(client => this.mapToClient(client)) || [];
+  }
+
+  /**
    * Gets client statistics
    */
   async getStats(clientId: string): Promise<ClientStats> {
@@ -205,6 +268,7 @@ export class ClientService {
       preferences: dbClient.preferencias,
       last_visit: dbClient.ultima_visita,
       total_spent: Number(dbClient.valor_total_gasto) || 0,
+      total_appointments: 0, // This would need to be calculated separately
       created_at: dbClient.criado_em,
       updated_at: dbClient.atualizado_em,
     };

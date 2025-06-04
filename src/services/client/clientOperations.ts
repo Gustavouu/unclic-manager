@@ -1,105 +1,114 @@
 
-import { clientApi } from './clientApi';
-import { Client, ClientFormData, ClientListResult, ClientOperationResult } from '@/types/client';
+import { ClientService } from './clientService';
+import type { Client, ClientFormData, ClientListResult, ClientOperationResult } from '@/types/client';
 
-export const clientOperations = {
-  // List clients with error handling
-  async listClients(businessId: string, params = {}): Promise<ClientListResult> {
-    try {
-      const result = await clientApi.getClients(businessId, params);
-      return {
-        success: true,
-        ...result
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Failed to fetch clients'
-      };
-    }
-  },
+const clientService = ClientService.getInstance();
 
-  // Create client with error handling
-  async createClient(businessId: string, clientData: ClientFormData): Promise<ClientOperationResult> {
-    try {
-      const client = await clientApi.createClient(businessId, clientData);
-      return {
-        success: true,
-        data: client
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Failed to create client'
-      };
-    }
-  },
-
-  // Update client with error handling
-  async updateClient(clientId: string, clientData: Partial<ClientFormData>, businessId: string): Promise<ClientOperationResult> {
-    try {
-      const client = await clientApi.updateClient(clientId, clientData);
-      return {
-        success: true,
-        data: client
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Failed to update client'
-      };
-    }
-  },
-
-  // Get client with error handling
-  async getClient(clientId: string): Promise<ClientOperationResult> {
-    try {
-      const client = await clientApi.getClientById(clientId);
-      return {
-        success: true,
-        data: client
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Failed to fetch client'
-      };
-    }
-  },
-
-  // Delete client with error handling
-  async deleteClient(clientId: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      await clientApi.deleteClient(clientId);
-      return { success: true };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Failed to delete client'
-      };
-    }
-  }
-};
-
-// Export individual functions for backwards compatibility
-export const createClient = clientOperations.createClient;
-export const updateClient = clientOperations.updateClient;
-export const deleteClient = clientOperations.deleteClient;
-export const findClientByEmail = async (email: string, businessId: string): Promise<Client | null> => {
+export async function getAllClients(): Promise<Client[]> {
   try {
-    const result = await clientApi.getClients(businessId, { search: email });
-    return result.data?.find(client => client.email === email) || null;
+    // This would need a business_id - using empty array for now
+    return [];
+  } catch (error) {
+    console.error('Error fetching all clients:', error);
+    throw error;
+  }
+}
+
+export async function getClientsByBusiness(businessId: string, params: { page?: number; limit?: number } = {}): Promise<ClientListResult> {
+  try {
+    const clients = await clientService.search({
+      business_id: businessId,
+      page: params.page || 1,
+      limit: params.limit || 10
+    });
+
+    return {
+      clients,
+      total: clients.length,
+      page: params.page || 1,
+      limit: params.limit || 10
+    };
+  } catch (error) {
+    console.error('Error fetching clients by business:', error);
+    throw error;
+  }
+}
+
+export async function createClient(businessId: string, clientData: ClientFormData): Promise<ClientOperationResult> {
+  try {
+    const client = await clientService.create({
+      business_id: businessId,
+      ...clientData
+    });
+
+    return {
+      success: true,
+      data: client
+    };
+  } catch (error) {
+    console.error('Error creating client:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+export async function updateClient(id: string, clientData: Partial<ClientFormData>, businessId: string): Promise<ClientOperationResult> {
+  try {
+    const client = await clientService.update(id, clientData);
+
+    return {
+      success: true,
+      data: client
+    };
+  } catch (error) {
+    console.error('Error updating client:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+export async function deleteClient(id: string): Promise<ClientOperationResult> {
+  try {
+    await clientService.delete(id);
+
+    return {
+      success: true
+    };
+  } catch (error) {
+    console.error('Error deleting client:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+export async function findClientByEmail(email: string, businessId: string): Promise<Client | null> {
+  try {
+    const clients = await clientService.search({
+      business_id: businessId,
+      search: email
+    });
+    return clients.find(client => client.email === email) || null;
   } catch (error) {
     console.error('Error finding client by email:', error);
     return null;
   }
-};
-export const findClientByPhone = async (phone: string, businessId: string): Promise<Client | null> => {
+}
+
+export async function findClientByPhone(phone: string, businessId: string): Promise<Client | null> {
   try {
-    const result = await clientApi.getClients(businessId, { search: phone });
-    return result.data?.find(client => client.phone === phone) || null;
+    const clients = await clientService.search({
+      business_id: businessId,
+      search: phone
+    });
+    return clients.find(client => client.phone === phone) || null;
   } catch (error) {
     console.error('Error finding client by phone:', error);
     return null;
   }
-};
+}

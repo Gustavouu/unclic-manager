@@ -13,6 +13,7 @@ export interface Appointment {
   status: 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'faltou';
   notes?: string;
   payment_method?: string;
+  payment_status?: 'pending' | 'paid' | 'refunded' | 'partially_paid';
   rating?: number;
   feedback_comment?: string;
   reminder_sent?: boolean;
@@ -36,6 +37,7 @@ export interface AppointmentCreate {
   status?: 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'faltou';
   notes?: string;
   payment_method?: string;
+  payment_status?: 'pending' | 'paid' | 'refunded' | 'partially_paid';
 }
 
 export interface AppointmentUpdate {
@@ -44,8 +46,10 @@ export interface AppointmentUpdate {
   end_time?: string;
   notes?: string;
   payment_method?: string;
+  payment_status?: 'pending' | 'paid' | 'refunded' | 'partially_paid';
   rating?: number;
   feedback_comment?: string;
+  price?: number;
 }
 
 export interface AppointmentSearchParams {
@@ -56,6 +60,16 @@ export interface AppointmentSearchParams {
   service_id?: string;
   date_from?: string;
   date_to?: string;
+  start_date?: string;
+  end_date?: string;
+  start_time?: string;
+  end_time?: string;
+  payment_status?: 'pending' | 'paid' | 'refunded' | 'partially_paid';
+}
+
+export interface AppointmentConflict {
+  conflict_details: string;
+  conflicting_appointment_id: string;
 }
 
 export interface AppointmentStats {

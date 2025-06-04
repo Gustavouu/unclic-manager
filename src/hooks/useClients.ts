@@ -7,6 +7,7 @@ import type { Client, ClientCreate, ClientUpdate } from '@/types/client';
 export const useClients = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { businessId } = useCurrentBusiness();
 
@@ -41,13 +42,18 @@ export const useClients = () => {
   const createClient = async (data: Omit<ClientCreate, 'business_id'>) => {
     if (!businessId) throw new Error('No business selected');
     
-    const newClient = await clientService.create({
-      ...data,
-      business_id: businessId,
-    });
-    
-    await fetchClients();
-    return newClient;
+    setIsSubmitting(true);
+    try {
+      const newClient = await clientService.create({
+        ...data,
+        business_id: businessId,
+      });
+      
+      await fetchClients();
+      return newClient;
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const updateClient = async (id: string, data: ClientUpdate) => {
@@ -68,14 +74,28 @@ export const useClients = () => {
     });
   };
 
+  const findClientByEmail = async (email: string) => {
+    if (!businessId) return null;
+    const results = await clientService.search({
+      business_id: businessId,
+      search: email
+    });
+    return results.find(client => client.email === email) || null;
+  };
+
   return {
     clients,
     isLoading,
+    isSubmitting,
     error,
     refetch: fetchClients,
     createClient,
     updateClient,
     deleteClient,
     searchClients,
+    findClientByEmail,
   };
 };
+
+// Export types for convenience
+export type { Client, ClientCreate, ClientUpdate } from '@/types/client';
