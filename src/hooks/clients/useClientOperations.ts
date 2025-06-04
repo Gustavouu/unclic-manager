@@ -12,20 +12,21 @@ export const useClientOperations = () => {
     try {
       console.log('Updating client:', clientId, clientData);
       
+      // Map English field names to Portuguese column names in the database
       const { data, error } = await supabase
         .from('clients')
         .update({
-          name: clientData.name,
+          nome: clientData.name, // Portuguese column name
           email: clientData.email || null,
-          phone: clientData.phone || null,
-          birth_date: clientData.birth_date || null,
-          gender: clientData.gender || null,
-          address: clientData.address || null,
-          city: clientData.city || null,
-          state: clientData.state || null,
-          zip_code: clientData.zip_code || null,
-          notes: clientData.notes || null,
-          updated_at: new Date().toISOString(),
+          telefone: clientData.phone || null, // Portuguese column name
+          data_nascimento: clientData.birth_date || null, // Portuguese column name
+          genero: clientData.gender || null, // Portuguese column name
+          endereco: clientData.address || null, // Portuguese column name
+          cidade: clientData.city || null, // Portuguese column name
+          estado: clientData.state || null, // Portuguese column name
+          cep: clientData.zip_code || null, // Portuguese column name
+          notas: clientData.notes || null, // Portuguese column name
+          atualizado_em: new Date().toISOString(), // Portuguese column name
         })
         .eq('id', clientId)
         .select()

@@ -28,12 +28,11 @@ export const useClients = () => {
     try {
       console.log('Fetching clients for business:', businessId);
       
-      // Try the 'clients' table first
       const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
         .select('*')
-        .eq('business_id', businessId)
-        .order('created_at', { ascending: false });
+        .eq('id_negocio', businessId)
+        .order('criado_em', { ascending: false });
 
       if (clientsError) {
         console.log('Error from clients table:', clientsError);
@@ -65,21 +64,22 @@ export const useClients = () => {
     try {
       console.log('Creating client with data:', clientData);
       
+      // Map English field names to Portuguese column names in the database
       const { data, error } = await supabase
         .from('clients')
         .insert([{
-          business_id: businessId,
-          name: clientData.name,
+          id_negocio: businessId, // Portuguese column name
+          nome: clientData.name, // Portuguese column name
           email: clientData.email || null,
-          phone: clientData.phone || null,
-          birth_date: clientData.birth_date || null,
-          gender: clientData.gender || null,
-          address: clientData.address || null,
-          city: clientData.city || null,
-          state: clientData.state || null,
-          zip_code: clientData.zip_code || null,
-          notes: clientData.notes || null,
-          total_spent: 0,
+          telefone: clientData.phone || null, // Portuguese column name
+          data_nascimento: clientData.birth_date || null, // Portuguese column name
+          genero: clientData.gender || null, // Portuguese column name
+          endereco: clientData.address || null, // Portuguese column name
+          cidade: clientData.city || null, // Portuguese column name
+          estado: clientData.state || null, // Portuguese column name
+          cep: clientData.zip_code || null, // Portuguese column name
+          notas: clientData.notes || null, // Portuguese column name
+          valor_total_gasto: 0, // Portuguese column name
         }])
         .select()
         .single();
@@ -108,7 +108,7 @@ export const useClients = () => {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .eq('business_id', businessId)
+        .eq('id_negocio', businessId)
         .eq('email', email)
         .single();
 
@@ -133,9 +133,9 @@ export const useClients = () => {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .eq('business_id', businessId)
-        .or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`)
-        .order('created_at', { ascending: false });
+        .eq('id_negocio', businessId)
+        .or(`nome.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,telefone.ilike.%${searchTerm}%`)
+        .order('criado_em', { ascending: false });
 
       if (error) {
         throw error;
