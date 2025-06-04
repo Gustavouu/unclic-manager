@@ -27,7 +27,7 @@ export const useServicesList = () => {
         .from('services')
         .select('*')
         .eq('business_id', businessId)
-        .order('created_at', { ascending: false });
+        .order('criado_em', { ascending: false });
 
       if (servicesError) {
         console.log('Error from services table:', servicesError);
@@ -59,8 +59,8 @@ export const useServicesList = () => {
         .from('services')
         .select('*')
         .eq('business_id', businessId)
-        .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`)
-        .order('created_at', { ascending: false });
+        .or(`nome.ilike.%${searchTerm}%,descricao.ilike.%${searchTerm}%,categoria.ilike.%${searchTerm}%`)
+        .order('criado_em', { ascending: false });
 
       if (error) {
         throw error;

@@ -25,6 +25,8 @@ export interface Professional {
   hire_date?: string;
   created_at?: string;
   updated_at?: string;
+  rating?: number;
+  total_reviews?: number;
 }
 
 export interface ProfessionalFormData {
@@ -38,4 +40,42 @@ export interface ProfessionalFormData {
   commission_percentage?: number;
   hire_date?: string;
   status?: string;
+}
+
+export interface ProfessionalCreate extends ProfessionalFormData {
+  business_id: string;
+}
+
+export interface ProfessionalUpdate extends Partial<ProfessionalFormData> {}
+
+export interface ProfessionalSearchParams {
+  business_id: string;
+  status?: string;
+  specialty?: string;
+  rating?: number;
+  search?: string;
+}
+
+export interface ProfessionalStats {
+  totalAppointments: number;
+  completedAppointments: number;
+  cancelledAppointments: number;
+  noShowAppointments: number;
+  averageRating: number;
+  totalRevenue: number;
+  mostPopularService: string;
+  busiestDay: string;
+  busiestTime: string;
+}
+
+export interface ProfessionalAvailability {
+  date: string;
+  available_slots: Array<{
+    start: string;
+    end: string;
+  }>;
+  unavailable_slots: Array<{
+    start: string;
+    end: string;
+  }>;
 }

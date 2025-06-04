@@ -1,6 +1,6 @@
 
-import { supabase } from '@/lib/supabase';
-import type { Service, ServiceCreate, ServiceUpdate, ServiceSearchParams, ServiceStats, ServiceCategory, ServiceCategoryCreate, ServiceCategoryUpdate, ServiceCategoryStats } from '@/types/service';
+import { supabase } from '@/integrations/supabase/client';
+import type { Service, ServiceFormData } from '@/types/service';
 
 export class ServiceService {
   private static instance: ServiceService;
@@ -14,15 +14,17 @@ export class ServiceService {
     return ServiceService.instance;
   }
 
-  /**
-   * Creates a new service
-   */
-  async create(data: ServiceCreate): Promise<Service> {
+  async create(data: ServiceFormData & { business_id: string }): Promise<Service> {
     const { data: service, error } = await supabase
       .from('services')
       .insert({
-        ...data,
-        is_active: data.is_active ?? true,
+        business_id: data.business_id,
+        nome: data.name,
+        descricao: data.description || null,
+        duracao: data.duration,
+        preco: data.price,
+        categoria: data.category || 'Geral',
+        ativo: true,
       })
       .select()
       .single();
@@ -31,13 +33,20 @@ export class ServiceService {
     return service;
   }
 
-  /**
-   * Updates an existing service
-   */
-  async update(id: string, data: ServiceUpdate): Promise<Service> {
+  async update(id: string, data: Partial<ServiceFormData>): Promise<Service> {
+    const updateData: any = {};
+    
+    if (data.name) updateData.nome = data.name;
+    if (data.description !== undefined) updateData.descricao = data.description;
+    if (data.duration) updateData.duracao = data.duration;
+    if (data.price !== undefined) updateData.preco = data.price;
+    if (data.category) updateData.categoria = data.category;
+    
+    updateData.atualizado_em = new Date().toISOString();
+
     const { data: service, error } = await supabase
       .from('services')
-      .update(data)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -46,16 +55,6 @@ export class ServiceService {
     return service;
   }
 
-  /**
-   * Updates service status
-   */
-  async updateStatus(id: string, isActive: boolean): Promise<Service> {
-    return this.update(id, { is_active: isActive });
-  }
-
-  /**
-   * Gets a service by ID
-   */
   async getById(id: string): Promise<Service> {
     const { data: service, error } = await supabase
       .from('services')
@@ -67,193 +66,18 @@ export class ServiceService {
     return service;
   }
 
-  /**
-   * Searches services based on parameters
-   */
-  async search(params: ServiceSearchParams): Promise<Service[]> {
-    let query = supabase
-      .from('services')
-      .select()
-      .eq('business_id', params.business_id);
-
-    if (params.category) {
-      query = query.eq('category', params.category);
-    }
-
-    if (params.min_price !== undefined) {
-      query = query.gte('price', params.min_price);
-    }
-
-    if (params.max_price !== undefined) {
-      query = query.lte('price', params.max_price);
-    }
-
-    if (params.min_duration !== undefined) {
-      query = query.gte('duration', params.min_duration);
-    }
-
-    if (params.max_duration !== undefined) {
-      query = query.lte('duration', params.max_duration);
-    }
-
-    if (params.is_active !== undefined) {
-      query = query.eq('is_active', params.is_active);
-    }
-
-    if (params.search) {
-      query = query.or(`name.ilike.%${params.search}%,description.ilike.%${params.search}%`);
-    }
-
-    const { data: services, error } = await query;
-
-    if (error) throw error;
-    return services || [];
-  }
-
-  /**
-   * Gets all services for a business
-   */
   async getByBusinessId(businessId: string): Promise<Service[]> {
     const { data: services, error } = await supabase
       .from('services')
       .select()
       .eq('business_id', businessId)
-      .eq('is_active', true)
-      .order('name');
+      .eq('ativo', true)
+      .order('nome');
 
     if (error) throw error;
     return services || [];
   }
 
-  /**
-   * Gets service statistics
-   */
-  async getStats(serviceId: string): Promise<ServiceStats> {
-    // Get basic service stats
-    const { data: appointments, error: appointmentsError } = await supabase
-      .from('Appointments')
-      .select('status, valor')
-      .eq('id_servico', serviceId);
-
-    if (appointmentsError) {
-      console.warn('Error fetching appointments for stats:', appointmentsError);
-      return {
-        totalAppointments: 0,
-        completedAppointments: 0,
-        cancelledAppointments: 0,
-        noShowAppointments: 0,
-        totalRevenue: 0,
-        averageRating: 0,
-        mostPopularDay: null,
-        mostPopularTime: null,
-      };
-    }
-
-    const total = appointments?.length || 0;
-    const completed = appointments?.filter(a => a.status === 'concluido').length || 0;
-    const cancelled = appointments?.filter(a => a.status === 'cancelado').length || 0;
-    const noShow = appointments?.filter(a => a.status === 'faltou').length || 0;
-    const revenue = appointments?.reduce((sum, a) => sum + (Number(a.valor) || 0), 0) || 0;
-
-    return {
-      totalAppointments: total,
-      completedAppointments: completed,
-      cancelledAppointments: cancelled,
-      noShowAppointments: noShow,
-      totalRevenue: revenue,
-      averageRating: 0, // Would need reviews table
-      mostPopularDay: null, // Would need more complex query
-      mostPopularTime: null, // Would need more complex query
-    };
-  }
-
-  /**
-   * Creates a new service category
-   */
-  async createCategory(data: ServiceCategoryCreate): Promise<ServiceCategory> {
-    const { data: category, error } = await supabase
-      .from('service_categories')
-      .insert(data)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return category;
-  }
-
-  /**
-   * Updates an existing service category
-   */
-  async updateCategory(id: string, data: ServiceCategoryUpdate): Promise<ServiceCategory> {
-    const { data: category, error } = await supabase
-      .from('service_categories')
-      .update(data)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return category;
-  }
-
-  /**
-   * Gets a service category by ID
-   */
-  async getCategoryById(id: string): Promise<ServiceCategory> {
-    const { data: category, error } = await supabase
-      .from('service_categories')
-      .select()
-      .eq('id', id)
-      .single();
-
-    if (error) throw error;
-    return category;
-  }
-
-  /**
-   * Lists all service categories for a business
-   */
-  async listCategories(businessId: string): Promise<ServiceCategory[]> {
-    const { data: categories, error } = await supabase
-      .from('service_categories')
-      .select()
-      .eq('business_id', businessId)
-      .order('name');
-
-    if (error) throw error;
-    return categories || [];
-  }
-
-  /**
-   * Deletes a service category
-   */
-  async deleteCategory(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('service_categories')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-  }
-
-  /**
-   * Gets service category statistics
-   */
-  async getCategoryStats(categoryId: string): Promise<ServiceCategoryStats> {
-    // This would need more complex queries to get real stats
-    return {
-      totalServices: 0,
-      totalAppointments: 0,
-      totalRevenue: 0,
-      averagePrice: 0,
-      mostPopularService: '',
-      mostPopularProfessional: '',
-    };
-  }
-
-  /**
-   * Deletes a service
-   */
   async delete(id: string): Promise<void> {
     const { error } = await supabase
       .from('services')

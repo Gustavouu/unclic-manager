@@ -1,13 +1,6 @@
 
-import { supabase } from '@/lib/supabase';
-import type { 
-  Professional, 
-  ProfessionalCreate, 
-  ProfessionalUpdate, 
-  ProfessionalSearchParams,
-  ProfessionalStats,
-  ProfessionalAvailability
-} from '@/types/professional';
+import { supabase } from '@/integrations/supabase/client';
+import type { Professional, ProfessionalFormData } from '@/types/professional';
 
 export class ProfessionalService {
   private static instance: ProfessionalService;
@@ -21,17 +14,21 @@ export class ProfessionalService {
     return ProfessionalService.instance;
   }
 
-  /**
-   * Creates a new professional
-   */
-  async create(data: ProfessionalCreate): Promise<Professional> {
+  async create(data: ProfessionalFormData & { business_id: string }): Promise<Professional> {
     const { data: professional, error } = await supabase
-      .from('professionals')
+      .from('funcionarios')
       .insert({
-        ...data,
-        status: data.status || 'active',
-        rating: 0,
-        total_reviews: 0,
+        id_negocio: data.business_id,
+        nome: data.name,
+        email: data.email || null,
+        telefone: data.phone || null,
+        cargo: data.position || null,
+        bio: data.bio || null,
+        foto_url: data.photo_url || null,
+        especializacoes: data.specialties || [],
+        comissao_percentual: data.commission_percentage || 0,
+        data_contratacao: data.hire_date || null,
+        status: data.status || 'ativo',
       })
       .select()
       .single();
@@ -40,13 +37,25 @@ export class ProfessionalService {
     return professional;
   }
 
-  /**
-   * Updates an existing professional
-   */
-  async update(id: string, data: ProfessionalUpdate): Promise<Professional> {
+  async update(id: string, data: Partial<ProfessionalFormData>): Promise<Professional> {
+    const updateData: any = {};
+    
+    if (data.name) updateData.nome = data.name;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.phone !== undefined) updateData.telefone = data.phone;
+    if (data.position !== undefined) updateData.cargo = data.position;
+    if (data.bio !== undefined) updateData.bio = data.bio;
+    if (data.photo_url !== undefined) updateData.foto_url = data.photo_url;
+    if (data.specialties !== undefined) updateData.especializacoes = data.specialties;
+    if (data.commission_percentage !== undefined) updateData.comissao_percentual = data.commission_percentage;
+    if (data.hire_date !== undefined) updateData.data_contratacao = data.hire_date;
+    if (data.status !== undefined) updateData.status = data.status;
+    
+    updateData.atualizado_em = new Date().toISOString();
+
     const { data: professional, error } = await supabase
-      .from('professionals')
-      .update(data)
+      .from('funcionarios')
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
@@ -55,35 +64,9 @@ export class ProfessionalService {
     return professional;
   }
 
-  /**
-   * Updates professional status
-   */
-  async updateStatus(id: string, status: 'active' | 'inactive' | 'on_leave'): Promise<Professional> {
-    return this.update(id, { status });
-  }
-
-  /**
-   * Updates professional rating
-   */
-  async updateRating(id: string, rating: number, incrementReviews: boolean = true): Promise<Professional> {
-    const professional = await this.getById(id);
-    const newTotalReviews = incrementReviews ? professional.total_reviews + 1 : professional.total_reviews;
-    const newRating = incrementReviews 
-      ? ((professional.rating * professional.total_reviews) + rating) / newTotalReviews
-      : rating;
-
-    return this.update(id, { 
-      rating: newRating, 
-      total_reviews: newTotalReviews 
-    });
-  }
-
-  /**
-   * Gets a professional by ID
-   */
   async getById(id: string): Promise<Professional> {
     const { data: professional, error } = await supabase
-      .from('professionals')
+      .from('funcionarios')
       .select()
       .eq('id', id)
       .single();
@@ -92,129 +75,21 @@ export class ProfessionalService {
     return professional;
   }
 
-  /**
-   * Searches professionals based on parameters
-   */
-  async search(params: ProfessionalSearchParams): Promise<Professional[]> {
-    let query = supabase
-      .from('professionals')
-      .select()
-      .eq('business_id', params.business_id);
-
-    if (params.status) {
-      query = query.eq('status', params.status);
-    }
-
-    if (params.specialty) {
-      query = query.contains('specialties', [params.specialty]);
-    }
-
-    if (params.rating !== undefined) {
-      query = query.gte('rating', params.rating);
-    }
-
-    if (params.search) {
-      query = query.or(`name.ilike.%${params.search}%,email.ilike.%${params.search}%`);
-    }
-
-    const { data: professionals, error } = await query;
-
-    if (error) throw error;
-    return professionals || [];
-  }
-
-  /**
-   * Gets all professionals for a business
-   */
   async getByBusinessId(businessId: string): Promise<Professional[]> {
     const { data: professionals, error } = await supabase
-      .from('professionals')
+      .from('funcionarios')
       .select()
-      .eq('business_id', businessId)
-      .eq('status', 'active')
-      .order('name');
+      .eq('id_negocio', businessId)
+      .eq('status', 'ativo')
+      .order('nome');
 
     if (error) throw error;
     return professionals || [];
   }
 
-  /**
-   * Gets professional statistics
-   */
-  async getStats(professionalId: string): Promise<ProfessionalStats> {
-    // Get basic professional stats from appointments
-    const { data: appointments, error: appointmentsError } = await supabase
-      .from('Appointments')
-      .select('status, valor, id_servico')
-      .eq('id_funcionario', professionalId);
-
-    if (appointmentsError) {
-      console.warn('Error fetching appointments for stats:', appointmentsError);
-      return {
-        totalAppointments: 0,
-        completedAppointments: 0,
-        cancelledAppointments: 0,
-        noShowAppointments: 0,
-        averageRating: 0,
-        totalRevenue: 0,
-        mostPopularService: '',
-        busiestDay: '',
-        busiestTime: '',
-      };
-    }
-
-    const total = appointments?.length || 0;
-    const completed = appointments?.filter(a => a.status === 'concluido').length || 0;
-    const cancelled = appointments?.filter(a => a.status === 'cancelado').length || 0;
-    const noShow = appointments?.filter(a => a.status === 'faltou').length || 0;
-    const revenue = appointments?.reduce((sum, a) => sum + (Number(a.valor) || 0), 0) || 0;
-
-    return {
-      totalAppointments: total,
-      completedAppointments: completed,
-      cancelledAppointments: cancelled,
-      noShowAppointments: noShow,
-      averageRating: 0, // Would need reviews table
-      totalRevenue: revenue,
-      mostPopularService: '', // Would need more complex query
-      busiestDay: '', // Would need more complex query
-      busiestTime: '', // Would need more complex query
-    };
-  }
-
-  /**
-   * Gets professional availability for a specific date
-   */
-  async getAvailability(professionalId: string, date: string): Promise<ProfessionalAvailability> {
-    // Get appointments for the professional on the specified date
-    const { data: appointments, error } = await supabase
-      .from('Appointments')
-      .select('hora_inicio, hora_fim')
-      .eq('id_funcionario', professionalId)
-      .eq('data', date);
-
-    if (error) {
-      console.warn('Error fetching availability:', error);
-    }
-
-    // For now, return a simple structure
-    // In a real implementation, this would calculate available slots based on working hours and existing appointments
-    return {
-      date,
-      available_slots: [],
-      unavailable_slots: appointments?.map(apt => ({
-        start: apt.hora_inicio,
-        end: apt.hora_fim
-      })) || [{ start: '09:00', end: '18:00' }],
-    };
-  }
-
-  /**
-   * Deletes a professional
-   */
   async delete(id: string): Promise<void> {
     const { error } = await supabase
-      .from('professionals')
+      .from('funcionarios')
       .delete()
       .eq('id', id);
 

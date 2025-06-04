@@ -23,12 +23,12 @@ export const useServiceOperations = () => {
         .from('services')
         .insert([{
           business_id: businessId,
-          name: serviceData.name,
-          description: serviceData.description || null,
-          duration: serviceData.duration,
-          price: serviceData.price,
-          category: serviceData.category || 'Geral',
-          is_active: true,
+          nome: serviceData.name,
+          descricao: serviceData.description || null,
+          duracao: serviceData.duration,
+          preco: serviceData.price,
+          categoria: serviceData.category || 'Geral',
+          ativo: true,
         }])
         .select()
         .single();
@@ -56,12 +56,12 @@ export const useServiceOperations = () => {
       const { data, error } = await supabase
         .from('services')
         .update({
-          name: serviceData.name,
-          description: serviceData.description || null,
-          duration: serviceData.duration,
-          price: serviceData.price,
-          category: serviceData.category || 'Geral',
-          updated_at: new Date().toISOString(),
+          nome: serviceData.name,
+          descricao: serviceData.description || null,
+          duracao: serviceData.duration,
+          preco: serviceData.price,
+          categoria: serviceData.category || 'Geral',
+          atualizado_em: new Date().toISOString(),
         })
         .eq('id', serviceId)
         .select()

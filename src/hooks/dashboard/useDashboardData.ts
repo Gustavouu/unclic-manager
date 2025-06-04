@@ -83,11 +83,11 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           .select('id, criado_em')
           .eq('id_negocio', businessId),
         
-        // Total services
+        // Total services - try services table first
         supabase
-          .from('servicos')
+          .from('services')
           .select('id, nome')
-          .eq('id_negocio', businessId)
+          .eq('business_id', businessId)
           .eq('ativo', true),
         
         // Total professionals
@@ -97,7 +97,7 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
           .eq('id_negocio', businessId)
           .eq('status', 'ativo'),
         
-        // Appointments (try Appointments table first, then bookings)
+        // Appointments
         supabase
           .from('Appointments')
           .select('id, valor, status, criado_em, id_servico')
@@ -142,34 +142,6 @@ export const useDashboardData = (period: FilterPeriod = 'month') => {
             popularServicesMap[apt.id_servico] = (popularServicesMap[apt.id_servico] || 0) + 1;
           }
         });
-      } else {
-        // Try bookings table as fallback
-        const bookingsResponse = await supabase
-          .from('bookings')
-          .select('id, price, status, created_at, service_id')
-          .eq('business_id', businessId)
-          .gte('created_at', startDate.toISOString());
-
-        if (bookingsResponse.data) {
-          totalAppointments = bookingsResponse.data.length;
-          completedAppointments = bookingsResponse.data.filter(apt => 
-            apt.status === 'completed'
-          ).length;
-          
-          totalRevenue = bookingsResponse.data.reduce((sum, apt) => {
-            if (apt.status === 'completed') {
-              return sum + (apt.price || 0);
-            }
-            return sum;
-          }, 0);
-
-          // Count popular services
-          bookingsResponse.data.forEach(apt => {
-            if (apt.service_id) {
-              popularServicesMap[apt.service_id] = (popularServicesMap[apt.service_id] || 0) + 1;
-            }
-          });
-        }
       }
 
       // Get service names for popular services
