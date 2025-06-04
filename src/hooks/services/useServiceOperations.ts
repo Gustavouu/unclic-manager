@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { ServiceService } from '@/services/service/serviceService';
 import { toast } from 'sonner';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import type { Service, ServiceFormData } from '@/types/service';
@@ -7,6 +8,7 @@ import type { Service, ServiceFormData } from '@/types/service';
 export const useServiceOperations = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { businessId } = useCurrentBusiness();
+  const serviceService = ServiceService.getInstance();
 
   const createService = async (serviceData: ServiceFormData): Promise<Service | null> => {
     if (!businessId) {
@@ -18,44 +20,16 @@ export const useServiceOperations = () => {
     try {
       console.log('Creating service:', serviceData);
       
-      const { data, error } = await supabase
-        .from('services')
-        .insert({
-          business_id: businessId, // Required by TypeScript schema
-          id_negocio: businessId,  // Required by database
-          nome: serviceData.name,
-          descricao: serviceData.description || null,
-          duracao: serviceData.duration,
-          preco: serviceData.price,
-          category: serviceData.category || 'Geral',
-          ativo: true,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      // Map the response to include both Portuguese and English field names
-      const serviceResult: Service = {
-        ...data,
-        id_negocio: data.id_negocio || data.business_id,
-        categoria: data.category || 'Geral',
-        name: data.nome,
-        description: data.descricao,
-        duration: data.duracao,
-        price: data.preco,
-        is_active: data.ativo,
-        created_at: data.criado_em,
-        updated_at: data.atualizado_em,
-      };
+      const serviceResult = await serviceService.create({
+        ...serviceData,
+        business_id: businessId
+      });
 
       toast.success('Serviço criado com sucesso!');
       return serviceResult;
     } catch (error: any) {
       console.error('Error creating service:', error);
-      toast.error('Erro ao criar serviço');
+      toast.error('Erro ao criar serviço: ' + (error.message || 'Erro desconhecido'));
       return null;
     } finally {
       setIsSubmitting(false);
@@ -67,43 +41,13 @@ export const useServiceOperations = () => {
     try {
       console.log('Updating service:', serviceId, serviceData);
       
-      const { data, error } = await supabase
-        .from('services')
-        .update({
-          nome: serviceData.name,
-          descricao: serviceData.description || null,
-          duracao: serviceData.duration,
-          preco: serviceData.price,
-          category: serviceData.category || 'Geral',
-          atualizado_em: new Date().toISOString(),
-        })
-        .eq('id', serviceId)
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      // Map the response to include both Portuguese and English field names
-      const serviceResult: Service = {
-        ...data,
-        id_negocio: data.id_negocio || data.business_id,
-        categoria: data.category || 'Geral',
-        name: data.nome,
-        description: data.descricao,
-        duration: data.duracao,
-        price: data.preco,
-        is_active: data.ativo,
-        created_at: data.criado_em,
-        updated_at: data.atualizado_em,
-      };
+      const serviceResult = await serviceService.update(serviceId, serviceData);
 
       toast.success('Serviço atualizado com sucesso!');
       return serviceResult;
     } catch (error: any) {
       console.error('Error updating service:', error);
-      toast.error('Erro ao atualizar serviço');
+      toast.error('Erro ao atualizar serviço: ' + (error.message || 'Erro desconhecido'));
       return null;
     } finally {
       setIsSubmitting(false);
@@ -115,21 +59,32 @@ export const useServiceOperations = () => {
     try {
       console.log('Deleting service:', serviceId);
       
-      const { error } = await supabase
-        .from('services')
-        .delete()
-        .eq('id', serviceId);
-
-      if (error) {
-        throw error;
-      }
+      await serviceService.delete(serviceId);
 
       toast.success('Serviço excluído com sucesso!');
       return true;
     } catch (error: any) {
       console.error('Error deleting service:', error);
-      toast.error('Erro ao excluir serviço');
+      toast.error('Erro ao excluir serviço: ' + (error.message || 'Erro desconhecido'));
       return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const toggleServiceStatus = async (serviceId: string, currentStatus: boolean): Promise<Service | null> => {
+    setIsSubmitting(true);
+    try {
+      console.log('Toggling service status:', serviceId, !currentStatus);
+      
+      const serviceResult = await serviceService.updateStatus(serviceId, !currentStatus);
+
+      toast.success(`Serviço ${!currentStatus ? 'ativado' : 'desativado'} com sucesso!`);
+      return serviceResult;
+    } catch (error: any) {
+      console.error('Error toggling service status:', error);
+      toast.error('Erro ao alterar status do serviço: ' + (error.message || 'Erro desconhecido'));
+      return null;
     } finally {
       setIsSubmitting(false);
     }
@@ -139,6 +94,7 @@ export const useServiceOperations = () => {
     createService,
     updateService,
     deleteService,
+    toggleServiceStatus,
     isSubmitting,
   };
 };

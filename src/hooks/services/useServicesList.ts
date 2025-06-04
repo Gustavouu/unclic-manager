@@ -1,14 +1,17 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { ServiceService } from '@/services/service/serviceService';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import type { Service } from '@/types/service';
+import { toast } from 'sonner';
 
 export const useServicesList = () => {
   const [services, setServices] = useState<Service[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { businessId } = useCurrentBusiness();
+
+  const serviceService = ServiceService.getInstance();
 
   const fetchServices = async () => {
     if (!businessId) {
@@ -22,89 +25,56 @@ export const useServicesList = () => {
     
     try {
       console.log('Fetching services for business:', businessId);
-      
-      const { data: servicesData, error: servicesError } = await supabase
-        .from('services')
-        .select('*')
-        .eq('business_id', businessId)
-        .order('criado_em', { ascending: false });
-
-      if (servicesError) {
-        console.log('Error from services table:', servicesError);
-        throw servicesError;
-      }
-
-      console.log('Fetched services:', servicesData);
-      
-      // Map the data to include both Portuguese and English field names
-      const mappedServices: Service[] = (servicesData || []).map(service => ({
-        ...service,
-        categoria: service.category || 'Geral',
-        name: service.nome,
-        description: service.descricao,
-        duration: service.duracao,
-        price: service.preco,
-        is_active: service.ativo,
-        created_at: service.criado_em,
-        updated_at: service.atualizado_em,
-      }));
-
-      setServices(mappedServices);
-    } catch (err) {
+      const data = await serviceService.getByBusinessId(businessId);
+      console.log('Services fetched:', data);
+      setServices(data);
+    } catch (err: any) {
       console.error('Error fetching services:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch services');
-      setServices([]);
+      const errorMessage = err.message || 'Erro ao carregar serviços';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const searchServices = async (searchTerm: string, category?: string) => {
+    if (!businessId) return;
+
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const data = await serviceService.search({
+        business_id: businessId,
+        search: searchTerm,
+        category,
+        is_active: true
+      });
+      setServices(data);
+    } catch (err: any) {
+      console.error('Error searching services:', err);
+      const errorMessage = err.message || 'Erro ao buscar serviços';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refetch = () => {
+    fetchServices();
   };
 
   useEffect(() => {
     fetchServices();
   }, [businessId]);
 
-  const searchServices = async (searchTerm: string): Promise<Service[]> => {
-    if (!businessId || !searchTerm.trim()) {
-      return services;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .eq('business_id', businessId)
-        .or(`nome.ilike.%${searchTerm}%,descricao.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`)
-        .order('criado_em', { ascending: false });
-
-      if (error) {
-        throw error;
-      }
-
-      // Map the data to include both Portuguese and English field names
-      const mappedServices: Service[] = (data || []).map(service => ({
-        ...service,
-        categoria: service.category || 'Geral',
-        name: service.nome,
-        description: service.descricao,
-        duration: service.duracao,
-        price: service.preco,
-        is_active: service.ativo,
-        created_at: service.criado_em,
-        updated_at: service.atualizado_em,
-      }));
-
-      return mappedServices;
-    } catch (error) {
-      console.error('Error searching services:', error);
-      return [];
-    }
-  };
-
   return {
     services,
     isLoading,
     error,
-    refetch: fetchServices,
+    refetch,
     searchServices,
   };
 };

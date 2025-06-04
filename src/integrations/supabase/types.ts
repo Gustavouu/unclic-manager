@@ -738,6 +738,7 @@ export type Database = {
           phone: string | null
           preferencias: Json | null
           state: string | null
+          status: string | null
           telefone: string | null
           tenant_id: string | null
           total_spent: number | null
@@ -774,6 +775,7 @@ export type Database = {
           phone?: string | null
           preferencias?: Json | null
           state?: string | null
+          status?: string | null
           telefone?: string | null
           tenant_id?: string | null
           total_spent?: number | null
@@ -810,6 +812,7 @@ export type Database = {
           phone?: string | null
           preferencias?: Json | null
           state?: string | null
+          status?: string | null
           telefone?: string | null
           tenant_id?: string | null
           total_spent?: number | null
@@ -1603,53 +1606,83 @@ export type Database = {
         Row: {
           atualizado_em: string | null
           bio: string | null
+          business_id: string
           cargo: string | null
           comissao_percentual: number | null
+          commission_percentage: number | null
+          created_at: string | null
           criado_em: string | null
           data_contratacao: string | null
           email: string | null
           especializacoes: string[] | null
           foto_url: string | null
+          hire_date: string | null
           id: string
           id_negocio: string
           id_usuario: string | null
+          name: string | null
           nome: string
+          phone: string | null
+          photo_url: string | null
+          position: string | null
+          specialties: string[] | null
           status: string | null
           telefone: string | null
+          updated_at: string | null
         }
         Insert: {
           atualizado_em?: string | null
           bio?: string | null
+          business_id: string
           cargo?: string | null
           comissao_percentual?: number | null
+          commission_percentage?: number | null
+          created_at?: string | null
           criado_em?: string | null
           data_contratacao?: string | null
           email?: string | null
           especializacoes?: string[] | null
           foto_url?: string | null
+          hire_date?: string | null
           id?: string
           id_negocio: string
           id_usuario?: string | null
+          name?: string | null
           nome: string
+          phone?: string | null
+          photo_url?: string | null
+          position?: string | null
+          specialties?: string[] | null
           status?: string | null
           telefone?: string | null
+          updated_at?: string | null
         }
         Update: {
           atualizado_em?: string | null
           bio?: string | null
+          business_id?: string
           cargo?: string | null
           comissao_percentual?: number | null
+          commission_percentage?: number | null
+          created_at?: string | null
           criado_em?: string | null
           data_contratacao?: string | null
           email?: string | null
           especializacoes?: string[] | null
           foto_url?: string | null
+          hire_date?: string | null
           id?: string
           id_negocio?: string
           id_usuario?: string | null
+          name?: string | null
           nome?: string
+          phone?: string | null
+          photo_url?: string | null
+          position?: string | null
+          specialties?: string[] | null
           status?: string | null
           telefone?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -3188,9 +3221,12 @@ export type Database = {
           business_id: string
           category: string | null
           comissao_percentual: number | null
+          created_at: string | null
           criado_em: string | null
           descricao: string | null
+          description: string | null
           duracao: number
+          duration: number | null
           id: string
           id_categoria: string | null
           id_negocio: string
@@ -3198,9 +3234,12 @@ export type Database = {
           image_url: string | null
           imagem_url: string | null
           is_active: boolean | null
+          name: string | null
           nome: string
           preco: number
+          price: number | null
           requer_equipamento: boolean | null
+          updated_at: string | null
         }
         Insert: {
           ativo?: boolean | null
@@ -3208,9 +3247,12 @@ export type Database = {
           business_id: string
           category?: string | null
           comissao_percentual?: number | null
+          created_at?: string | null
           criado_em?: string | null
           descricao?: string | null
+          description?: string | null
           duracao: number
+          duration?: number | null
           id?: string
           id_categoria?: string | null
           id_negocio: string
@@ -3218,9 +3260,12 @@ export type Database = {
           image_url?: string | null
           imagem_url?: string | null
           is_active?: boolean | null
+          name?: string | null
           nome: string
           preco: number
+          price?: number | null
           requer_equipamento?: boolean | null
+          updated_at?: string | null
         }
         Update: {
           ativo?: boolean | null
@@ -3228,9 +3273,12 @@ export type Database = {
           business_id?: string
           category?: string | null
           comissao_percentual?: number | null
+          created_at?: string | null
           criado_em?: string | null
           descricao?: string | null
+          description?: string | null
           duracao?: number
+          duration?: number | null
           id?: string
           id_categoria?: string | null
           id_negocio?: string
@@ -3238,9 +3286,12 @@ export type Database = {
           image_url?: string | null
           imagem_url?: string | null
           is_active?: boolean | null
+          name?: string | null
           nome?: string
           preco?: number
+          price?: number | null
           requer_equipamento?: boolean | null
+          updated_at?: string | null
         }
         Relationships: [
           {
