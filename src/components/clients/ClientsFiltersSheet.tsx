@@ -6,8 +6,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Client } from "@/hooks/useClients";
 import { ClientsFilters } from "./ClientsFilters";
+import type { Client } from "@/types/client";
 
 interface ClientsFiltersSheetProps {
   isOpen: boolean;

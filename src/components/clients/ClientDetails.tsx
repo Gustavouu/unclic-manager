@@ -1,10 +1,9 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Client } from "@/hooks/useClients";
 import { Mail, Phone, MapPin, Calendar, CreditCard, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import type { Client } from "@/types/client";
 
 interface ClientDetailsProps {
   client: Client;

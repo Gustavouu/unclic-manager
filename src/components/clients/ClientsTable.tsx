@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -16,9 +15,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Client } from "@/hooks/useClients";
 import { useState } from "react";
 import { ClientDetails } from "./ClientDetails";
+import type { Client } from "@/types/client";
 
 interface ClientsTableProps {
   clients: Client[];
