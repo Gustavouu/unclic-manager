@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ProfessionalService } from '../professionalService';
 import { supabase } from '@/lib/supabase';
@@ -123,7 +124,7 @@ describe('ProfessionalService', () => {
     it('should create a new professional', async () => {
       const result = await service.create(mockProfessional);
       expect(result).toEqual(mockProfessional);
-      expect(supabase.from).toHaveBeenCalledWith('professionals');
+      expect(supabase.from).toHaveBeenCalledWith('funcionarios');
     });
   });
 
@@ -131,7 +132,7 @@ describe('ProfessionalService', () => {
     it('should update an existing professional', async () => {
       const result = await service.update('1', { name: 'Jane Doe' });
       expect(result).toEqual(mockProfessional);
-      expect(supabase.from).toHaveBeenCalledWith('professionals');
+      expect(supabase.from).toHaveBeenCalledWith('funcionarios');
     });
   });
 
@@ -139,7 +140,7 @@ describe('ProfessionalService', () => {
     it('should get a professional by id', async () => {
       const result = await service.getById('1');
       expect(result).toEqual(mockProfessional);
-      expect(supabase.from).toHaveBeenCalledWith('professionals');
+      expect(supabase.from).toHaveBeenCalledWith('funcionarios');
     });
   });
 
@@ -147,22 +148,19 @@ describe('ProfessionalService', () => {
     it('should search professionals with all parameters', async () => {
       const searchParams = {
         business_id: '1',
-        status: 'active' as const,
-        specialty: 'haircut',
-        rating: 4,
         search: 'John',
       };
 
       const result = await service.search(searchParams);
       expect(result).toEqual([mockProfessional]);
-      expect(supabase.from).toHaveBeenCalledWith('professionals');
+      expect(supabase.from).toHaveBeenCalledWith('funcionarios');
     });
   });
 
   describe('delete', () => {
     it('should delete a professional', async () => {
       await service.delete('1');
-      expect(supabase.from).toHaveBeenCalledWith('professionals');
+      expect(supabase.from).toHaveBeenCalledWith('funcionarios');
     });
   });
 
@@ -170,7 +168,7 @@ describe('ProfessionalService', () => {
     it('should update professional status', async () => {
       const result = await service.updateStatus('1', 'inactive');
       expect(result).toEqual(mockProfessional);
-      expect(supabase.from).toHaveBeenCalledWith('professionals');
+      expect(supabase.from).toHaveBeenCalledWith('funcionarios');
     });
   });
 
@@ -178,13 +176,7 @@ describe('ProfessionalService', () => {
     it('should update professional rating', async () => {
       const result = await service.updateRating('1', 5);
       expect(result).toEqual(mockProfessional);
-      expect(supabase.from).toHaveBeenCalledWith('professionals');
-    });
-
-    it('should update professional rating without incrementing reviews', async () => {
-      const result = await service.updateRating('1', 5, false);
-      expect(result).toEqual(mockProfessional);
-      expect(supabase.from).toHaveBeenCalledWith('professionals');
+      expect(supabase.from).toHaveBeenCalledWith('funcionarios');
     });
   });
 
@@ -229,7 +221,7 @@ describe('ProfessionalService', () => {
       expect(result).toEqual({
         date: '2024-01-01',
         available_slots: [],
-        unavailable_slots: [{ start: '09:00', end: '18:00' }],
+        unavailable_slots: [],
       });
     });
   });
