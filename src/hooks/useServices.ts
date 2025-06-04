@@ -98,59 +98,29 @@ export const useServices = () => {
     setError(null);
 
     try {
-      // Tentar buscar da tabela services_v2 primeiro
+      // Primeiro, tentar buscar da tabela services ou inventory (que existem no banco)
       const { data: servicesData, error: servicesError } = await supabase
-        .from('services_v2')
+        .from('inventory')
         .select('*')
-        .eq('business_id', businessId)
-        .eq('is_active', true);
+        .eq('business_id', businessId);
 
-      if (servicesError) {
-        console.warn('Error fetching from services_v2:', servicesError);
-        
-        // Tentar da tabela servicos
-        const { data: servicosData, error: servicosError } = await supabase
-          .from('servicos')
-          .select('*')
-          .eq('id_negocio', businessId);
-
-        if (servicosError) {
-          console.warn('No services found in database, using sample data');
-          const sampleData = createSampleServices(businessId);
-          setServices(sampleData);
-        } else if (servicosData && servicosData.length > 0) {
-          const mappedServices: Service[] = servicosData.map((service: any) => ({
-            id: service.id,
-            name: service.nome,
-            description: service.descricao,
-            duration: service.duracao,
-            price: service.preco,
-            category: service.categoria,
-            isActive: service.ativo,
-            businessId: service.id_negocio,
-          }));
-          setServices(mappedServices);
-        } else {
-          const sampleData = createSampleServices(businessId);
-          setServices(sampleData);
-        }
-      } else if (servicesData && servicesData.length > 0) {
-        const mappedServices: Service[] = servicesData.map((service: any) => ({
-          id: service.id,
-          name: service.name,
-          description: service.description,
-          duration: service.duration,
-          price: service.price,
-          category: service.category,
-          isActive: service.is_active,
-          businessId: service.business_id,
-        }));
-        setServices(mappedServices);
-      } else {
-        // Se não há dados, usar dados de exemplo
+      if (servicesError || !servicesData || servicesData.length === 0) {
+        console.warn('No services found in database, using sample data');
         const sampleData = createSampleServices(businessId);
         setServices(sampleData);
-        console.log('No services found, using sample data');
+      } else {
+        // Mapear dados do inventário para serviços (adaptação temporária)
+        const mappedServices: Service[] = servicesData.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          duration: 60, // Default duration
+          price: item.sale_price || 0,
+          category: item.category_id || 'general',
+          isActive: true,
+          businessId: item.business_id,
+        }));
+        setServices(mappedServices);
       }
     } catch (err: any) {
       console.error('Error fetching services:', err);

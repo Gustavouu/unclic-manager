@@ -8,11 +8,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useProfessionals } from "@/hooks/professionals/useProfessionals";
+import { useProfessionals, Professional } from "@/hooks/professionals/useProfessionals";
 import { ProfessionalInfoTab } from "./details/ProfessionalInfoTab";
 import { ProfessionalPerformanceTab } from "./details/ProfessionalPerformanceTab";
 import { ProfessionalScheduleTab } from "./details/ProfessionalScheduleTab";
-import { Professional } from "@/hooks/professionals/types";
 
 interface ProfessionalDetailsDialogProps {
   open?: boolean;

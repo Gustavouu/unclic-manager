@@ -17,6 +17,17 @@ export interface Professional {
   businessId: string;
 }
 
+export interface ProfessionalFormData {
+  name: string;
+  email?: string;
+  phone?: string;
+  position?: string;
+  bio?: string;
+  photoUrl?: string;
+  specialties?: string[];
+  status?: string;
+}
+
 // Dados de exemplo para profissionais
 const createSampleProfessionals = (businessId: string): Professional[] => [
   {
@@ -147,6 +158,104 @@ export const useProfessionals = () => {
     }
   };
 
+  const createProfessional = async (data: ProfessionalFormData) => {
+    if (!businessId) {
+      toast.error('Business ID não encontrado');
+      return null;
+    }
+
+    try {
+      const { data: newProfessional, error } = await supabase
+        .from('employees')
+        .insert([
+          {
+            business_id: businessId,
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            position: data.position,
+            bio: data.bio,
+            photo_url: data.photoUrl,
+            specialties: data.specialties,
+            status: data.status || 'active',
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success('Profissional criado com sucesso!');
+      await fetchProfessionals();
+      return newProfessional;
+    } catch (error: any) {
+      console.error('Error creating professional:', error);
+      toast.error('Erro ao criar profissional');
+      return null;
+    }
+  };
+
+  const updateProfessional = async (id: string, data: Partial<ProfessionalFormData>) => {
+    if (!businessId) {
+      toast.error('Business ID não encontrado');
+      return null;
+    }
+
+    try {
+      const { data: updatedProfessional, error } = await supabase
+        .from('employees')
+        .update({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          position: data.position,
+          bio: data.bio,
+          photo_url: data.photoUrl,
+          specialties: data.specialties,
+          status: data.status,
+        })
+        .eq('id', id)
+        .eq('business_id', businessId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success('Profissional atualizado com sucesso!');
+      await fetchProfessionals();
+      return updatedProfessional;
+    } catch (error: any) {
+      console.error('Error updating professional:', error);
+      toast.error('Erro ao atualizar profissional');
+      return null;
+    }
+  };
+
+  const deleteProfessional = async (id: string) => {
+    if (!businessId) {
+      toast.error('Business ID não encontrado');
+      return false;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('employees')
+        .delete()
+        .eq('id', id)
+        .eq('business_id', businessId);
+
+      if (error) throw error;
+
+      toast.success('Profissional removido com sucesso!');
+      await fetchProfessionals();
+      return true;
+    } catch (error: any) {
+      console.error('Error deleting professional:', error);
+      toast.error('Erro ao remover profissional');
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchProfessionals();
   }, [businessId]);
@@ -156,5 +265,8 @@ export const useProfessionals = () => {
     isLoading,
     error,
     refetch: fetchProfessionals,
+    createProfessional,
+    updateProfessional,
+    deleteProfessional,
   };
 };
