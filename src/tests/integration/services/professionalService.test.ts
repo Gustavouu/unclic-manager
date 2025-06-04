@@ -112,7 +112,7 @@ describe('ProfessionalService Integration', () => {
         }),
       ]);
 
-      // Testa busca por negócio e termo de pesquisa
+      // Testa busca por negócio e termo de pesquisa - fixed to use correct parameters
       const searchResults = await professionalService.search({ 
         business_id: testBusinessId, 
         search: 'John'
