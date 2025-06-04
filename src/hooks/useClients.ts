@@ -1,169 +1,81 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-
-export interface Client {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  birth_date?: string;
-  last_visit?: string;
-  total_spent?: number;
-  business_id?: string;
-  user_id?: string;
-  gender?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  notes?: string;
-  created_at?: string;
-  updated_at?: string;
-  status?: string;
-  criado_em?: string;
-}
-
-export interface ClientFormData {
-  name: string;
-  email?: string;
-  phone?: string;
-  firstName?: string;
-  lastName?: string;
-  birth_date?: string;
-  gender?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  notes?: string;
-}
+import { ClientService } from '@/services/client/clientService';
+import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
+import type { Client, ClientCreate, ClientUpdate } from '@/types/client';
 
 export const useClients = () => {
   const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { businessId } = useCurrentBusiness();
+
+  const clientService = ClientService.getInstance();
 
   const fetchClients = async () => {
-    setLoading(true);
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      // Map the data to ensure all required fields are present
-      const mappedClients: Client[] = (data || []).map(client => ({
-        ...client,
-        status: 'active', // Set default status since it doesn't exist in the database
-        criado_em: client.criado_em || client.created_at
-      }));
-      
-      setClients(mappedClients);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao buscar clientes');
-    } finally {
-      setLoading(false);
+    if (!businessId) {
+      setClients([]);
       setIsLoading(false);
+      return;
     }
-  };
 
-  const findClientByEmail = async (email: string): Promise<Client | null> => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
+      const data = await clientService.getByBusinessId(businessId);
+      setClients(data);
     } catch (err) {
-      console.error('Error finding client by email:', err);
-      return null;
-    }
-  };
-
-  const createClient = async (clientData: ClientFormData) => {
-    setIsSubmitting(true);
-    try {
-      // Use the correct field names for the clients table (legacy format)
-      const newClient = {
-        id: crypto.randomUUID(),
-        nome: clientData.name, // Use 'nome' instead of 'name'
-        email: clientData.email,
-        telefone: clientData.phone, // Use 'telefone' instead of 'phone'
-        data_nascimento: clientData.birth_date, // Use 'data_nascimento' instead of 'birth_date'
-        genero: clientData.gender, // Use 'genero' instead of 'gender'
-        endereco: clientData.address, // Use 'endereco' instead of 'address'
-        cidade: clientData.city, // Use 'cidade' instead of 'city'
-        estado: clientData.state, // Use 'estado' instead of 'state'
-        cep: clientData.zip_code, // Use 'cep' instead of 'zip_code'
-        notas: clientData.notes, // Use 'notas' instead of 'notes'
-        criado_em: new Date().toISOString(), // Use 'criado_em' instead of 'created_at'
-        atualizado_em: new Date().toISOString(), // Use 'atualizado_em' instead of 'updated_at'
-        id_negocio: '00000000-0000-0000-0000-000000000000', // Required field
-      };
-
-      const { data, error } = await supabase
-        .from('clients')
-        .insert(newClient)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Convert back to Client format for state
-      const clientForState: Client = {
-        id: data.id,
-        name: data.nome,
-        email: data.email,
-        phone: data.telefone,
-        birth_date: data.data_nascimento,
-        gender: data.genero,
-        address: data.endereco,
-        city: data.cidade,
-        state: data.estado,
-        zip_code: data.cep,
-        notes: data.notas,
-        created_at: data.criado_em,
-        updated_at: data.atualizado_em,
-        business_id: data.id_negocio,
-        status: 'active',
-        criado_em: data.criado_em
-      };
-
-      setClients(prev => [clientForState, ...prev]);
-      toast.success('Cliente criado com sucesso!');
-      return clientForState;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao criar cliente';
-      setError(errorMessage);
-      toast.error(errorMessage);
-      throw err;
+      console.error('Error fetching clients:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch clients');
+      setClients([]);
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchClients();
-  }, []);
+  }, [businessId]);
+
+  const createClient = async (data: Omit<ClientCreate, 'business_id'>) => {
+    if (!businessId) throw new Error('No business selected');
+    
+    const newClient = await clientService.create({
+      ...data,
+      business_id: businessId,
+    });
+    
+    await fetchClients();
+    return newClient;
+  };
+
+  const updateClient = async (id: string, data: ClientUpdate) => {
+    await clientService.update(id, data);
+    await fetchClients();
+  };
+
+  const deleteClient = async (id: string) => {
+    await clientService.delete(id);
+    await fetchClients();
+  };
+
+  const searchClients = async (searchTerm: string) => {
+    if (!businessId) return [];
+    return clientService.search({ 
+      business_id: businessId, 
+      search: searchTerm 
+    });
+  };
 
   return {
     clients,
-    loading,
     isLoading,
     error,
-    createClient,
-    findClientByEmail,
-    isSubmitting,
     refetch: fetchClients,
+    createClient,
+    updateClient,
+    deleteClient,
+    searchClients,
   };
 };

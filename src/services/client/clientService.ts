@@ -1,5 +1,12 @@
+
 import { supabase } from '@/lib/supabase';
-import type { Client, ClientCreate, ClientUpdate, ClientStats } from '@/types/client';
+import type { 
+  Client, 
+  ClientCreate, 
+  ClientUpdate, 
+  ClientSearchParams,
+  ClientStats
+} from '@/types/client';
 
 export class ClientService {
   private static instance: ClientService;
@@ -14,36 +21,61 @@ export class ClientService {
   }
 
   /**
-   * Cria um novo cliente
+   * Creates a new client
    */
   async create(data: ClientCreate): Promise<Client> {
     const { data: client, error } = await supabase
       .from('clients')
-      .insert(data)
+      .insert({
+        id_negocio: data.business_id,
+        nome: data.name,
+        email: data.email,
+        telefone: data.phone,
+        data_nascimento: data.birth_date,
+        genero: data.gender,
+        endereco: data.address,
+        cidade: data.city,
+        estado: data.state,
+        cep: data.zip_code,
+        notas: data.notes,
+      })
       .select()
       .single();
 
     if (error) throw error;
-    return client;
+    return this.mapToClient(client);
   }
 
   /**
-   * Atualiza um cliente existente
+   * Updates an existing client
    */
   async update(id: string, data: ClientUpdate): Promise<Client> {
+    const updateData: any = {};
+    
+    if (data.name) updateData.nome = data.name;
+    if (data.email) updateData.email = data.email;
+    if (data.phone) updateData.telefone = data.phone;
+    if (data.birth_date) updateData.data_nascimento = data.birth_date;
+    if (data.gender) updateData.genero = data.gender;
+    if (data.address) updateData.endereco = data.address;
+    if (data.city) updateData.cidade = data.city;
+    if (data.state) updateData.estado = data.state;
+    if (data.zip_code) updateData.cep = data.zip_code;
+    if (data.notes) updateData.notas = data.notes;
+
     const { data: client, error } = await supabase
       .from('clients')
-      .update(data)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
 
     if (error) throw error;
-    return client;
+    return this.mapToClient(client);
   }
 
   /**
-   * Busca um cliente pelo ID
+   * Gets a client by ID
    */
   async getById(id: string): Promise<Client> {
     const { data: client, error } = await supabase
@@ -53,38 +85,96 @@ export class ClientService {
       .single();
 
     if (error) throw error;
-    return client;
+    return this.mapToClient(client);
   }
 
   /**
-   * Lista todos os clientes de um negócio
+   * Searches clients based on parameters
    */
-  async listByBusiness(businessId: string): Promise<Client[]> {
+  async search(params: ClientSearchParams): Promise<Client[]> {
+    let query = supabase
+      .from('clients')
+      .select()
+      .eq('id_negocio', params.business_id);
+
+    if (params.search) {
+      query = query.or(`nome.ilike.%${params.search}%,email.ilike.%${params.search}%,telefone.ilike.%${params.search}%`);
+    }
+
+    if (params.city) {
+      query = query.eq('cidade', params.city);
+    }
+
+    if (params.state) {
+      query = query.eq('estado', params.state);
+    }
+
+    const { data: clients, error } = await query.order('nome');
+
+    if (error) throw error;
+    return clients?.map(client => this.mapToClient(client)) || [];
+  }
+
+  /**
+   * Gets all clients for a business
+   */
+  async getByBusinessId(businessId: string): Promise<Client[]> {
     const { data: clients, error } = await supabase
       .from('clients')
       .select()
-      .eq('business_id', businessId);
+      .eq('id_negocio', businessId)
+      .order('nome');
 
     if (error) throw error;
-    return clients;
+    return clients?.map(client => this.mapToClient(client)) || [];
   }
 
   /**
-   * Busca clientes por nome ou email
+   * Gets client statistics
    */
-  async search(businessId: string, query: string): Promise<Client[]> {
-    const { data: clients, error } = await supabase
-      .from('clients')
-      .select()
-      .eq('business_id', businessId)
-      .or(`name.ilike.%${query}%,email.ilike.%${query}%`);
+  async getStats(clientId: string): Promise<ClientStats> {
+    // Get client appointments and spending
+    const { data: appointments, error: appointmentsError } = await supabase
+      .from('Appointments')
+      .select('status, valor, data')
+      .eq('id_cliente', clientId);
 
-    if (error) throw error;
-    return clients;
+    if (appointmentsError) {
+      console.warn('Error fetching client stats:', appointmentsError);
+      return {
+        totalAppointments: 0,
+        completedAppointments: 0,
+        cancelledAppointments: 0,
+        totalSpent: 0,
+        averageSpent: 0,
+        lastVisit: null,
+        loyaltyPoints: 0,
+      };
+    }
+
+    const total = appointments?.length || 0;
+    const completed = appointments?.filter(a => a.status === 'concluido').length || 0;
+    const cancelled = appointments?.filter(a => a.status === 'cancelado').length || 0;
+    const totalSpent = appointments?.reduce((sum, a) => sum + (Number(a.valor) || 0), 0) || 0;
+    
+    const completedAppointments = appointments?.filter(a => a.status === 'concluido') || [];
+    const lastVisit = completedAppointments.length > 0 
+      ? completedAppointments.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0].data
+      : null;
+
+    return {
+      totalAppointments: total,
+      completedAppointments: completed,
+      cancelledAppointments: cancelled,
+      totalSpent,
+      averageSpent: completed > 0 ? totalSpent / completed : 0,
+      lastVisit,
+      loyaltyPoints: Math.floor(totalSpent / 10), // Simple loyalty calculation
+    };
   }
 
   /**
-   * Deleta um cliente
+   * Deletes a client
    */
   async delete(id: string): Promise<void> {
     const { error } = await supabase
@@ -96,72 +186,27 @@ export class ClientService {
   }
 
   /**
-   * Atualiza o status do cliente
+   * Maps database client to domain client
    */
-  async updateStatus(id: string, status: 'active' | 'inactive' | 'blocked'): Promise<Client> {
-    const { data: client, error } = await supabase
-      .from('clients')
-      .update({ status })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return client;
+  private mapToClient(dbClient: any): Client {
+    return {
+      id: dbClient.id,
+      business_id: dbClient.id_negocio,
+      name: dbClient.nome,
+      email: dbClient.email,
+      phone: dbClient.telefone,
+      birth_date: dbClient.data_nascimento,
+      gender: dbClient.genero,
+      address: dbClient.endereco,
+      city: dbClient.cidade,
+      state: dbClient.estado,
+      zip_code: dbClient.cep,
+      notes: dbClient.notas,
+      preferences: dbClient.preferencias,
+      last_visit: dbClient.ultima_visita,
+      total_spent: Number(dbClient.valor_total_gasto) || 0,
+      created_at: dbClient.criado_em,
+      updated_at: dbClient.atualizado_em,
+    };
   }
-
-  /**
-   * Atualiza as preferências do cliente
-   */
-  async updatePreferences(id: string, preferences: Partial<Client['preferences']>): Promise<Client> {
-    const { data: client, error } = await supabase
-      .from('clients')
-      .update({ preferences })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return client;
-  }
-
-  /**
-   * Busca estatísticas do cliente
-   */
-  async getStats(id: string): Promise<ClientStats> {
-    const { data, error } = await supabase.rpc('get_client_stats', {
-      client_id: id,
-    });
-
-    if (error) throw error;
-    return data;
-  }
-
-  /**
-   * Busca clientes por profissional preferido
-   */
-  async listByPreferredProfessional(businessId: string, professionalId: string): Promise<Client[]> {
-    const { data: clients, error } = await supabase
-      .from('clients')
-      .select()
-      .eq('business_id', businessId)
-      .contains('preferences->preferred_professionals', [professionalId]);
-
-    if (error) throw error;
-    return clients;
-  }
-
-  /**
-   * Busca clientes por serviço preferido
-   */
-  async listByPreferredService(businessId: string, serviceId: string): Promise<Client[]> {
-    const { data: clients, error } = await supabase
-      .from('clients')
-      .select()
-      .eq('business_id', businessId)
-      .contains('preferences->preferred_services', [serviceId]);
-
-    if (error) throw error;
-    return clients;
-  }
-} 
+}

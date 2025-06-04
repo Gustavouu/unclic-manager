@@ -1,18 +1,24 @@
+
 export interface Appointment {
   id: string;
   business_id: string;
   client_id: string;
   professional_id: string;
   service_id: string;
+  date: string;
   start_time: string;
   end_time: string;
-  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+  duration: number;
   price: number;
-  payment_status: 'pending' | 'paid' | 'refunded' | 'partially_paid';
-  payment_method: 'credit_card' | 'debit_card' | 'cash' | 'pix' | null;
-  notes: string | null;
-  cancellation_reason: string | null;
-  cancellation_fee: number | null;
+  status: 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'faltou';
+  notes?: string;
+  payment_method?: string;
+  rating?: number;
+  feedback_comment?: string;
+  reminder_sent?: boolean;
+  client_name?: string;
+  professional_name?: string;
+  service_name?: string;
   created_at: string;
   updated_at: string;
 }
@@ -22,62 +28,45 @@ export interface AppointmentCreate {
   client_id: string;
   professional_id: string;
   service_id: string;
+  date: string;
   start_time: string;
   end_time: string;
-  status?: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+  duration: number;
   price: number;
-  payment_status?: 'pending' | 'paid' | 'refunded' | 'partially_paid';
-  payment_method?: 'credit_card' | 'debit_card' | 'cash' | 'pix' | null;
-  notes?: string | null;
-  cancellation_reason?: string | null;
-  cancellation_fee?: number | null;
+  status?: 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'faltou';
+  notes?: string;
+  payment_method?: string;
 }
 
 export interface AppointmentUpdate {
-  professional_id?: string;
-  service_id?: string;
+  status?: 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'faltou';
   start_time?: string;
   end_time?: string;
-  status?: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
-  price?: number;
-  payment_status?: 'pending' | 'paid' | 'refunded' | 'partially_paid';
-  payment_method?: 'credit_card' | 'debit_card' | 'cash' | 'pix' | null;
-  notes?: string | null;
-  cancellation_reason?: string | null;
-  cancellation_fee?: number | null;
-}
-
-export interface AppointmentStats {
-  totalAppointments: number;
-  totalRevenue: number;
-  averageAppointmentValue: number;
-  completionRate: number;
-  cancellationRate: number;
-  noShowRate: number;
-  mostPopularService: string | null;
-  mostPopularProfessional: string | null;
-  busiestDay: string | null;
-  busiestTime: string | null;
+  notes?: string;
+  payment_method?: string;
+  rating?: number;
+  feedback_comment?: string;
 }
 
 export interface AppointmentSearchParams {
   business_id: string;
+  status?: 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'faltou';
   client_id?: string;
   professional_id?: string;
   service_id?: string;
-  status?: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
-  payment_status?: 'pending' | 'paid' | 'refunded' | 'partially_paid';
-  start_date?: string;
-  end_date?: string;
-  start_time?: string;
-  end_time?: string;
+  date_from?: string;
+  date_to?: string;
 }
 
-export interface AppointmentConflict {
-  appointment_id: string;
-  professional_id: string;
-  start_time: string;
-  end_time: string;
-  conflict_type: 'professional' | 'client' | 'service';
-  conflict_details: string;
-} 
+export interface AppointmentStats {
+  total: number;
+  scheduled: number;
+  confirmed: number;
+  completed: number;
+  cancelled: number;
+  no_show: number;
+  total_revenue: number;
+  average_value: number;
+  completion_rate: number;
+  cancellation_rate: number;
+}
