@@ -245,6 +245,98 @@ export type Database = {
           },
         ]
       }
+      appointments_standardized: {
+        Row: {
+          booking_date: string
+          business_id: string
+          client_id: string
+          created_at: string | null
+          duration: number
+          employee_id: string
+          end_time: string
+          feedback_comment: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          price: number
+          rating: number | null
+          reminder_sent: boolean | null
+          service_id: string
+          start_time: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          booking_date: string
+          business_id: string
+          client_id: string
+          created_at?: string | null
+          duration: number
+          employee_id: string
+          end_time: string
+          feedback_comment?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          price?: number
+          rating?: number | null
+          reminder_sent?: boolean | null
+          service_id: string
+          start_time: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          booking_date?: string
+          business_id?: string
+          client_id?: string
+          created_at?: string | null
+          duration?: number
+          employee_id?: string
+          end_time?: string
+          feedback_comment?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          price?: number
+          rating?: number | null
+          reminder_sent?: boolean | null
+          service_id?: string
+          start_time?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_appointments_business"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_appointments_client"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients_standardized"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_appointments_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees_standardized"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_appointments_service"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_standardized"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments_unified: {
         Row: {
           booking_date: string
@@ -860,6 +952,77 @@ export type Database = {
           },
         ]
       }
+      clients_standardized: {
+        Row: {
+          address: string | null
+          birth_date: string | null
+          business_id: string
+          city: string | null
+          created_at: string | null
+          email: string | null
+          gender: string | null
+          id: string
+          last_visit: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          preferences: Json | null
+          state: string | null
+          status: string | null
+          total_spent: number | null
+          updated_at: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          birth_date?: string | null
+          business_id: string
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          gender?: string | null
+          id?: string
+          last_visit?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          preferences?: Json | null
+          state?: string | null
+          status?: string | null
+          total_spent?: number | null
+          updated_at?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          birth_date?: string | null
+          business_id?: string
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          gender?: string | null
+          id?: string
+          last_visit?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          preferences?: Json | null
+          state?: string | null
+          status?: string | null
+          total_spent?: number | null
+          updated_at?: string | null
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_clients_business"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients_unified: {
         Row: {
           address: string | null
@@ -1267,6 +1430,65 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "application_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees_standardized: {
+        Row: {
+          bio: string | null
+          business_id: string
+          commission_percentage: number | null
+          created_at: string | null
+          email: string | null
+          hire_date: string | null
+          id: string
+          name: string
+          phone: string | null
+          photo_url: string | null
+          position: string | null
+          specialties: string[] | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bio?: string | null
+          business_id: string
+          commission_percentage?: number | null
+          created_at?: string | null
+          email?: string | null
+          hire_date?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          position?: string | null
+          specialties?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bio?: string | null
+          business_id?: string
+          commission_percentage?: number | null
+          created_at?: string | null
+          email?: string | null
+          hire_date?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          position?: string | null
+          specialties?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_employees_business"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -3435,6 +3657,59 @@ export type Database = {
         }
         Relationships: []
       }
+      services_standardized: {
+        Row: {
+          business_id: string
+          category: string | null
+          commission_percentage: number | null
+          created_at: string | null
+          description: string | null
+          duration: number
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          price: number
+          updated_at: string | null
+        }
+        Insert: {
+          business_id: string
+          category?: string | null
+          commission_percentage?: number | null
+          created_at?: string | null
+          description?: string | null
+          duration: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          price: number
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string
+          category?: string | null
+          commission_percentage?: number | null
+          created_at?: string | null
+          description?: string | null
+          duration?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_services_business"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_items: {
         Row: {
           batchNumber: string | null
@@ -4059,6 +4334,10 @@ export type Database = {
       }
       set_tenant_context: {
         Args: { tenant_id: string }
+        Returns: undefined
+      }
+      sync_legacy_data: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       table_exists: {

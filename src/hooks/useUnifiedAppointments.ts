@@ -5,7 +5,7 @@ import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import { UnifiedAppointment, normalizeStatus } from '@/types/appointment-unified';
 import type { AppointmentCreate, AppointmentUpdate } from '@/types/appointment';
 
-export const useAppointments = () => {
+export const useUnifiedAppointments = () => {
   const [appointments, setAppointments] = useState<UnifiedAppointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +23,7 @@ export const useAppointments = () => {
     setError(null);
     
     try {
-      console.log('Fetching appointments for business ID:', businessId);
+      console.log('Fetching unified appointments for business ID:', businessId);
       
       const data = await appointmentService.search({ business_id: businessId });
       
@@ -62,9 +62,9 @@ export const useAppointments = () => {
       }));
       
       setAppointments(unifiedData);
-      console.log('Successfully loaded', unifiedData.length, 'appointments');
+      console.log('Successfully loaded', unifiedData.length, 'unified appointments');
     } catch (err) {
-      console.error('Error fetching appointments:', err);
+      console.error('Error fetching unified appointments:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch appointments');
       setAppointments([]);
     } finally {
@@ -98,16 +98,6 @@ export const useAppointments = () => {
     await fetchAppointments();
   };
 
-  const getAppointmentsByDateRange = async (startDate: string, endDate: string) => {
-    if (!businessId) return [];
-    return await appointmentService.getByDateRange(businessId, startDate, endDate);
-  };
-
-  const getAppointmentStats = async (dateFrom?: string, dateTo?: string) => {
-    if (!businessId) return null;
-    return await appointmentService.getStats(businessId, dateFrom, dateTo);
-  };
-
   return {
     appointments,
     isLoading,
@@ -116,7 +106,5 @@ export const useAppointments = () => {
     createAppointment,
     updateAppointment,
     deleteAppointment,
-    getAppointmentsByDateRange,
-    getAppointmentStats,
   };
 };

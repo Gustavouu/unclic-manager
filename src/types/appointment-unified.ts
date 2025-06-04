@@ -1,17 +1,5 @@
 
-// Unified appointment types to resolve conflicts between different type definitions
-export type AppointmentStatus = 
-  | 'agendado' 
-  | 'confirmado' 
-  | 'concluido' 
-  | 'cancelado' 
-  | 'faltou'
-  | 'scheduled' 
-  | 'confirmed' 
-  | 'completed' 
-  | 'canceled' 
-  | 'no_show';
-
+// Unified appointment types that work with both legacy and standardized data
 export interface UnifiedAppointment {
   id: string;
   business_id: string;
@@ -22,20 +10,21 @@ export interface UnifiedAppointment {
   service_id: string;
   service_name?: string;
   service_type?: string;
-  date: Date;
+  date: Date | string;
   start_time: string;
   end_time: string;
   duration: number;
   price: number;
-  status: AppointmentStatus;
+  status: string;
   notes?: string;
   payment_method?: string;
-  payment_status?: 'pending' | 'paid' | 'refunded' | 'partially_paid';
+  payment_status?: string;
   rating?: number;
   feedback_comment?: string;
   reminder_sent?: boolean;
   created_at: string;
   updated_at: string;
+  
   // Legacy compatibility fields
   clientId?: string;
   clientName?: string;
@@ -45,35 +34,34 @@ export interface UnifiedAppointment {
   professionalName?: string;
 }
 
-// Status mapping utilities
-export const statusMapping = {
-  // Portuguese to English
-  'agendado': 'scheduled',
-  'confirmado': 'confirmed', 
-  'concluido': 'completed',
-  'cancelado': 'canceled',
-  'faltou': 'no_show',
-  // English to Portuguese
-  'scheduled': 'agendado',
-  'confirmed': 'confirmado',
-  'completed': 'concluido', 
-  'canceled': 'cancelado',
-  'no_show': 'faltou'
-} as const;
-
-export function normalizeStatus(status: string): AppointmentStatus {
-  const mapped = statusMapping[status as keyof typeof statusMapping];
-  return (mapped || status) as AppointmentStatus;
+export function normalizeStatus(status: string): string {
+  const statusMap: Record<string, string> = {
+    'agendado': 'scheduled',
+    'confirmado': 'confirmed',
+    'concluido': 'completed',
+    'cancelado': 'canceled',
+    'faltou': 'no_show',
+    'scheduled': 'scheduled',
+    'confirmed': 'confirmed',
+    'completed': 'completed',
+    'canceled': 'canceled',
+    'no_show': 'no_show',
+  };
+  return statusMap[status] || status;
 }
 
-export function isCompletedStatus(status: AppointmentStatus): boolean {
-  return status === 'concluido' || status === 'completed';
-}
-
-export function isScheduledStatus(status: AppointmentStatus): boolean {
-  return status === 'agendado' || status === 'scheduled';
-}
-
-export function isCanceledStatus(status: AppointmentStatus): boolean {
-  return status === 'cancelado' || status === 'canceled';
+export function denormalizeStatus(status: string): string {
+  const statusMap: Record<string, string> = {
+    'scheduled': 'agendado',
+    'confirmed': 'confirmado',
+    'completed': 'concluido',
+    'canceled': 'cancelado',
+    'no_show': 'faltou',
+    'agendado': 'agendado',
+    'confirmado': 'confirmado',
+    'concluido': 'concluido',
+    'cancelado': 'cancelado',
+    'faltou': 'faltou',
+  };
+  return statusMap[status] || status;
 }

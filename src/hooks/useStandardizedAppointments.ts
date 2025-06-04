@@ -2,11 +2,10 @@
 import { useState, useEffect } from 'react';
 import { StandardizedAppointmentService } from '@/services/appointments/standardizedAppointmentService';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
-import { UnifiedAppointment, normalizeStatus } from '@/types/appointment-unified';
-import type { AppointmentCreate, AppointmentUpdate } from '@/types/appointment';
+import type { Appointment, AppointmentCreate, AppointmentUpdate } from '@/types/appointment';
 
-export const useAppointments = () => {
-  const [appointments, setAppointments] = useState<UnifiedAppointment[]>([]);
+export const useStandardizedAppointments = () => {
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { businessId } = useCurrentBusiness();
@@ -23,48 +22,13 @@ export const useAppointments = () => {
     setError(null);
     
     try {
-      console.log('Fetching appointments for business ID:', businessId);
+      console.log('Fetching standardized appointments for business ID:', businessId);
       
       const data = await appointmentService.search({ business_id: businessId });
-      
-      // Convert to unified format
-      const unifiedData: UnifiedAppointment[] = data.map((appointment) => ({
-        id: appointment.id,
-        business_id: appointment.business_id,
-        client_id: appointment.client_id,
-        client_name: appointment.client_name,
-        professional_id: appointment.professional_id,
-        professional_name: appointment.professional_name,
-        service_id: appointment.service_id,
-        service_name: appointment.service_name,
-        service_type: 'general',
-        date: new Date(appointment.date),
-        start_time: appointment.start_time,
-        end_time: appointment.end_time,
-        duration: appointment.duration,
-        price: appointment.price,
-        status: normalizeStatus(appointment.status),
-        notes: appointment.notes,
-        payment_method: appointment.payment_method,
-        payment_status: 'pending',
-        rating: appointment.rating,
-        feedback_comment: appointment.feedback_comment,
-        reminder_sent: appointment.reminder_sent,
-        created_at: appointment.created_at,
-        updated_at: appointment.updated_at,
-        // Legacy compatibility
-        clientId: appointment.client_id,
-        clientName: appointment.client_name,
-        serviceId: appointment.service_id,
-        serviceName: appointment.service_name,
-        professionalId: appointment.professional_id,
-        professionalName: appointment.professional_name,
-      }));
-      
-      setAppointments(unifiedData);
-      console.log('Successfully loaded', unifiedData.length, 'appointments');
+      setAppointments(data);
+      console.log('Successfully loaded', data.length, 'standardized appointments');
     } catch (err) {
-      console.error('Error fetching appointments:', err);
+      console.error('Error fetching standardized appointments:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch appointments');
       setAppointments([]);
     } finally {
