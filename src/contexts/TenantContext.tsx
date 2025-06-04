@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface TenantContextType {
   businessId: string | null;
+  businessName: string | null;
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
@@ -26,13 +27,15 @@ interface TenantProviderProps {
 
 export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
   const [businessId, setBusinessId] = useState<string | null>(null);
+  const [businessName, setBusinessName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, loading: authLoading } = useAuthContext();
 
-  const fetchBusinessId = async () => {
+  const fetchBusinessData = async () => {
     if (!user) {
       setBusinessId(null);
+      setBusinessName(null);
       setIsLoading(false);
       return;
     }
@@ -53,50 +56,67 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
         throw businessUserError;
       }
 
-      if (businessUserData?.business_id) {
-        setBusinessId(businessUserData.business_id);
-        return;
+      let foundBusinessId = businessUserData?.business_id;
+
+      if (!foundBusinessId) {
+        // Try businesses table by admin email
+        const { data: businessData, error: businessError } = await supabase
+          .from('businesses')
+          .select('id')
+          .eq('admin_email', user.email)
+          .limit(1)
+          .maybeSingle();
+
+        if (businessError && businessError.code !== 'PGRST116') {
+          throw businessError;
+        }
+
+        foundBusinessId = businessData?.id;
       }
 
-      // Try businesses table by admin email
-      const { data: businessData, error: businessError } = await supabase
-        .from('businesses')
-        .select('id')
-        .eq('admin_email', user.email)
-        .limit(1)
-        .maybeSingle();
+      if (foundBusinessId) {
+        setBusinessId(foundBusinessId);
 
-      if (businessError && businessError.code !== 'PGRST116') {
-        throw businessError;
-      }
+        // Fetch business name
+        const { data: businessDetails, error: businessDetailsError } = await supabase
+          .from('businesses')
+          .select('name')
+          .eq('id', foundBusinessId)
+          .single();
 
-      if (businessData?.id) {
-        setBusinessId(businessData.id);
+        if (businessDetailsError) {
+          console.error('Error fetching business details:', businessDetailsError);
+        } else {
+          setBusinessName(businessDetails.name);
+        }
       } else {
         console.warn('No business found for user:', user.id);
         setBusinessId(null);
+        setBusinessName(null);
       }
     } catch (err: any) {
-      console.error('Error fetching business ID:', err);
+      console.error('Error fetching business data:', err);
       setError(err.message || 'Failed to fetch business information');
       setBusinessId(null);
+      setBusinessName(null);
     } finally {
       setIsLoading(false);
     }
   };
 
   const refetch = () => {
-    fetchBusinessId();
+    fetchBusinessData();
   };
 
   useEffect(() => {
     if (!authLoading) {
-      fetchBusinessId();
+      fetchBusinessData();
     }
   }, [user, authLoading]);
 
   const value = {
     businessId,
+    businessName,
     isLoading: isLoading || authLoading,
     error,
     refetch,

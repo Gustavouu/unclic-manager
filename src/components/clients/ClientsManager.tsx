@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,12 +15,17 @@ import type { Client } from '@/types/client';
 
 interface ClientsManagerProps {
   onViewClient?: (clientId: string) => void;
+  onEditClient?: (clientId: string) => void;
+  onDeleteClient?: (clientId: string, clientName: string) => void;
   onCreateAppointment?: (clientId: string) => void;
+  onNewClient?: () => void;
 }
 
 export const ClientsManager: React.FC<ClientsManagerProps> = ({
   onViewClient,
+  onEditClient,
   onCreateAppointment,
+  onNewClient,
 }) => {
   const {
     clients,
@@ -45,12 +49,14 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({
   const handleNewClient = () => {
     setSelectedClient(undefined);
     setIsFormModalOpen(true);
+    onNewClient?.();
   };
 
   const handleEditClient = (clientId: string) => {
     const client = allClients.find(c => c.id === clientId);
     setSelectedClient(client);
     setIsFormModalOpen(true);
+    onEditClient?.(clientId);
   };
 
   const handleFormSuccess = () => {

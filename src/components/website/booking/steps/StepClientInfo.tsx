@@ -1,103 +1,135 @@
 
 import React, { useState, useEffect } from 'react';
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useClients } from '@/hooks/useClients';
-
-interface ClientFormData {
-  name: string;
-  email?: string;
-  phone?: string;
-  firstName?: string;
-  lastName?: string;
-  birth_date?: string;
-  gender?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  notes?: string;
-}
-
-const clientSchema = z.object({
-  name: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres' }),
-  email: z.string().email({ message: 'Email inválido' }).optional(),
-  phone: z.string().optional(),
-});
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useClientsDashboard } from '@/hooks/clients/useClientsDashboard';
 
 interface StepClientInfoProps {
-  onNext: (data: any) => void; 
-  onBack?: () => void;
-  bookingData: any;
-  onUpdateBookingData: (data: any) => void;
+  onNext: (clientData: any) => void;
+  onBack: () => void;
+  initialData?: any;
 }
 
-export const StepClientInfo: React.FC<StepClientInfoProps> = ({ 
-  onNext, 
+export const StepClientInfo: React.FC<StepClientInfoProps> = ({
+  onNext,
   onBack,
-  bookingData,
-  onUpdateBookingData 
+  initialData = {}
 }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<ClientFormData>({
-    resolver: zodResolver(clientSchema),
+  const { findClientByEmail } = useClientsDashboard();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    ...initialData
   });
-  const { findClientByEmail } = useClients();
-  const [existingClient, setExistingClient] = useState<ClientFormData | null>(null);
 
-  const onSubmit = async (data: ClientFormData) => {
-    if (data.email) {
-      try {
-        const client = await findClientByEmail(data.email);
-        if (client) {
-          setExistingClient(client);
-        }
-      } catch (error) {
-        console.error("Error finding client:", error);
-      }
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Nome é obrigatório';
     }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email é obrigatório';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Email inválido';
+    }
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Telefone é obrigatório';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    // Update booking data
-    onUpdateBookingData({
-      clientName: data.name,
-      clientEmail: data.email,
-      clientPhone: data.phone
-    });
+    if (validateForm()) {
+      // Check if client exists
+      const existingClient = findClientByEmail(formData.email);
+      
+      onNext({
+        ...formData,
+        existingClientId: existingClient?.id
+      });
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
     
-    onNext(data);
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <div className="space-y-6">
       <div>
-        <Label htmlFor="name">Nome completo</Label>
-        <Input id="name" type="text" {...register('name')} />
-        {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+        <h2 className="text-xl font-semibold mb-2">Suas Informações</h2>
+        <p className="text-gray-600">Preencha seus dados para o agendamento</p>
       </div>
-      <div>
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" {...register('email')} />
-        {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-      </div>
-      <div>
-        <Label htmlFor="phone">Telefone</Label>
-        <Input id="phone" type="tel" {...register('phone')} />
-        {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
-      </div>
-      
-      <div className="flex justify-between pt-4">
-        {onBack && (
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Nome Completo *</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => handleInputChange('name', e.target.value)}
+            placeholder="Seu nome completo"
+            className={errors.name ? 'border-red-500' : ''}
+          />
+          {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email">Email *</Label>
+          <Input
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => handleInputChange('email', e.target.value)}
+            placeholder="seu@email.com"
+            className={errors.email ? 'border-red-500' : ''}
+          />
+          {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="phone">Telefone *</Label>
+          <Input
+            id="phone"
+            value={formData.phone}
+            onChange={(e) => handleInputChange('phone', e.target.value)}
+            placeholder="(11) 99999-9999"
+            className={errors.phone ? 'border-red-500' : ''}
+          />
+          {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
+        </div>
+
+        <div className="flex justify-between pt-4">
           <Button type="button" variant="outline" onClick={onBack}>
             Voltar
           </Button>
-        )}
-        <Button type="submit" className={onBack ? "" : "w-full"}>
-          Próximo
-        </Button>
-      </div>
-    </form>
+          <Button type="submit">
+            Continuar
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 };

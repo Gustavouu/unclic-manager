@@ -48,6 +48,10 @@ export interface ClientStats {
   newThisMonth: number;
   activeClients: number;
   retentionRate: number;
+  totalAppointments?: number;
+  completedAppointments?: number;
+  cancelledAppointments?: number;
+  totalSpent?: number;
 }
 
 export interface ClientSearchParams {
@@ -55,6 +59,10 @@ export interface ClientSearchParams {
   status?: string;
   limit?: number;
   offset?: number;
+  business_id?: string;
+  city?: string;
+  state?: string;
+  page?: number;
 }
 
 export interface ClientCreate {
@@ -68,6 +76,7 @@ export interface ClientCreate {
   state?: string;
   zip_code?: string;
   notes?: string;
+  business_id?: string;
 }
 
 export interface ClientUpdate extends Partial<ClientCreate> {}
@@ -75,10 +84,12 @@ export interface ClientUpdate extends Partial<ClientCreate> {}
 export interface ClientListResult {
   clients: Client[];
   total: number;
+  page?: number;
 }
 
 export interface ClientOperationResult {
   success: boolean;
   client?: Client;
   error?: string;
+  data?: any;
 }
