@@ -59,6 +59,8 @@ export interface UseDashboardMetricsReturn {
   isLoading: boolean;
   error: string | null;
   formatCurrency: (value: number) => string;
+  lastUpdate?: Date | null;
+  refreshData?: () => void;
 }
 
 export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';
