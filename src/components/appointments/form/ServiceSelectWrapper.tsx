@@ -1,37 +1,62 @@
 
-import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import React from "react";
+import { UseFormReturn } from "react-hook-form";
+import { AppointmentFormValues } from "@/types/appointments";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useServices } from "@/hooks/useServices";
+import { formatCurrency } from "@/lib/format";
 
-interface ServiceSelectWrapperProps {
-  value?: string;
-  onValueChange?: (value: string) => void;
-  placeholder?: string;
-}
+export type ServiceSelectWrapperProps = {
+  form: UseFormReturn<AppointmentFormValues>;
+};
 
-export const ServiceSelectWrapper: React.FC<ServiceSelectWrapperProps> = ({
-  value,
-  onValueChange,
-  placeholder = "Selecione um serviço"
-}) => {
-  // Temporary placeholder services until we implement proper service management
-  const services = [
-    { id: '1', name: 'Corte de Cabelo', price: 30 },
-    { id: '2', name: 'Barba', price: 20 },
-    { id: '3', name: 'Sobrancelha', price: 15 },
-  ];
+export default function ServiceSelectWrapper({ form }: ServiceSelectWrapperProps) {
+  const { services, isLoading } = useServices();
 
   return (
-    <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {services.map((service) => (
-          <SelectItem key={service.id} value={service.id}>
-            {service.name} - R$ {service.price}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <FormField
+      control={form.control}
+      name="serviceId"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Serviço *</FormLabel>
+          <Select 
+            onValueChange={(value) => {
+              field.onChange(value);
+              // Auto-fill price and duration when service is selected
+              const selectedService = services.find(s => s.id === value);
+              if (selectedService) {
+                form.setValue('price', selectedService.price);
+                form.setValue('duration', selectedService.duration);
+              }
+            }} 
+            defaultValue={field.value}
+            disabled={isLoading}
+          >
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue 
+                  placeholder={isLoading ? "Carregando serviços..." : "Selecione um serviço"} 
+                />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              {services.map((service) => (
+                <SelectItem key={service.id} value={service.id}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{service.name}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {formatCurrency(service.price)} • {service.duration}min
+                    </span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   );
-};
+}

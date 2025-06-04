@@ -1,58 +1,107 @@
 
-import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
-import { DateTimeSelect } from './DateTimeSelect';
-import { AppointmentFormValues } from '../schemas/appointmentFormSchema';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import { UseFormReturn } from "react-hook-form";
+import { AppointmentFormValues } from "@/types/appointments";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
-interface DateTimeSelectWrapperProps {
+export type DateTimeSelectWrapperProps = {
   form: UseFormReturn<AppointmentFormValues>;
-  serviceId?: string;
   professionalId?: string;
-  className?: string;
-  error?: string;
-  label?: string;
-  placeholder?: string;
-  disabled?: boolean;
-}
+};
 
-export function DateTimeSelectWrapper({
-  form,
-  serviceId,
-  professionalId,
-  className,
-  error,
-  label,
-  placeholder,
-  disabled
-}: DateTimeSelectWrapperProps) {
+// Horários disponíveis (em uma aplicação real, isso viria do backend)
+const availableSlots = [
+  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
+  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
+  "17:00", "17:30", "18:00", "18:30", "19:00", "19:30"
+];
+
+export default function DateTimeSelectWrapper({ form, professionalId }: DateTimeSelectWrapperProps) {
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
   return (
-    <div className={cn("space-y-2", className)}>
-      {label && (
-        <label className="text-sm font-medium text-gray-700">
-          {label}
-        </label>
-      )}
-      <DateTimeSelect
-        form={form}
-        onTimeChange={() => {
-          // Handle time change if needed
-        }}
-        minAdvanceTime={30}
-        maxFutureDays={30}
-        businessHours={{
-          segunda: { enabled: true, start: "09:00", end: "18:00" },
-          terca: { enabled: true, start: "09:00", end: "18:00" },
-          quarta: { enabled: true, start: "09:00", end: "18:00" },
-          quinta: { enabled: true, start: "09:00", end: "18:00" },
-          sexta: { enabled: true, start: "09:00", end: "18:00" },
-          sabado: { enabled: true, start: "09:00", end: "15:00" },
-          domingo: { enabled: false, start: "00:00", end: "00:00" }
-        }}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Data */}
+      <FormField
+        control={form.control}
+        name="date"
+        render={({ field }) => (
+          <FormItem className="flex flex-col">
+            <FormLabel>Data *</FormLabel>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <FormControl>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full pl-3 text-left font-normal",
+                      !field.value && "text-muted-foreground"
+                    )}
+                  >
+                    {field.value ? (
+                      format(field.value, "PPP", { locale: ptBR })
+                    ) : (
+                      <span>Selecione uma data</span>
+                    )}
+                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                  </Button>
+                </FormControl>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={field.value}
+                  onSelect={(date) => {
+                    field.onChange(date);
+                    setIsCalendarOpen(false);
+                  }}
+                  disabled={(date) =>
+                    date < new Date() || date < new Date("1900-01-01")
+                  }
+                  initialFocus
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
+            <FormMessage />
+          </FormItem>
+        )}
       />
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
+
+      {/* Horário */}
+      <FormField
+        control={form.control}
+        name="time"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Horário *</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um horário" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent className="max-h-[200px]">
+                {availableSlots.map((slot) => (
+                  <SelectItem key={slot} value={slot}>
+                    {slot}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 }

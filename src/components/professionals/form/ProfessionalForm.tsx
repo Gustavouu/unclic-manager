@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { professionalFormSchema } from '../schemas/professionalFormSchema';
 import { ProfessionalFormFields } from './ProfessionalFormFields';
-import { Professional, ProfessionalFormData } from '@/hooks/professionals/types';
+import { Professional, ProfessionalFormData, ProfessionalStatus } from '@/hooks/professionals/types';
 
 interface ProfessionalFormProps {
   onClose: () => void;
@@ -33,7 +33,7 @@ export const ProfessionalForm = ({
       bio: professional?.bio || '',
       photo_url: professional?.photo_url || '',
       specialties: professional?.specialties || [],
-      status: professional?.status || 'active',
+      status: professional?.status || ProfessionalStatus.ACTIVE,
       commission_percentage: professional?.commission_percentage || 0,
       hire_date: professional?.hire_date || '',
     },
