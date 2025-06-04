@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Professional, ProfessionalFormData } from '@/types/professional';
 
@@ -18,6 +17,7 @@ export class ProfessionalService {
     const { data: professional, error } = await supabase
       .from('funcionarios')
       .insert({
+        business_id: data.business_id,
         id_negocio: data.business_id,
         nome: data.name,
         email: data.email || null,
@@ -151,7 +151,6 @@ export class ProfessionalService {
     if (error) throw error;
   }
 
-  // Add missing methods referenced in tests
   async search(params: { business_id: string; search: string }): Promise<Professional[]> {
     const { data: professionals, error } = await supabase
       .from('funcionarios')

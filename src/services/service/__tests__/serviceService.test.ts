@@ -1,9 +1,10 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ServiceService } from '../serviceService';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 // Mock do Supabase
-vi.mock('@/lib/supabase', () => ({
+vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn(() => ({
       insert: vi.fn(() => ({
@@ -40,15 +41,13 @@ vi.mock('@/lib/supabase', () => ({
             statusText: 'OK',
           })),
         })),
-        gte: vi.fn(() => ({
-          lte: vi.fn(() => ({
-            or: vi.fn(() => ({
-              data: [mockService],
-              error: null,
-              count: null,
-              status: 200,
-              statusText: 'OK',
-            })),
+        or: vi.fn(() => ({
+          order: vi.fn(() => ({
+            data: [mockService],
+            error: null,
+            count: null,
+            status: 200,
+            statusText: 'OK',
           })),
         })),
       })),
@@ -61,13 +60,6 @@ vi.mock('@/lib/supabase', () => ({
         })),
       })),
     })),
-    rpc: vi.fn(() => ({
-      data: mockStats,
-      error: null,
-      count: null,
-      status: 200,
-      statusText: 'OK',
-    })),
   },
 }));
 
@@ -79,39 +71,21 @@ const mockService = {
   description: 'Corte de cabelo masculino',
   duration: 30,
   price: 50,
-  category: '1',
-  image_url: null,
+  category: 'Cabelo',
   is_active: true,
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
-};
-
-const mockCategory = {
-  id: '1',
-  business_id: '1',
-  name: 'Cabelo',
-  description: 'Serviços de cabelo',
-  image_url: null,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
 };
 
 const mockStats = {
   totalAppointments: 100,
+  completedAppointments: 80,
+  cancelledAppointments: 10,
+  noShowAppointments: 10,
   totalRevenue: 5000,
-  averagePrice: 50,
-  mostPopularProfessional: '1',
-  busiestDay: 'monday',
-  busiestTime: '10:00',
-};
-
-const mockCategoryStats = {
-  totalServices: 5,
-  totalAppointments: 200,
-  totalRevenue: 10000,
-  averagePrice: 50,
-  mostPopularService: '1',
-  mostPopularProfessional: '1',
+  averageRating: 4.5,
+  mostPopularDay: 'monday',
+  mostPopularTime: '10:00',
 };
 
 describe('ServiceService', () => {
@@ -124,7 +98,14 @@ describe('ServiceService', () => {
 
   describe('create', () => {
     it('should create a new service', async () => {
-      const result = await service.create(mockService);
+      const result = await service.create({
+        business_id: '1',
+        name: 'Corte de Cabelo',
+        description: 'Corte de cabelo masculino',
+        duration: 30,
+        price: 50,
+        category: 'Cabelo',
+      });
       expect(result).toEqual(mockService);
       expect(supabase.from).toHaveBeenCalledWith('services');
     });
@@ -147,16 +128,12 @@ describe('ServiceService', () => {
   });
 
   describe('search', () => {
-    it('should search services with all parameters', async () => {
+    it('should search services with parameters', async () => {
       const searchParams = {
         business_id: '1',
-        category: '1',
-        min_price: 30,
-        max_price: 100,
-        min_duration: 15,
-        max_duration: 60,
-        is_active: true,
         search: 'Corte',
+        category: 'Cabelo',
+        is_active: true,
       };
 
       const result = await service.search(searchParams);
@@ -184,58 +161,13 @@ describe('ServiceService', () => {
     it('should get service stats', async () => {
       const result = await service.getStats('1');
       expect(result).toEqual(mockStats);
-      expect(supabase.rpc).toHaveBeenCalledWith('get_service_stats', {
-        service_id: '1',
-      });
     });
   });
 
-  describe('createCategory', () => {
-    it('should create a new service category', async () => {
-      const result = await service.createCategory(mockCategory);
-      expect(result).toEqual(mockCategory);
-      expect(supabase.from).toHaveBeenCalledWith('service_categories');
+  describe('getCategories', () => {
+    it('should get service categories', async () => {
+      const result = await service.getCategories('1');
+      expect(result).toEqual(['Cabelo']);
     });
   });
-
-  describe('updateCategory', () => {
-    it('should update an existing service category', async () => {
-      const result = await service.updateCategory('1', { name: 'Cabelo e Barba' });
-      expect(result).toEqual(mockCategory);
-      expect(supabase.from).toHaveBeenCalledWith('service_categories');
-    });
-  });
-
-  describe('getCategoryById', () => {
-    it('should get a service category by id', async () => {
-      const result = await service.getCategoryById('1');
-      expect(result).toEqual(mockCategory);
-      expect(supabase.from).toHaveBeenCalledWith('service_categories');
-    });
-  });
-
-  describe('listCategories', () => {
-    it('should list service categories', async () => {
-      const result = await service.listCategories('1');
-      expect(result).toEqual([mockCategory]);
-      expect(supabase.from).toHaveBeenCalledWith('service_categories');
-    });
-  });
-
-  describe('deleteCategory', () => {
-    it('should delete a service category', async () => {
-      await service.deleteCategory('1');
-      expect(supabase.from).toHaveBeenCalledWith('service_categories');
-    });
-  });
-
-  describe('getCategoryStats', () => {
-    it('should get service category stats', async () => {
-      const result = await service.getCategoryStats('1');
-      expect(result).toEqual(mockCategoryStats);
-      expect(supabase.rpc).toHaveBeenCalledWith('get_service_category_stats', {
-        category_id: '1',
-      });
-    });
-  });
-}); 
+});

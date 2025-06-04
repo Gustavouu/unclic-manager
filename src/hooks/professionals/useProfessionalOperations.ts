@@ -22,6 +22,7 @@ export const useProfessionalOperations = () => {
       const { data, error } = await supabase
         .from('funcionarios')
         .insert({
+          business_id: businessId,
           id_negocio: businessId,
           nome: professionalData.name,
           email: professionalData.email || null,

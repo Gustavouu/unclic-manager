@@ -1,32 +1,29 @@
 
 export interface Professional {
   id: string;
-  id_negocio: string;
-  nome: string;
+  business_id?: string;
+  id_negocio?: string;
+  name?: string;
+  nome?: string;
   email?: string;
+  phone?: string;
   telefone?: string;
+  position?: string;
   cargo?: string;
   bio?: string;
-  foto_url?: string;
-  especializacoes?: string[];
-  comissao_percentual?: number;
-  data_contratacao?: string;
-  status: string;
-  criado_em: string;
-  atualizado_em: string;
-  // English aliases for compatibility
-  business_id?: string;
-  name?: string;
-  phone?: string;
-  position?: string;
   photo_url?: string;
+  foto_url?: string;
   specialties?: string[];
+  especializacoes?: string[];
   commission_percentage?: number;
+  comissao_percentual?: number;
   hire_date?: string;
+  data_contratacao?: string;
+  status?: string;
   created_at?: string;
+  criado_em?: string;
   updated_at?: string;
-  rating?: number;
-  total_reviews?: number;
+  atualizado_em?: string;
 }
 
 export interface ProfessionalFormData {
@@ -40,42 +37,4 @@ export interface ProfessionalFormData {
   commission_percentage?: number;
   hire_date?: string;
   status?: string;
-}
-
-export interface ProfessionalCreate extends ProfessionalFormData {
-  business_id: string;
-}
-
-export interface ProfessionalUpdate extends Partial<ProfessionalFormData> {}
-
-export interface ProfessionalSearchParams {
-  business_id: string;
-  status?: string;
-  specialty?: string;
-  rating?: number;
-  search?: string;
-}
-
-export interface ProfessionalStats {
-  totalAppointments: number;
-  completedAppointments: number;
-  cancelledAppointments: number;
-  noShowAppointments: number;
-  averageRating: number;
-  totalRevenue: number;
-  mostPopularService: string;
-  busiestDay: string;
-  busiestTime: string;
-}
-
-export interface ProfessionalAvailability {
-  date: string;
-  available_slots: Array<{
-    start: string;
-    end: string;
-  }>;
-  unavailable_slots: Array<{
-    start: string;
-    end: string;
-  }>;
 }

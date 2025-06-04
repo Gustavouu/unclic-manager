@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ServiceService } from '@/services/service/serviceService';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
-import type { Service, ServiceCreate, ServiceUpdate } from '@/types/service';
+import type { Service, ServiceCreate, ServiceUpdate, ServiceFormData } from '@/types/service';
 
 export const useServices = () => {
   const [services, setServices] = useState<Service[]>([]);
@@ -39,16 +39,17 @@ export const useServices = () => {
     fetchServices();
   }, [businessId]);
 
-  const createService = async (data: Omit<ServiceCreate, 'business_id'>) => {
+  const createService = async (data: ServiceFormData) => {
     if (!businessId) throw new Error('No business selected');
     
     setIsSubmitting(true);
     try {
-      const newService = await serviceService.create({
+      const serviceCreate: ServiceCreate = {
         ...data,
         business_id: businessId,
-      });
+      };
       
+      const newService = await serviceService.create(serviceCreate);
       await fetchServices();
       return newService;
     } finally {

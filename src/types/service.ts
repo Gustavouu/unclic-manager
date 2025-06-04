@@ -46,3 +46,10 @@ export interface ServiceStats {
   mostPopularDay: string | null;
   mostPopularTime: string | null;
 }
+
+// Add the missing type exports
+export interface ServiceCreate extends ServiceFormData {
+  business_id: string;
+}
+
+export interface ServiceUpdate extends Partial<ServiceFormData> {}
