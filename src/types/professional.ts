@@ -38,3 +38,18 @@ export interface ProfessionalFormData {
   hire_date?: string;
   status?: string;
 }
+
+// Add the missing type exports that the test file expects
+export interface ProfessionalCreate extends ProfessionalFormData {
+  business_id: string;
+}
+
+export interface ProfessionalUpdate extends Partial<ProfessionalFormData> {}
+
+export interface ProfessionalSearchParams {
+  business_id: string;
+  search?: string;
+  status?: string;
+  specialties?: string[];
+  position?: string;
+}
