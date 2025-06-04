@@ -245,69 +245,6 @@ export type Database = {
           },
         ]
       }
-      Appointments_backup: {
-        Row: {
-          atualizado_em: string | null
-          avaliacao: number | null
-          comentario_avaliacao: string | null
-          criado_em: string | null
-          data: string | null
-          duracao: number | null
-          forma_pagamento: string | null
-          hora_fim: string | null
-          hora_inicio: string | null
-          id: string | null
-          id_cliente: string | null
-          id_funcionario: string | null
-          id_negocio: string | null
-          id_servico: string | null
-          lembrete_enviado: boolean | null
-          observacoes: string | null
-          status: string | null
-          valor: number | null
-        }
-        Insert: {
-          atualizado_em?: string | null
-          avaliacao?: number | null
-          comentario_avaliacao?: string | null
-          criado_em?: string | null
-          data?: string | null
-          duracao?: number | null
-          forma_pagamento?: string | null
-          hora_fim?: string | null
-          hora_inicio?: string | null
-          id?: string | null
-          id_cliente?: string | null
-          id_funcionario?: string | null
-          id_negocio?: string | null
-          id_servico?: string | null
-          lembrete_enviado?: boolean | null
-          observacoes?: string | null
-          status?: string | null
-          valor?: number | null
-        }
-        Update: {
-          atualizado_em?: string | null
-          avaliacao?: number | null
-          comentario_avaliacao?: string | null
-          criado_em?: string | null
-          data?: string | null
-          duracao?: number | null
-          forma_pagamento?: string | null
-          hora_fim?: string | null
-          hora_inicio?: string | null
-          id?: string | null
-          id_cliente?: string | null
-          id_funcionario?: string | null
-          id_negocio?: string | null
-          id_servico?: string | null
-          lembrete_enviado?: boolean | null
-          observacoes?: string | null
-          status?: string | null
-          valor?: number | null
-        }
-        Relationships: []
-      }
       audit_logs: {
         Row: {
           created_at: string | null
@@ -2258,51 +2195,6 @@ export type Database = {
         ]
       }
       metricas_dashboard: {
-        Row: {
-          created_at: string | null
-          data_referencia: string
-          horarios_pico: Json | null
-          id: string
-          novos_clientes: number
-          servicos_populares: Json | null
-          taxa_cancelamento: number
-          tenant_id: string
-          ticket_medio: number
-          total_agendamentos: number
-          total_vendas: number
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          data_referencia: string
-          horarios_pico?: Json | null
-          id?: string
-          novos_clientes?: number
-          servicos_populares?: Json | null
-          taxa_cancelamento?: number
-          tenant_id: string
-          ticket_medio?: number
-          total_agendamentos?: number
-          total_vendas?: number
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          data_referencia?: string
-          horarios_pico?: Json | null
-          id?: string
-          novos_clientes?: number
-          servicos_populares?: Json | null
-          taxa_cancelamento?: number
-          tenant_id?: string
-          ticket_medio?: number
-          total_agendamentos?: number
-          total_vendas?: number
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      metrics_dashboard: {
         Row: {
           created_at: string | null
           data_referencia: string
