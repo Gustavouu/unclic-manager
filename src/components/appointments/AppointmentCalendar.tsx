@@ -61,8 +61,8 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
 
   const handleCancelAppointment = async (unifiedAppointment: UnifiedAppointment) => {
     try {
-      // Use Portuguese status for backend compatibility
-      await updateAppointment(unifiedAppointment.id, { status: 'cancelado' });
+      // Use English status for backend compatibility
+      await updateAppointment(unifiedAppointment.id, { status: 'canceled' });
       setShowDetailsDialog(false);
     } catch (error) {
       console.error('Erro ao cancelar agendamento:', error);

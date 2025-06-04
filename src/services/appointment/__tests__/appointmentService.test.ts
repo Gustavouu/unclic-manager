@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AppointmentService } from '../appointmentService';
 import { supabase } from '@/lib/supabase';
@@ -82,7 +81,7 @@ const mockAppointmentData = {
   end_time: '11:00:00',
   duration: 60,
   price: 100,
-  status: 'agendado' as const,
+  status: 'scheduled' as const,
   payment_method: 'credit_card',
   notes: 'Test Notes',
 };
@@ -98,7 +97,7 @@ const mockAppointment = {
   end_time: '11:00:00',
   duration: 60,
   price: 100,
-  status: 'agendado' as const,
+  status: 'scheduled' as const,
   payment_method: 'credit_card',
   payment_status: 'pending' as const,
   notes: 'Test Notes',
@@ -143,7 +142,7 @@ describe('AppointmentService', () => {
 
   describe('update', () => {
     it('should update an existing appointment', async () => {
-      const result = await service.update('1', { price: 150 });
+      const result = await service.update('1', { status: 'confirmed' });
       expect(result).toEqual(mockAppointment);
       expect(supabase.from).toHaveBeenCalledWith('Appointments');
     });
@@ -203,7 +202,7 @@ describe('AppointmentService', () => {
 
   describe('updateStatus', () => {
     it('should update appointment status', async () => {
-      const result = await service.updateStatus('1', 'cancelado', 'Client cancelled', 50);
+      const result = await service.updateStatus('1', 'canceled', 'Client cancelled', 50);
       expect(result).toEqual(mockAppointment);
       expect(supabase.from).toHaveBeenCalledWith('Appointments');
     });

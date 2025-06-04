@@ -43,7 +43,7 @@ export class AppointmentService {
         hora_fim: data.end_time,
         duracao: data.duration,
         valor: data.price,
-        status: data.status || 'agendado',
+        status: data.status || 'scheduled',
         observacoes: data.notes,
         forma_pagamento: data.payment_method,
       })
@@ -170,7 +170,7 @@ export class AppointmentService {
    */
   async updateStatus(
     id: string,
-    status: 'agendado' | 'confirmado' | 'concluido' | 'cancelado' | 'faltou',
+    status: 'scheduled' | 'confirmed' | 'completed' | 'canceled' | 'no_show',
     cancellationReason?: string,
     cancellationFee?: number
   ): Promise<Appointment> {

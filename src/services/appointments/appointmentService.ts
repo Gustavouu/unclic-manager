@@ -36,7 +36,7 @@ export class AppointmentService {
         hora_fim: data.end_time,
         duracao: data.duration,
         valor: data.price,
-        status: data.status || 'agendado',
+        status: data.status || 'scheduled',
         observacoes: data.notes,
         forma_pagamento: data.payment_method,
       })
@@ -60,6 +60,7 @@ export class AppointmentService {
     if (data.payment_method) updateData.forma_pagamento = data.payment_method;
     if (data.rating) updateData.avaliacao = data.rating;
     if (data.feedback_comment) updateData.comentario_avaliacao = data.feedback_comment;
+    if (data.price) updateData.valor = data.price;
 
     const { data: appointment, error } = await supabase
       .from('Appointments')
