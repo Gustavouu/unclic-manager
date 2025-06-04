@@ -35,7 +35,21 @@ export const useServicesList = () => {
       }
 
       console.log('Fetched services:', servicesData);
-      setServices(servicesData || []);
+      
+      // Map the data to include both Portuguese and English field names
+      const mappedServices: Service[] = (servicesData || []).map(service => ({
+        ...service,
+        categoria: service.category || 'Geral',
+        name: service.nome,
+        description: service.descricao,
+        duration: service.duracao,
+        price: service.preco,
+        is_active: service.ativo,
+        created_at: service.criado_em,
+        updated_at: service.atualizado_em,
+      }));
+
+      setServices(mappedServices);
     } catch (err) {
       console.error('Error fetching services:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch services');
@@ -59,14 +73,27 @@ export const useServicesList = () => {
         .from('services')
         .select('*')
         .eq('business_id', businessId)
-        .or(`nome.ilike.%${searchTerm}%,descricao.ilike.%${searchTerm}%,categoria.ilike.%${searchTerm}%`)
+        .or(`nome.ilike.%${searchTerm}%,descricao.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`)
         .order('criado_em', { ascending: false });
 
       if (error) {
         throw error;
       }
 
-      return data || [];
+      // Map the data to include both Portuguese and English field names
+      const mappedServices: Service[] = (data || []).map(service => ({
+        ...service,
+        categoria: service.category || 'Geral',
+        name: service.nome,
+        description: service.descricao,
+        duration: service.duracao,
+        price: service.preco,
+        is_active: service.ativo,
+        created_at: service.criado_em,
+        updated_at: service.atualizado_em,
+      }));
+
+      return mappedServices;
     } catch (error) {
       console.error('Error searching services:', error);
       return [];

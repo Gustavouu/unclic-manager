@@ -27,7 +27,7 @@ export const useServiceOperations = () => {
           descricao: serviceData.description || null,
           duracao: serviceData.duration,
           preco: serviceData.price,
-          categoria: serviceData.category || 'Geral',
+          category: serviceData.category || 'Geral',
           ativo: true,
         })
         .select()
@@ -37,8 +37,21 @@ export const useServiceOperations = () => {
         throw error;
       }
 
+      // Map the response to include both Portuguese and English field names
+      const serviceResult: Service = {
+        ...data,
+        categoria: data.category || 'Geral',
+        name: data.nome,
+        description: data.descricao,
+        duration: data.duracao,
+        price: data.preco,
+        is_active: data.ativo,
+        created_at: data.criado_em,
+        updated_at: data.atualizado_em,
+      };
+
       toast.success('Serviço criado com sucesso!');
-      return data;
+      return serviceResult;
     } catch (error: any) {
       console.error('Error creating service:', error);
       toast.error('Erro ao criar serviço');
@@ -60,7 +73,7 @@ export const useServiceOperations = () => {
           descricao: serviceData.description || null,
           duracao: serviceData.duration,
           preco: serviceData.price,
-          categoria: serviceData.category || 'Geral',
+          category: serviceData.category || 'Geral',
           atualizado_em: new Date().toISOString(),
         })
         .eq('id', serviceId)
@@ -71,8 +84,21 @@ export const useServiceOperations = () => {
         throw error;
       }
 
+      // Map the response to include both Portuguese and English field names
+      const serviceResult: Service = {
+        ...data,
+        categoria: data.category || 'Geral',
+        name: data.nome,
+        description: data.descricao,
+        duration: data.duracao,
+        price: data.preco,
+        is_active: data.ativo,
+        created_at: data.criado_em,
+        updated_at: data.atualizado_em,
+      };
+
       toast.success('Serviço atualizado com sucesso!');
-      return data;
+      return serviceResult;
     } catch (error: any) {
       console.error('Error updating service:', error);
       toast.error('Erro ao atualizar serviço');

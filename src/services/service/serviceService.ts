@@ -23,14 +23,26 @@ export class ServiceService {
         descricao: data.description || null,
         duracao: data.duration,
         preco: data.price,
-        categoria: data.category || 'Geral',
+        category: data.category || 'Geral',
         ativo: true,
       })
       .select()
       .single();
 
     if (error) throw error;
-    return service;
+    
+    // Map the response to include both Portuguese and English field names
+    return {
+      ...service,
+      categoria: service.category || 'Geral',
+      name: service.nome,
+      description: service.descricao,
+      duration: service.duracao,
+      price: service.preco,
+      is_active: service.ativo,
+      created_at: service.criado_em,
+      updated_at: service.atualizado_em,
+    };
   }
 
   async update(id: string, data: Partial<ServiceFormData>): Promise<Service> {
@@ -40,7 +52,7 @@ export class ServiceService {
     if (data.description !== undefined) updateData.descricao = data.description;
     if (data.duration) updateData.duracao = data.duration;
     if (data.price !== undefined) updateData.preco = data.price;
-    if (data.category) updateData.categoria = data.category;
+    if (data.category) updateData.category = data.category;
     
     updateData.atualizado_em = new Date().toISOString();
 
@@ -52,7 +64,19 @@ export class ServiceService {
       .single();
 
     if (error) throw error;
-    return service;
+    
+    // Map the response to include both Portuguese and English field names
+    return {
+      ...service,
+      categoria: service.category || 'Geral',
+      name: service.nome,
+      description: service.descricao,
+      duration: service.duracao,
+      price: service.preco,
+      is_active: service.ativo,
+      created_at: service.criado_em,
+      updated_at: service.atualizado_em,
+    };
   }
 
   async getById(id: string): Promise<Service> {
@@ -63,7 +87,19 @@ export class ServiceService {
       .single();
 
     if (error) throw error;
-    return service;
+    
+    // Map the response to include both Portuguese and English field names
+    return {
+      ...service,
+      categoria: service.category || 'Geral',
+      name: service.nome,
+      description: service.descricao,
+      duration: service.duracao,
+      price: service.preco,
+      is_active: service.ativo,
+      created_at: service.criado_em,
+      updated_at: service.atualizado_em,
+    };
   }
 
   async getByBusinessId(businessId: string): Promise<Service[]> {
@@ -75,7 +111,19 @@ export class ServiceService {
       .order('nome');
 
     if (error) throw error;
-    return services || [];
+    
+    // Map the response to include both Portuguese and English field names
+    return (services || []).map(service => ({
+      ...service,
+      categoria: service.category || 'Geral',
+      name: service.nome,
+      description: service.descricao,
+      duration: service.duracao,
+      price: service.preco,
+      is_active: service.ativo,
+      created_at: service.criado_em,
+      updated_at: service.atualizado_em,
+    }));
   }
 
   async delete(id: string): Promise<void> {
@@ -92,10 +140,22 @@ export class ServiceService {
       .from('services')
       .select()
       .eq('business_id', params.business_id)
-      .or(`nome.ilike.%${params.search}%,descricao.ilike.%${params.search}%,categoria.ilike.%${params.search}%`)
+      .or(`nome.ilike.%${params.search}%,descricao.ilike.%${params.search}%,category.ilike.%${params.search}%`)
       .order('nome');
 
     if (error) throw error;
-    return services || [];
+    
+    // Map the response to include both Portuguese and English field names
+    return (services || []).map(service => ({
+      ...service,
+      categoria: service.category || 'Geral',
+      name: service.nome,
+      description: service.descricao,
+      duration: service.duracao,
+      price: service.preco,
+      is_active: service.ativo,
+      created_at: service.criado_em,
+      updated_at: service.atualizado_em,
+    }));
   }
 }

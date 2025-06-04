@@ -21,6 +21,7 @@ export const ServicesTab = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [showNewServiceDialog, setShowNewServiceDialog] = useState(false);
+  const [deleteDialogService, setDeleteDialogService] = useState<ServiceData | null>(null);
   
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -41,9 +42,12 @@ export const ServicesTab = () => {
     toast.success("Serviço atualizado com sucesso!");
   };
 
-  const handleServiceDeleted = (serviceId: string) => {
-    setServices(prev => prev.filter(service => service.id !== serviceId));
-    toast.success("Serviço removido com sucesso!");
+  const handleServiceDeleted = () => {
+    if (deleteDialogService) {
+      setServices(prev => prev.filter(service => service.id !== deleteDialogService.id));
+      toast.success("Serviço removido com sucesso!");
+      setDeleteDialogService(null);
+    }
   };
 
   // Function to format price to handle both string and number
@@ -125,11 +129,13 @@ export const ServicesTab = () => {
                           service={service}
                           onServiceUpdated={handleServiceUpdated}
                         />
-                        <DeleteServiceDialog
-                          serviceId={service.id}
-                          serviceName={service.name}
-                          onServiceDeleted={() => handleServiceDeleted(service.id)}
-                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteDialogService(service)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -159,6 +165,19 @@ export const ServicesTab = () => {
         onOpenChange={setShowNewServiceDialog}
         onServiceCreated={handleServiceCreated}
       />
+
+      {deleteDialogService && (
+        <DeleteServiceDialog
+          open={!!deleteDialogService}
+          onOpenChange={(open) => !open && setDeleteDialogService(null)}
+          service={{
+            id: deleteDialogService.id,
+            nome: deleteDialogService.name,
+            name: deleteDialogService.name,
+          }}
+          onServiceDeleted={handleServiceDeleted}
+        />
+      )}
     </Card>
   );
 };
