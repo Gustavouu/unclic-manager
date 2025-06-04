@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export const normalizeClientData = (client: any) => {
@@ -38,7 +39,8 @@ export const normalizeProfessionalData = (professional: any) => {
     status: professional.status || 'active',
     commission_percentage: professional.commission_percentage || professional.comissao_percentual || 0,
     hire_date: professional.hire_date || professional.data_contratacao,
-    bio: professional.bio || ''
+    bio: professional.bio || '',
+    business_id: professional.business_id || professional.id_negocio
   };
 };
 

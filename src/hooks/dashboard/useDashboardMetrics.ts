@@ -66,15 +66,18 @@ export const useDashboardMetrics = () => {
       setIsLoading(true);
       setError(null);
 
+      console.log('Loading dashboard data for business:', businessId);
+
       // Get current month dates
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
       const today = now.toISOString().split('T')[0];
 
-      // Fetch clients from unified table
+      // Fetch clients from unified table first, fallback to original
       let clients: any[] = [];
       try {
+        console.log('Fetching clients from unified table...');
         const { data: clientsData, error: clientsError } = await supabase
           .from('clients_unified')
           .select('*')
@@ -88,8 +91,10 @@ export const useDashboardMetrics = () => {
             .select('*')
             .eq('id_negocio', businessId);
           clients = fallbackClients || [];
+          console.log('Fetched clients from fallback table:', clients.length);
         } else {
           clients = clientsData || [];
+          console.log('Fetched clients from unified table:', clients.length);
         }
       } catch (clientError) {
         console.warn('Could not fetch clients, using defaults:', clientError);
@@ -99,10 +104,12 @@ export const useDashboardMetrics = () => {
       
       // Calculate new clients this month
       const newClientsThisMonth = clients.filter(client => {
-        if (!client.created_at) return false;
-        const createdDate = new Date(client.created_at);
+        if (!client.created_at && !client.criado_em) return false;
+        const createdDate = new Date(client.created_at || client.criado_em);
         return createdDate >= new Date(startOfMonth) && createdDate <= new Date(endOfMonth);
       }).length;
+
+      console.log('Active clients:', activeClients.length, 'New clients this month:', newClientsThisMonth);
 
       // Initialize appointment stats with default values
       let appointmentStats = {
@@ -113,9 +120,9 @@ export const useDashboardMetrics = () => {
         completed_count: 0
       };
 
-      // Fetch appointment statistics from unified table
+      // Fetch appointment statistics from unified table first, fallback to original
       try {
-        // Get monthly appointments from unified table
+        console.log('Fetching appointments from unified table...');
         const { data: monthlyAppointments, error: monthlyError } = await supabase
           .from('appointments_unified')
           .select('*')
@@ -134,6 +141,7 @@ export const useDashboardMetrics = () => {
             .lte('booking_date', endOfMonth);
           
           const appointments = fallbackAppointments || [];
+          console.log('Fetched appointments from fallback table:', appointments.length);
           appointmentStats = {
             total: appointments.length,
             total_revenue: appointments.reduce((sum, apt) => sum + (apt.price || 0), 0),
@@ -143,6 +151,7 @@ export const useDashboardMetrics = () => {
           };
         } else {
           const appointments = monthlyAppointments || [];
+          console.log('Fetched appointments from unified table:', appointments.length);
           appointmentStats = {
             total: appointments.length,
             total_revenue: appointments.reduce((sum, apt) => sum + (apt.price || 0), 0),
@@ -154,6 +163,8 @@ export const useDashboardMetrics = () => {
       } catch (appointmentError) {
         console.warn('Could not fetch appointment stats, using defaults:', appointmentError);
       }
+
+      console.log('Appointment stats:', appointmentStats);
 
       // Calculate metrics with fallbacks
       const totalRevenue = appointmentStats.total_revenue || 0;
@@ -188,7 +199,7 @@ export const useDashboardMetrics = () => {
       }));
 
       // Set final metrics
-      setMetrics({
+      const finalMetrics = {
         totalAppointments,
         totalClients: clients.length,
         monthlyRevenue: totalRevenue,
@@ -201,8 +212,11 @@ export const useDashboardMetrics = () => {
         averageTicket,
         growthRate,
         retentionRate,
-      });
+      };
 
+      console.log('Final metrics:', finalMetrics);
+
+      setMetrics(finalMetrics);
       setRevenueData(revenueData);
       setPopularServices(popularServicesWithPercentage);
       setNextAppointments([]);

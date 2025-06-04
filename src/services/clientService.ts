@@ -5,19 +5,22 @@ import type { Client } from '@/types/client';
 
 export const fetchClients = async (businessId: string): Promise<Client[]> => {
   try {
-    // Try unified table first
+    console.log('Fetching clients for business:', businessId);
+    
+    // Primary: Try unified table first
     const { data: unifiedClients, error: unifiedError } = await supabase
       .from('clients_unified')
       .select('*')
       .eq('business_id', businessId);
 
     if (!unifiedError && unifiedClients) {
+      console.log('Successfully fetched from clients_unified:', unifiedClients.length, 'clients');
       return unifiedClients.map(normalizeClientData);
     }
 
     console.warn('Unified clients table not accessible, trying fallback:', unifiedError);
 
-    // Fallback to original clients table
+    // Fallback: Try original clients table
     const { data: fallbackClients, error: fallbackError } = await supabase
       .from('clients')
       .select('*')
@@ -28,6 +31,7 @@ export const fetchClients = async (businessId: string): Promise<Client[]> => {
       throw fallbackError;
     }
 
+    console.log('Successfully fetched from clients fallback:', fallbackClients?.length || 0, 'clients');
     return (fallbackClients || []).map(normalizeClientData);
   } catch (error) {
     console.error('Error fetching clients:', error);
@@ -37,7 +41,9 @@ export const fetchClients = async (businessId: string): Promise<Client[]> => {
 
 export const createClient = async (clientData: Partial<Client>): Promise<Client> => {
   try {
-    // Try to insert into unified table first
+    console.log('Creating client with data:', clientData);
+
+    // Primary: Try to insert into unified table first
     const { data: unifiedClient, error: unifiedError } = await supabase
       .from('clients_unified')
       .insert([{
@@ -58,12 +64,13 @@ export const createClient = async (clientData: Partial<Client>): Promise<Client>
       .single();
 
     if (!unifiedError && unifiedClient) {
+      console.log('Successfully created client in clients_unified');
       return normalizeClientData(unifiedClient);
     }
 
     console.warn('Could not insert into unified table, trying fallback:', unifiedError);
 
-    // Fallback to original clients table
+    // Fallback: Try original clients table
     const { data: fallbackClient, error: fallbackError } = await supabase
       .from('clients')
       .insert([{
@@ -88,6 +95,7 @@ export const createClient = async (clientData: Partial<Client>): Promise<Client>
       throw fallbackError;
     }
 
+    console.log('Successfully created client in clients fallback');
     return normalizeClientData(fallbackClient);
   } catch (error) {
     console.error('Error creating client:', error);
@@ -97,7 +105,9 @@ export const createClient = async (clientData: Partial<Client>): Promise<Client>
 
 export const updateClient = async (id: string, clientData: Partial<Client>): Promise<Client> => {
   try {
-    // Try unified table first
+    console.log('Updating client:', id, 'with data:', clientData);
+
+    // Primary: Try unified table first
     const { data: unifiedClient, error: unifiedError } = await supabase
       .from('clients_unified')
       .update({
@@ -118,10 +128,13 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
       .single();
 
     if (!unifiedError && unifiedClient) {
+      console.log('Successfully updated client in clients_unified');
       return normalizeClientData(unifiedClient);
     }
 
-    // Fallback to original clients table
+    console.warn('Could not update in unified table, trying fallback:', unifiedError);
+
+    // Fallback: Try original clients table
     const { data: fallbackClient, error: fallbackError } = await supabase
       .from('clients')
       .update({
@@ -146,6 +159,7 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
       throw fallbackError;
     }
 
+    console.log('Successfully updated client in clients fallback');
     return normalizeClientData(fallbackClient);
   } catch (error) {
     console.error('Error updating client:', error);
@@ -155,17 +169,22 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
 
 export const deleteClient = async (id: string): Promise<void> => {
   try {
-    // Try unified table first
+    console.log('Deleting client:', id);
+
+    // Primary: Try unified table first
     const { error: unifiedError } = await supabase
       .from('clients_unified')
       .delete()
       .eq('id', id);
 
     if (!unifiedError) {
+      console.log('Successfully deleted client from clients_unified');
       return;
     }
 
-    // Fallback to original clients table
+    console.warn('Could not delete from unified table, trying fallback:', unifiedError);
+
+    // Fallback: Try original clients table
     const { error: fallbackError } = await supabase
       .from('clients')
       .delete()
@@ -175,6 +194,8 @@ export const deleteClient = async (id: string): Promise<void> => {
       console.error('Error deleting client from fallback table:', fallbackError);
       throw fallbackError;
     }
+
+    console.log('Successfully deleted client from clients fallback');
   } catch (error) {
     console.error('Error deleting client:', error);
     throw error;
@@ -187,6 +208,9 @@ export const searchClients = async (params: { search?: string; business_id?: str
       return [];
     }
 
+    console.log('Searching clients with params:', params);
+
+    // Primary: Try unified table first
     let query = supabase
       .from('clients_unified')
       .select('*')
@@ -207,10 +231,13 @@ export const searchClients = async (params: { search?: string; business_id?: str
     const { data: unifiedClients, error: unifiedError } = await query;
 
     if (!unifiedError && unifiedClients) {
+      console.log('Successfully searched clients_unified:', unifiedClients.length, 'results');
       return unifiedClients.map(normalizeClientData);
     }
 
-    // Fallback to original clients table
+    console.warn('Could not search unified table, trying fallback:', unifiedError);
+
+    // Fallback: Try original clients table
     let fallbackQuery = supabase
       .from('clients')
       .select('*')
@@ -235,6 +262,7 @@ export const searchClients = async (params: { search?: string; business_id?: str
       throw fallbackError;
     }
 
+    console.log('Successfully searched clients fallback:', fallbackClients?.length || 0, 'results');
     return (fallbackClients || []).map(normalizeClientData);
   } catch (error) {
     console.error('Error searching clients:', error);
@@ -244,7 +272,9 @@ export const searchClients = async (params: { search?: string; business_id?: str
 
 export const getClientById = async (id: string): Promise<Client | null> => {
   try {
-    // Try unified table first
+    console.log('Getting client by ID:', id);
+
+    // Primary: Try unified table first
     const { data: unifiedClient, error: unifiedError } = await supabase
       .from('clients_unified')
       .select('*')
@@ -252,10 +282,15 @@ export const getClientById = async (id: string): Promise<Client | null> => {
       .single();
 
     if (!unifiedError && unifiedClient) {
+      console.log('Successfully found client in clients_unified');
       return normalizeClientData(unifiedClient);
     }
 
-    // Fallback to original table
+    if (unifiedError && unifiedError.code !== 'PGRST116') {
+      console.warn('Error in unified table (non-404):', unifiedError);
+    }
+
+    // Fallback: Try original table
     const { data: fallbackClient, error: fallbackError } = await supabase
       .from('clients')
       .select('*')
@@ -263,11 +298,17 @@ export const getClientById = async (id: string): Promise<Client | null> => {
       .single();
 
     if (fallbackError && fallbackError.code !== 'PGRST116') {
-      console.error('Error getting client by ID:', fallbackError);
+      console.error('Error getting client by ID from fallback:', fallbackError);
       return null;
     }
 
-    return fallbackClient ? normalizeClientData(fallbackClient) : null;
+    if (fallbackClient) {
+      console.log('Successfully found client in clients fallback');
+      return normalizeClientData(fallbackClient);
+    }
+
+    console.log('Client not found in any table');
+    return null;
   } catch (error) {
     console.error('Error getting client by ID:', error);
     return null;
@@ -276,7 +317,9 @@ export const getClientById = async (id: string): Promise<Client | null> => {
 
 export const findClientByEmail = async (email: string, businessId: string): Promise<Client | null> => {
   try {
-    // Try unified table first
+    console.log('Finding client by email:', email, 'for business:', businessId);
+
+    // Primary: Try unified table first
     const { data: unifiedClient, error: unifiedError } = await supabase
       .from('clients_unified')
       .select('*')
@@ -285,10 +328,15 @@ export const findClientByEmail = async (email: string, businessId: string): Prom
       .single();
 
     if (!unifiedError && unifiedClient) {
+      console.log('Successfully found client by email in clients_unified');
       return normalizeClientData(unifiedClient);
     }
 
-    // Fallback to original table
+    if (unifiedError && unifiedError.code !== 'PGRST116') {
+      console.warn('Error in unified table (non-404):', unifiedError);
+    }
+
+    // Fallback: Try original table
     const { data: fallbackClient, error: fallbackError } = await supabase
       .from('clients')
       .select('*')
@@ -297,11 +345,17 @@ export const findClientByEmail = async (email: string, businessId: string): Prom
       .single();
 
     if (fallbackError && fallbackError.code !== 'PGRST116') {
-      console.error('Error finding client by email:', fallbackError);
+      console.error('Error finding client by email from fallback:', fallbackError);
       return null;
     }
 
-    return fallbackClient ? normalizeClientData(fallbackClient) : null;
+    if (fallbackClient) {
+      console.log('Successfully found client by email in clients fallback');
+      return normalizeClientData(fallbackClient);
+    }
+
+    console.log('Client not found by email in any table');
+    return null;
   } catch (error) {
     console.error('Error finding client by email:', error);
     return null;
@@ -310,7 +364,9 @@ export const findClientByEmail = async (email: string, businessId: string): Prom
 
 export const findClientByPhone = async (phone: string, businessId: string): Promise<Client | null> => {
   try {
-    // Try unified table first
+    console.log('Finding client by phone:', phone, 'for business:', businessId);
+
+    // Primary: Try unified table first
     const { data: unifiedClient, error: unifiedError } = await supabase
       .from('clients_unified')
       .select('*')
@@ -319,10 +375,15 @@ export const findClientByPhone = async (phone: string, businessId: string): Prom
       .single();
 
     if (!unifiedError && unifiedClient) {
+      console.log('Successfully found client by phone in clients_unified');
       return normalizeClientData(unifiedClient);
     }
 
-    // Fallback to original table
+    if (unifiedError && unifiedError.code !== 'PGRST116') {
+      console.warn('Error in unified table (non-404):', unifiedError);
+    }
+
+    // Fallback: Try original table
     const { data: fallbackClient, error: fallbackError } = await supabase
       .from('clients')
       .select('*')
@@ -331,11 +392,17 @@ export const findClientByPhone = async (phone: string, businessId: string): Prom
       .single();
 
     if (fallbackError && fallbackError.code !== 'PGRST116') {
-      console.error('Error finding client by phone:', fallbackError);
+      console.error('Error finding client by phone from fallback:', fallbackError);
       return null;
     }
 
-    return fallbackClient ? normalizeClientData(fallbackClient) : null;
+    if (fallbackClient) {
+      console.log('Successfully found client by phone in clients fallback');
+      return normalizeClientData(fallbackClient);
+    }
+
+    console.log('Client not found by phone in any table');
+    return null;
   } catch (error) {
     console.error('Error finding client by phone:', error);
     return null;
