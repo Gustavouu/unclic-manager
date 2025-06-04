@@ -3,14 +3,17 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { RevenueChart } from '@/components/dashboard/RevenueChart';
-import { useDashboardData, FilterPeriod } from '@/hooks/dashboard/useDashboardData';
+import { ClientDashboardWidget } from '@/components/clients/ClientDashboardWidget';
+import { useDashboardData, FilterPeriod } from '@/hooks/useDashboardData';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { OnboardingRedirect } from '@/components/auth/OnboardingRedirect';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const [period, setPeriod] = useState<FilterPeriod>('month');
   const { metrics, isLoading, error } = useDashboardData(period);
+  const navigate = useNavigate();
 
   if (error) {
     return (
@@ -27,6 +30,18 @@ export default function Dashboard() {
     date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
     value: Math.floor(Math.random() * 1000) + 500
   }));
+
+  const handleViewAllClients = () => {
+    navigate('/clients');
+  };
+
+  const handleViewClient = (clientId: string) => {
+    navigate(`/clients/${clientId}`);
+  };
+
+  const handleNewClient = () => {
+    navigate('/clients?action=new');
+  };
 
   return (
     <OnboardingRedirect>
@@ -77,32 +92,48 @@ export default function Dashboard() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
+          {/* Client Dashboard Widget */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Clientes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ClientDashboardWidget
+                  onViewAllClients={handleViewAllClients}
+                  onViewClient={handleViewClient}
+                  onNewClient={handleNewClient}
+                />
+              </CardContent>
+            </Card>
+          </div>
+          
           {/* Recent Activity */}
           <RecentActivity />
-          
-          {/* Popular Services */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Serviços Populares</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {metrics.popularServices.length > 0 ? (
-                <div className="space-y-3">
-                  {metrics.popularServices.map((service, index) => (
-                    <div key={service.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <span className="font-medium">{service.name}</span>
-                      <span className="text-sm text-gray-600">{service.count} agendamentos</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <p>Nenhum dado de serviços disponível</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
+
+        {/* Popular Services */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Serviços Populares</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {metrics.popularServices.length > 0 ? (
+              <div className="space-y-3">
+                {metrics.popularServices.map((service, index) => (
+                  <div key={service.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <span className="font-medium">{service.name}</span>
+                    <span className="text-sm text-gray-600">{service.count} agendamentos</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>Nenhum dado de serviços disponível</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </OnboardingRedirect>
   );

@@ -1,118 +1,67 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, BarChart3, FileSpreadsheet } from 'lucide-react';
 import { ClientStatsCard } from './ClientStatsCard';
-import { ClientFilters, ClientFilterOptions } from './ClientFilters';
+import { ClientFilters } from './ClientFilters';
 import { ClientsTable } from './ClientsTable';
+import { ClientFormModal } from './ClientFormModal';
+import { ClientsPagination } from './ClientsPagination';
 import { ClientsImportExport } from './ClientsImportExport';
-import { useClientsAdvanced, useClientAnalytics } from '@/hooks/clients';
+import { useClientsList } from '@/hooks/clients/useClientsList';
+import { useClientAnalytics } from '@/hooks/clients/useClientAnalytics';
+import type { Client } from '@/types/client';
 
 interface ClientsManagerProps {
-  onNewClient?: () => void;
-  onEditClient?: (clientId: string) => void;
   onViewClient?: (clientId: string) => void;
-  onDeleteClient?: (clientId: string) => void;
   onCreateAppointment?: (clientId: string) => void;
 }
 
-const defaultFilters: ClientFilterOptions = {
-  search: '',
-  status: '',
-  city: '',
-  gender: '',
-  dateRange: '',
-  spendingRange: '',
-};
-
 export const ClientsManager: React.FC<ClientsManagerProps> = ({
-  onNewClient,
-  onEditClient,
   onViewClient,
-  onDeleteClient,
   onCreateAppointment,
 }) => {
-  const { clients, isLoading, searchClients } = useClientsAdvanced();
+  const {
+    clients,
+    allClients,
+    filters,
+    pagination,
+    availableFilters,
+    isLoading,
+    updateFilters,
+    updatePagination,
+    clearFilters,
+    refetch,
+  } = useClientsList();
+  
   const analytics = useClientAnalytics();
-  const [filters, setFilters] = useState<ClientFilterOptions>(defaultFilters);
+  const [selectedClient, setSelectedClient] = useState<Client | undefined>();
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
-  // Get unique cities for filter options
-  const cities = useMemo(() => {
-    return Array.from(new Set(clients.map(client => client.city).filter(Boolean)));
-  }, [clients]);
+  const totalPages = Math.ceil(pagination.total / pagination.pageSize);
 
-  // Filter clients based on current filters
-  const filteredClients = useMemo(() => {
-    let filtered = [...clients];
+  const handleNewClient = () => {
+    setSelectedClient(undefined);
+    setIsFormModalOpen(true);
+  };
 
-    // Search filter
-    if (filters.search) {
-      filtered = filtered.filter(client =>
-        client.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        client.email?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        client.phone?.includes(filters.search)
-      );
+  const handleEditClient = (clientId: string) => {
+    const client = allClients.find(c => c.id === clientId);
+    setSelectedClient(client);
+    setIsFormModalOpen(true);
+  };
+
+  const handleFormSuccess = () => {
+    refetch();
+  };
+
+  const handleDeleteClient = async (clientId: string) => {
+    if (confirm('Tem certeza que deseja excluir este cliente?')) {
+      // This would be handled by the ClientsTable component
+      // through the useClientOperations hook
     }
-
-    // Status filter
-    if (filters.status) {
-      filtered = filtered.filter(client => client.status === filters.status);
-    }
-
-    // City filter
-    if (filters.city) {
-      filtered = filtered.filter(client => client.city === filters.city);
-    }
-
-    // Gender filter
-    if (filters.gender) {
-      filtered = filtered.filter(client => client.gender === filters.gender);
-    }
-
-    // Date range filter
-    if (filters.dateRange) {
-      const now = new Date();
-      let cutoffDate: Date;
-
-      switch (filters.dateRange) {
-        case 'last_week':
-          cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          break;
-        case 'last_month':
-          cutoffDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-          break;
-        case 'last_3_months':
-          cutoffDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
-          break;
-        case 'last_6_months':
-          cutoffDate = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
-          break;
-        case 'over_6_months':
-          cutoffDate = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
-          filtered = filtered.filter(client => {
-            const lastVisit = client.last_visit ? new Date(client.last_visit) : null;
-            return !lastVisit || lastVisit < cutoffDate;
-          });
-          break;
-        default:
-          break;
-      }
-
-      if (filters.dateRange !== 'over_6_months' && cutoffDate!) {
-        filtered = filtered.filter(client => {
-          const lastVisit = client.last_visit ? new Date(client.last_visit) : null;
-          return lastVisit && lastVisit >= cutoffDate;
-        });
-      }
-    }
-
-    return filtered;
-  }, [clients, filters]);
-
-  const handleClearFilters = () => {
-    setFilters(defaultFilters);
   };
 
   if (isLoading) {
@@ -136,9 +85,11 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
-          <p className="text-gray-600">Gerencie sua base de {analytics.totalClients} clientes</p>
+          <p className="text-gray-600">
+            Gerencie sua base de {analytics.totalClients} clientes
+          </p>
         </div>
-        <Button onClick={onNewClient} className="flex items-center gap-2">
+        <Button onClick={handleNewClient} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
           Novo Cliente
         </Button>
@@ -165,26 +116,37 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({
           {/* Filters */}
           <ClientFilters
             filters={filters}
-            onFiltersChange={setFilters}
-            onClearFilters={handleClearFilters}
-            cities={cities}
+            onFiltersChange={updateFilters}
+            onClearFilters={clearFilters}
+            cities={availableFilters.cities}
           />
 
           {/* Clients Table */}
           <Card>
             <CardHeader>
               <CardTitle>
-                {filteredClients.length} cliente{filteredClients.length !== 1 ? 's' : ''} encontrado{filteredClients.length !== 1 ? 's' : ''}
+                {pagination.total} cliente{pagination.total !== 1 ? 's' : ''} encontrado{pagination.total !== 1 ? 's' : ''}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <ClientsTable
-                clients={filteredClients}
-                onEditClient={onEditClient || (() => {})}
+                clients={clients}
+                onEditClient={handleEditClient}
                 onViewClient={onViewClient || (() => {})}
-                onDeleteClient={onDeleteClient || (() => {})}
+                onDeleteClient={handleDeleteClient}
                 onCreateAppointment={onCreateAppointment}
               />
+              
+              {pagination.total > 0 && (
+                <ClientsPagination
+                  currentPage={pagination.page}
+                  totalPages={totalPages}
+                  pageSize={pagination.pageSize}
+                  totalItems={pagination.total}
+                  onPageChange={(page) => updatePagination({ page })}
+                  onPageSizeChange={(pageSize) => updatePagination({ pageSize, page: 1 })}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -260,6 +222,14 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({
           <ClientsImportExport />
         </TabsContent>
       </Tabs>
+
+      {/* Form Modal */}
+      <ClientFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        client={selectedClient}
+        onSuccess={handleFormSuccess}
+      />
     </div>
   );
 };
