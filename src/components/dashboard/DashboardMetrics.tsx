@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Users, DollarSign, TrendingUp } from 'lucide-react';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import { AppointmentService } from '@/services/appointments/appointmentService';
-import { ClientService } from '@/services/client/clientService';
+import { fetchClients } from '@/services/clientService';
 
 interface DashboardMetrics {
   totalAppointments: number;
@@ -34,7 +33,7 @@ export const DashboardMetrics: React.FC = () => {
         setIsLoading(true);
         
         const appointmentService = AppointmentService.getInstance();
-        const clientService = ClientService.getInstance();
+        const clients = await fetchClients(businessId);
 
         // Get current month dates
         const now = new Date();
@@ -42,9 +41,8 @@ export const DashboardMetrics: React.FC = () => {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
         // Fetch data
-        const [appointmentStats, clients] = await Promise.all([
+        const [appointmentStats] = await Promise.all([
           appointmentService.getStats(businessId, startOfMonth, endOfMonth),
-          clientService.getByBusinessId(businessId),
         ]);
 
         // Calculate growth rate (simplified - would need historical data for real calculation)

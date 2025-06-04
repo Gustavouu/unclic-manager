@@ -51,12 +51,12 @@ export const StepClientInfo: React.FC<StepClientInfoProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
       // Check if client exists
-      const existingClient = findClientByEmail(formData.email);
+      const existingClient = await findClientByEmail(formData.email);
       
       // Update booking data if handler is available
       if (onUpdateBookingData) {
