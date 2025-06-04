@@ -245,6 +245,69 @@ export type Database = {
           },
         ]
       }
+      appointments_unified: {
+        Row: {
+          booking_date: string
+          business_id: string
+          client_id: string
+          created_at: string | null
+          duration: number
+          employee_id: string
+          end_time: string
+          feedback_comment: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          price: number
+          rating: number | null
+          reminder_sent: boolean | null
+          service_id: string
+          start_time: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          booking_date: string
+          business_id: string
+          client_id: string
+          created_at?: string | null
+          duration: number
+          employee_id: string
+          end_time: string
+          feedback_comment?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          price?: number
+          rating?: number | null
+          reminder_sent?: boolean | null
+          service_id: string
+          start_time: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          booking_date?: string
+          business_id?: string
+          client_id?: string
+          created_at?: string | null
+          duration?: number
+          employee_id?: string
+          end_time?: string
+          feedback_comment?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          price?: number
+          rating?: number | null
+          reminder_sent?: boolean | null
+          service_id?: string
+          start_time?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           created_at: string | null
@@ -769,6 +832,69 @@ export type Database = {
           },
         ]
       }
+      clients_unified: {
+        Row: {
+          address: string | null
+          birth_date: string | null
+          business_id: string
+          city: string | null
+          created_at: string | null
+          email: string | null
+          gender: string | null
+          id: string
+          last_visit: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          preferences: Json | null
+          state: string | null
+          status: string | null
+          total_spent: number | null
+          updated_at: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          birth_date?: string | null
+          business_id: string
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          gender?: string | null
+          id?: string
+          last_visit?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          preferences?: Json | null
+          state?: string | null
+          status?: string | null
+          total_spent?: number | null
+          updated_at?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          birth_date?: string | null
+          business_id?: string
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          gender?: string | null
+          id?: string
+          last_visit?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          preferences?: Json | null
+          state?: string | null
+          status?: string | null
+          total_spent?: number | null
+          updated_at?: string | null
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
       commission_rules: {
         Row: {
           createdAt: string
@@ -1108,6 +1234,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      employees_unified: {
+        Row: {
+          bio: string | null
+          business_id: string
+          commission_percentage: number | null
+          created_at: string | null
+          email: string | null
+          hire_date: string | null
+          id: string
+          name: string
+          phone: string | null
+          photo_url: string | null
+          position: string | null
+          specialties: string[] | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bio?: string | null
+          business_id: string
+          commission_percentage?: number | null
+          created_at?: string | null
+          email?: string | null
+          hire_date?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          position?: string | null
+          specialties?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bio?: string | null
+          business_id?: string
+          commission_percentage?: number | null
+          created_at?: string | null
+          email?: string | null
+          hire_date?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          position?: string | null
+          specialties?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       establishments: {
         Row: {

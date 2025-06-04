@@ -1,373 +1,185 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { Client, ClientFormData, ClientSearchParams } from '@/types/client';
+import { normalizeClientData } from '@/utils/databaseUtils';
 
-/**
- * Helper function to safely convert preferences to Record<string, any>
- */
-function convertPreferences(preferences: any): Record<string, any> {
-  if (preferences === null || preferences === undefined) {
-    return {};
-  }
-  
-  if (typeof preferences === 'object' && !Array.isArray(preferences)) {
-    return preferences as Record<string, any>;
-  }
-  
-  return {};
+export interface Client {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  birth_date?: string;
+  last_visit?: string;
+  total_spent?: number;
+  total_appointments?: number;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  avatar?: string;
+  status: string;
+  address?: string;
+  gender?: string;
+  notes?: string;
+  created_at?: string;
+  business_id: string;
+  user_id?: string;
 }
 
-/**
- * Maps database client data to the Client interface
- */
-function mapDbClientToClient(dbClient: any): Client {
-  return {
-    id: dbClient.id,
-    business_id: dbClient.business_id || dbClient.id_negocio,
-    name: dbClient.name || dbClient.nome,
-    email: dbClient.email || '',
-    phone: dbClient.phone || dbClient.telefone || '',
-    birth_date: dbClient.birth_date || dbClient.data_nascimento || '',
-    gender: dbClient.gender || dbClient.genero || '',
-    address: dbClient.address || dbClient.endereco || '',
-    city: dbClient.city || dbClient.cidade || '',
-    state: dbClient.state || dbClient.estado || '',
-    zip_code: dbClient.zip_code || dbClient.cep || '',
-    notes: dbClient.notes || dbClient.notas || '',
-    preferences: convertPreferences(dbClient.preferencias),
-    last_visit: dbClient.last_visit || dbClient.ultima_visita,
-    total_spent: Number(dbClient.total_spent || dbClient.valor_total_gasto) || 0,
-    total_appointments: 0,
-    status: dbClient.status || 'active',
-    created_at: dbClient.created_at || dbClient.criado_em,
-    updated_at: dbClient.updated_at || dbClient.atualizado_em,
-  };
-}
-
-/**
- * Fetch all clients for a business
- */
-export async function fetchClients(businessId: string): Promise<Client[]> {
-  if (!businessId) {
-    console.log('No business ID available, skipping client fetch');
-    return [];
-  }
-
+export const fetchClients = async (businessId: string): Promise<Client[]> => {
   try {
-    console.log('Fetching clients for business ID:', businessId);
-    
-    const { data, error } = await supabase
-      .from('clients')
+    // Try unified table first
+    const { data: unifiedClients, error: unifiedError } = await supabase
+      .from('clients_unified')
       .select('*')
       .eq('business_id', businessId);
 
-    if (error) {
-      console.error("Erro ao buscar clientes:", error);
-      toast.error("Não foi possível carregar os clientes.");
-      throw error;
+    if (!unifiedError && unifiedClients) {
+      return unifiedClients.map(normalizeClientData);
     }
 
-    return (data || []).map(mapDbClientToClient);
-  } catch (err: any) {
-    console.error("Erro inesperado ao buscar clientes:", err);
-    throw err;
-  }
-}
+    console.warn('Unified clients table not accessible, trying fallback:', unifiedError);
 
-/**
- * Search clients with parameters
- */
-export async function searchClients(params: ClientSearchParams): Promise<Client[]> {
-  try {
-    let query = supabase
+    // Fallback to original clients table
+    const { data: fallbackClients, error: fallbackError } = await supabase
       .from('clients')
-      .select('*');
+      .select('*')
+      .eq('id_negocio', businessId);
 
-    if (params.business_id) {
-      query = query.eq('business_id', params.business_id);
+    if (fallbackError) {
+      console.error('Error fetching clients from fallback table:', fallbackError);
+      throw fallbackError;
     }
 
-    if (params.search) {
-      query = query.or(`name.ilike.%${params.search}%,email.ilike.%${params.search}%,phone.ilike.%${params.search}%`);
-    }
-
-    if (params.city) {
-      query = query.eq('city', params.city);
-    }
-
-    if (params.state) {
-      query = query.eq('state', params.state);
-    }
-
-    if (params.status) {
-      query = query.eq('status', params.status);
-    }
-
-    // Handle pagination
-    if (params.page && params.limit) {
-      const from = (params.page - 1) * params.limit;
-      const to = from + params.limit - 1;
-      query = query.range(from, to);
-    }
-
-    const { data, error } = await query.order('name');
-
-    if (error) throw error;
-
-    return (data || []).map(mapDbClientToClient);
+    return (fallbackClients || []).map(normalizeClientData);
   } catch (error) {
-    console.error('Error searching clients:', error);
+    console.error('Error fetching clients:', error);
     throw error;
   }
-}
+};
 
-/**
- * Create a new client
- */
-export async function createClient(clientData: Partial<Client>, businessId: string): Promise<Client> {
+export const createClient = async (clientData: Partial<Client>): Promise<Client> => {
   try {
-    if (!businessId) {
-      throw new Error("ID do negócio não disponível");
-    }
-    
-    console.log('Creating client for business ID:', businessId, clientData);
-    
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      console.error("Usuário não autenticado");
-      throw new Error("Usuário não autenticado");
-    }
-    
-    const dataToInsert = {
-      business_id: businessId,
-      id_negocio: businessId, // Legacy field sync
-      name: clientData.name,
-      nome: clientData.name, // Legacy field sync
-      email: clientData.email || '',
-      phone: clientData.phone || '',
-      telefone: clientData.phone || '', // Legacy field sync
-      birth_date: clientData.birth_date,
-      data_nascimento: clientData.birth_date, // Legacy field sync
-      gender: clientData.gender,
-      genero: clientData.gender, // Legacy field sync
-      address: clientData.address,
-      endereco: clientData.address, // Legacy field sync
-      city: clientData.city,
-      cidade: clientData.city, // Legacy field sync
-      state: clientData.state,
-      estado: clientData.state, // Legacy field sync
-      zip_code: clientData.zip_code,
-      cep: clientData.zip_code, // Legacy field sync
-      notes: clientData.notes,
-      notas: clientData.notes, // Legacy field sync
-      preferences: clientData.preferences || {},
-      preferencias: clientData.preferences || {}, // Legacy field sync
-      status: clientData.status || 'active'
-    };
-
-    const { data, error } = await supabase
-      .from('clients')
-      .insert([dataToInsert])
+    // Try to insert into unified table first
+    const { data: unifiedClient, error: unifiedError } = await supabase
+      .from('clients_unified')
+      .insert([{
+        business_id: clientData.business_id,
+        name: clientData.name,
+        email: clientData.email,
+        phone: clientData.phone,
+        birth_date: clientData.birth_date,
+        gender: clientData.gender,
+        address: clientData.address,
+        city: clientData.city,
+        state: clientData.state,
+        zip_code: clientData.zip_code,
+        notes: clientData.notes,
+        status: clientData.status || 'active'
+      }])
       .select()
       .single();
 
-    if (error) {
-      console.error("Error creating client:", error);
-      throw error;
+    if (!unifiedError && unifiedClient) {
+      return normalizeClientData(unifiedClient);
     }
 
-    toast.success("Cliente criado com sucesso!");
-    return mapDbClientToClient(data);
-    
-  } catch (err: any) {
-    console.error("Error creating client:", err);
-    toast.error(err.message || "Erro ao criar cliente");
-    throw err;
-  }
-}
+    console.warn('Could not insert into unified table, trying fallback:', unifiedError);
 
-/**
- * Update an existing client
- */
-export async function updateClient(id: string, clientData: Partial<Client>): Promise<Client> {
-  try {
-    const updateData: any = {};
-    
-    // Map modern fields and legacy fields
-    if (clientData.name) {
-      updateData.name = clientData.name;
-      updateData.nome = clientData.name;
-    }
-    if (clientData.email !== undefined) {
-      updateData.email = clientData.email;
-    }
-    if (clientData.phone !== undefined) {
-      updateData.phone = clientData.phone;
-      updateData.telefone = clientData.phone;
-    }
-    if (clientData.birth_date !== undefined) {
-      updateData.birth_date = clientData.birth_date;
-      updateData.data_nascimento = clientData.birth_date;
-    }
-    if (clientData.gender !== undefined) {
-      updateData.gender = clientData.gender;
-      updateData.genero = clientData.gender;
-    }
-    if (clientData.address !== undefined) {
-      updateData.address = clientData.address;
-      updateData.endereco = clientData.address;
-    }
-    if (clientData.city !== undefined) {
-      updateData.city = clientData.city;
-      updateData.cidade = clientData.city;
-    }
-    if (clientData.state !== undefined) {
-      updateData.state = clientData.state;
-      updateData.estado = clientData.state;
-    }
-    if (clientData.zip_code !== undefined) {
-      updateData.zip_code = clientData.zip_code;
-      updateData.cep = clientData.zip_code;
-    }
-    if (clientData.notes !== undefined) {
-      updateData.notes = clientData.notes;
-      updateData.notas = clientData.notes;
-    }
-    if (clientData.preferences !== undefined) {
-      updateData.preferences = clientData.preferences;
-      updateData.preferencias = clientData.preferences;
-    }
-    if (clientData.status !== undefined) {
-      updateData.status = clientData.status;
-    }
-
-    const { data, error } = await supabase
+    // Fallback to original clients table
+    const { data: fallbackClient, error: fallbackError } = await supabase
       .from('clients')
-      .update(updateData)
-      .eq('id', id)
+      .insert([{
+        id_negocio: clientData.business_id,
+        nome: clientData.name,
+        email: clientData.email,
+        telefone: clientData.phone,
+        data_nascimento: clientData.birth_date,
+        genero: clientData.gender,
+        endereco: clientData.address,
+        cidade: clientData.city,
+        estado: clientData.state,
+        cep: clientData.zip_code,
+        notas: clientData.notes,
+        status: clientData.status || 'active'
+      }])
       .select()
       .single();
 
-    if (error) {
-      console.error("Error updating client:", error);
-      throw error;
+    if (fallbackError) {
+      console.error('Error creating client in fallback table:', fallbackError);
+      throw fallbackError;
     }
 
-    toast.success("Cliente atualizado com sucesso!");
-    return mapDbClientToClient(data);
-  } catch (err: any) {
-    console.error("Error updating client:", err);
-    toast.error(err.message || "Erro ao atualizar cliente");
-    throw err;
+    return normalizeClientData(fallbackClient);
+  } catch (error) {
+    console.error('Error creating client:', error);
+    throw error;
   }
-}
+};
 
-/**
- * Delete a client
- */
-export async function deleteClient(id: string): Promise<void> {
+export const findClientByEmail = async (email: string, businessId: string): Promise<Client | null> => {
   try {
-    const { error } = await supabase
-      .from('clients')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error("Error deleting client:", error);
-      throw error;
-    }
-
-    toast.success("Cliente excluído com sucesso!");
-  } catch (err: any) {
-    console.error("Error deleting client:", err);
-    toast.error(err.message || "Erro ao excluir cliente");
-    throw err;
-  }
-}
-
-/**
- * Find a client by email
- */
-export async function findClientByEmail(email: string, businessId: string): Promise<Client | null> {
-  try {
-    if (!businessId) {
-      throw new Error("ID do negócio não disponível");
-    }
-    
-    console.log('Finding client by email for business ID:', businessId, email);
-    
-    const { data, error } = await supabase
-      .from('clients')
+    // Try unified table first
+    const { data: unifiedClient, error: unifiedError } = await supabase
+      .from('clients_unified')
       .select('*')
       .eq('email', email)
       .eq('business_id', businessId)
-      .maybeSingle();
+      .single();
 
-    if (error) throw error;
-    
-    if (!data) return null;
+    if (!unifiedError && unifiedClient) {
+      return normalizeClientData(unifiedClient);
+    }
 
-    return mapDbClientToClient(data);
-    
-  } catch (err: any) {
-    console.error("Error finding client:", err);
+    // Fallback to original table
+    const { data: fallbackClient, error: fallbackError } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('email', email)
+      .eq('id_negocio', businessId)
+      .single();
+
+    if (fallbackError && fallbackError.code !== 'PGRST116') {
+      console.error('Error finding client by email:', fallbackError);
+      return null;
+    }
+
+    return fallbackClient ? normalizeClientData(fallbackClient) : null;
+  } catch (error) {
+    console.error('Error finding client by email:', error);
     return null;
   }
-}
+};
 
-/**
- * Find a client by phone number
- */
-export async function findClientByPhone(phone: string, businessId: string): Promise<Client | null> {
+export const findClientByPhone = async (phone: string, businessId: string): Promise<Client | null> => {
   try {
-    if (!businessId) {
-      throw new Error("ID do negócio não disponível");
-    }
-    
-    console.log('Finding client by phone for business ID:', businessId, phone);
-    
-    const { data, error } = await supabase
-      .from('clients')
+    // Try unified table first
+    const { data: unifiedClient, error: unifiedError } = await supabase
+      .from('clients_unified')
       .select('*')
       .eq('phone', phone)
       .eq('business_id', businessId)
-      .maybeSingle();
-
-    if (error) throw error;
-    
-    if (!data) return null;
-
-    return mapDbClientToClient(data);
-    
-  } catch (err: any) {
-    console.error("Error finding client by phone:", err);
-    return null;
-  }
-}
-
-/**
- * Get client by ID
- */
-export async function getClientById(id: string): Promise<Client | null> {
-  try {
-    const { data, error } = await supabase
-      .from('clients')
-      .select('*')
-      .eq('id', id)
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return null; // No rows found
-      }
-      throw error;
+    if (!unifiedError && unifiedClient) {
+      return normalizeClientData(unifiedClient);
     }
 
-    return mapDbClientToClient(data);
-  } catch (err: any) {
-    console.error("Error fetching client by ID:", err);
+    // Fallback to original table
+    const { data: fallbackClient, error: fallbackError } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('telefone', phone)
+      .eq('id_negocio', businessId)
+      .single();
+
+    if (fallbackError && fallbackError.code !== 'PGRST116') {
+      console.error('Error finding client by phone:', fallbackError);
+      return null;
+    }
+
+    return fallbackClient ? normalizeClientData(fallbackClient) : null;
+  } catch (error) {
+    console.error('Error finding client by phone:', error);
     return null;
   }
-}
+};

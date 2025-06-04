@@ -1,8 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
-import { AppointmentService } from '@/services/appointments/appointmentService';
-import { fetchClients } from '@/services/clientService';
 import { supabase } from '@/integrations/supabase/client';
 
 export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';
@@ -74,10 +72,25 @@ export const useDashboardMetrics = () => {
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
       const today = now.toISOString().split('T')[0];
 
-      // Fetch clients with error handling
+      // Fetch clients from unified table
       let clients: any[] = [];
       try {
-        clients = await fetchClients(businessId);
+        const { data: clientsData, error: clientsError } = await supabase
+          .from('clients_unified')
+          .select('*')
+          .eq('business_id', businessId);
+
+        if (clientsError) {
+          console.warn('Error fetching clients from unified table:', clientsError);
+          // Fallback to original clients table
+          const { data: fallbackClients } = await supabase
+            .from('clients')
+            .select('*')
+            .eq('id_negocio', businessId);
+          clients = fallbackClients || [];
+        } else {
+          clients = clientsData || [];
+        }
       } catch (clientError) {
         console.warn('Could not fetch clients, using defaults:', clientError);
       }
@@ -100,33 +113,46 @@ export const useDashboardMetrics = () => {
         completed_count: 0
       };
 
-      // Fetch appointment statistics with improved error handling
+      // Fetch appointment statistics from unified table
       try {
-        const appointmentService = AppointmentService.getInstance();
-        const stats = await appointmentService.getStats(businessId, startOfMonth, endOfMonth);
-        
-        appointmentStats = {
-          total: stats.total || 0,
-          total_revenue: stats.total_revenue || 0,
-          today_count: 0, // Calculate separately if needed
-          pending_count: stats.scheduled || 0,
-          completed_count: stats.completed || 0
-        };
+        // Get monthly appointments from unified table
+        const { data: monthlyAppointments, error: monthlyError } = await supabase
+          .from('appointments_unified')
+          .select('*')
+          .eq('business_id', businessId)
+          .gte('booking_date', startOfMonth)
+          .lte('booking_date', endOfMonth);
+
+        if (monthlyError) {
+          console.warn('Error fetching from unified appointments, trying fallback:', monthlyError);
+          // Fallback to original tables
+          const { data: fallbackAppointments } = await supabase
+            .from('bookings')
+            .select('*')
+            .eq('business_id', businessId)
+            .gte('booking_date', startOfMonth)
+            .lte('booking_date', endOfMonth);
+          
+          const appointments = fallbackAppointments || [];
+          appointmentStats = {
+            total: appointments.length,
+            total_revenue: appointments.reduce((sum, apt) => sum + (apt.price || 0), 0),
+            today_count: appointments.filter(apt => apt.booking_date === today).length,
+            pending_count: appointments.filter(apt => apt.status === 'scheduled' || apt.status === 'agendado').length,
+            completed_count: appointments.filter(apt => apt.status === 'completed' || apt.status === 'concluido').length
+          };
+        } else {
+          const appointments = monthlyAppointments || [];
+          appointmentStats = {
+            total: appointments.length,
+            total_revenue: appointments.reduce((sum, apt) => sum + (apt.price || 0), 0),
+            today_count: appointments.filter(apt => apt.booking_date === today).length,
+            pending_count: appointments.filter(apt => apt.status === 'scheduled' || apt.status === 'agendado').length,
+            completed_count: appointments.filter(apt => apt.status === 'completed' || apt.status === 'concluido').length
+          };
+        }
       } catch (appointmentError) {
         console.warn('Could not fetch appointment stats, using defaults:', appointmentError);
-      }
-
-      // Try to get today's appointments count
-      try {
-        const { data: todayAppointments } = await supabase
-          .from('Appointments')
-          .select('id')
-          .eq('id_negocio', businessId)
-          .eq('data', today);
-        
-        appointmentStats.today_count = todayAppointments?.length || 0;
-      } catch (todayError) {
-        console.warn('Could not fetch today\'s appointments count:', todayError);
       }
 
       // Calculate metrics with fallbacks
