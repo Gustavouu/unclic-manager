@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ClientService } from '@/services/client/clientService';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
-import type { Client, ClientCreate, ClientUpdate } from '@/types/client';
+import type { Client, ClientCreate, ClientUpdate, ClientFormData } from '@/types/client';
 
 export const useClients = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -98,4 +98,4 @@ export const useClients = () => {
 };
 
 // Export types for convenience
-export type { Client, ClientCreate, ClientUpdate } from '@/types/client';
+export type { Client, ClientCreate, ClientUpdate, ClientFormData } from '@/types/client';

@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ClientService } from '../clientService';
 import { supabase } from '@/lib/supabase';
@@ -30,10 +31,16 @@ vi.mock('@/lib/supabase', () => ({
             data: mockClient,
             error: null,
           })),
+          order: vi.fn(() => ({
+            data: [mockClient],
+            error: null,
+          })),
         })),
         or: vi.fn(() => ({
-          data: [mockClient],
-          error: null,
+          order: vi.fn(() => ({
+            data: [mockClient],
+            error: null,
+          })),
         })),
         contains: vi.fn(() => ({
           data: [mockClient],
@@ -46,10 +53,6 @@ vi.mock('@/lib/supabase', () => ({
         })),
       })),
     })),
-    rpc: vi.fn(() => ({
-      data: mockStats,
-      error: null,
-    })),
   },
 }));
 
@@ -61,11 +64,8 @@ const mockClient = {
   email: 'client@test.com',
   phone: '1234567890',
   birth_date: '1990-01-01',
-  gender: 'male' as const,
+  gender: 'masculino',
   address: 'Test Address',
-  address_number: '123',
-  address_complement: 'Test Complement',
-  neighborhood: 'Test Neighborhood',
   city: 'Test City',
   state: 'Test State',
   zip_code: '12345',
@@ -73,33 +73,22 @@ const mockClient = {
   preferences: {
     preferred_professionals: ['1'],
     preferred_services: ['1'],
-    preferred_payment_method: 'credit_card' as const,
-    preferred_communication_channel: 'email' as const,
-    preferred_appointment_time: 'morning' as const,
-    preferred_appointment_day: 'monday' as const,
-    send_reminders: true,
-    send_followup: true,
-    send_promotions: true,
-    send_birthday_greeting: true,
-    notes: 'Test Preferences Notes',
   },
-  status: 'active' as const,
-  last_appointment: '2024-01-01T00:00:00Z',
-  total_appointments: 10,
+  last_visit: '2024-01-01T00:00:00Z',
   total_spent: 1000,
+  total_appointments: 10,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
 };
 
 const mockStats = {
   totalAppointments: 10,
+  completedAppointments: 8,
+  cancelledAppointments: 1,
   totalSpent: 1000,
-  averageAppointmentValue: 100,
-  lastAppointmentDate: '2024-01-01T00:00:00Z',
-  favoriteService: '1',
-  favoriteProfessional: '1',
-  noShowCount: 0,
-  cancellationCount: 1,
+  averageSpent: 100,
+  lastVisit: '2024-01-01T00:00:00Z',
+  loyaltyPoints: 100,
 };
 
 describe('ClientService', () => {
@@ -143,8 +132,8 @@ describe('ClientService', () => {
   });
 
   describe('search', () => {
-    it('should search clients by name or email', async () => {
-      const result = await service.search('1', 'test');
+    it('should search clients by parameters', async () => {
+      const result = await service.search({ business_id: '1', search: 'test' });
       expect(result).toEqual([mockClient]);
       expect(supabase.from).toHaveBeenCalledWith('clients');
     });
@@ -177,17 +166,31 @@ describe('ClientService', () => {
 
   describe('getStats', () => {
     it('should get client stats', async () => {
+      // Mock the appointments query for stats
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            data: [
+              { status: 'concluido', valor: 100, data: '2024-01-01' },
+              { status: 'concluido', valor: 150, data: '2024-01-02' },
+              { status: 'cancelado', valor: 0, data: '2024-01-03' },
+            ],
+            error: null,
+          })),
+        })),
+      } as any);
+
       const result = await service.getStats('1');
-      expect(result).toEqual(mockStats);
-      expect(supabase.rpc).toHaveBeenCalledWith('get_client_stats', {
-        client_id: '1',
-      });
+      expect(result.totalAppointments).toBe(3);
+      expect(result.completedAppointments).toBe(2);
+      expect(result.cancelledAppointments).toBe(1);
+      expect(result.totalSpent).toBe(250);
     });
   });
 
   describe('listByPreferredProfessional', () => {
     it('should list clients by preferred professional', async () => {
-      const result = await service.listByPreferredProfessional('1', '1');
+      const result = await service.listByPreferredProfessional('1');
       expect(result).toEqual([mockClient]);
       expect(supabase.from).toHaveBeenCalledWith('clients');
     });
@@ -195,9 +198,9 @@ describe('ClientService', () => {
 
   describe('listByPreferredService', () => {
     it('should list clients by preferred service', async () => {
-      const result = await service.listByPreferredService('1', '1');
+      const result = await service.listByPreferredService('1');
       expect(result).toEqual([mockClient]);
       expect(supabase.from).toHaveBeenCalledWith('clients');
     });
   });
-}); 
+});
