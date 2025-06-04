@@ -4,6 +4,22 @@ import { toast } from 'sonner';
 import { Client } from '@/types/client';
 
 /**
+ * Helper function to safely convert preferences to Record<string, any>
+ */
+function convertPreferences(preferences: any): Record<string, any> {
+  if (preferences === null || preferences === undefined) {
+    return {};
+  }
+  
+  if (typeof preferences === 'object' && !Array.isArray(preferences)) {
+    return preferences as Record<string, any>;
+  }
+  
+  // If it's not an object (string, number, boolean, array), wrap it or return empty object
+  return {};
+}
+
+/**
  * Fetch all clients for a business
  */
 export async function fetchClients(businessId: string): Promise<Client[]> {
@@ -39,7 +55,7 @@ export async function fetchClients(businessId: string): Promise<Client[]> {
       state: client.state || client.estado || '',
       zip_code: client.zip_code || client.cep || '',
       notes: client.notes || client.notas || '',
-      preferences: client.preferencias || {},
+      preferences: convertPreferences(client.preferencias),
       last_visit: client.last_visit || client.ultima_visita,
       total_spent: Number(client.total_spent || client.valor_total_gasto) || 0,
       total_appointments: 0, // This field doesn't exist in the database, so we default to 0
@@ -111,7 +127,7 @@ export async function createClient(clientData: Partial<Client>, businessId: stri
       state: data.state || data.estado || '',
       zip_code: data.zip_code || data.cep || '',
       notes: data.notes || data.notas || '',
-      preferences: data.preferencias || {},
+      preferences: convertPreferences(data.preferencias),
       last_visit: data.last_visit || data.ultima_visita,
       total_spent: Number(data.total_spent || data.valor_total_gasto) || 0,
       total_appointments: 0, // This field doesn't exist in the database, so we default to 0
@@ -161,7 +177,7 @@ export async function findClientByEmail(email: string, businessId: string): Prom
       state: data.state || data.estado || '',
       zip_code: data.zip_code || data.cep || '',
       notes: data.notes || data.notas || '',
-      preferences: data.preferencias || {},
+      preferences: convertPreferences(data.preferencias),
       last_visit: data.last_visit || data.ultima_visita,
       total_spent: Number(data.total_spent || data.valor_total_gasto) || 0,
       total_appointments: 0, // This field doesn't exist in the database, so we default to 0
@@ -211,7 +227,7 @@ export async function findClientByPhone(phone: string, businessId: string): Prom
       state: data.state || data.estado || '',
       zip_code: data.zip_code || data.cep || '',
       notes: data.notes || data.notas || '',
-      preferences: data.preferencias || {},
+      preferences: convertPreferences(data.preferencias),
       last_visit: data.last_visit || data.ultima_visita,
       total_spent: Number(data.total_spent || data.valor_total_gasto) || 0,
       total_appointments: 0, // This field doesn't exist in the database, so we default to 0
