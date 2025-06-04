@@ -8,6 +8,7 @@ export const useNeedsOnboarding = () => {
   const { businessId, currentBusiness } = useOptimizedTenant();
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
@@ -18,6 +19,7 @@ export const useNeedsOnboarding = () => {
       }
 
       try {
+        setError(null);
         // If no business is found, user needs onboarding
         if (!businessId || !currentBusiness?.name) {
           setNeedsOnboarding(true);
@@ -26,6 +28,7 @@ export const useNeedsOnboarding = () => {
         }
       } catch (error) {
         console.error('Error checking onboarding status:', error);
+        setError(error instanceof Error ? error.message : 'Unknown error occurred');
         setNeedsOnboarding(true);
       } finally {
         setLoading(false);
@@ -38,5 +41,6 @@ export const useNeedsOnboarding = () => {
   return {
     needsOnboarding,
     loading,
+    error,
   };
 };

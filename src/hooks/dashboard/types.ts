@@ -32,6 +32,7 @@ export interface AppointmentData {
   status: string;
   price?: number;
   created_at?: string;
+  service_id?: string;
 }
 
 export interface ClientData {
@@ -53,7 +54,11 @@ export interface DashboardData {
 
 export interface UseDashboardMetricsReturn {
   metrics: DashboardMetrics;
+  revenueData: RevenueDataPoint[];
+  popularServices: PopularService[];
   isLoading: boolean;
   error: string | null;
   formatCurrency: (value: number) => string;
 }
+
+export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';
