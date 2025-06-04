@@ -1,20 +1,42 @@
 
-import { useTenant } from "@/contexts/TenantContext";
+import { useState, useEffect } from 'react';
+import { useOptimizedTenant } from '@/contexts/OptimizedTenantContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useNeedsOnboarding = () => {
-  const { businessId } = useTenant();
-  
-  // For now, return false since we don't have a currentBusiness property
-  // In a real implementation, this would check onboarding status
-  const needsOnboarding = false;
-  const isLoading = false;
-  const loading = false;
-  const error = null;
-  
+  const { user } = useAuth();
+  const { businessId, currentBusiness } = useOptimizedTenant();
+  const [loading, setLoading] = useState(true);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      if (!user) {
+        setNeedsOnboarding(false);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // If no business is found, user needs onboarding
+        if (!businessId || !currentBusiness?.name) {
+          setNeedsOnboarding(true);
+        } else {
+          setNeedsOnboarding(false);
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        setNeedsOnboarding(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkOnboardingStatus();
+  }, [user, businessId, currentBusiness]);
+
   return {
     needsOnboarding,
-    isLoading,
     loading,
-    error
   };
 };

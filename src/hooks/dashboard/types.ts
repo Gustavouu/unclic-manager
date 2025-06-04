@@ -1,6 +1,4 @@
 
-export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';
-
 export interface DashboardMetrics {
   totalAppointments: number;
   totalClients: number;
@@ -32,23 +30,19 @@ export interface AppointmentData {
   id: string;
   booking_date: string;
   status: string;
-  price: number | null;
-  created_at: string;
+  price?: number;
+  created_at?: string;
 }
 
 export interface ClientData {
   id: string;
   status: string;
-  created_at: string;
+  created_at?: string;
 }
 
 export interface SupabaseResponse<T> {
   data: T[] | null;
-  error: {
-    message: string;
-    code?: string;
-    details?: string;
-  } | null;
+  error: any;
 }
 
 export interface DashboardData {
@@ -59,11 +53,7 @@ export interface DashboardData {
 
 export interface UseDashboardMetricsReturn {
   metrics: DashboardMetrics;
-  revenueData: RevenueDataPoint[];
-  popularServices: PopularService[];
   isLoading: boolean;
   error: string | null;
-  lastUpdate: Date | null;
-  refreshData: () => void;
   formatCurrency: (value: number) => string;
 }
