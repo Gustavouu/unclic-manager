@@ -125,10 +125,10 @@ export function WebsiteBookingFlow({
           
           {currentStep === 3 && (
             <StepClientInfo 
-              bookingData={bookingData}
-              onUpdateBookingData={updateBookingData}
               onNext={handleNextStep}
               onBack={handlePreviousStep}
+              bookingData={bookingData}
+              onUpdateBookingData={updateBookingData}
             />
           )}
           

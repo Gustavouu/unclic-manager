@@ -26,7 +26,6 @@ export async function getClientsByBusiness(businessId: string, params: { page?: 
       clients,
       total: clients.length,
       page: params.page || 1,
-      limit: params.limit || 10
     };
   } catch (error) {
     console.error('Error fetching clients by business:', error);

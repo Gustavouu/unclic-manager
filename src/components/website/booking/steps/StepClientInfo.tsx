@@ -9,18 +9,22 @@ interface StepClientInfoProps {
   onNext: (clientData: any) => void;
   onBack: () => void;
   initialData?: any;
+  bookingData?: any;
+  onUpdateBookingData?: (data: any) => void;
 }
 
 export const StepClientInfo: React.FC<StepClientInfoProps> = ({
   onNext,
   onBack,
-  initialData = {}
+  initialData = {},
+  bookingData,
+  onUpdateBookingData
 }) => {
   const { findClientByEmail } = useClientsDashboard();
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
+    name: bookingData?.clientName || initialData.name || '',
+    email: bookingData?.clientEmail || initialData.email || '',
+    phone: bookingData?.clientPhone || initialData.phone || '',
     ...initialData
   });
 
@@ -53,6 +57,16 @@ export const StepClientInfo: React.FC<StepClientInfoProps> = ({
     if (validateForm()) {
       // Check if client exists
       const existingClient = findClientByEmail(formData.email);
+      
+      // Update booking data if handler is available
+      if (onUpdateBookingData) {
+        onUpdateBookingData({
+          clientName: formData.name,
+          clientEmail: formData.email,
+          clientPhone: formData.phone,
+          clientId: existingClient?.id
+        });
+      }
       
       onNext({
         ...formData,

@@ -40,7 +40,7 @@ const SignUp = () => {
     setIsSubmitting(true);
     
     try {
-      await signUp(email, password, name);
+      await signUp(email, password);
       navigate("/");
     } catch (error) {
       console.error("Erro no cadastro:", error);

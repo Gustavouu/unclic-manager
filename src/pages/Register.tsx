@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -74,10 +73,7 @@ const Register = () => {
     setIsSubmitting(true);
 
     try {
-      await signUp(formData.email, formData.password, {
-        name: formData.name,
-        business_name: formData.businessName,
-      });
+      await signUp(formData.email, formData.password);
     } catch (error) {
       console.error('Registration error:', error);
     } finally {
