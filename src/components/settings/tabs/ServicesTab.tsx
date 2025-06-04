@@ -128,7 +128,7 @@ export const ServicesTab = () => {
                         <DeleteServiceDialog
                           serviceId={service.id}
                           serviceName={service.name}
-                          onServiceDeleted={handleServiceDeleted}
+                          onServiceDeleted={() => handleServiceDeleted(service.id)}
                         />
                       </div>
                     </TableCell>

@@ -21,7 +21,7 @@ export const useProfessionalOperations = () => {
       
       const { data, error } = await supabase
         .from('funcionarios')
-        .insert([{
+        .insert({
           id_negocio: businessId,
           nome: professionalData.name,
           email: professionalData.email || null,
@@ -33,7 +33,7 @@ export const useProfessionalOperations = () => {
           comissao_percentual: professionalData.commission_percentage || 0,
           data_contratacao: professionalData.hire_date || null,
           status: professionalData.status || 'ativo',
-        }])
+        })
         .select()
         .single();
 

@@ -86,4 +86,16 @@ export class ServiceService {
 
     if (error) throw error;
   }
+
+  async search(params: { business_id: string; search: string }): Promise<Service[]> {
+    const { data: services, error } = await supabase
+      .from('services')
+      .select()
+      .eq('business_id', params.business_id)
+      .or(`nome.ilike.%${params.search}%,descricao.ilike.%${params.search}%,categoria.ilike.%${params.search}%`)
+      .order('nome');
+
+    if (error) throw error;
+    return services || [];
+  }
 }

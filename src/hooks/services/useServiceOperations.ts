@@ -21,7 +21,7 @@ export const useServiceOperations = () => {
       
       const { data, error } = await supabase
         .from('services')
-        .insert([{
+        .insert({
           business_id: businessId,
           nome: serviceData.name,
           descricao: serviceData.description || null,
@@ -29,7 +29,7 @@ export const useServiceOperations = () => {
           preco: serviceData.price,
           categoria: serviceData.category || 'Geral',
           ativo: true,
-        }])
+        })
         .select()
         .single();
 

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ProfessionalService } from '@/services/professional/professionalService';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
-import type { Professional } from '@/types/professional';
+import type { Professional, ProfessionalFormData } from '@/types/professional';
 
 export const useProfessionals = () => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
@@ -38,11 +38,20 @@ export const useProfessionals = () => {
     fetchProfessionals();
   }, [businessId]);
 
-  const createProfessional = async (data: Omit<Professional, 'id' | 'business_id' | 'created_at' | 'updated_at' | 'rating' | 'total_reviews'>) => {
+  const createProfessional = async (data: ProfessionalFormData) => {
     if (!businessId) throw new Error('No business selected');
     
     const newProfessional = await professionalService.create({
-      ...data,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      position: data.position,
+      bio: data.bio,
+      photo_url: data.photo_url,
+      specialties: data.specialties,
+      commission_percentage: data.commission_percentage,
+      hire_date: data.hire_date,
+      status: data.status,
       business_id: businessId,
     });
     
@@ -50,7 +59,7 @@ export const useProfessionals = () => {
     return newProfessional;
   };
 
-  const updateProfessional = async (id: string, data: Partial<Professional>) => {
+  const updateProfessional = async (id: string, data: Partial<ProfessionalFormData>) => {
     await professionalService.update(id, data);
     await fetchProfessionals();
   };

@@ -14,6 +14,10 @@ export const ServiceActions = ({
   onServiceUpdated,
   onServiceDeleted
 }: ServiceActionsProps) => {
+  const handleServiceDeleted = () => {
+    onServiceDeleted(service.id);
+  };
+
   return (
     <div className="flex items-center justify-end gap-2">
       <EditServiceDialog 
@@ -23,7 +27,7 @@ export const ServiceActions = ({
       <DeleteServiceDialog 
         serviceId={service.id}
         serviceName={service.name} 
-        onServiceDeleted={onServiceDeleted} 
+        onServiceDeleted={handleServiceDeleted} 
       />
     </div>
   );
