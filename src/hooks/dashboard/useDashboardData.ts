@@ -1,28 +1,27 @@
 
-// Unified dashboard data types for backward compatibility
-export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';
-
-export interface DashboardMetrics {
-  totalClients: number;
-  activeClients: number;
+// Tipos para compatibilidade com o hook legacy
+export interface DashboardStats {
   totalAppointments: number;
-  totalRevenue: number;
-  monthlyRevenue: number;
-  weeklyRevenue: number;
-  todayAppointments: number;
-  pendingAppointments: number;
   completedAppointments: number;
-  canceledAppointments: number;
+  totalRevenue: number;
+  newClients: number;
+  clientsCount: number;
   averageTicket: number;
   retentionRate: number;
+  popularServices: PopularService[];
+  revenueData: RevenueDataPoint[];
+  appointmentsToday: number;
+  pendingAppointments: number;
+  cancellationRate: number;
+  cancelledAppointments: number;
   growthRate: number;
-  newClientsThisMonth: number;
-  servicesCompleted: number;
-}
-
-export interface RevenueDataPoint {
-  date: string;
-  value: number;
+  occupancyRate: number;
+  todayAppointments: number;
+  monthlyRevenue: number;
+  averageRating: number;
+  totalClients: number;
+  monthlyServices: number;
+  newClientsCount: number;
 }
 
 export interface PopularService {
@@ -32,23 +31,13 @@ export interface PopularService {
   percentage: number;
 }
 
-export interface DashboardStats {
-  totalClients: number;
-  monthlyRevenue: number;
-  totalAppointments: number;
-  averageRating: number;
-  revenueData: RevenueDataPoint[];
-  popularServices: PopularService[];
-  nextAppointments: any[];
-  retentionRate: number;
-  newClients: number;
-  completionRate: number;
-  totalServices: number;
-  totalRevenue: number;
+export interface RevenueDataPoint {
+  date: string;
+  revenue: number;
+  appointments: number;
 }
 
-// Re-export the main hook with improved typing
-export { useDashboardMetrics } from './useDashboardMetrics';
+export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';
 
-// Legacy compatibility export
+// Re-export do hook otimizado para compatibilidade
 export { useDashboardMetrics as useDashboardData } from './useDashboardMetrics';

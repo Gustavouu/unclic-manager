@@ -1,12 +1,24 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Users, DollarSign, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, Users, DollarSign, TrendingUp, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDashboardMetrics } from '@/hooks/dashboard/useDashboardMetrics';
+import type { UseDashboardMetricsReturn } from '@/hooks/dashboard/types';
+
+interface MetricCard {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  description: string;
+  trend?: string;
+  highlight?: string;
+  isMonetary?: boolean;
+  urgent?: boolean;
+}
 
 export const DashboardMetricsUnified: React.FC = () => {
-  const { metrics, isLoading, error, formatCurrency } = useDashboardMetrics();
+  const { metrics, isLoading, error, formatCurrency }: UseDashboardMetricsReturn = useDashboardMetrics();
 
   if (error) {
     return (
@@ -44,32 +56,32 @@ export const DashboardMetricsUnified: React.FC = () => {
     );
   }
 
-  const cards = [
+  const cards: MetricCard[] = [
     {
       title: "Agendamentos do Mês",
       value: metrics.totalAppointments,
-      icon: Calendar,
+      icon: <Calendar className="h-4 w-4" />,
       description: `${metrics.completedAppointments} concluídos`,
-      trend: metrics.growthRate > 0 ? `+${metrics.growthRate}%` : undefined
+      trend: metrics.growthRate > 0 ? `+${metrics.growthRate.toFixed(1)}%` : undefined
     },
     {
       title: "Total de Clientes",
       value: metrics.totalClients,
-      icon: Users,
+      icon: <Users className="h-4 w-4" />,
       description: `${metrics.activeClients} ativos`,
       highlight: metrics.newClientsThisMonth > 0 ? `+${metrics.newClientsThisMonth} novos` : undefined
     },
     {
       title: "Receita do Mês",
       value: formatCurrency(metrics.monthlyRevenue),
-      icon: DollarSign,
+      icon: <DollarSign className="h-4 w-4" />,
       description: `Ticket médio: ${formatCurrency(metrics.averageTicket)}`,
       isMonetary: true
     },
     {
       title: "Agendamentos Hoje",
       value: metrics.todayAppointments,
-      icon: Clock,
+      icon: <Clock className="h-4 w-4" />,
       description: `${metrics.pendingAppointments} pendentes`,
       urgent: metrics.todayAppointments > 0
     }
@@ -85,7 +97,7 @@ export const DashboardMetricsUnified: React.FC = () => {
               <CardTitle className="text-sm font-medium">
                 {card.title}
               </CardTitle>
-              <Icon className={`h-4 w-4 ${card.urgent ? 'text-orange-600' : 'text-muted-foreground'}`} />
+              {Icon}
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
