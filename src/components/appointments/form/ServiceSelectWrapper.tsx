@@ -1,7 +1,7 @@
 
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
-import { AppointmentFormValues } from "@/types/appointments";
+import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useServices } from "@/hooks/useServices";

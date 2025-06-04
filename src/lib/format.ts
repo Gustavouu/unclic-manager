@@ -19,3 +19,11 @@ export function formatPhone(phone: string): string {
   }
   return phone;
 }
+
+export function formatPercentage(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'percent',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  }).format(value / 100);
+}
