@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { CalendarView } from './calendar/CalendarView';
 import { AppointmentDetailsDialog } from './dialogs/AppointmentDetailsDialog';
-import { useAppointments } from '@/hooks/useAppointments';
-import { Appointment } from '@/types/appointment';
+import { useAppointments } from '@/hooks/appointments/useAppointments';
+import { Appointment } from '@/hooks/appointments/types';
 import { CalendarViewType } from '@/types/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -39,7 +39,7 @@ export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
 
   const handleCancelAppointment = async (appointment: Appointment) => {
     try {
-      await updateAppointment(appointment.id, { status: 'canceled' });
+      await updateAppointment(appointment.id, { status: 'cancelado' });
       setShowDetailsDialog(false);
     } catch (error) {
       console.error('Erro ao cancelar agendamento:', error);

@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, CheckCircle, Clock, XCircle, Users, TrendingUp } from 'lucide-react';
-import { useAppointments } from '@/hooks/useAppointments';
+import { useAppointments } from '@/hooks/appointments/useAppointments';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/format';
 
@@ -39,11 +38,11 @@ export function AppointmentStats() {
 
   const stats = {
     total: monthAppointments.length,
-    concluidos: monthAppointments.filter(apt => apt.status === 'concluido' || apt.status === 'completed').length,
-    agendados: monthAppointments.filter(apt => apt.status === 'agendado' || apt.status === 'scheduled').length,
-    cancelados: monthAppointments.filter(apt => apt.status === 'cancelado' || apt.status === 'canceled').length,
+    concluidos: monthAppointments.filter(apt => apt.status === 'concluido').length,
+    agendados: monthAppointments.filter(apt => apt.status === 'agendado').length,
+    cancelados: monthAppointments.filter(apt => apt.status === 'cancelado').length,
     receita: monthAppointments
-      .filter(apt => apt.status === 'concluido' || apt.status === 'completed')
+      .filter(apt => apt.status === 'concluido')
       .reduce((sum, apt) => sum + apt.price, 0),
   };
 
