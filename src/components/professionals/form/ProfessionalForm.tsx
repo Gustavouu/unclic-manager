@@ -1,72 +1,85 @@
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
-import { Form } from '@/components/ui/form';
-import { professionalFormSchema } from '../schemas/professionalFormSchema';
-import { ProfessionalFormFields } from './ProfessionalFormFields';
-import { Professional, ProfessionalFormData, ProfessionalStatus } from '@/hooks/professionals/types';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { useProfessionals } from "@/hooks/professionals/useProfessionals";
+import { Professional, ProfessionalFormData } from "@/hooks/professionals/types";
+import { ProfessionalFormFields } from "./ProfessionalFormFields";
+import { professionalFormSchema } from "../schemas/professionalFormSchema";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
-interface ProfessionalFormProps {
+export interface ProfessionalFormProps {
   onClose: () => void;
   onSubmit: (data: ProfessionalFormData) => Promise<void>;
-  professional?: Professional;
+  professional?: Professional; // For editing
   editMode?: boolean;
   isSubmitting?: boolean;
+  initialPhotoUrl?: string;
 }
 
 export const ProfessionalForm = ({ 
   onClose, 
-  onSubmit, 
-  professional, 
-  editMode = false, 
-  isSubmitting = false 
+  onSubmit,
+  professional,
+  editMode = false,
+  isSubmitting = false
 }: ProfessionalFormProps) => {
+  // Get professionals data and ensure specialties is properly initialized
+  const { specialties = [] } = useProfessionals();
+  
   const form = useForm<ProfessionalFormData>({
     resolver: zodResolver(professionalFormSchema),
     defaultValues: {
-      name: professional?.name || '',
-      email: professional?.email || '',
-      phone: professional?.phone || '',
-      position: professional?.position || '',
-      bio: professional?.bio || '',
-      photo_url: professional?.photo_url || '',
-      specialties: professional?.specialties || [],
-      status: professional?.status || ProfessionalStatus.ACTIVE,
+      name: professional?.name || "",
+      email: professional?.email || "",
+      phone: professional?.phone || "",
+      position: professional?.position || "",
+      specialties: professional?.specialties || [] as string[],
       commission_percentage: professional?.commission_percentage || 0,
-      hire_date: professional?.hire_date || '',
+      photo_url: professional?.photo_url || ""
     },
   });
 
   const handleSubmit = async (data: ProfessionalFormData) => {
-    await onSubmit(data);
+    if (isSubmitting) return;
+    
+    try {
+      // Create a clean copy of the form data
+      const formData = {
+        ...data,
+        specialties: Array.isArray(data.specialties) ? data.specialties as string[] : []
+      };
+      
+      console.log("Submitting professional form data:", formData);
+      
+      await onSubmit(formData);
+    } catch (error) {
+      console.error("Error processing professional:", error);
+      toast(`Ocorreu um erro ao ${editMode ? 'atualizar' : 'adicionar'} o colaborador.`);
+    }
   };
-
-  // Mock specialties data - this should come from a service in a real app
-  const specialties = [
-    'Corte',
-    'Coloração',
-    'Manicure',
-    'Pedicure',
-    'Depilação',
-    'Massagem',
-    'Maquiagem',
-    'Barba',
-    'Tratamentos'
-  ];
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <DialogDescription className="mb-5 text-slate-600">
+        {editMode 
+          ? "Edite as informações do colaborador abaixo." 
+          : "Preencha as informações do novo colaborador abaixo."
+        }
+      </DialogDescription>
+      
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <ProfessionalFormFields 
           form={form} 
           specialties={specialties}
           editMode={editMode}
-          initialPhotoUrl={professional?.photo_url || ''}
+          initialPhotoUrl={professional?.photo_url}
         />
         
-        <div className="flex justify-end gap-2 pt-4">
+        <DialogFooter className="pt-6">
           <Button 
             type="button" 
             variant="outline" 
@@ -76,15 +89,20 @@ export const ProfessionalForm = ({
             Cancelar
           </Button>
           <Button 
-            type="submit" 
+            type="submit"
             disabled={isSubmitting}
+            className="bg-primary"
           >
-            {isSubmitting 
-              ? (editMode ? 'Atualizando...' : 'Criando...') 
-              : (editMode ? 'Atualizar' : 'Criar')
-            }
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {editMode ? "Atualizando..." : "Adicionando..."}
+              </>
+            ) : (
+              editMode ? "Atualizar Colaborador" : "Adicionar Colaborador"
+            )}
           </Button>
-        </div>
+        </DialogFooter>
       </form>
     </Form>
   );

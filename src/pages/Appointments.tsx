@@ -1,17 +1,17 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CalendarIcon, List, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppointmentCalendar } from "@/components/appointments/AppointmentCalendar";
 import { AppointmentsList } from "@/components/appointments/AppointmentsList";
-import { NewAppointmentDialogImproved } from "@/components/appointments/NewAppointmentDialogImproved";
+import { NewAppointmentDialog } from "@/components/appointments/NewAppointmentDialog";
 import { OnboardingProvider } from "@/contexts/onboarding/OnboardingContext";
 import { AppointmentStats } from "@/components/appointments/AppointmentStats";
 import { Calendar, Grid3X3 } from "lucide-react";
 import { useRouteCalendarView } from "@/hooks/useRouteCalendarView";
-import { PageHeader } from "@/components/ui/page-header";
+import { CalendarViewType } from "@/components/appointments/calendar/types";
 
 const Appointments = () => {
   const [view, setView] = useState<"calendar" | "list">("calendar");
@@ -20,92 +20,74 @@ const Appointments = () => {
 
   return (
     <OnboardingProvider>
-      <div className="space-y-6">
-        {/* Header padronizado */}
-        <PageHeader
-          title="Agendamentos"
-          description="Gerencie todos os seus agendamentos em um só lugar"
-          actions={
-            <Button 
-              onClick={() => setShowNewAppointmentDialog(true)}
-              className="gap-2"
-              size="default"
-            >
-              <CalendarPlus size={18} />
-              Novo Agendamento
-            </Button>
-          }
-        />
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-2">
+          <h1 className="text-xl font-display font-medium">Gerenciamento de Agendamentos</h1>
+          <Button 
+            onClick={() => setShowNewAppointmentDialog(true)}
+            className="gap-2 bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+          >
+            <CalendarPlus size={16} />
+            Novo Agendamento
+          </Button>
+        </div>
         
-        {/* Cards de estatísticas */}
+        {/* Stats cards row */}
         <AppointmentStats />
 
-        {/* Conteúdo principal */}
-        <Card>
+        <Card className="border shadow-sm overflow-hidden">
           <Tabs 
-            value={view}
+            defaultValue="calendar" 
             className="w-full"
             onValueChange={(value) => setView(value as "calendar" | "list")}
           >
-            {/* Header das abas padronizado */}
-            <div className="flex justify-between items-center p-6 border-b">
-              <TabsList>
-                <TabsTrigger 
-                  value="calendar" 
-                  className="gap-2"
-                >
+            <div className="flex justify-between items-center p-3 border-b bg-white">
+              <TabsList className="bg-slate-100">
+                <TabsTrigger value="calendar" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                   <CalendarIcon size={16} />
-                  <span className="hidden sm:inline">Calendário</span>
+                  <span>Calendário</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="list" 
-                  className="gap-2"
-                >
+                <TabsTrigger value="list" className="gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                   <List size={16} />
-                  <span className="hidden sm:inline">Lista</span>
+                  <span>Lista</span>
                 </TabsTrigger>
               </TabsList>
               
-              {/* Controles de visualização do calendário */}
               {view === "calendar" && (
                 <div className="flex items-center gap-2">
                   <Button
-                    variant={calendarView === 'month' ? 'default' : 'outline'}
+                    variant="outline"
                     size="sm"
+                    className={`h-9 ${calendarView === 'month' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
                     onClick={() => updateUrlView('month')}
                   >
                     <Grid3X3 size={16} className="mr-1" />
-                    <span className="hidden sm:inline">Mensal</span>
+                    Mensal
                   </Button>
                   <Button
-                    variant={calendarView === 'week' ? 'default' : 'outline'}
+                    variant="outline"
                     size="sm"
+                    className={`h-9 ${calendarView === 'week' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
                     onClick={() => updateUrlView('week')}
                   >
                     <Calendar size={16} className="mr-1" />
-                    <span className="hidden sm:inline">Semanal</span>
+                    Semanal
                   </Button>
                 </div>
               )}
             </div>
             
-            {/* Conteúdo das abas */}
             <TabsContent value="calendar" className="mt-0 p-0">
-              <div className="p-6">
-                <AppointmentCalendar initialView={calendarView} />
-              </div>
+              <AppointmentCalendar initialView={calendarView} />
             </TabsContent>
             
-            <TabsContent value="list" className="mt-0 p-0">
-              <div className="p-6">
-                <AppointmentsList />
-              </div>
+            <TabsContent value="list" className="mt-0 p-4 bg-white">
+              <AppointmentsList />
             </TabsContent>
           </Tabs>
         </Card>
 
-        {/* Dialog de novo agendamento melhorado */}
-        <NewAppointmentDialogImproved 
+        <NewAppointmentDialog 
           open={showNewAppointmentDialog}
           onOpenChange={setShowNewAppointmentDialog}
         />

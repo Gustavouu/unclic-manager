@@ -22,7 +22,6 @@ import { ProductCategoryPriceFields } from './ProductCategoryPriceFields';
 import { ProductQuantityFields } from './ProductQuantityFields';
 import { ProductDescriptionField } from './ProductDescriptionField';
 import { Product } from '@/hooks/inventory/types';
-import { toast } from "sonner";
 
 interface ProductFormProps {
   onSubmit: (product: NewProduct) => void;
@@ -36,13 +35,12 @@ export const ProductForm = ({ onSubmit, onCancel, initialValues }: ProductFormPr
     defaultValues: {
       name: "",
       description: "",
-      category: "hair",
+      category: "",
       price: 0,
-      quantity: 1,
-      minQuantity: 1,
+      quantity: 0,
+      minQuantity: 5,
       supplier: "",
     },
-    mode: "onChange", // Enable real-time validation
   });
 
   // Set form values when initialValues changes
@@ -51,87 +49,43 @@ export const ProductForm = ({ onSubmit, onCancel, initialValues }: ProductFormPr
       form.reset({
         name: initialValues.name,
         description: initialValues.description || "",
-        category: initialValues.category as "hair" | "makeup" | "skincare" | "nail",
+        category: initialValues.category,
         price: initialValues.price,
         quantity: initialValues.quantity,
         minQuantity: initialValues.minQuantity,
         supplier: initialValues.supplier || "",
       });
-    } else {
-      // Reset to default values for new products
-      form.reset({
-        name: "",
-        description: "",
-        category: "hair",
-        price: 0,
-        quantity: 1,
-        minQuantity: 1,
-        supplier: "",
-      });
     }
   }, [initialValues, form]);
 
-  const handleSubmit = async (data: ProductFormValues) => {
-    try {
-      const newProduct: NewProduct = {
-        name: data.name.trim(),
-        description: data.description?.trim(),
-        category: data.category,
-        price: Number(data.price),
-        quantity: Number(data.quantity),
-        minQuantity: Number(data.minQuantity),
-        supplier: data.supplier?.trim(),
-      };
-      
-      await onSubmit(newProduct);
-      
-      if (!initialValues) {
-        form.reset();
-      }
-      
-      toast.success(initialValues ? 'Produto atualizado com sucesso!' : 'Produto criado com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao salvar produto. Tente novamente.');
-      console.error('Error saving product:', error);
-    }
+  const handleSubmit = (data: ProductFormValues) => {
+    const newProduct: NewProduct = {
+      name: data.name,
+      description: data.description,
+      category: data.category,
+      price: data.price,
+      quantity: data.quantity,
+      minQuantity: data.minQuantity,
+      supplier: data.supplier,
+    };
+    
+    onSubmit(newProduct);
+    form.reset();
   };
-
-  const isFormValid = form.formState.isValid;
-  const isSubmitting = form.formState.isSubmitting;
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <ProductBasicInfoFields />
         <ProductCategoryPriceFields />
         <ProductQuantityFields />
         <ProductDescriptionField />
         
-        <DialogFooter className="gap-3">
+        <DialogFooter>
           <DialogClose asChild>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onCancel}
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
+            <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
           </DialogClose>
-          <Button 
-            type="submit" 
-            disabled={!isFormValid || isSubmitting}
-            className="min-w-24"
-          >
-            {isSubmitting ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Salvando...
-              </div>
-            ) : (
-              initialValues ? 'Atualizar' : 'Salvar'
-            )}
-          </Button>
+          <Button type="submit">{initialValues ? 'Atualizar' : 'Salvar'}</Button>
         </DialogFooter>
       </form>
     </Form>

@@ -59,12 +59,7 @@ export function UpcomingAppointmentsWidget({ appointments }: UpcomingAppointment
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium truncate">{appointment.clientName}</h4>
-                  <Badge 
-                    variant={appointment.status === "concluido" ? "default" : "outline"} 
-                    className={`ml-2 whitespace-nowrap ${
-                      appointment.status === "concluido" ? "bg-green-100 text-green-800 border-green-200" : ""
-                    }`}
-                  >
+                  <Badge variant={appointment.status === "concluido" ? "success" : "outline"} className="ml-2 whitespace-nowrap">
                     {appointment.status === "concluido" ? "Concluído" : "Agendado"}
                   </Badge>
                 </div>

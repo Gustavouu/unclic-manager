@@ -1,6 +1,7 @@
 
-import { useProfessionals, Professional } from "@/hooks/professionals/useProfessionals";
+import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { ProfessionalsContent } from "./ProfessionalsContent";
+import { Professional } from "@/hooks/professionals/types";
 import React from "react";
 
 interface ProfessionalsLayoutProps {

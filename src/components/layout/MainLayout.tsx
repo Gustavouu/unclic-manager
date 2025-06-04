@@ -1,6 +1,6 @@
 
 import { ReactNode } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MainLayoutProps {
   children: ReactNode;

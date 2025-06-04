@@ -1,13 +1,6 @@
 
-import React, { useState } from 'react';
-import { CalendarView } from './calendar/CalendarView';
-import { AppointmentDetailsDialog } from './dialogs/AppointmentDetailsDialog';
-import { useAppointments } from '@/hooks/appointments/useAppointments';
-import { Appointment } from '@/hooks/appointments/types';
+import React from 'react';
 import { CalendarViewType } from '@/types/calendar';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 
 export interface AppointmentCalendarProps {
   initialView?: CalendarViewType;
@@ -16,67 +9,11 @@ export interface AppointmentCalendarProps {
 export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({ 
   initialView = 'month' 
 }) => {
-  const { appointments, isLoading, updateAppointmentStatus } = useAppointments();
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-
-  const handleSelectAppointment = (appointment: Appointment) => {
-    setSelectedAppointment(appointment);
-    setShowDetailsDialog(true);
-  };
-
-  const handleNewAppointment = () => {
-    // Esta função será chamada quando o usuário clicar em "Novo Agendamento"
-    // Por enquanto, apenas um log - pode ser conectado ao dialog de novo agendamento
-    console.log('Novo agendamento');
-  };
-
-  const handleEditAppointment = (appointment: Appointment) => {
-    // Função para editar agendamento
-    console.log('Editar agendamento:', appointment.id);
-    setShowDetailsDialog(false);
-  };
-
-  const handleCancelAppointment = async (appointment: Appointment) => {
-    try {
-      await updateAppointmentStatus(appointment.id, 'cancelado');
-      setShowDetailsDialog(false);
-    } catch (error) {
-      console.error('Erro ao cancelar agendamento:', error);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <div className="grid grid-cols-7 gap-2">
-          {Array.from({ length: 35 }).map((_, i) => (
-            <Skeleton key={i} className="h-24" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="h-full">
-      <CalendarView
-        appointments={appointments}
-        onNewAppointment={handleNewAppointment}
-        onSelectAppointment={handleSelectAppointment}
-      />
-
-      <AppointmentDetailsDialog
-        appointment={selectedAppointment}
-        open={showDetailsDialog}
-        onOpenChange={setShowDetailsDialog}
-        onEdit={handleEditAppointment}
-        onCancel={handleCancelAppointment}
-      />
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-4">Calendário de Agendamentos</h2>
+      <p>Vista atual: {initialView}</p>
+      {/* Calendar implementation would go here */}
     </div>
   );
 };

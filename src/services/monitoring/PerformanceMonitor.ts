@@ -1,30 +1,24 @@
 
-interface MetricData {
+interface PerformanceMetric {
   name: string;
   value: number;
   timestamp: number;
   metadata?: Record<string, any>;
 }
 
-interface PerformanceReport {
-  summary: {
-    avgResponseTime: number;
-    p95ResponseTime: number;
-    totalQueries: number;
-    errorRate: number;
-  };
-  criticalMetrics: MetricData[];
-  slowQueries: Array<{
-    query: string;
-    duration: number;
-    timestamp: number;
-  }>;
+interface QueryPerformance {
+  query: string;
+  duration: number;
+  timestamp: number;
+  success: boolean;
+  error?: string;
 }
 
 export class PerformanceMonitor {
   private static instance: PerformanceMonitor;
-  private metrics: MetricData[] = [];
-  private maxMetrics = 100; // Limitar o número de métricas armazenadas
+  private metrics: PerformanceMetric[] = [];
+  private queryMetrics: QueryPerformance[] = [];
+  private readonly MAX_METRICS = 1000;
 
   private constructor() {}
 
@@ -35,102 +29,156 @@ export class PerformanceMonitor {
     return PerformanceMonitor.instance;
   }
 
-  trackMetric(name: string, value: number, metadata?: Record<string, any>): void {
-    // Adicionar métrica
-    this.metrics.push({
+  public trackMetric(name: string, value: number, metadata?: Record<string, any>): void {
+    const metric: PerformanceMetric = {
       name,
       value,
       timestamp: Date.now(),
       metadata
-    });
+    };
 
-    // Manter apenas as métricas mais recentes
-    if (this.metrics.length > this.maxMetrics) {
-      this.metrics = this.metrics.slice(-this.maxMetrics);
-    }
-
-    // Log apenas em desenvolvimento
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Performance] ${name}: ${value}`, metadata);
-    }
-  }
-
-  async measureAsync<T>(name: string, fn: () => Promise<T>): Promise<T> {
-    const startTime = performance.now();
-    try {
-      const result = await fn();
-      const duration = performance.now() - startTime;
-      this.trackMetric(`${name}_duration`, duration);
-      this.trackMetric(`${name}_success`, 1);
-      return result;
-    } catch (error) {
-      const duration = performance.now() - startTime;
-      this.trackMetric(`${name}_duration`, duration);
-      this.trackMetric(`${name}_error`, 1);
-      throw error;
-    }
-  }
-
-  trackQuery(tableName: string, duration: number, success: boolean, error?: string): void {
-    this.trackMetric(`query_${tableName}_duration`, duration);
-    this.trackMetric(`query_${tableName}_${success ? 'success' : 'error'}`, 1);
+    this.metrics.push(metric);
     
-    if (error && process.env.NODE_ENV === 'development') {
-      console.error(`[Query Error] ${tableName}:`, error);
+    // Manter apenas as últimas métricas
+    if (this.metrics.length > this.MAX_METRICS) {
+      this.metrics = this.metrics.slice(-this.MAX_METRICS);
+    }
+
+    // Log métricas críticas
+    if (this.isCriticalMetric(name, value)) {
+      console.warn(`Critical performance metric: ${name} = ${value}`, metadata);
     }
   }
 
-  generateReport(): PerformanceReport {
+  public trackQuery(query: string, duration: number, success: boolean, error?: string): void {
+    const queryMetric: QueryPerformance = {
+      query,
+      duration,
+      timestamp: Date.now(),
+      success,
+      error
+    };
+
+    this.queryMetrics.push(queryMetric);
+    
+    if (this.queryMetrics.length > this.MAX_METRICS) {
+      this.queryMetrics = this.queryMetrics.slice(-this.MAX_METRICS);
+    }
+
+    // Alertar sobre queries lentas
+    if (duration > 1000) {
+      console.warn(`Slow query detected: ${duration}ms`, { query, error });
+    }
+  }
+
+  public measureAsync<T>(name: string, fn: () => Promise<T>): Promise<T> {
+    const startTime = performance.now();
+    
+    return fn()
+      .then(result => {
+        const duration = performance.now() - startTime;
+        this.trackMetric(`${name}_duration`, duration);
+        this.trackMetric(`${name}_success`, 1);
+        return result;
+      })
+      .catch(error => {
+        const duration = performance.now() - startTime;
+        this.trackMetric(`${name}_duration`, duration);
+        this.trackMetric(`${name}_error`, 1);
+        throw error;
+      });
+  }
+
+  public getMetrics(name?: string, timeRange?: { start: number; end: number }): PerformanceMetric[] {
+    let filtered = this.metrics;
+
+    if (name) {
+      filtered = filtered.filter(m => m.name === name);
+    }
+
+    if (timeRange) {
+      filtered = filtered.filter(m => 
+        m.timestamp >= timeRange.start && m.timestamp <= timeRange.end
+      );
+    }
+
+    return filtered;
+  }
+
+  public getQueryMetrics(timeRange?: { start: number; end: number }): QueryPerformance[] {
+    let filtered = this.queryMetrics;
+
+    if (timeRange) {
+      filtered = filtered.filter(m => 
+        m.timestamp >= timeRange.start && m.timestamp <= timeRange.end
+      );
+    }
+
+    return filtered;
+  }
+
+  public getAverageMetric(name: string, timeRange?: { start: number; end: number }): number {
+    const metrics = this.getMetrics(name, timeRange);
+    if (metrics.length === 0) return 0;
+    
+    const sum = metrics.reduce((acc, m) => acc + m.value, 0);
+    return sum / metrics.length;
+  }
+
+  public getPercentile(name: string, percentile: number, timeRange?: { start: number; end: number }): number {
+    const metrics = this.getMetrics(name, timeRange);
+    if (metrics.length === 0) return 0;
+
+    const sorted = metrics.map(m => m.value).sort((a, b) => a - b);
+    const index = Math.ceil((percentile / 100) * sorted.length) - 1;
+    return sorted[Math.max(0, index)];
+  }
+
+  private isCriticalMetric(name: string, value: number): boolean {
+    const thresholds: Record<string, number> = {
+      'memory_usage': 80, // 80% usage
+      'cpu_usage': 90,    // 90% usage
+      'error_rate': 5,    // 5% error rate
+      'response_time': 2000, // 2 seconds
+    };
+
+    return thresholds[name] && value > thresholds[name];
+  }
+
+  public generateReport(): {
+    summary: Record<string, any>;
+    slowQueries: QueryPerformance[];
+    criticalMetrics: PerformanceMetric[];
+  } {
     const now = Date.now();
-    const recentMetrics = this.metrics.filter(m => now - m.timestamp < 5 * 60 * 1000); // Last 5 minutes
+    const oneHourAgo = now - (60 * 60 * 1000);
+    const timeRange = { start: oneHourAgo, end: now };
 
-    // Calculate average response time
-    const durationMetrics = recentMetrics.filter(m => m.name.includes('_duration'));
-    const avgResponseTime = durationMetrics.length > 0 
-      ? durationMetrics.reduce((sum, m) => sum + m.value, 0) / durationMetrics.length 
-      : 0;
+    const avgResponseTime = this.getAverageMetric('response_time', timeRange);
+    const p95ResponseTime = this.getPercentile('response_time', 95, timeRange);
+    const errorRate = this.getAverageMetric('error_rate', timeRange);
 
-    // Calculate P95 response time
-    const sortedDurations = durationMetrics.map(m => m.value).sort((a, b) => a - b);
-    const p95Index = Math.floor(sortedDurations.length * 0.95);
-    const p95ResponseTime = sortedDurations[p95Index] || 0;
-
-    // Find critical metrics (> 1000ms)
-    const criticalMetrics = durationMetrics.filter(m => m.value > 1000);
-
-    // Find slow queries
-    const slowQueries = durationMetrics
-      .filter(m => m.value > 500 && m.name.includes('query_'))
-      .map(m => ({
-        query: m.name.replace('_duration', ''),
-        duration: m.value,
-        timestamp: m.timestamp
-      }))
+    const slowQueries = this.queryMetrics
+      .filter(q => q.duration > 500)
+      .sort((a, b) => b.duration - a.duration)
       .slice(0, 10);
 
-    // Calculate error rate
-    const successMetrics = recentMetrics.filter(m => m.name.includes('_success'));
-    const errorMetrics = recentMetrics.filter(m => m.name.includes('_error'));
-    const totalRequests = successMetrics.length + errorMetrics.length;
-    const errorRate = totalRequests > 0 ? (errorMetrics.length / totalRequests) * 100 : 0;
+    const criticalMetrics = this.metrics.filter(m => 
+      this.isCriticalMetric(m.name, m.value) && 
+      m.timestamp >= oneHourAgo
+    );
 
     return {
       summary: {
         avgResponseTime,
         p95ResponseTime,
-        totalQueries: durationMetrics.length,
-        errorRate
+        errorRate,
+        totalQueries: this.queryMetrics.length,
+        slowQueriesCount: slowQueries.length,
+        criticalAlertsCount: criticalMetrics.length
       },
-      criticalMetrics,
-      slowQueries
+      slowQueries,
+      criticalMetrics
     };
-  }
-
-  getMetrics(): MetricData[] {
-    return [...this.metrics];
-  }
-
-  clearMetrics(): void {
-    this.metrics = [];
   }
 }

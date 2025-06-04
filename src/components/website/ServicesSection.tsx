@@ -35,7 +35,7 @@ export function ServicesSection({ services, onBookingClick }: ServicesSectionPro
                 )}
                 <div className="flex justify-between items-center">
                   <span className="text-2xl font-bold text-primary">
-                    {formatCurrency(service.price)}
+                    {formatCurrency(service.price, 'BRL')}
                   </span>
                   <span className="text-sm text-gray-500">
                     {service.duration} min

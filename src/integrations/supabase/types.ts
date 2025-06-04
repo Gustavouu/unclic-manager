@@ -559,8 +559,6 @@ export type Database = {
           created_at: string | null
           id: string
           role: string
-          role_id: string | null
-          status: Database["public"]["Enums"]["user_status"] | null
           updated_at: string | null
           user_id: string
         }
@@ -569,8 +567,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: string
-          role_id?: string | null
-          status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string | null
           user_id: string
         }
@@ -579,8 +575,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: string
-          role_id?: string | null
-          status?: Database["public"]["Enums"]["user_status"] | null
           updated_at?: string | null
           user_id?: string
         }
@@ -590,13 +584,6 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "business_users_role_id_fkey"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "roles"
             referencedColumns: ["id"]
           },
         ]
@@ -2810,27 +2797,44 @@ export type Database = {
       }
       permissions: {
         Row: {
-          created_at: string | null
-          description: string
+          action: string
+          createdAt: string
+          description: string | null
           id: string
           module: string
-          name: Database["public"]["Enums"]["permission_type"]
+          name: string
+          tenantId: string
+          updatedAt: string
         }
         Insert: {
-          created_at?: string | null
-          description: string
-          id?: string
+          action: string
+          createdAt?: string
+          description?: string | null
+          id: string
           module: string
-          name: Database["public"]["Enums"]["permission_type"]
+          name: string
+          tenantId: string
+          updatedAt: string
         }
         Update: {
-          created_at?: string | null
-          description?: string
+          action?: string
+          createdAt?: string
+          description?: string | null
           id?: string
           module?: string
-          name?: Database["public"]["Enums"]["permission_type"]
+          name?: string
+          tenantId?: string
+          updatedAt?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "permissions_tenantId_fkey"
+            columns: ["tenantId"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -3082,34 +3086,34 @@ export type Database = {
       }
       role_permissions: {
         Row: {
-          created_at: string | null
+          createdAt: string
           id: string
-          permission_name: Database["public"]["Enums"]["permission_type"]
-          role_id: string
+          permissionId: string
+          roleId: string
         }
         Insert: {
-          created_at?: string | null
-          id?: string
-          permission_name: Database["public"]["Enums"]["permission_type"]
-          role_id: string
+          createdAt?: string
+          id: string
+          permissionId: string
+          roleId: string
         }
         Update: {
-          created_at?: string | null
+          createdAt?: string
           id?: string
-          permission_name?: Database["public"]["Enums"]["permission_type"]
-          role_id?: string
+          permissionId?: string
+          roleId?: string
         }
         Relationships: [
           {
-            foreignKeyName: "role_permissions_permission_name_fkey"
-            columns: ["permission_name"]
+            foreignKeyName: "role_permissions_permissionId_fkey"
+            columns: ["permissionId"]
             isOneToOne: false
             referencedRelation: "permissions"
-            referencedColumns: ["name"]
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "role_permissions_role_id_fkey"
-            columns: ["role_id"]
+            foreignKeyName: "role_permissions_roleId_fkey"
+            columns: ["roleId"]
             isOneToOne: false
             referencedRelation: "roles"
             referencedColumns: ["id"]
@@ -3118,97 +3122,38 @@ export type Database = {
       }
       roles: {
         Row: {
-          business_id: string
-          created_at: string | null
+          createdAt: string
           description: string | null
           id: string
-          is_system: boolean | null
+          isSystem: boolean
           name: string
-          role_type: Database["public"]["Enums"]["role_type"]
-          updated_at: string | null
+          tenantId: string
+          updatedAt: string
         }
         Insert: {
-          business_id: string
-          created_at?: string | null
+          createdAt?: string
           description?: string | null
-          id?: string
-          is_system?: boolean | null
-          name: string
-          role_type?: Database["public"]["Enums"]["role_type"]
-          updated_at?: string | null
-        }
-        Update: {
-          business_id?: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_system?: boolean | null
-          name?: string
-          role_type?: Database["public"]["Enums"]["role_type"]
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "roles_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      security_audit_logs: {
-        Row: {
-          action: string
-          business_id: string | null
-          created_at: string | null
-          error_message: string | null
           id: string
-          ip_address: unknown | null
-          new_values: Json | null
-          old_values: Json | null
-          record_id: string | null
-          success: boolean | null
-          table_name: string | null
-          user_agent: string | null
-          user_id: string | null
-        }
-        Insert: {
-          action: string
-          business_id?: string | null
-          created_at?: string | null
-          error_message?: string | null
-          id?: string
-          ip_address?: unknown | null
-          new_values?: Json | null
-          old_values?: Json | null
-          record_id?: string | null
-          success?: boolean | null
-          table_name?: string | null
-          user_agent?: string | null
-          user_id?: string | null
+          isSystem?: boolean
+          name: string
+          tenantId: string
+          updatedAt: string
         }
         Update: {
-          action?: string
-          business_id?: string | null
-          created_at?: string | null
-          error_message?: string | null
+          createdAt?: string
+          description?: string | null
           id?: string
-          ip_address?: unknown | null
-          new_values?: Json | null
-          old_values?: Json | null
-          record_id?: string | null
-          success?: boolean | null
-          table_name?: string | null
-          user_agent?: string | null
-          user_id?: string | null
+          isSystem?: boolean
+          name?: string
+          tenantId?: string
+          updatedAt?: string
         }
         Relationships: [
           {
-            foreignKeyName: "security_audit_logs_business_id_fkey"
-            columns: ["business_id"]
+            foreignKeyName: "roles_tenantId_fkey"
+            columns: ["tenantId"]
             isOneToOne: false
-            referencedRelation: "businesses"
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -3811,7 +3756,15 @@ export type Database = {
           roleId?: string
           userId?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_roleId_fkey"
+            columns: ["roleId"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       users: {
         Row: {
@@ -3980,10 +3933,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      create_default_roles_for_business: {
-        Args: { business_id_param: string }
-        Returns: undefined
-      }
       fetch_agendamentos: {
         Args: { business_id_param: string }
         Returns: Json[]
@@ -4004,10 +3953,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string[]
       }
-      get_user_permissions: {
-        Args: { user_id_param: string; business_id_param: string }
-        Returns: Database["public"]["Enums"]["permission_type"][]
-      }
       get_user_tenant_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -4015,17 +3960,6 @@ export type Database = {
       has_permission: {
         Args: { permission_name: string }
         Returns: boolean
-      }
-      log_security_audit: {
-        Args: {
-          action_param: string
-          table_name_param?: string
-          record_id_param?: string
-          old_values_param?: Json
-          new_values_param?: Json
-          business_id_param?: string
-        }
-        Returns: undefined
       }
       migrate_all_data: {
         Args: Record<PropertyKey, never>
@@ -4061,19 +3995,8 @@ export type Database = {
         Args: { table_name: string }
         Returns: boolean
       }
-      user_belongs_to_business_secure: {
-        Args: { business_id_param: string }
-        Returns: boolean
-      }
       user_belongs_to_tenant: {
         Args: { tenant_id: string }
-        Returns: boolean
-      }
-      user_has_permission: {
-        Args: {
-          permission_name: Database["public"]["Enums"]["permission_type"]
-          business_id_param?: string
-        }
         Returns: boolean
       }
       user_has_permission_on_resource: {
@@ -4174,41 +4097,10 @@ export type Database = {
         | "BOLETO"
         | "ONLINE"
         | "OTHER"
-      permission_type:
-        | "appointments.view"
-        | "appointments.create"
-        | "appointments.edit"
-        | "appointments.delete"
-        | "clients.view"
-        | "clients.create"
-        | "clients.edit"
-        | "clients.delete"
-        | "services.view"
-        | "services.create"
-        | "services.edit"
-        | "services.delete"
-        | "professionals.view"
-        | "professionals.create"
-        | "professionals.edit"
-        | "professionals.delete"
-        | "financial.view"
-        | "financial.create"
-        | "financial.edit"
-        | "financial.delete"
-        | "reports.view"
-        | "inventory.view"
-        | "inventory.create"
-        | "inventory.edit"
-        | "inventory.delete"
-        | "settings.view"
-        | "settings.edit"
-        | "admin.full_access"
       ProductUnit: "UNIT" | "KG" | "G" | "MG" | "L" | "ML" | "M" | "CM" | "MM"
-      role_type: "owner" | "admin" | "manager" | "staff" | "professional"
       TenantStatus: "ACTIVE" | "SUSPENDED" | "CANCELLED" | "TRIAL"
       TransactionStatus: "PENDING" | "PAID" | "CANCELLED" | "PARTIAL"
       TransactionType: "INCOME" | "EXPENSE" | "TRANSFER"
-      user_status: "active" | "inactive" | "blocked" | "pending"
       UserStatus: "ACTIVE" | "INACTIVE" | "SUSPENDED"
     }
     CompositeTypes: {
@@ -4391,42 +4283,10 @@ export const Constants = {
         "ONLINE",
         "OTHER",
       ],
-      permission_type: [
-        "appointments.view",
-        "appointments.create",
-        "appointments.edit",
-        "appointments.delete",
-        "clients.view",
-        "clients.create",
-        "clients.edit",
-        "clients.delete",
-        "services.view",
-        "services.create",
-        "services.edit",
-        "services.delete",
-        "professionals.view",
-        "professionals.create",
-        "professionals.edit",
-        "professionals.delete",
-        "financial.view",
-        "financial.create",
-        "financial.edit",
-        "financial.delete",
-        "reports.view",
-        "inventory.view",
-        "inventory.create",
-        "inventory.edit",
-        "inventory.delete",
-        "settings.view",
-        "settings.edit",
-        "admin.full_access",
-      ],
       ProductUnit: ["UNIT", "KG", "G", "MG", "L", "ML", "M", "CM", "MM"],
-      role_type: ["owner", "admin", "manager", "staff", "professional"],
       TenantStatus: ["ACTIVE", "SUSPENDED", "CANCELLED", "TRIAL"],
       TransactionStatus: ["PENDING", "PAID", "CANCELLED", "PARTIAL"],
       TransactionType: ["INCOME", "EXPENSE", "TRANSFER"],
-      user_status: ["active", "inactive", "blocked", "pending"],
       UserStatus: ["ACTIVE", "INACTIVE", "SUSPENDED"],
     },
   },

@@ -5,16 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Plus } from 'lucide-react';
 import { NewProductDialog } from './NewProductDialog';
 import { useInventory } from '@/hooks/inventory/useInventory';
-import { useInventoryFilters } from '@/hooks/inventory/useInventoryFilters';
-import { useInventoryExport } from '@/hooks/inventory/useInventoryExport';
 import { InventoryAnalytics } from './InventoryAnalytics';
-import { InventoryFiltersAdvanced } from './InventoryFiltersAdvanced';
+import { InventoryFilters } from './InventoryFilters';
 import { Product } from '@/hooks/inventory/types';
 import { getFormattedDate } from './details/formatters';
 import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
 import { StatsCard } from '@/components/common/StatsCard';
 import { Package, AlertCircle, DollarSign } from 'lucide-react';
-import { toast } from 'sonner';
 
 export const InventoryContent = () => {
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
@@ -28,15 +25,6 @@ export const InventoryContent = () => {
     getInventoryAnalytics 
   } = useInventory();
   
-  const {
-    filters,
-    filteredProducts,
-    updateFilter,
-    clearFilters,
-  } = useInventoryFilters(products);
-
-  const { exportToCSV } = useInventoryExport();
-  
   const analytics = getInventoryAnalytics();
   
   const handleEditProduct = (product: Product) => {
@@ -47,22 +35,12 @@ export const InventoryContent = () => {
   const handleDeleteProduct = (product: Product) => {
     if (window.confirm(`Tem certeza que deseja excluir o produto "${product.name}"?`)) {
       deleteProduct(product.id);
-      toast.success('Produto excluído com sucesso!');
     }
   };
   
   const handleCloseDialog = () => {
     setIsNewProductOpen(false);
     setEditingProduct(null);
-  };
-
-  const handleExport = () => {
-    try {
-      exportToCSV(filteredProducts);
-      toast.success('Dados exportados com sucesso!');
-    } catch (error) {
-      toast.error('Erro ao exportar dados');
-    }
   };
 
   const bestSellers = analytics.bestSellers.map(product => ({
@@ -152,23 +130,17 @@ export const InventoryContent = () => {
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <h2 className="text-lg font-semibold">Produtos em Estoque</h2>
-        <Button onClick={() => setIsNewProductOpen(true)} size="sm" className="gap-1 h-8 text-xs">
-          <Plus className="h-3.5 w-3.5" />
-          Novo Produto
-        </Button>
+        <div className="flex items-center gap-2">
+          <InventoryFilters />
+          <Button onClick={() => setIsNewProductOpen(true)} size="sm" className="gap-1 h-8 text-xs">
+            <Plus className="h-3.5 w-3.5" />
+            Novo Produto
+          </Button>
+        </div>
       </div>
       
-      <InventoryFiltersAdvanced
-        filters={filters}
-        onFilterChange={updateFilter}
-        onClearFilters={clearFilters}
-        onExport={handleExport}
-        totalProducts={products.length}
-        filteredCount={filteredProducts.length}
-      />
-      
       <InventoryTable 
-        products={filteredProducts} 
+        products={products} 
         isLoading={isLoading} 
         onEdit={handleEditProduct}
         onDelete={handleDeleteProduct}
