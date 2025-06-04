@@ -26,7 +26,27 @@ export async function fetchClients(businessId: string): Promise<Client[]> {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(client => ({
+      id: client.id,
+      business_id: client.business_id || client.id_negocio,
+      name: client.name || client.nome,
+      email: client.email || '',
+      phone: client.phone || client.telefone || '',
+      birth_date: client.birth_date || client.data_nascimento || '',
+      gender: client.gender || client.genero || '',
+      address: client.address || client.endereco || '',
+      city: client.city || client.cidade || '',
+      state: client.state || client.estado || '',
+      zip_code: client.zip_code || client.cep || '',
+      notes: client.notes || client.notas || '',
+      preferences: client.preferences || client.preferencias || {},
+      last_visit: client.last_visit || client.ultima_visita,
+      total_spent: Number(client.total_spent || client.valor_total_gasto) || 0,
+      total_appointments: client.total_appointments || 0,
+      status: client.status || 'active',
+      created_at: client.created_at || client.criado_em,
+      updated_at: client.updated_at || client.atualizado_em,
+    }));
   } catch (err: any) {
     console.error("Erro inesperado ao buscar clientes:", err);
     throw err;
@@ -64,6 +84,7 @@ export async function createClient(clientData: Partial<Client>, businessId: stri
       notas: clientData.notes, // Set legacy field
       genero: clientData.gender, // Set legacy field
       data_nascimento: clientData.birth_date, // Set legacy field
+      preferencias: clientData.preferences || {}, // Set legacy field
     };
 
     const { data, error } = await supabase
@@ -77,7 +98,27 @@ export async function createClient(clientData: Partial<Client>, businessId: stri
       throw error;
     }
 
-    return data;
+    return {
+      id: data.id,
+      business_id: data.business_id || data.id_negocio,
+      name: data.name || data.nome,
+      email: data.email || '',
+      phone: data.phone || data.telefone || '',
+      birth_date: data.birth_date || data.data_nascimento || '',
+      gender: data.gender || data.genero || '',
+      address: data.address || data.endereco || '',
+      city: data.city || data.cidade || '',
+      state: data.state || data.estado || '',
+      zip_code: data.zip_code || data.cep || '',
+      notes: data.notes || data.notas || '',
+      preferences: data.preferences || data.preferencias || {},
+      last_visit: data.last_visit || data.ultima_visita,
+      total_spent: Number(data.total_spent || data.valor_total_gasto) || 0,
+      total_appointments: data.total_appointments || 0,
+      status: data.status || 'active',
+      created_at: data.created_at || data.criado_em,
+      updated_at: data.updated_at || data.atualizado_em,
+    };
     
   } catch (err: any) {
     console.error("Error creating client:", err);
@@ -105,7 +146,29 @@ export async function findClientByEmail(email: string, businessId: string): Prom
 
     if (error) throw error;
     
-    return data;
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      business_id: data.business_id || data.id_negocio,
+      name: data.name || data.nome,
+      email: data.email || '',
+      phone: data.phone || data.telefone || '',
+      birth_date: data.birth_date || data.data_nascimento || '',
+      gender: data.gender || data.genero || '',
+      address: data.address || data.endereco || '',
+      city: data.city || data.cidade || '',
+      state: data.state || data.estado || '',
+      zip_code: data.zip_code || data.cep || '',
+      notes: data.notes || data.notas || '',
+      preferences: data.preferences || data.preferencias || {},
+      last_visit: data.last_visit || data.ultima_visita,
+      total_spent: Number(data.total_spent || data.valor_total_gasto) || 0,
+      total_appointments: data.total_appointments || 0,
+      status: data.status || 'active',
+      created_at: data.created_at || data.criado_em,
+      updated_at: data.updated_at || data.atualizado_em,
+    };
     
   } catch (err: any) {
     console.error("Error finding client:", err);
@@ -133,7 +196,29 @@ export async function findClientByPhone(phone: string, businessId: string): Prom
 
     if (error) throw error;
     
-    return data;
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      business_id: data.business_id || data.id_negocio,
+      name: data.name || data.nome,
+      email: data.email || '',
+      phone: data.phone || data.telefone || '',
+      birth_date: data.birth_date || data.data_nascimento || '',
+      gender: data.gender || data.genero || '',
+      address: data.address || data.endereco || '',
+      city: data.city || data.cidade || '',
+      state: data.state || data.estado || '',
+      zip_code: data.zip_code || data.cep || '',
+      notes: data.notes || data.notas || '',
+      preferences: data.preferences || data.preferencias || {},
+      last_visit: data.last_visit || data.ultima_visita,
+      total_spent: Number(data.total_spent || data.valor_total_gasto) || 0,
+      total_appointments: data.total_appointments || 0,
+      status: data.status || 'active',
+      created_at: data.created_at || data.criado_em,
+      updated_at: data.updated_at || data.atualizado_em,
+    };
     
   } catch (err: any) {
     console.error("Error finding client by phone:", err);

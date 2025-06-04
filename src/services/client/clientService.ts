@@ -205,6 +205,10 @@ export class ClientService {
     if (appointmentsError) {
       console.warn('Error fetching client stats:', appointmentsError);
       return {
+        totalClients: 1,
+        newThisMonth: 0,
+        activeClients: 1,
+        retentionRate: 0,
         totalAppointments: 0,
         completedAppointments: 0,
         cancelledAppointments: 0,
@@ -225,6 +229,10 @@ export class ClientService {
       : null;
 
     return {
+      totalClients: 1,
+      newThisMonth: 0,
+      activeClients: 1,
+      retentionRate: completed > 0 ? (completed / total) * 100 : 0,
       totalAppointments: total,
       completedAppointments: completed,
       cancelledAppointments: cancelled,
