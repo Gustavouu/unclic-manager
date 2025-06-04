@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
@@ -9,7 +8,7 @@ interface FinancialChartData {
   despesa: number;
 }
 
-interface UseFinancialDataReturn {
+export interface UseFinancialDataReturn {
   chartData: FinancialChartData[];
   isLoading: boolean;
   error: string | null;
