@@ -1,53 +1,31 @@
 
-export const formatCurrency = (value: number, currency: string = 'USD', options?: { notation?: 'standard' | 'compact' }) => {
-  return new Intl.NumberFormat('en-US', {
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: currency,
-    notation: options?.notation || 'standard',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    currency: 'BRL'
   }).format(value);
-};
+}
 
-export const formatCompactCurrency = (value: number, currency: string = 'USD') => {
-  return new Intl.NumberFormat('en-US', {
-    notation: 'compact',
-    compactDisplay: 'short',
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 1,
-  }).format(value);
-};
-
-export const formatNumber = (value: number) => {
-  return new Intl.NumberFormat('en-US').format(value);
-};
-
-export const formatPercentage = (value: number) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'percent',
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  }).format(value / 100);
-};
-
-export const formatDate = (date: Date | string) => {
+export function formatDate(date: Date | string): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  }).format(dateObj);
-};
+  return new Intl.DateTimeFormat('pt-BR').format(dateObj);
+}
 
-export const formatDateTime = (date: Date | string) => {
+export function formatDateTime(date: Date | string): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
     year: 'numeric',
-    month: 'short',
-    day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit',
+    minute: '2-digit'
   }).format(dateObj);
-};
+}
+
+export function formatTime(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return new Intl.DateTimeFormat('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(dateObj);
+}
