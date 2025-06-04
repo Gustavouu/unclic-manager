@@ -1,4 +1,3 @@
-
 export interface Professional {
   id: string;
   business_id: string;
@@ -50,6 +49,8 @@ export interface ProfessionalUpdate {
     [key: string]: TimeSlot[];
   };
   status?: 'active' | 'inactive' | 'on_leave';
+  rating?: number;
+  total_reviews?: number;
 }
 
 export interface ProfessionalSearchParams {
