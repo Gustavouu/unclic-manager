@@ -1,6 +1,5 @@
 
-// Legacy hook - now redirects to the new refactored dashboard metrics hook
-// This file is kept for backward compatibility
+// Redirect to the new dashboard metrics hook for consistency
 export { useDashboardMetrics as useDashboardData } from './dashboard/useDashboardMetrics';
 
 // Re-export types for backward compatibility
@@ -9,10 +8,5 @@ export type {
   RevenueDataPoint,
   PopularService,
   FilterPeriod,
+  UseDashboardMetricsReturn as DashboardStats,
 } from './dashboard/types';
-
-// Keep the DashboardStats type from the original interface for full compatibility
-export type { DashboardStats } from './dashboard/useDashboardData';
-
-// Note: This hook has been refactored to use smaller, more focused modules
-console.warn('useDashboardData is deprecated. Please use useDashboardMetrics from @/hooks/dashboard/useDashboardMetrics');

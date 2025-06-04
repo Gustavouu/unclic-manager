@@ -1,43 +1,8 @@
 
-// Tipos para compatibilidade com o hook legacy
-export interface DashboardStats {
-  totalAppointments: number;
-  completedAppointments: number;
-  totalRevenue: number;
-  newClients: number;
-  clientsCount: number;
-  averageTicket: number;
-  retentionRate: number;
-  popularServices: PopularService[];
-  revenueData: RevenueDataPoint[];
-  appointmentsToday: number;
-  pendingAppointments: number;
-  cancellationRate: number;
-  cancelledAppointments: number;
-  growthRate: number;
-  occupancyRate: number;
-  todayAppointments: number;
-  monthlyRevenue: number;
-  averageRating: number;
-  totalClients: number;
-  monthlyServices: number;
-  newClientsCount: number;
-}
+// This file provides backward compatibility types
+import type { UseDashboardMetricsReturn } from './types';
 
-export interface PopularService {
-  id: string;
-  name: string;
-  count: number;
-  percentage: number;
-}
+export type DashboardStats = UseDashboardMetricsReturn;
 
-export interface RevenueDataPoint {
-  date: string;
-  revenue: number;
-  appointments: number;
-}
-
-export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';
-
-// Re-export do hook otimizado para compatibilidade
+// Re-export the main hook under the old name for compatibility
 export { useDashboardMetrics as useDashboardData } from './useDashboardMetrics';
