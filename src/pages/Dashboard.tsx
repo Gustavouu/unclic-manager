@@ -67,11 +67,11 @@ export default function Dashboard() {
         <DashboardStats 
           stats={{
             totalClients: metrics.totalClients,
-            totalServices: metrics.totalServices,
+            totalServices: metrics.totalServices || 0,
             totalAppointments: metrics.totalAppointments,
             totalRevenue: metrics.totalRevenue,
-            newClients: metrics.newClients,
-            completionRate: metrics.completionRate,
+            newClients: metrics.newClients || 0,
+            completionRate: metrics.completionRate || 0,
           }} 
           loading={isLoading} 
         />
@@ -118,7 +118,7 @@ export default function Dashboard() {
             <CardTitle>Serviços Populares</CardTitle>
           </CardHeader>
           <CardContent>
-            {metrics.popularServices.length > 0 ? (
+            {metrics.popularServices && metrics.popularServices.length > 0 ? (
               <div className="space-y-3">
                 {metrics.popularServices.map((service, index) => (
                   <div key={service.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
