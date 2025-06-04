@@ -5,6 +5,8 @@ import { AppointmentService } from '@/services/appointments/appointmentService';
 import { fetchClients } from '@/services/clientService';
 import { supabase } from '@/integrations/supabase/client';
 
+export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';
+
 interface DashboardMetrics {
   totalAppointments: number;
   totalClients: number;
@@ -83,7 +85,7 @@ export const useDashboardMetrics = () => {
         return createdDate >= new Date(startOfMonth) && createdDate <= new Date(endOfMonth);
       }).length;
 
-      // Try to get appointment stats
+      // Initialize appointment stats with default values
       let appointmentStats = {
         total: 0,
         total_revenue: 0,
@@ -94,7 +96,16 @@ export const useDashboardMetrics = () => {
 
       try {
         const appointmentService = AppointmentService.getInstance();
-        appointmentStats = await appointmentService.getStats(businessId, startOfMonth, endOfMonth);
+        const stats = await appointmentService.getStats(businessId, startOfMonth, endOfMonth);
+        
+        // Handle the actual return type from AppointmentService and map to our expected format
+        appointmentStats = {
+          total: stats.total || 0,
+          total_revenue: stats.totalRevenue || stats.total_revenue || 0,
+          today_count: stats.todayCount || stats.today_count || 0,
+          pending_count: stats.pendingCount || stats.pending_count || 0,
+          completed_count: stats.completedCount || stats.completed_count || 0
+        };
       } catch (appointmentError) {
         console.warn('Could not fetch appointment stats, using defaults:', appointmentError);
       }

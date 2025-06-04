@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { RevenueChart } from '@/components/dashboard/RevenueChart';
 import { ClientDashboardWidget } from '@/components/clients/ClientDashboardWidget';
-import { useDashboardData, FilterPeriod } from '@/hooks/dashboard/useDashboardData';
+import { useDashboardMetrics, FilterPeriod } from '@/hooks/dashboard/useDashboardMetrics';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { OnboardingRedirect } from '@/components/auth/OnboardingRedirect';
@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const [period, setPeriod] = useState<FilterPeriod>('month');
-  const { metrics, isLoading, error } = useDashboardData(period);
+  const { metrics, popularServices, isLoading, error } = useDashboardMetrics();
   const navigate = useNavigate();
 
   if (error) {
@@ -67,11 +67,11 @@ export default function Dashboard() {
         <DashboardStats 
           stats={{
             totalClients: metrics.totalClients,
-            totalServices: metrics.totalServices,
+            totalServices: metrics.totalAppointments,
             totalAppointments: metrics.totalAppointments,
-            totalRevenue: metrics.totalRevenue,
-            newClients: metrics.newClients,
-            completionRate: metrics.completionRate,
+            totalRevenue: metrics.monthlyRevenue,
+            newClients: metrics.newClientsThisMonth,
+            completionRate: metrics.completedAppointments > 0 ? (metrics.completedAppointments / metrics.totalAppointments) * 100 : 0,
           }} 
           loading={isLoading} 
         />
@@ -118,9 +118,9 @@ export default function Dashboard() {
             <CardTitle>Serviços Populares</CardTitle>
           </CardHeader>
           <CardContent>
-            {metrics.popularServices && metrics.popularServices.length > 0 ? (
+            {popularServices && popularServices.length > 0 ? (
               <div className="space-y-3">
-                {metrics.popularServices.map((service, index) => (
+                {popularServices.map((service, index) => (
                   <div key={service.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                     <span className="font-medium">{service.name}</span>
                     <span className="text-sm text-gray-600">{service.count} agendamentos</span>
