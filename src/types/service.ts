@@ -47,11 +47,13 @@ export interface ServiceSearchParams {
 
 export interface ServiceStats {
   totalAppointments: number;
+  completedAppointments: number;
+  cancelledAppointments: number;
+  noShowAppointments: number;
   totalRevenue: number;
-  averagePrice: number;
-  mostPopularProfessional: string;
-  busiestDay: string;
-  busiestTime: string;
+  averageRating: number;
+  mostPopularDay: string | null;
+  mostPopularTime: string | null;
 }
 
 export interface ServiceCategory {

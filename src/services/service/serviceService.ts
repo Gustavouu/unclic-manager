@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import type { Service, ServiceCreate, ServiceUpdate, ServiceSearchParams, ServiceStats } from '@/types/service';
+import type { Service, ServiceCreate, ServiceUpdate, ServiceSearchParams, ServiceStats, ServiceCategory, ServiceCategoryCreate, ServiceCategoryUpdate, ServiceCategoryStats } from '@/types/service';
 
 export class ServiceService {
   private static instance: ServiceService;
@@ -44,6 +44,13 @@ export class ServiceService {
 
     if (error) throw error;
     return service;
+  }
+
+  /**
+   * Updates service status
+   */
+  async updateStatus(id: string, isActive: boolean): Promise<Service> {
+    return this.update(id, { is_active: isActive });
   }
 
   /**
@@ -157,6 +164,90 @@ export class ServiceService {
       averageRating: 0, // Would need reviews table
       mostPopularDay: null, // Would need more complex query
       mostPopularTime: null, // Would need more complex query
+    };
+  }
+
+  /**
+   * Creates a new service category
+   */
+  async createCategory(data: ServiceCategoryCreate): Promise<ServiceCategory> {
+    const { data: category, error } = await supabase
+      .from('service_categories')
+      .insert(data)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return category;
+  }
+
+  /**
+   * Updates an existing service category
+   */
+  async updateCategory(id: string, data: ServiceCategoryUpdate): Promise<ServiceCategory> {
+    const { data: category, error } = await supabase
+      .from('service_categories')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return category;
+  }
+
+  /**
+   * Gets a service category by ID
+   */
+  async getCategoryById(id: string): Promise<ServiceCategory> {
+    const { data: category, error } = await supabase
+      .from('service_categories')
+      .select()
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return category;
+  }
+
+  /**
+   * Lists all service categories for a business
+   */
+  async listCategories(businessId: string): Promise<ServiceCategory[]> {
+    const { data: categories, error } = await supabase
+      .from('service_categories')
+      .select()
+      .eq('business_id', businessId)
+      .order('name');
+
+    if (error) throw error;
+    return categories || [];
+  }
+
+  /**
+   * Deletes a service category
+   */
+  async deleteCategory(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('service_categories')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  /**
+   * Gets service category statistics
+   */
+  async getCategoryStats(categoryId: string): Promise<ServiceCategoryStats> {
+    // This would need more complex queries to get real stats
+    return {
+      totalServices: 0,
+      totalAppointments: 0,
+      totalRevenue: 0,
+      averagePrice: 0,
+      mostPopularService: '',
+      mostPopularProfessional: '',
     };
   }
 

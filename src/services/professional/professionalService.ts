@@ -56,6 +56,29 @@ export class ProfessionalService {
   }
 
   /**
+   * Updates professional status
+   */
+  async updateStatus(id: string, status: 'active' | 'inactive' | 'on_leave'): Promise<Professional> {
+    return this.update(id, { status });
+  }
+
+  /**
+   * Updates professional rating
+   */
+  async updateRating(id: string, rating: number, incrementReviews: boolean = true): Promise<Professional> {
+    const professional = await this.getById(id);
+    const newTotalReviews = incrementReviews ? professional.total_reviews + 1 : professional.total_reviews;
+    const newRating = incrementReviews 
+      ? ((professional.rating * professional.total_reviews) + rating) / newTotalReviews
+      : rating;
+
+    return this.update(id, { 
+      rating: newRating, 
+      total_reviews: newTotalReviews 
+    });
+  }
+
+  /**
    * Gets a professional by ID
    */
   async getById(id: string): Promise<Professional> {
@@ -163,11 +186,26 @@ export class ProfessionalService {
    * Gets professional availability for a specific date
    */
   async getAvailability(professionalId: string, date: string): Promise<ProfessionalAvailability> {
-    // This would need a more complex implementation with availability and booking data
+    // Get appointments for the professional on the specified date
+    const { data: appointments, error } = await supabase
+      .from('Appointments')
+      .select('hora_inicio, hora_fim')
+      .eq('id_funcionario', professionalId)
+      .eq('data', date);
+
+    if (error) {
+      console.warn('Error fetching availability:', error);
+    }
+
+    // For now, return a simple structure
+    // In a real implementation, this would calculate available slots based on working hours and existing appointments
     return {
       date,
       available_slots: [],
-      unavailable_slots: [],
+      unavailable_slots: appointments?.map(apt => ({
+        start: apt.hora_inicio,
+        end: apt.hora_fim
+      })) || [{ start: '09:00', end: '18:00' }],
     };
   }
 
