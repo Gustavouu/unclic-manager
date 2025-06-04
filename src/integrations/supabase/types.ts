@@ -3988,6 +3988,10 @@ export type Database = {
         Args: { business_id_param: string }
         Returns: Json[]
       }
+      get_business_metrics: {
+        Args: { p_business_id: string }
+        Returns: Json
+      }
       get_current_tenant_context: {
         Args: Record<PropertyKey, never>
         Returns: string

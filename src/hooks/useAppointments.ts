@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { AppointmentService } from '@/services/appointments/appointmentService';
+import { supabase } from '@/integrations/supabase/client';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import { UnifiedAppointment } from '@/types/appointment-unified';
 import type { AppointmentCreate, AppointmentUpdate } from '@/types/appointment';
@@ -10,8 +10,6 @@ export const useAppointments = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { businessId } = useCurrentBusiness();
-
-  const appointmentService = AppointmentService.getInstance();
 
   const fetchAppointments = async () => {
     if (!businessId) {
@@ -24,42 +22,66 @@ export const useAppointments = () => {
     setError(null);
     
     try {
-      const data = await appointmentService.search({ business_id: businessId });
+      console.log('Fetching appointments for business ID:', businessId);
       
-      // Convert to unified format
-      const unifiedData: UnifiedAppointment[] = data.map(apt => ({
-        id: apt.id,
-        business_id: apt.business_id,
-        client_id: apt.client_id,
-        client_name: apt.client_name,
-        professional_id: apt.professional_id,
-        professional_name: apt.professional_name,
-        service_id: apt.service_id,
-        service_name: apt.service_name,
-        date: new Date(apt.date),
-        start_time: apt.start_time,
-        end_time: apt.end_time,
-        duration: apt.duration,
-        price: apt.price,
-        status: apt.status,
-        notes: apt.notes,
-        payment_method: apt.payment_method,
-        payment_status: apt.payment_status,
-        rating: apt.rating,
-        feedback_comment: apt.feedback_comment,
-        reminder_sent: apt.reminder_sent,
-        created_at: apt.created_at,
-        updated_at: apt.updated_at,
+      // Use the bookings table with proper joins
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          clients!inner(name, email, phone),
+          employees!inner(name, email, phone)
+        `)
+        .eq('business_id', businessId)
+        .order('booking_date', { ascending: false })
+        .order('start_time', { ascending: false });
+          
+      if (error) {
+        console.error('Error fetching bookings:', error);
+        throw error;
+      }
+      
+      if (!data || data.length === 0) {
+        console.log('No appointment data found');
+        setAppointments([]);
+        return;
+      }
+      
+      // Convert database response to UnifiedAppointment format
+      const unifiedData: UnifiedAppointment[] = data.map((booking: any) => ({
+        id: booking.id,
+        business_id: booking.business_id,
+        client_id: booking.client_id,
+        client_name: booking.clients?.name || 'Cliente',
+        professional_id: booking.employee_id,
+        professional_name: booking.employees?.name || 'Profissional',
+        service_id: booking.service_id,
+        service_name: 'Serviço', // Default since we don't have services table yet
+        date: new Date(booking.booking_date),
+        start_time: booking.start_time,
+        end_time: booking.end_time,
+        duration: booking.duration,
+        price: booking.price,
+        status: booking.status,
+        notes: booking.notes,
+        payment_method: booking.payment_method,
+        payment_status: 'pending', // Default value
+        rating: booking.rating,
+        feedback_comment: booking.feedback_comment,
+        reminder_sent: booking.reminder_sent,
+        created_at: booking.created_at,
+        updated_at: booking.updated_at,
         // Legacy compatibility
-        clientId: apt.client_id,
-        clientName: apt.client_name,
-        serviceId: apt.service_id,
-        serviceName: apt.service_name,
-        professionalId: apt.professional_id,
-        professionalName: apt.professional_name
+        clientId: booking.client_id,
+        clientName: booking.clients?.name || 'Cliente',
+        serviceId: booking.service_id,
+        serviceName: 'Serviço',
+        professionalId: booking.employee_id,
+        professionalName: booking.employees?.name || 'Profissional'
       }));
       
       setAppointments(unifiedData);
+      console.log('Successfully loaded', unifiedData.length, 'appointments');
     } catch (err) {
       console.error('Error fetching appointments:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch appointments');
@@ -76,28 +98,70 @@ export const useAppointments = () => {
   const createAppointment = async (data: Omit<AppointmentCreate, 'business_id'>) => {
     if (!businessId) throw new Error('No business selected');
     
-    const newAppointment = await appointmentService.create({
-      ...data,
-      business_id: businessId,
-    });
+    const { data: newBooking, error } = await supabase
+      .from('bookings')
+      .insert({
+        business_id: businessId,
+        client_id: data.client_id,
+        employee_id: data.professional_id,
+        service_id: data.service_id,
+        booking_date: data.date,
+        start_time: data.start_time,
+        end_time: data.end_time,
+        duration: data.duration,
+        price: data.price,
+        status: data.status || 'scheduled',
+        notes: data.notes,
+        payment_method: data.payment_method
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
     
     await fetchAppointments();
-    return newAppointment;
+    return newBooking;
   };
 
   const updateAppointment = async (id: string, data: AppointmentUpdate) => {
-    await appointmentService.update(id, data);
+    const { error } = await supabase
+      .from('bookings')
+      .update({
+        status: data.status,
+        notes: data.notes,
+        payment_method: data.payment_method,
+        rating: data.rating,
+        feedback_comment: data.feedback_comment,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (error) throw error;
     await fetchAppointments();
   };
 
   const deleteAppointment = async (id: string) => {
-    await appointmentService.delete(id);
+    const { error } = await supabase
+      .from('bookings')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
     await fetchAppointments();
   };
 
   const getAppointmentsByDateRange = async (startDate: string, endDate: string) => {
     if (!businessId) return [];
-    return appointmentService.getByDateRange(businessId, startDate, endDate);
+    
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('business_id', businessId)
+      .gte('booking_date', startDate)
+      .lte('booking_date', endDate);
+
+    if (error) throw error;
+    return data || [];
   };
 
   return {

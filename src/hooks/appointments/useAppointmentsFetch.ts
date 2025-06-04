@@ -24,14 +24,13 @@ export function useAppointmentsFetch() {
     try {
       console.log('Fetching appointments for business ID:', businessId);
       
-      // Use the bookings table which exists in the database
+      // Use the bookings table with proper joins
       const { data, error } = await supabase
         .from('bookings')
         .select(`
           *,
-          clients (*),
-          services_v2 (*),
-          employees (*)
+          clients!inner(name, email, phone),
+          employees!inner(name, email, phone)
         `)
         .eq('business_id', businessId)
         .order('booking_date', { ascending: false })
@@ -55,8 +54,8 @@ export function useAppointmentsFetch() {
         clientId: booking.client_id,
         clientName: booking.clients?.name || 'Cliente',
         serviceId: booking.service_id,
-        serviceName: booking.services_v2?.name || 'Serviço',
-        serviceType: booking.services_v2?.category || 'service',
+        serviceName: 'Serviço', // Default since we don't have services table yet
+        serviceType: 'service',
         professionalId: booking.employee_id,
         professionalName: booking.employees?.name || 'Profissional',
         date: new Date(`${booking.booking_date}T${booking.start_time}`),
@@ -95,6 +94,12 @@ function mapStatusFromDb(status: string): AppointmentStatus {
     'completed': 'concluido',
     'canceled': 'cancelado',
     'no_show': 'faltou',
+    // Handle Portuguese statuses directly
+    'agendado': 'agendado',
+    'confirmado': 'confirmado',
+    'concluido': 'concluido',
+    'cancelado': 'cancelado',
+    'faltou': 'faltou',
   };
   return statusMap[status] || 'agendado';
 }

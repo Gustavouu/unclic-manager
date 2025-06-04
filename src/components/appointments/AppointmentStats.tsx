@@ -28,7 +28,7 @@ export function AppointmentStats() {
     );
   }
 
-  // Calcular estatísticas
+  // Calculate statistics
   const today = new Date();
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
@@ -40,11 +40,17 @@ export function AppointmentStats() {
 
   const stats = {
     total: monthAppointments.length,
-    concluidos: monthAppointments.filter(apt => isCompletedStatus(apt.status)).length,
-    agendados: monthAppointments.filter(apt => isScheduledStatus(apt.status)).length,
-    cancelados: monthAppointments.filter(apt => isCanceledStatus(apt.status)).length,
-    receita: monthAppointments
-      .filter(apt => isCompletedStatus(apt.status))
+    completed: monthAppointments.filter(apt => 
+      apt.status === 'completed' || apt.status === 'concluido'
+    ).length,
+    scheduled: monthAppointments.filter(apt => 
+      apt.status === 'scheduled' || apt.status === 'agendado' || apt.status === 'confirmed' || apt.status === 'confirmado'
+    ).length,
+    canceled: monthAppointments.filter(apt => 
+      apt.status === 'canceled' || apt.status === 'cancelado'
+    ).length,
+    revenue: monthAppointments
+      .filter(apt => apt.status === 'completed' || apt.status === 'concluido')
       .reduce((sum, apt) => sum + apt.price, 0),
   };
 
@@ -55,31 +61,31 @@ export function AppointmentStats() {
       icon: Calendar,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
-      description: `${stats.agendados} agendados`
+      description: `${stats.scheduled} agendados`
     },
     {
       title: 'Concluídos',
-      value: stats.concluidos,
+      value: stats.completed,
       icon: CheckCircle,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
-      description: `${stats.total > 0 ? Math.round((stats.concluidos / stats.total) * 100) : 0}% do total`
+      description: `${stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% do total`
     },
     {
       title: 'Cancelados',
-      value: stats.cancelados,
+      value: stats.canceled,
       icon: XCircle,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
-      description: `${stats.total > 0 ? Math.round((stats.cancelados / stats.total) * 100) : 0}% do total`
+      description: `${stats.total > 0 ? Math.round((stats.canceled / stats.total) * 100) : 0}% do total`
     },
     {
       title: 'Receita do Mês',
-      value: formatCurrency(stats.receita),
+      value: formatCurrency(stats.revenue),
       icon: TrendingUp,
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-50',
-      description: `${stats.concluidos} atendimentos`
+      description: `${stats.completed} atendimentos`
     }
   ];
 
