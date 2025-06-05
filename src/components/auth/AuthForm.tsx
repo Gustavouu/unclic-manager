@@ -1,268 +1,198 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff } from "lucide-react";
-import { showErrorToast } from "@/utils/formUtils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
-// Define form schema with Zod
-const loginSchema = z.object({
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
-});
-
-const registerSchema = z.object({
-  name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "As senhas não conferem",
-  path: ["confirmPassword"],
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
-type RegisterFormValues = z.infer<typeof registerSchema>;
-
-interface AuthFormProps {
-  initialTab?: "login" | "register";
-  onLogin?: (email: string, password: string) => Promise<void>;
-  onRegister?: (name: string, email: string, password: string) => Promise<void>;
-  isLoading?: boolean;
-}
-
-export const AuthForm = ({ 
-  initialTab = "login", 
-  onLogin, 
-  onRegister, 
-  isLoading = false 
-}: AuthFormProps) => {
-  const [activeTab, setActiveTab] = useState(initialTab);
-  const [showPassword, setShowPassword] = useState(false);
+export function AuthForm() {
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
-  
-  // Initialize the login form
-  const loginForm = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+  const location = useLocation();
+
+  // Get redirect location or default to dashboard
+  const from = location.state?.from?.pathname || "/dashboard";
+
+  const [loginData, setLoginData] = useState({
+    email: "",
+    password: ""
   });
 
-  // Initialize the register form
-  const registerForm = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
+  const [signupData, setSignupData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: ""
   });
 
-  // Handle login form submission
-  const handleLogin = async (values: LoginFormValues) => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!loginData.email || !loginData.password) {
+      toast.error("Por favor, preencha todos os campos");
+      return;
+    }
+
+    setIsLoading(true);
+    console.log('Attempting login with:', loginData.email);
+    
     try {
-      if (onLogin) {
-        await onLogin(values.email, values.password);
-      } else {
-        console.log("Login credentials:", values);
-        // Simulate successful login
-        navigate("/dashboard");
+      const { error } = await signIn(loginData.email, loginData.password);
+      
+      if (error) {
+        console.error('Login error:', error);
+        toast.error(error.message || "Erro ao fazer login");
+        return;
       }
-    } catch (error: any) {
-      showErrorToast(error.message || "Falha ao fazer login");
+
+      console.log('Login successful, redirecting to:', from);
+      toast.success("Login realizado com sucesso!");
+      navigate(from, { replace: true });
+    } catch (error) {
+      console.error("Login exception:", error);
+      toast.error("Erro inesperado ao fazer login");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Handle register form submission
-  const handleRegister = async (values: RegisterFormValues) => {
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!signupData.email || !signupData.password || !signupData.confirmPassword) {
+      toast.error("Por favor, preencha todos os campos");
+      return;
+    }
+
+    if (signupData.password !== signupData.confirmPassword) {
+      toast.error("As senhas não conferem");
+      return;
+    }
+
+    if (signupData.password.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+
+    setIsLoading(true);
+    console.log('Attempting signup with:', signupData.email);
+    
     try {
-      if (onRegister) {
-        await onRegister(values.name, values.email, values.password);
-      } else {
-        console.log("Registration data:", values);
-        // Simulate successful registration
-        setActiveTab("login");
+      const { error } = await signUp(signupData.email, signupData.password);
+      
+      if (error) {
+        console.error('Signup error:', error);
+        toast.error(error.message || "Erro ao criar conta");
+        return;
       }
-    } catch (error: any) {
-      showErrorToast(error.message || "Falha ao registrar");
+
+      toast.success("Conta criada com sucesso! Faça login para continuar.");
+      // Switch to login tab after successful signup
+      document.querySelector('[value="login"]')?.click();
+    } catch (error) {
+      console.error("Signup exception:", error);
+      toast.error("Erro inesperado ao criar conta");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle className="text-center text-2xl font-bold">Unclic Manager</CardTitle>
-        <CardDescription className="text-center">
-          {activeTab === "login" 
-            ? "Entre para acessar sua conta" 
-            : "Crie sua conta para começar"}
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl font-bold">Unclic Manager</CardTitle>
+        <CardDescription>
+          Faça login ou crie sua conta para acessar o sistema
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "register")}>
+        <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Cadastro</TabsTrigger>
+            <TabsTrigger value="signup">Criar Conta</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="login">
-            <Form {...loginForm}>
-              <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4 mt-4">
-                <FormField
-                  control={loginForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="email@exemplo.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+          <TabsContent value="login" className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-email">Email</Label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={loginData.email}
+                  onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                  disabled={isLoading}
                 />
-                
-                <FormField
-                  control={loginForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Senha</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input 
-                            type={showPassword ? "text" : "password"} 
-                            placeholder="••••••••" 
-                            {...field} 
-                          />
-                          <button 
-                            type="button"
-                            className="absolute right-2 top-2.5 text-gray-500"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="login-password">Senha</Label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  placeholder="Sua senha"
+                  value={loginData.password}
+                  onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                  required
+                  disabled={isLoading}
                 />
-                
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Entrando..." : "Entrar"}
-                </Button>
-              </form>
-            </Form>
-            
-            <div className="mt-4 text-center">
-              <Button variant="link" onClick={() => navigate("/reset-password")}>
-                Esqueceu sua senha?
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Entrando..." : "Entrar"}
               </Button>
-            </div>
+            </form>
           </TabsContent>
           
-          <TabsContent value="register">
-            <Form {...registerForm}>
-              <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4 mt-4">
-                <FormField
-                  control={registerForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Seu nome completo" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+          <TabsContent value="signup" className="space-y-4">
+            <form onSubmit={handleSignup} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="signup-email">Email</Label>
+                <Input
+                  id="signup-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={signupData.email}
+                  onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                  disabled={isLoading}
                 />
-                
-                <FormField
-                  control={registerForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="email@exemplo.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-password">Senha</Label>
+                <Input
+                  id="signup-password"
+                  type="password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={signupData.password}
+                  onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
+                  required
+                  disabled={isLoading}
                 />
-                
-                <FormField
-                  control={registerForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Senha</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input 
-                            type={showPassword ? "text" : "password"} 
-                            placeholder="••••••••" 
-                            {...field} 
-                          />
-                          <button 
-                            type="button"
-                            className="absolute right-2 top-2.5 text-gray-500"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-confirm">Confirmar Senha</Label>
+                <Input
+                  id="signup-confirm"
+                  type="password"
+                  placeholder="Confirme sua senha"
+                  value={signupData.confirmPassword}
+                  onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  required
+                  disabled={isLoading}
                 />
-                
-                <FormField
-                  control={registerForm.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirmar Senha</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type={showPassword ? "text" : "password"} 
-                          placeholder="••••••••" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Criando conta..." : "Criar Conta"}
-                </Button>
-              </form>
-            </Form>
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Criando conta..." : "Criar Conta"}
+              </Button>
+            </form>
           </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-muted-foreground">
-          {activeTab === "login" 
-            ? "Ao entrar, você concorda com nossos termos de serviço e política de privacidade."
-            : "Ao se cadastrar, você concorda com nossos termos de serviço e política de privacidade."}
-        </p>
-      </CardFooter>
     </Card>
   );
-};
+}

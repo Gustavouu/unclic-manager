@@ -33,17 +33,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    };
-
-    getInitialSession();
-
-    // Listen for auth changes
+    console.log('AuthProvider: Setting up auth state listener');
+    
+    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.id);
@@ -53,40 +45,100 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Then get initial session
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+        } else {
+          console.log('Initial session:', session?.user?.id);
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
+      } catch (error) {
+        console.error('Exception getting session:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getInitialSession();
+
+    return () => {
+      console.log('AuthProvider: Cleaning up auth listener');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
+    console.log('Signing out...');
+    setLoading(true);
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Error signing out:', error);
       throw error;
     }
+    console.log('Sign out successful');
+    setLoading(false);
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    console.log('Signing in with email:', email);
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      console.log('Sign in response:', { user: data?.user?.id, error });
+      
+      if (error) {
+        setLoading(false);
+        return { error };
+      }
+      
+      // Don't set loading to false here - let onAuthStateChange handle it
+      return { error: null };
+    } catch (error) {
+      console.error('Sign in exception:', error);
+      setLoading(false);
+      return { error };
+    }
   };
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`
-      }
-    });
-    return { error };
+    console.log('Signing up with email:', email);
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+      
+      console.log('Sign up response:', { user: data?.user?.id, error });
+      setLoading(false);
+      return { error };
+    } catch (error) {
+      console.error('Sign up exception:', error);
+      setLoading(false);
+      return { error };
+    }
   };
 
   const resetPassword = async (email: string) => {
+    console.log('Resetting password for email:', email);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset-password`
     });
+    
+    console.log('Reset password response:', { error });
     return { error };
   };
 
@@ -99,6 +151,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signUp,
     resetPassword,
   };
+
+  console.log('AuthProvider render - user:', user?.id, 'loading:', loading);
 
   return (
     <AuthContext.Provider value={value}>

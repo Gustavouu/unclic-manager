@@ -18,6 +18,7 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
 
   console.log('RequireAuth - user:', user?.id, 'loading:', loading, 'pathname:', location.pathname);
 
+  // Show loading while checking authentication
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -26,20 +27,13 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
     );
   }
 
+  // Redirect to auth if not authenticated
   if (!user) {
-    // Evita loop infinito verificando se já estamos na página de auth
-    if (location.pathname === '/auth') {
-      return <>{children}</>;
-    }
+    console.log('RequireAuth: No user, redirecting to /auth');
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Skip onboarding check if explicitly requested
-  if (skipOnboardingCheck) {
-    return <>{children}</>;
-  }
-
-  // TODO: Add onboarding check logic here if needed
-  
+  // User is authenticated, render children
+  console.log('RequireAuth: User authenticated, rendering children');
   return <>{children}</>;
 };
