@@ -1,130 +1,89 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from 'next-themes';
 import { Layout } from '@/components/layout/Layout';
-import Dashboard from '@/pages/Dashboard';
-import Appointments from '@/pages/Appointments';
-import Clients from '@/pages/Clients';
-import Services from '@/pages/Services';
-import Professionals from '@/pages/Professionals';
-import Inventory from '@/pages/Inventory';
-import Finance from '@/pages/Finance';
-import Payments from '@/pages/Payments';
-import ReportsPage from '@/pages/ReportsPage';
-import Settings from '@/pages/Settings';
-import { ThemeProvider } from '@/components/theme-provider';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { TenantProvider } from '@/contexts/TenantContext';
-import { initializeGlobalErrorHandler } from '@/services/error/GlobalErrorHandler';
-import './App.css';
+import { RequireAuth } from '@/components/auth/RequireAuth';
+import AuthPage from '@/pages/Auth';
 
-// Inicializar o manipulador de erros global
-initializeGlobalErrorHandler();
+// Import pages
+import DashboardEnhanced from '@/pages/DashboardEnhanced';
+import AppointmentsPage from '@/pages/Appointments';
+import ClientsPage from '@/pages/Clients';
+import ServicesPage from '@/pages/Services';
+import ProfessionalsPage from '@/pages/Professionals';
+import InventoryPage from '@/pages/Inventory';
+import FinancePage from '@/pages/Finance';
+import PaymentsPage from '@/pages/Payments';
+import ReportsPage from '@/pages/Reports';
+import MarketingPage from '@/pages/Marketing';
+import DocumentsPage from '@/pages/Documents';
+import SettingsPage from '@/pages/Settings';
+import OnboardingPage from '@/pages/Onboarding';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 10, // 10 minutes (renamed from cacheTime)
-      retry: (failureCount, error: any) => {
-        // Não tentar novamente para erros 4xx (exceto 401/403)
-        if (error?.status >= 400 && error?.status < 500 && ![401, 403].includes(error?.status)) {
-          return false;
-        }
-        return failureCount < 3;
-      },
-    },
-    mutations: {
-      retry: false, // Não tentar novamente mutations automaticamente
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
     },
   },
 });
 
-// Helper function to get breadcrumb based on pathname
-const getBreadcrumb = (pathname: string) => {
-  const breadcrumbMap: Record<string, { label: string; path?: string }[]> = {
-    '/dashboard': [
-      { label: "Início", path: "/dashboard" }
-    ],
-    '/appointments': [
-      { label: "Início", path: "/dashboard" },
-      { label: "Agendamentos" }
-    ],
-    '/clients': [
-      { label: "Início", path: "/dashboard" },
-      { label: "Clientes" }
-    ],
-    '/services': [
-      { label: "Início", path: "/dashboard" },
-      { label: "Serviços" }
-    ],
-    '/professionals': [
-      { label: "Início", path: "/dashboard" },
-      { label: "Profissionais" }
-    ],
-    '/inventory': [
-      { label: "Início", path: "/dashboard" },
-      { label: "Estoque" }
-    ],
-    '/finance': [
-      { label: "Início", path: "/dashboard" },
-      { label: "Financeiro" }
-    ],
-    '/payments': [
-      { label: "Início", path: "/dashboard" },
-      { label: "Pagamentos" }
-    ],
-    '/reports': [
-      { label: "Início", path: "/dashboard" },
-      { label: "Relatórios" }
-    ],
-    '/settings': [
-      { label: "Início", path: "/dashboard" },
-      { label: "Configurações" }
-    ],
-  };
-
-  return breadcrumbMap[pathname] || [];
-};
-
-function AppRoutes() {
-  const location = useLocation();
-  const breadcrumb = getBreadcrumb(location.pathname);
-
-  return (
-    <Layout breadcrumb={breadcrumb}>
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/appointments" element={<Appointments />} />
-        <Route path="/clients" element={<Clients />} />
-        <Route path="/services" element={<Services />} />
-        <Route path="/professionals" element={<Professionals />} />
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/finance" element={<Finance />} />
-        <Route path="/payments" element={<Payments />} />
-        <Route path="/reports" element={<ReportsPage />} />
-        <Route path="/settings" element={<Settings />} />
-      </Routes>
-    </Layout>
-  );
-}
-
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="beauty-app-theme">
-      <AuthProvider>
-        <TenantProvider>
-          <QueryClientProvider client={queryClient}>
-            <Router>
-              <AppRoutes />
-              <Toaster position="top-right" richColors closeButton />
-            </Router>
-          </QueryClientProvider>
-        </TenantProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" enableSystem>
+        <Router>
+          <div className="min-h-screen bg-background">
+            <Routes>
+              {/* Public routes */}
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
+
+              {/* Protected routes */}
+              <Route
+                path="/*"
+                element={
+                  <RequireAuth>
+                    <Layout>
+                      <Routes>
+                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                        <Route path="/dashboard" element={<DashboardEnhanced />} />
+                        <Route path="/appointments/*" element={<AppointmentsPage />} />
+                        <Route path="/clients/*" element={<ClientsPage />} />
+                        <Route path="/services/*" element={<ServicesPage />} />
+                        <Route path="/professionals/*" element={<ProfessionalsPage />} />
+                        <Route path="/inventory/*" element={<InventoryPage />} />
+                        <Route path="/finance/*" element={<FinancePage />} />
+                        <Route path="/payments/*" element={<PaymentsPage />} />
+                        <Route path="/reports/*" element={<ReportsPage />} />
+                        <Route path="/marketing/*" element={<MarketingPage />} />
+                        <Route path="/documents/*" element={<DocumentsPage />} />
+                        <Route path="/settings/*" element={<SettingsPage />} />
+                      </Routes>
+                    </Layout>
+                  </RequireAuth>
+                }
+              />
+            </Routes>
+
+            <Toaster 
+              position="bottom-right"
+              toastOptions={{
+                style: {
+                  background: 'hsl(var(--background))',
+                  color: 'hsl(var(--foreground))',
+                  border: '1px solid hsl(var(--border))',
+                },
+              }}
+            />
+          </div>
+        </Router>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 
