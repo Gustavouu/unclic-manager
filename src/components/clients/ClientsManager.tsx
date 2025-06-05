@@ -1,14 +1,14 @@
+
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, BarChart3, FileSpreadsheet } from 'lucide-react';
 import { ClientStatsCard } from './ClientStatsCard';
 import { ClientFilters } from './ClientFilters';
-import { ClientsTable } from './ClientsTable';
 import { ClientFormModal } from './ClientFormModal';
-import { ClientsPagination } from './ClientsPagination';
 import { ClientsImportExport } from './ClientsImportExport';
+import { ClientsList } from './ClientsList';
+import { ClientsAnalytics } from './analytics/ClientsAnalytics';
 import { useClientsList } from '@/hooks/clients/useClientsList';
 import { useClientAnalytics } from '@/hooks/clients/useClientAnalytics';
 import type { Client } from '@/types/client';
@@ -127,101 +127,27 @@ export const ClientsManager: React.FC<ClientsManagerProps> = ({
             cities={availableFilters.cities}
           />
 
-          {/* Clients Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {pagination.total} cliente{pagination.total !== 1 ? 's' : ''} encontrado{pagination.total !== 1 ? 's' : ''}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ClientsTable
-                clients={clients}
-                onEditClient={handleEditClient}
-                onViewClient={onViewClient || (() => {})}
-                onDeleteClient={handleDeleteClient}
-                onCreateAppointment={onCreateAppointment}
-              />
-              
-              {pagination.total > 0 && (
-                <ClientsPagination
-                  currentPage={pagination.page}
-                  totalPages={totalPages}
-                  pageSize={pagination.pageSize}
-                  totalItems={pagination.total}
-                  onPageChange={(page) => updatePagination({ page })}
-                  onPageSizeChange={(pageSize) => updatePagination({ pageSize, page: 1 })}
-                />
-              )}
-            </CardContent>
-          </Card>
+          {/* Clients List */}
+          <ClientsList
+            clients={clients}
+            totalClients={pagination.total}
+            currentPage={pagination.page}
+            totalPages={totalPages}
+            pageSize={pagination.pageSize}
+            onEditClient={handleEditClient}
+            onViewClient={onViewClient || (() => {})}
+            onDeleteClient={handleDeleteClient}
+            onCreateAppointment={onCreateAppointment}
+            onPageChange={(page) => updatePagination({ page })}
+            onPageSizeChange={(pageSize) => updatePagination({ pageSize, page: 1 })}
+          />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Top 5 Clientes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {analytics.topSpenders.map((client, index) => (
-                    <div key={client.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-medium text-sm">
-                            {index + 1}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium">{client.name}</p>
-                          <p className="text-sm text-gray-500">{client.email}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">
-                          {new Intl.NumberFormat('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                          }).format(client.total_spent || 0)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Clientes que Precisam de Atenção</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {analytics.clientsNeedingAttention.slice(0, 5).map((client) => (
-                    <div key={client.id} className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                      <div>
-                        <p className="font-medium">{client.name}</p>
-                        <p className="text-sm text-gray-500">
-                          Última visita: {client.last_visit 
-                            ? new Date(client.last_visit).toLocaleDateString('pt-BR')
-                            : 'Nunca'
-                          }
-                        </p>
-                      </div>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => onCreateAppointment?.(client.id)}
-                      >
-                        Agendar
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <ClientsAnalytics
+            analytics={analytics}
+            onCreateAppointment={onCreateAppointment}
+          />
         </TabsContent>
 
         <TabsContent value="import-export">

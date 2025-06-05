@@ -1,14 +1,14 @@
-
-import { ErrorHandlingService, ErrorSeverity, ErrorContext } from './ErrorHandlingService';
+import { ErrorService } from './ErrorService';
+import { ErrorSeverity, ErrorContext } from './ErrorHandlingService';
 import { toast } from 'sonner';
 
 export class GlobalErrorHandler {
   private static instance: GlobalErrorHandler;
-  private errorService: ErrorHandlingService;
+  private errorService: ErrorService;
   private isProduction: boolean;
 
   private constructor() {
-    this.errorService = ErrorHandlingService.getInstance();
+    this.errorService = ErrorService.getInstance();
     this.isProduction = import.meta.env.PROD;
     this.setupGlobalHandlers();
   }
@@ -21,7 +21,6 @@ export class GlobalErrorHandler {
   }
 
   private setupGlobalHandlers(): void {
-    // Capturar erros não tratados do JavaScript
     window.addEventListener('error', (event) => {
       this.handleError(event.error, 'high', {
         component: 'Global',
@@ -34,7 +33,6 @@ export class GlobalErrorHandler {
       });
     });
 
-    // Capturar erros de promises rejeitadas
     window.addEventListener('unhandledrejection', (event) => {
       this.handleError(event.reason, 'high', {
         component: 'Global',
@@ -42,7 +40,6 @@ export class GlobalErrorHandler {
       });
     });
 
-    // Interceptar erros do React (se necessário)
     if (!this.isProduction) {
       console.log('🛡️ Global Error Handler initialized');
     }
@@ -55,7 +52,6 @@ export class GlobalErrorHandler {
   ): string {
     const errorId = this.errorService.handleError(error, severity, context);
     
-    // Mostrar toast apenas para erros que o usuário deve ver
     if (severity === 'high' || severity === 'critical') {
       const userMessage = this.errorService.getUserFriendlyMessage(error);
       toast.error(userMessage, {
@@ -64,7 +60,6 @@ export class GlobalErrorHandler {
       });
     }
 
-    // Em produção, enviar erros críticos para serviço de monitoramento
     if (this.isProduction && severity === 'critical') {
       this.reportToMonitoringService(error, errorId, context);
     }
@@ -90,7 +85,6 @@ export class GlobalErrorHandler {
 
     let severity: ErrorSeverity = 'medium';
     
-    // Determinar severidade baseada no status code
     if (error.status >= 500) {
       severity = 'high';
     } else if (error.status === 401 || error.status === 403) {
@@ -154,7 +148,6 @@ export class GlobalErrorHandler {
     errorId: string,
     context: ErrorContext
   ): void {
-    // Em um ambiente real, isso enviaria para Sentry, LogRocket, etc.
     const errorData = {
       errorId,
       message: typeof error === 'string' ? error : error.message,
@@ -166,9 +159,6 @@ export class GlobalErrorHandler {
     };
 
     console.error('🚨 Critical Error Reported to Monitoring:', errorData);
-    
-    // Aqui você adicionaria a integração real com o serviço de monitoramento
-    // Example: Sentry.captureException(error, { extra: errorData });
   }
 
   public getErrorHistory(limit?: number) {
@@ -183,17 +173,14 @@ export class GlobalErrorHandler {
     return this.errorService.markErrorAsResolved(errorId);
   }
 
-  // Método para limpar erros antigos (pode ser chamado periodicamente)
   public clearOldErrors(olderThanDays: number = 7): void {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
     
-    // Implementar lógica para remover erros antigos
     console.log(`Clearing errors older than ${olderThanDays} days`);
   }
 }
 
-// Hook para usar o manipulador de erros em componentes React
 export const useErrorHandler = () => {
   const errorHandler = GlobalErrorHandler.getInstance();
 
@@ -206,33 +193,17 @@ export const useErrorHandler = () => {
   };
 
   const handleApiError = (error: any, endpoint: string, operation?: string) => {
-    return errorHandler.handleApiError(error, endpoint, operation);
-  };
-
-  const handleFormError = (error: any, formName: string, fieldName?: string) => {
-    return errorHandler.handleFormError(error, formName, fieldName);
-  };
-
-  const retry = <T>(
-    operation: () => Promise<T>,
-    maxRetries?: number,
-    delayMs?: number,
-    context?: ErrorContext
-  ) => {
-    return errorHandler.retry(operation, maxRetries, delayMs, context);
+    return errorHandler.errorService.handleApiError(error, endpoint, operation);
   };
 
   return {
     handleError,
     handleApiError,
-    handleFormError,
-    retry,
-    getErrorHistory: () => errorHandler.getErrorHistory(),
-    getErrorStats: () => errorHandler.getErrorStats()
+    getErrorHistory: () => errorHandler.errorService.getErrorHistory(),
+    getErrorStats: () => errorHandler.errorService.getErrorStats()
   };
 };
 
-// Inicializar o manipulador global
 export const initializeGlobalErrorHandler = () => {
   GlobalErrorHandler.getInstance();
 };
