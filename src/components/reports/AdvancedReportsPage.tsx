@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, PieChart } from 'lucide-react';
+import { BarChart3, Info } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { useAdvancedReports } from '@/hooks/reports/useAdvancedReports';
 import { ReportsKPICards } from './ReportsKPICards';
@@ -11,6 +11,7 @@ import { PaymentMethodsChart } from './charts/PaymentMethodsChart';
 import { ServicesTab } from './tabs/ServicesTab';
 import { ProfessionalsTab } from './tabs/ProfessionalsTab';
 import { ReportExporter } from './ReportExporter';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export const AdvancedReportsPage: React.FC = () => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -39,16 +40,45 @@ export const AdvancedReportsPage: React.FC = () => {
     );
   }
 
-  if (error || !data) {
+  if (error) {
     return (
       <div className="text-center py-8">
-        <p className="text-red-600">Erro ao carregar relatórios: {error}</p>
+        <Alert className="max-w-md mx-auto">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="text-center py-8">
+        <Alert className="max-w-md mx-auto">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Nenhum dado de relatório disponível para o período selecionado.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Demo Data Alert */}
+      {data.isDemoData && (
+        <Alert className="bg-blue-50 border-blue-200">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <strong>Dados de Demonstração:</strong> Os relatórios mostrados são exemplos. 
+            Complete a configuração do seu negócio para ver dados reais.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -100,7 +130,7 @@ export const AdvancedReportsPage: React.FC = () => {
           <ReportExporter 
             data={data}
             reportType="advanced"
-            period={`${dateRange?.from?.toISOString().split('T')[0]} - ${dateRange?.to?.toISOString().split('T')[0]}`}
+            period={data.period}
           />
         </TabsContent>
       </Tabs>
