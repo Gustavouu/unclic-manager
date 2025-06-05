@@ -6,10 +6,12 @@ import { FileText, Download, Upload, Folder } from 'lucide-react';
 
 export default function DocumentsPage() {
   return (
-    <PageContainer 
-      title="Documentos" 
-      description="Gerencie contratos, termos e documentos do negócio"
-    >
+    <PageContainer className="space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold">Documentos</h1>
+        <p className="text-muted-foreground">Gerencie contratos, termos e documentos do negócio</p>
+      </div>
+      
       <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>

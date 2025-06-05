@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { Layout } from '@/components/layout/Layout';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import AuthPage from '@/pages/Auth';
@@ -36,52 +37,54 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light" enableSystem>
-        <Router>
-          <div className="min-h-screen bg-background">
-            <Routes>
-              {/* Public routes */}
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/onboarding" element={<OnboardingPage />} />
+        <AuthProvider>
+          <Router>
+            <div className="min-h-screen bg-background">
+              <Routes>
+                {/* Public routes */}
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/onboarding" element={<OnboardingPage />} />
 
-              {/* Protected routes */}
-              <Route
-                path="/*"
-                element={
-                  <RequireAuth>
-                    <Layout>
-                      <Routes>
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                        <Route path="/dashboard" element={<DashboardEnhanced />} />
-                        <Route path="/appointments/*" element={<AppointmentsPage />} />
-                        <Route path="/clients/*" element={<ClientsPage />} />
-                        <Route path="/services/*" element={<ServicesPage />} />
-                        <Route path="/professionals/*" element={<ProfessionalsPage />} />
-                        <Route path="/inventory/*" element={<InventoryPage />} />
-                        <Route path="/finance/*" element={<FinancePage />} />
-                        <Route path="/payments/*" element={<PaymentsPage />} />
-                        <Route path="/reports/*" element={<ReportsPage />} />
-                        <Route path="/marketing/*" element={<MarketingPage />} />
-                        <Route path="/documents/*" element={<DocumentsPage />} />
-                        <Route path="/settings/*" element={<SettingsPage />} />
-                      </Routes>
-                    </Layout>
-                  </RequireAuth>
-                }
+                {/* Protected routes */}
+                <Route
+                  path="/*"
+                  element={
+                    <RequireAuth>
+                      <Layout>
+                        <Routes>
+                          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                          <Route path="/dashboard" element={<DashboardEnhanced />} />
+                          <Route path="/appointments/*" element={<AppointmentsPage />} />
+                          <Route path="/clients/*" element={<ClientsPage />} />
+                          <Route path="/services/*" element={<ServicesPage />} />
+                          <Route path="/professionals/*" element={<ProfessionalsPage />} />
+                          <Route path="/inventory/*" element={<InventoryPage />} />
+                          <Route path="/finance/*" element={<FinancePage />} />
+                          <Route path="/payments/*" element={<PaymentsPage />} />
+                          <Route path="/reports/*" element={<ReportsPage />} />
+                          <Route path="/marketing/*" element={<MarketingPage />} />
+                          <Route path="/documents/*" element={<DocumentsPage />} />
+                          <Route path="/settings/*" element={<SettingsPage />} />
+                        </Routes>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+              </Routes>
+
+              <Toaster 
+                position="bottom-right"
+                toastOptions={{
+                  style: {
+                    background: 'hsl(var(--background))',
+                    color: 'hsl(var(--foreground))',
+                    border: '1px solid hsl(var(--border))',
+                  },
+                }}
               />
-            </Routes>
-
-            <Toaster 
-              position="bottom-right"
-              toastOptions={{
-                style: {
-                  background: 'hsl(var(--background))',
-                  color: 'hsl(var(--foreground))',
-                  border: '1px solid hsl(var(--border))',
-                },
-              }}
-            />
-          </div>
-        </Router>
+            </div>
+          </Router>
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
