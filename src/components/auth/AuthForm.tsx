@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -92,7 +91,8 @@ export function AuthForm() {
 
       toast.success("Conta criada com sucesso! Faça login para continuar.");
       // Switch to login tab after successful signup
-      document.querySelector('[value="login"]')?.click();
+      const loginTab = document.querySelector('[value="login"]') as HTMLElement;
+      loginTab?.click();
     } catch (error) {
       console.error("Signup exception:", error);
       toast.error("Erro inesperado ao criar conta");
