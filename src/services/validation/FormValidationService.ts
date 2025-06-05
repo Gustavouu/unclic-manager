@@ -1,6 +1,11 @@
 import React from 'react';
 import { ValidationService, ValidationRule } from './ValidationService';
 
+export interface ValidationResult {
+  isValid: boolean;
+  errors: Record<string, string>;
+}
+
 export interface FormFieldConfig {
   name: string;
   label: string;
@@ -29,7 +34,7 @@ export class FormValidationService {
     return FormValidationService.instance;
   }
 
-  public validateForm(data: Record<string, any>, config: FormValidationConfig) {
+  public validateForm(data: Record<string, any>, config: FormValidationConfig): ValidationResult {
     const rules = config.fields.map(field => ({
       field: field.name,
       required: field.required,
