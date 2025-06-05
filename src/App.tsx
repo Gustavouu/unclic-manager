@@ -41,35 +41,145 @@ function App() {
           <Router>
             <div className="min-h-screen bg-background">
               <Routes>
-                {/* Public routes */}
+                {/* Public routes - não precisam de autenticação */}
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />
 
-                {/* Protected routes */}
+                {/* Protected routes - precisam de autenticação */}
                 <Route
-                  path="/*"
+                  path="/dashboard"
                   element={
                     <RequireAuth>
                       <Layout>
-                        <Routes>
-                          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                          <Route path="/dashboard" element={<DashboardEnhanced />} />
-                          <Route path="/appointments/*" element={<AppointmentsPage />} />
-                          <Route path="/clients/*" element={<ClientsPage />} />
-                          <Route path="/services/*" element={<ServicesPage />} />
-                          <Route path="/professionals/*" element={<ProfessionalsPage />} />
-                          <Route path="/inventory/*" element={<InventoryPage />} />
-                          <Route path="/finance/*" element={<FinancePage />} />
-                          <Route path="/payments/*" element={<PaymentsPage />} />
-                          <Route path="/reports/*" element={<ReportsPage />} />
-                          <Route path="/marketing/*" element={<MarketingPage />} />
-                          <Route path="/documents/*" element={<DocumentsPage />} />
-                          <Route path="/settings/*" element={<SettingsPage />} />
-                        </Routes>
+                        <DashboardEnhanced />
                       </Layout>
                     </RequireAuth>
                   }
                 />
+                
+                <Route
+                  path="/appointments/*"
+                  element={
+                    <RequireAuth>
+                      <Layout>
+                        <AppointmentsPage />
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                
+                <Route
+                  path="/clients/*"
+                  element={
+                    <RequireAuth>
+                      <Layout>
+                        <ClientsPage />
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                
+                <Route
+                  path="/services/*"
+                  element={
+                    <RequireAuth>
+                      <Layout>
+                        <ServicesPage />
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                
+                <Route
+                  path="/professionals/*"
+                  element={
+                    <RequireAuth>
+                      <Layout>
+                        <ProfessionalsPage />
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                
+                <Route
+                  path="/inventory/*"
+                  element={
+                    <RequireAuth>
+                      <Layout>
+                        <InventoryPage />
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                
+                <Route
+                  path="/finance/*"
+                  element={
+                    <RequireAuth>
+                      <Layout>
+                        <FinancePage />
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                
+                <Route
+                  path="/payments/*"
+                  element={
+                    <RequireAuth>
+                      <Layout>
+                        <PaymentsPage />
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                
+                <Route
+                  path="/reports/*"
+                  element={
+                    <RequireAuth>
+                      <Layout>
+                        <ReportsPage />
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                
+                <Route
+                  path="/marketing/*"
+                  element={
+                    <RequireAuth>
+                      <Layout>
+                        <MarketingPage />
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                
+                <Route
+                  path="/documents/*"
+                  element={
+                    <RequireAuth>
+                      <Layout>
+                        <DocumentsPage />
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                
+                <Route
+                  path="/settings/*"
+                  element={
+                    <RequireAuth>
+                      <Layout>
+                        <SettingsPage />
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+
+                {/* Redirect root to dashboard */}
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
               </Routes>
 
               <Toaster 
