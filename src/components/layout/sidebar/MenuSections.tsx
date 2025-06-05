@@ -1,83 +1,178 @@
 
-import * as React from "react";
-import {
-  CalendarRange,
-  LayoutDashboard,
-  Package,
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { 
+  LayoutDashboard, 
+  Users, 
+  Calendar, 
   Scissors,
-  Users,
-  WalletCards,
+  UserCheck,
+  DollarSign, 
+  BarChart3, 
   Settings,
-  BarChart3,
+  Package,
   CreditCard,
-} from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
-import { SidebarGroup } from "./SidebarGroup";
-import { cn } from "@/lib/utils";
-import { ThemeSwitcher } from "./ThemeSwitcher";
+  FileText,
+  Megaphone
+} from 'lucide-react';
 
-export function MenuSections() {
-  const { pathname } = useLocation();
+interface MenuItem {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  href: string;
+  badge?: string | number;
+  description?: string;
+}
 
-  const menuItems = [
-    {
-      group: "Menu",
-      items: [
-        { icon: LayoutDashboard, title: "Dashboard", path: "/dashboard" }
-      ]
-    },
-    {
-      group: "Gestão",
-      items: [
-        { icon: CalendarRange, title: "Agenda", path: "/appointments" },
-        { icon: Scissors, title: "Serviços", path: "/services" },
-        { icon: Users, title: "Clientes", path: "/clients" },
-        { icon: Users, title: "Profissionais", path: "/professionals" },
-        { icon: Package, title: "Estoque", path: "/inventory" },
-        { icon: WalletCards, title: "Financeiro", path: "/finance" },
-        { icon: CreditCard, title: "Pagamentos", path: "/payments" },
-        { icon: BarChart3, title: "Relatórios", path: "/reports" },
-        { icon: Settings, title: "Configurações", path: "/settings" }
-      ]
-    }
-  ];
-  
+interface MenuSection {
+  title: string;
+  items: MenuItem[];
+}
+
+const menuSections: MenuSection[] = [
+  {
+    title: 'Principal',
+    items: [
+      {
+        title: 'Dashboard',
+        icon: LayoutDashboard,
+        href: '/dashboard',
+        description: 'Visão geral do negócio'
+      },
+      {
+        title: 'Agendamentos',
+        icon: Calendar,
+        href: '/appointments',
+        description: 'Gerencie sua agenda'
+      }
+    ]
+  },
+  {
+    title: 'Gestão',
+    items: [
+      {
+        title: 'Clientes',
+        icon: Users,
+        href: '/clients',
+        description: 'Base de clientes'
+      },
+      {
+        title: 'Serviços',
+        icon: Scissors,
+        href: '/services',
+        description: 'Catálogo de serviços'
+      },
+      {
+        title: 'Profissionais',
+        icon: UserCheck,
+        href: '/professionals',
+        description: 'Equipe de trabalho'
+      },
+      {
+        title: 'Estoque',
+        icon: Package,
+        href: '/inventory',
+        description: 'Controle de produtos'
+      }
+    ]
+  },
+  {
+    title: 'Financeiro',
+    items: [
+      {
+        title: 'Financeiro',
+        icon: DollarSign,
+        href: '/finance',
+        description: 'Receitas e despesas'
+      },
+      {
+        title: 'Pagamentos',
+        icon: CreditCard,
+        href: '/payments',
+        description: 'Métodos de pagamento'
+      },
+      {
+        title: 'Relatórios',
+        icon: BarChart3,
+        href: '/reports',
+        description: 'Análises e insights'
+      }
+    ]
+  },
+  {
+    title: 'Sistema',
+    items: [
+      {
+        title: 'Marketing',
+        icon: Megaphone,
+        href: '/marketing',
+        description: 'Campanhas e promoções'
+      },
+      {
+        title: 'Documentos',
+        icon: FileText,
+        href: '/documents',
+        description: 'Contratos e termos'
+      },
+      {
+        title: 'Configurações',
+        icon: Settings,
+        href: '/settings',
+        description: 'Configurações do sistema'
+      }
+    ]
+  }
+];
+
+export const MenuSections: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const isActive = (href: string) => {
+    return location.pathname === href || location.pathname.startsWith(href + '/');
+  };
+
   return (
-    <div className="py-2">
-      {menuItems.map((section) => (
-        <SidebarGroup title={section.group} key={section.group}>
-          <div className="space-y-1 px-3">
+    <nav className="space-y-6 px-3">
+      {menuSections.map((section) => (
+        <div key={section.title} className="space-y-1">
+          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            {section.title}
+          </h3>
+          <div className="space-y-1">
             {section.items.map((item) => {
-              const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              
               return (
-                <Link
-                  key={item.path}
-                  to={item.path}
+                <button
+                  key={item.href}
+                  onClick={() => navigate(item.href)}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                    isActive 
-                      ? "bg-blue-600 text-white font-medium shadow-sm" 
-                      : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-800"
+                    'w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200',
+                    'hover:bg-accent hover:text-accent-foreground',
+                    'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                    active && 'bg-accent text-accent-foreground shadow-sm'
                   )}
+                  title={item.description}
                 >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.title}</span>
-                </Link>
+                  <Icon className={cn(
+                    'h-4 w-4 flex-shrink-0',
+                    active ? 'text-accent-foreground' : 'text-muted-foreground'
+                  )} />
+                  <span className="truncate">{item.title}</span>
+                  {item.badge && (
+                    <span className="ml-auto text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
               );
             })}
           </div>
-        </SidebarGroup>
-      ))}
-      
-      <div className="mt-auto px-4 py-3">
-        <div className="flex items-center justify-between rounded-md p-2 bg-gray-50 dark:bg-neutral-900">
-          <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="text-sm">Tema</span>
-          </div>
-          <ThemeSwitcher />
         </div>
-      </div>
-    </div>
+      ))}
+    </nav>
   );
-}
+};

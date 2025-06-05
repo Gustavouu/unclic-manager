@@ -1,59 +1,94 @@
 
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { LogOut, Settings, User } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import React from 'react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LogOut, Settings, User, HelpCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-export function UserDropdown() {
-  const { user, signOut } = useAuth();
+export const UserDropdown: React.FC = () => {
+  const navigate = useNavigate();
 
-  if (!user) {
-    return null;
-  }
-
-  const userInitials = user.email?.substring(0, 2).toUpperCase() || "U";
-  const userName = user.user_metadata?.name || user.email || "Usuário";
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/auth');
+      toast.success('Logout realizado com sucesso!');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast.error('Erro ao fazer logout');
+    }
+  };
 
   return (
-    <div className="p-4 border-t">
+    <div className="border-t p-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="w-full justify-start gap-2 h-auto p-2">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={user.user_metadata?.avatar_url} />
-              <AvatarFallback>{userInitials}</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col items-start text-sm">
-              <span className="font-medium">{userName}</span>
-              <span className="text-xs text-muted-foreground truncate">
-                {user.email}
-              </span>
+          <Button variant="ghost" className="w-full justify-start h-auto p-2">
+            <div className="flex items-center gap-3 w-full">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="" alt="User" />
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                  U
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 text-left min-w-0">
+                <p className="text-sm font-medium truncate">Usuário Demo</p>
+                <p className="text-xs text-muted-foreground truncate">admin@unclic.app</p>
+              </div>
             </div>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem>
-            <User className="mr-2 h-4 w-4" />
-            <span>Perfil</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>Configurações</span>
-          </DropdownMenuItem>
+        
+        <DropdownMenuContent 
+          align="end" 
+          className="w-56 bg-background border shadow-lg"
+          sideOffset={8}
+        >
+          <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => signOut()}>
+          
+          <DropdownMenuItem 
+            onClick={() => navigate('/profile')}
+            className="cursor-pointer"
+          >
+            <User className="mr-2 h-4 w-4" />
+            Perfil
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem 
+            onClick={() => navigate('/settings')}
+            className="cursor-pointer"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Configurações
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem className="cursor-pointer">
+            <HelpCircle className="mr-2 h-4 w-4" />
+            Ajuda
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          <DropdownMenuItem 
+            onClick={handleLogout}
+            className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+          >
             <LogOut className="mr-2 h-4 w-4" />
-            <span>Sair</span>
+            Sair
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
   );
-}
+};
