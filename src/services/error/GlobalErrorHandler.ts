@@ -1,10 +1,11 @@
+
 import { ErrorService } from './ErrorService';
 import { ErrorSeverity, ErrorContext } from './ErrorHandlingService';
 import { toast } from 'sonner';
 
 export class GlobalErrorHandler {
   private static instance: GlobalErrorHandler;
-  private errorService: ErrorService;
+  public errorService: ErrorService; // Changed from private to public
   private isProduction: boolean;
 
   private constructor() {

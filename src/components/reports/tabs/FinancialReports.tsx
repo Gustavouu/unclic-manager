@@ -12,6 +12,14 @@ interface FinancialReportsProps {
 }
 
 export function FinancialReports({ dateRange, stats }: FinancialReportsProps) {
+  // Mock payment methods data based on stats
+  const paymentMethodsData = [
+    { method: 'Cartão de Crédito', count: Math.floor(stats.totalAppointments * 0.4), percentage: 40 },
+    { method: 'PIX', count: Math.floor(stats.totalAppointments * 0.3), percentage: 30 },
+    { method: 'Dinheiro', count: Math.floor(stats.totalAppointments * 0.2), percentage: 20 },
+    { method: 'Cartão de Débito', count: Math.floor(stats.totalAppointments * 0.1), percentage: 10 },
+  ];
+
   return (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
       <Card className="md:col-span-2">
@@ -50,7 +58,7 @@ export function FinancialReports({ dateRange, stats }: FinancialReportsProps) {
           <CardDescription>Distribuição por forma de pagamento</CardDescription>
         </CardHeader>
         <CardContent>
-          <PaymentMethodsChart dateRange={dateRange} stats={stats} />
+          <PaymentMethodsChart data={paymentMethodsData} />
         </CardContent>
       </Card>
     </div>

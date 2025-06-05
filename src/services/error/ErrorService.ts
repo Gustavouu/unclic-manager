@@ -60,4 +60,16 @@ export class ErrorService {
   public getErrorStats() {
     return this.errorHandlingService.getErrorStats();
   }
+
+  public retryOperation<T>(
+    operation: () => Promise<T>,
+    maxRetries: number = 3,
+    delayMs: number = 1000
+  ): Promise<T> {
+    return this.errorHandlingService.retryOperation(operation, maxRetries, delayMs);
+  }
+
+  public markErrorAsResolved(errorId: string): boolean {
+    return this.errorHandlingService.markErrorAsResolved(errorId);
+  }
 }
