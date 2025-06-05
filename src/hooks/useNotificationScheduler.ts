@@ -5,7 +5,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 
 interface ScheduledNotification {
   id: string;
-  type: 'appointment_reminder' | 'payment_reminder' | 'follow_up';
+  type: 'appointment_reminder' | 'payment_due' | 'system';
   scheduledFor: Date;
   recipientId: string;
   message: string;
@@ -37,7 +37,7 @@ export const useNotificationScheduler = () => {
   const schedulePaymentReminder = async (clientId: string, amount: number, dueDate: Date) => {
     const notification: ScheduledNotification = {
       id: Date.now().toString(),
-      type: 'payment_reminder',
+      type: 'payment_due',
       scheduledFor: dueDate,
       recipientId: clientId,
       message: `Lembrete: Pagamento de R$ ${amount.toFixed(2)} vence hoje`,
