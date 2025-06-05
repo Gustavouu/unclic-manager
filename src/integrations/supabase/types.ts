@@ -835,7 +835,7 @@ export type Database = {
           address: string | null
           atualizado_em: string | null
           birth_date: string | null
-          business_id: string | null
+          business_id: string
           cep: string | null
           cidade: string | null
           city: string | null
@@ -851,11 +851,12 @@ export type Database = {
           id_negocio: string
           id_usuario: string | null
           last_visit: string | null
-          name: string | null
+          name: string
           nome: string
           notas: string | null
           notes: string | null
           phone: string | null
+          preferences: Json | null
           preferencias: Json | null
           state: string | null
           status: string | null
@@ -872,7 +873,7 @@ export type Database = {
           address?: string | null
           atualizado_em?: string | null
           birth_date?: string | null
-          business_id?: string | null
+          business_id: string
           cep?: string | null
           cidade?: string | null
           city?: string | null
@@ -888,11 +889,12 @@ export type Database = {
           id_negocio: string
           id_usuario?: string | null
           last_visit?: string | null
-          name?: string | null
+          name: string
           nome: string
           notas?: string | null
           notes?: string | null
           phone?: string | null
+          preferences?: Json | null
           preferencias?: Json | null
           state?: string | null
           status?: string | null
@@ -909,7 +911,7 @@ export type Database = {
           address?: string | null
           atualizado_em?: string | null
           birth_date?: string | null
-          business_id?: string | null
+          business_id?: string
           cep?: string | null
           cidade?: string | null
           city?: string | null
@@ -925,11 +927,12 @@ export type Database = {
           id_negocio?: string
           id_usuario?: string | null
           last_visit?: string | null
-          name?: string | null
+          name?: string
           nome?: string
           notas?: string | null
           notes?: string | null
           phone?: string | null
+          preferences?: Json | null
           preferencias?: Json | null
           state?: string | null
           status?: string | null

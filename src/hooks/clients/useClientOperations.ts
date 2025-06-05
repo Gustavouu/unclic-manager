@@ -19,34 +19,22 @@ export const useClientOperations = () => {
     try {
       console.log('Creating client with data:', { ...clientData, business_id: businessId });
       
-      // Prepare the data with both Portuguese and English field names for compatibility
+      // Prepare the data using standardized English field names
       const insertData = {
         business_id: businessId,
-        id_negocio: businessId, // Duplicate for legacy compatibility
         name: clientData.name?.trim(),
-        nome: clientData.name?.trim(), // Duplicate for legacy compatibility
         email: clientData.email?.toLowerCase().trim() || null,
         phone: clientData.phone?.trim() || null,
-        telefone: clientData.phone?.trim() || null, // Duplicate for legacy compatibility
         birth_date: clientData.birth_date || null,
-        data_nascimento: clientData.birth_date || null, // Duplicate for legacy compatibility
         gender: clientData.gender || null,
-        genero: clientData.gender || null, // Duplicate for legacy compatibility
         address: clientData.address?.trim() || null,
-        endereco: clientData.address?.trim() || null, // Duplicate for legacy compatibility
         city: clientData.city?.trim() || null,
-        cidade: clientData.city?.trim() || null, // Duplicate for legacy compatibility
         state: clientData.state?.toUpperCase().trim() || null,
-        estado: clientData.state?.toUpperCase().trim() || null, // Duplicate for legacy compatibility
         zip_code: clientData.zip_code?.replace(/[^0-9]/g, '') || null,
-        cep: clientData.zip_code?.replace(/[^0-9]/g, '') || null, // Duplicate for legacy compatibility
         notes: clientData.notes?.trim() || null,
-        notas: clientData.notes?.trim() || null, // Duplicate for legacy compatibility
         status: 'active',
         total_spent: 0,
-        valor_total_gasto: 0, // Duplicate for legacy compatibility
         preferences: {},
-        preferencias: {}, // Duplicate for legacy compatibility
       };
 
       // Validate required fields
@@ -106,29 +94,19 @@ export const useClientOperations = () => {
     try {
       console.log('Updating client:', clientId, clientData);
       
-      // Prepare the update data with both field names
+      // Prepare the update data using English field names
       const updateData = {
         name: clientData.name?.trim(),
-        nome: clientData.name?.trim(),
         email: clientData.email?.toLowerCase().trim() || null,
         phone: clientData.phone?.trim() || null,
-        telefone: clientData.phone?.trim() || null,
         birth_date: clientData.birth_date || null,
-        data_nascimento: clientData.birth_date || null,
         gender: clientData.gender || null,
-        genero: clientData.gender || null,
         address: clientData.address?.trim() || null,
-        endereco: clientData.address?.trim() || null,
         city: clientData.city?.trim() || null,
-        cidade: clientData.city?.trim() || null,
         state: clientData.state?.toUpperCase().trim() || null,
-        estado: clientData.state?.toUpperCase().trim() || null,
         zip_code: clientData.zip_code?.replace(/[^0-9]/g, '') || null,
-        cep: clientData.zip_code?.replace(/[^0-9]/g, '') || null,
         notes: clientData.notes?.trim() || null,
-        notas: clientData.notes?.trim() || null,
         updated_at: new Date().toISOString(),
-        atualizado_em: new Date().toISOString(),
       };
 
       const { data, error } = await supabase

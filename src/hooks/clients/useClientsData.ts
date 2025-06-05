@@ -23,12 +23,12 @@ export const useClientsData = () => {
     try {
       console.log(`Fetching clients for business: ${businessId}`);
       
-      // Query the clients table with proper field mapping
+      // Query the clients table using standardized English field names
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .eq('id_negocio', businessId)
-        .order('criado_em', { ascending: false });
+        .eq('business_id', businessId)
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching clients:', error);
@@ -40,24 +40,24 @@ export const useClientsData = () => {
       // Map the database fields to the expected Client interface
       const mappedClients: Client[] = (data || []).map(client => ({
         id: client.id,
-        business_id: client.business_id || client.id_negocio,
-        name: client.nome || client.name || '',
+        business_id: client.business_id,
+        name: client.name || '',
         email: client.email || '',
-        phone: client.telefone || client.phone || '',
-        birth_date: client.data_nascimento || client.birth_date || '',
-        gender: client.genero || client.gender || '',
-        address: client.endereco || client.address || '',
-        city: client.cidade || client.city || '',
-        state: client.estado || client.state || '',
-        zip_code: client.cep || client.zip_code || '',
-        notes: client.notas || client.notes || '',
-        created_at: client.criado_em || client.created_at,
-        updated_at: client.atualizado_em || client.updated_at,
-        last_visit: client.ultima_visita || client.last_visit,
-        total_spent: client.valor_total_gasto || client.total_spent || 0,
+        phone: client.phone || '',
+        birth_date: client.birth_date || '',
+        gender: client.gender || '',
+        address: client.address || '',
+        city: client.city || '',
+        state: client.state || '',
+        zip_code: client.zip_code || '',
+        notes: client.notes || '',
+        created_at: client.created_at,
+        updated_at: client.updated_at,
+        last_visit: client.last_visit,
+        total_spent: client.total_spent || 0,
         status: client.status || 'active',
-        preferences: typeof client.preferencias === 'object' && client.preferencias !== null 
-          ? client.preferencias as Record<string, any>
+        preferences: typeof client.preferences === 'object' && client.preferences !== null 
+          ? client.preferences as Record<string, any>
           : {}
       }));
 
@@ -79,22 +79,22 @@ export const useClientsData = () => {
 
     console.log('Creating client with data:', clientData);
 
-    // Map form data to database schema
+    // Map form data to database schema using English fields
     const dbData = {
-      id_negocio: businessId,
-      nome: clientData.name,
+      business_id: businessId,
+      name: clientData.name,
       email: clientData.email || null,
-      telefone: clientData.phone || null,
-      data_nascimento: clientData.birth_date || null,
-      genero: clientData.gender || null,
-      endereco: clientData.address || null,
-      cidade: clientData.city || null,
-      estado: clientData.state || null,
-      cep: clientData.zip_code || null,
-      notas: clientData.notes || null,
+      phone: clientData.phone || null,
+      birth_date: clientData.birth_date || null,
+      gender: clientData.gender || null,
+      address: clientData.address || null,
+      city: clientData.city || null,
+      state: clientData.state || null,
+      zip_code: clientData.zip_code || null,
+      notes: clientData.notes || null,
       status: 'active',
-      valor_total_gasto: 0,
-      preferencias: {}
+      total_spent: 0,
+      preferences: {}
     };
 
     const { data, error } = await supabase
@@ -113,24 +113,24 @@ export const useClientsData = () => {
     // Map response back to Client interface
     const newClient: Client = {
       id: data.id,
-      business_id: data.id_negocio,
-      name: data.nome,
+      business_id: data.business_id,
+      name: data.name,
       email: data.email || '',
-      phone: data.telefone || '',
-      birth_date: data.data_nascimento || '',
-      gender: data.genero || '',
-      address: data.endereco || '',
-      city: data.cidade || '',
-      state: data.estado || '',
-      zip_code: data.cep || '',
-      notes: data.notas || '',
-      created_at: data.criado_em,
-      updated_at: data.atualizado_em,
-      last_visit: data.ultima_visita,
-      total_spent: data.valor_total_gasto || 0,
+      phone: data.phone || '',
+      birth_date: data.birth_date || '',
+      gender: data.gender || '',
+      address: data.address || '',
+      city: data.city || '',
+      state: data.state || '',
+      zip_code: data.zip_code || '',
+      notes: data.notes || '',
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      last_visit: data.last_visit,
+      total_spent: data.total_spent || 0,
       status: data.status || 'active',
-      preferences: typeof data.preferencias === 'object' && data.preferencias !== null 
-        ? data.preferencias as Record<string, any>
+      preferences: typeof data.preferences === 'object' && data.preferences !== null 
+        ? data.preferences as Record<string, any>
         : {}
     };
 
@@ -142,18 +142,18 @@ export const useClientsData = () => {
   const updateClient = async (id: string, clientData: Partial<ClientFormData>): Promise<Client> => {
     console.log('Updating client:', id, clientData);
 
-    // Map form data to database schema
+    // Map form data to database schema using English fields
     const dbData: any = {};
-    if (clientData.name !== undefined) dbData.nome = clientData.name;
+    if (clientData.name !== undefined) dbData.name = clientData.name;
     if (clientData.email !== undefined) dbData.email = clientData.email;
-    if (clientData.phone !== undefined) dbData.telefone = clientData.phone;
-    if (clientData.birth_date !== undefined) dbData.data_nascimento = clientData.birth_date;
-    if (clientData.gender !== undefined) dbData.genero = clientData.gender;
-    if (clientData.address !== undefined) dbData.endereco = clientData.address;
-    if (clientData.city !== undefined) dbData.cidade = clientData.city;
-    if (clientData.state !== undefined) dbData.estado = clientData.state;
-    if (clientData.zip_code !== undefined) dbData.cep = clientData.zip_code;
-    if (clientData.notes !== undefined) dbData.notas = clientData.notes;
+    if (clientData.phone !== undefined) dbData.phone = clientData.phone;
+    if (clientData.birth_date !== undefined) dbData.birth_date = clientData.birth_date;
+    if (clientData.gender !== undefined) dbData.gender = clientData.gender;
+    if (clientData.address !== undefined) dbData.address = clientData.address;
+    if (clientData.city !== undefined) dbData.city = clientData.city;
+    if (clientData.state !== undefined) dbData.state = clientData.state;
+    if (clientData.zip_code !== undefined) dbData.zip_code = clientData.zip_code;
+    if (clientData.notes !== undefined) dbData.notes = clientData.notes;
 
     const { data, error } = await supabase
       .from('clients')
@@ -172,24 +172,24 @@ export const useClientsData = () => {
     // Map response back to Client interface
     const updatedClient: Client = {
       id: data.id,
-      business_id: data.id_negocio,
-      name: data.nome,
+      business_id: data.business_id,
+      name: data.name,
       email: data.email || '',
-      phone: data.telefone || '',
-      birth_date: data.data_nascimento || '',
-      gender: data.genero || '',
-      address: data.endereco || '',
-      city: data.cidade || '',
-      state: data.estado || '',
-      zip_code: data.cep || '',
-      notes: data.notas || '',
-      created_at: data.criado_em,
-      updated_at: data.atualizado_em,
-      last_visit: data.ultima_visita,
-      total_spent: data.valor_total_gasto || 0,
+      phone: data.phone || '',
+      birth_date: data.birth_date || '',
+      gender: data.gender || '',
+      address: data.address || '',
+      city: data.city || '',
+      state: data.state || '',
+      zip_code: data.zip_code || '',
+      notes: data.notes || '',
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      last_visit: data.last_visit,
+      total_spent: data.total_spent || 0,
       status: data.status || 'active',
-      preferences: typeof data.preferencias === 'object' && data.preferencias !== null 
-        ? data.preferencias as Record<string, any>
+      preferences: typeof data.preferences === 'object' && data.preferences !== null 
+        ? data.preferences as Record<string, any>
         : {}
     };
 
