@@ -24,7 +24,7 @@ export const EditClientDialog: React.FC<EditClientDialogProps> = ({
   clientId,
   onClientUpdated
 }) => {
-  const { handleUpdateClient, isSubmitting } = useClientOperations();
+  const { updateClient, isSubmitting } = useClientOperations();
   const { clients } = useClients();
   const [formData, setFormData] = useState<ClientFormData>({
     name: "",
@@ -80,15 +80,11 @@ export const EditClientDialog: React.FC<EditClientDialogProps> = ({
       return;
     }
 
-    const success = await handleUpdateClient(clientId, formData);
-    if (success) {
+    const result = await updateClient(clientId, formData);
+    if (result) {
       onOpenChange(false);
       if (onClientUpdated) {
-        // Find the updated client and call the callback
-        const updatedClient = clients.find(c => c.id === clientId);
-        if (updatedClient) {
-          onClientUpdated(updatedClient);
-        }
+        onClientUpdated(result);
       }
     }
   };

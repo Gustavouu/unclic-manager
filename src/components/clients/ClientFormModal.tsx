@@ -34,7 +34,7 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
   client,
   onSuccess,
 }) => {
-  const { handleCreateClient, handleUpdateClient, isSubmitting } = useClientOperations();
+  const { createClient, updateClient, isSubmitting } = useClientOperations();
   const [formData, setFormData] = useState<ClientFormData>({
     name: '',
     email: '',
@@ -106,11 +106,11 @@ export const ClientFormModal: React.FC<ClientFormModalProps> = ({
       return;
     }
 
-    const success = client 
-      ? await handleUpdateClient(client.id, formData)
-      : await handleCreateClient(formData);
+    const result = client 
+      ? await updateClient(client.id, formData)
+      : await createClient(formData);
 
-    if (success) {
+    if (result) {
       onClose();
       onSuccess?.();
     }

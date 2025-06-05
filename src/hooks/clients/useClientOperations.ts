@@ -19,22 +19,34 @@ export const useClientOperations = () => {
     try {
       console.log('Creating client with data:', { ...clientData, business_id: businessId });
       
-      // Prepare the data using standardized English field names
+      // Prepare the data using both English and Portuguese field names for compatibility
       const insertData = {
         business_id: businessId,
+        id_negocio: businessId, // Portuguese field for compatibility
         name: clientData.name?.trim(),
+        nome: clientData.name?.trim(), // Portuguese field for compatibility
         email: clientData.email?.toLowerCase().trim() || null,
         phone: clientData.phone?.trim() || null,
+        telefone: clientData.phone?.trim() || null, // Portuguese field for compatibility
         birth_date: clientData.birth_date || null,
+        data_nascimento: clientData.birth_date || null, // Portuguese field for compatibility
         gender: clientData.gender || null,
+        genero: clientData.gender || null, // Portuguese field for compatibility
         address: clientData.address?.trim() || null,
+        endereco: clientData.address?.trim() || null, // Portuguese field for compatibility
         city: clientData.city?.trim() || null,
+        cidade: clientData.city?.trim() || null, // Portuguese field for compatibility
         state: clientData.state?.toUpperCase().trim() || null,
+        estado: clientData.state?.toUpperCase().trim() || null, // Portuguese field for compatibility
         zip_code: clientData.zip_code?.replace(/[^0-9]/g, '') || null,
+        cep: clientData.zip_code?.replace(/[^0-9]/g, '') || null, // Portuguese field for compatibility
         notes: clientData.notes?.trim() || null,
+        notas: clientData.notes?.trim() || null, // Portuguese field for compatibility
         status: 'active',
         total_spent: 0,
+        valor_total_gasto: 0, // Portuguese field for compatibility
         preferences: {},
+        preferencias: {}, // Portuguese field for compatibility
       };
 
       // Validate required fields
@@ -94,19 +106,29 @@ export const useClientOperations = () => {
     try {
       console.log('Updating client:', clientId, clientData);
       
-      // Prepare the update data using English field names
+      // Prepare the update data using both English and Portuguese field names
       const updateData = {
         name: clientData.name?.trim(),
+        nome: clientData.name?.trim(), // Portuguese field for compatibility
         email: clientData.email?.toLowerCase().trim() || null,
         phone: clientData.phone?.trim() || null,
+        telefone: clientData.phone?.trim() || null, // Portuguese field for compatibility
         birth_date: clientData.birth_date || null,
+        data_nascimento: clientData.birth_date || null, // Portuguese field for compatibility
         gender: clientData.gender || null,
+        genero: clientData.gender || null, // Portuguese field for compatibility
         address: clientData.address?.trim() || null,
+        endereco: clientData.address?.trim() || null, // Portuguese field for compatibility
         city: clientData.city?.trim() || null,
+        cidade: clientData.city?.trim() || null, // Portuguese field for compatibility
         state: clientData.state?.toUpperCase().trim() || null,
+        estado: clientData.state?.toUpperCase().trim() || null, // Portuguese field for compatibility
         zip_code: clientData.zip_code?.replace(/[^0-9]/g, '') || null,
+        cep: clientData.zip_code?.replace(/[^0-9]/g, '') || null, // Portuguese field for compatibility
         notes: clientData.notes?.trim() || null,
+        notas: clientData.notes?.trim() || null, // Portuguese field for compatibility
         updated_at: new Date().toISOString(),
+        atualizado_em: new Date().toISOString(), // Portuguese field for compatibility
       };
 
       const { data, error } = await supabase

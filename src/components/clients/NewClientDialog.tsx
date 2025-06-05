@@ -11,11 +11,17 @@ import { useClientOperations } from '@/hooks/clients/useClientOperations';
 import type { ClientFormData } from '@/types/client';
 
 interface NewClientDialogProps {
-  onClientCreated?: () => void;
+  onClientCreated?: (client?: any) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export const NewClientDialog: React.FC<NewClientDialogProps> = ({ onClientCreated }) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const NewClientDialog: React.FC<NewClientDialogProps> = ({ 
+  onClientCreated, 
+  open, 
+  onOpenChange 
+}) => {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [formData, setFormData] = useState<ClientFormData>({
     name: '',
     email: '',
@@ -30,6 +36,10 @@ export const NewClientDialog: React.FC<NewClientDialogProps> = ({ onClientCreate
   });
 
   const { createClient, isSubmitting } = useClientOperations();
+
+  // Use external open state if provided, otherwise use internal state
+  const isOpen = open !== undefined ? open : internalOpen;
+  const setIsOpen = onOpenChange || setInternalOpen;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +66,7 @@ export const NewClientDialog: React.FC<NewClientDialogProps> = ({ onClientCreate
       });
       
       setIsOpen(false);
-      onClientCreated?.();
+      onClientCreated?.(result);
     }
   };
 
@@ -64,14 +74,32 @@ export const NewClientDialog: React.FC<NewClientDialogProps> = ({ onClientCreate
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const DialogWrapper = ({ children }: { children: React.ReactNode }) => {
+    if (open !== undefined) {
+      // Controlled mode
+      return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          {children}
+        </Dialog>
+      );
+    } else {
+      // Uncontrolled mode with trigger button
+      return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Cliente
+            </Button>
+          </DialogTrigger>
+          {children}
+        </Dialog>
+      );
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Cliente
-        </Button>
-      </DialogTrigger>
+    <DialogWrapper>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Adicionar Novo Cliente</DialogTitle>
@@ -217,6 +245,6 @@ export const NewClientDialog: React.FC<NewClientDialogProps> = ({ onClientCreate
           </div>
         </form>
       </DialogContent>
-    </Dialog>
+    </DialogWrapper>
   );
 };

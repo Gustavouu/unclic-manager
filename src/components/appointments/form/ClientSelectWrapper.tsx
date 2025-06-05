@@ -60,11 +60,28 @@ export default function ClientSelectWrapper({ form }: ClientSelectWrapperProps) 
     fetchClients();
   }, [businessId]);
 
-  const handleNewClient = (newClient: any) => {
-    const normalizedClient = normalizeClientData(newClient);
-    setClients(prev => [...prev, normalizedClient]);
-    form.setValue("clientId", normalizedClient.id);
+  const handleNewClient = () => {
     setShowNewClientDialog(false);
+    // Refresh the clients list
+    const fetchClients = async () => {
+      if (!businessId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('business_id', businessId);
+          
+        if (!error && data) {
+          const normalizedClients = data.map(normalizeClientData);
+          setClients(normalizedClients);
+        }
+      } catch (error) {
+        console.error('Error fetching clients:', error);
+      }
+    };
+    
+    fetchClients();
   };
   
   return (
