@@ -1,42 +1,40 @@
 
-import { ReactNode } from "react";
-import { Sidebar } from "@/components/layout/sidebar/Sidebar";
-import { Header } from "./Header";
-import { MobileSidebar } from "./sidebar/MobileSidebar";
+import React from 'react';
+import { Header } from './Header';
+import { Sidebar } from './sidebar/Sidebar';
+import { MobileSidebar } from './sidebar/MobileSidebar';
+import { SidebarProvider } from '@/components/ui/sidebar/context';
 
 interface BreadcrumbItem {
   label: string;
   path?: string;
 }
 
-type LayoutProps = {
-  children: ReactNode;
+interface LayoutProps {
+  children: React.ReactNode;
   breadcrumb?: BreadcrumbItem[];
-};
+}
 
-export const Layout = ({ children, breadcrumb }: LayoutProps) => {
+export const Layout: React.FC<LayoutProps> = ({ children, breadcrumb }) => {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background">
-      {/* Mobile Sidebar */}
-      <MobileSidebar />
-      
-      {/* Desktop Sidebar - Fixed */}
-      <div className="hidden md:fixed md:inset-y-0 md:z-50 md:flex md:w-60 md:flex-col">
-        <Sidebar />
-      </div>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block">
+          <Sidebar />
+        </div>
 
-      {/* Main Content Area */}
-      <div className="flex flex-col md:pl-60">
-        {/* Header */}
-        <Header breadcrumb={breadcrumb} />
-        
-        {/* Page Content */}
-        <main className="flex-1 py-6">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Mobile Sidebar */}
+        <MobileSidebar />
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col lg:ml-60">
+          <Header breadcrumb={breadcrumb} />
+          <main className="flex-1 overflow-y-auto">
             {children}
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
