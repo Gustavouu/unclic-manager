@@ -65,3 +65,19 @@ export function denormalizeStatus(status: string): string {
   };
   return statusMap[status] || status;
 }
+
+// Status utility functions
+export function isCompletedStatus(status: string): boolean {
+  const normalizedStatus = normalizeStatus(status);
+  return normalizedStatus === 'completed';
+}
+
+export function isScheduledStatus(status: string): boolean {
+  const normalizedStatus = normalizeStatus(status);
+  return normalizedStatus === 'scheduled' || normalizedStatus === 'confirmed';
+}
+
+export function isCanceledStatus(status: string): boolean {
+  const normalizedStatus = normalizeStatus(status);
+  return normalizedStatus === 'canceled' || normalizedStatus === 'no_show';
+}
