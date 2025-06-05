@@ -41,6 +41,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('Auth state changed:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // When user signs in, ensure they have proper business access
+        if (session?.user && event === 'SIGNED_IN') {
+          try {
+            await supabase.rpc('ensure_user_business_access');
+            console.log('User business access ensured');
+          } catch (error) {
+            console.error('Error ensuring user business access:', error);
+          }
+        }
+        
         setLoading(false);
       }
     );
@@ -55,6 +66,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.log('Initial session:', session?.user?.id);
           setSession(session);
           setUser(session?.user ?? null);
+          
+          // Ensure user business access for initial session as well
+          if (session?.user) {
+            try {
+              await supabase.rpc('ensure_user_business_access');
+              console.log('Initial user business access ensured');
+            } catch (error) {
+              console.error('Error ensuring initial user business access:', error);
+            }
+          }
         }
       } catch (error) {
         console.error('Exception getting session:', error);

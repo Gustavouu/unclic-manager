@@ -4259,6 +4259,10 @@ export type Database = {
         Args: { business_id_param: string }
         Returns: undefined
       }
+      ensure_user_business_access: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       fetch_agendamentos: {
         Args: { business_id_param: string }
         Returns: Json[]
@@ -4276,6 +4280,10 @@ export type Database = {
         Returns: string
       }
       get_user_business_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_user_business_id_safe: {
         Args: Record<PropertyKey, never>
         Returns: string
       }

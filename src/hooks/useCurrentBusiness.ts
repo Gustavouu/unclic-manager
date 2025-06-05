@@ -1,13 +1,13 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useCurrentBusiness = () => {
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuthContext();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchBusinessId = async () => {
@@ -21,53 +21,35 @@ export const useCurrentBusiness = () => {
         setIsLoading(true);
         setError(null);
 
-        // First, try to get business ID from business_users table
-        const { data: businessUserData, error: businessUserError } = await supabase
-          .from('business_users')
-          .select('business_id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle();
+        // First ensure the user has proper business access
+        await supabase.rpc('ensure_user_business_access');
 
-        if (businessUserError && businessUserError.code !== 'PGRST116') {
-          throw businessUserError;
+        // Then get the business ID using our safe function
+        const { data: businessIdData, error: businessIdError } = await supabase
+          .rpc('get_user_business_id_safe');
+
+        if (businessIdError) {
+          throw businessIdError;
         }
 
-        if (businessUserData?.business_id) {
-          setBusinessId(businessUserData.business_id);
-          setIsLoading(false);
-          return;
-        }
-
-        // If not found, check if user has a business through application_users
-        const { data: appUserData, error: appUserError } = await supabase
-          .from('application_users')
-          .select('business_id')
-          .eq('id', user.id)
-          .limit(1)
-          .maybeSingle();
-
-        if (appUserError && appUserError.code !== 'PGRST116') {
-          throw appUserError;
-        }
-
-        if (appUserData?.business_id) {
-          setBusinessId(appUserData.business_id);
+        if (businessIdData) {
+          setBusinessId(businessIdData);
         } else {
-          // Try to find any business where the user is the admin
-          const { data: businessData, error: businessError } = await supabase
-            .from('businesses')
-            .select('id')
-            .eq('admin_email', user.email)
+          // Try to get business ID from business_users table as fallback
+          const { data: businessUserData, error: businessUserError } = await supabase
+            .from('business_users')
+            .select('business_id')
+            .eq('user_id', user.id)
+            .eq('status', 'active')
             .limit(1)
             .maybeSingle();
 
-          if (businessError && businessError.code !== 'PGRST116') {
-            throw businessError;
+          if (businessUserError && businessUserError.code !== 'PGRST116') {
+            throw businessUserError;
           }
 
-          if (businessData?.id) {
-            setBusinessId(businessData.id);
+          if (businessUserData?.business_id) {
+            setBusinessId(businessUserData.business_id);
           } else {
             console.warn('No business found for user:', user.id);
             setBusinessId(null);
