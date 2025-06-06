@@ -23,38 +23,37 @@ export function PaymentMethodsStats({ isLoading }: PaymentMethodsStatsProps) {
     const fetchPaymentMethods = async () => {
       try {
         const { data, error } = await supabase
-          .from('financial_transactions')
-          .select('paymentMethod, amount')
-          .eq('type', 'INCOME')
-          .eq('status', 'PAID')
-          .eq('tenantId', businessId);
+          .from('payments')
+          .select('payment_method, amount')
+          .eq('business_id', businessId)
+          .eq('status', 'paid');
         
         if (error) throw error;
         
         // Agrupar e somar por método de pagamento
         const methods: Record<string, number> = {};
-        data.forEach(transaction => {
-          const method = transaction.paymentMethod || 'OTHER';
-          methods[method] = (methods[method] || 0) + Number(transaction.amount);
+        data?.forEach(payment => {
+          const method = payment.payment_method || 'other';
+          methods[method] = (methods[method] || 0) + Number(payment.amount);
         });
         
         // Transformar em array para o gráfico
         const methodColors: Record<string, string> = {
-          CREDIT_CARD: '#4f46e5',
-          DEBIT_CARD: '#3b82f6', 
-          PIX: '#0ea5e9',
-          BANK_SLIP: '#6366f1',
-          CASH: '#8b5cf6',
-          OTHER: '#a3a3a3'
+          credit_card: '#4f46e5',
+          debit_card: '#3b82f6', 
+          pix: '#0ea5e9',
+          bank_slip: '#6366f1',
+          cash: '#8b5cf6',
+          other: '#a3a3a3'
         };
         
         const methodNames: Record<string, string> = {
-          CREDIT_CARD: 'Cartão de Crédito',
-          DEBIT_CARD: 'Cartão de Débito',
-          PIX: 'PIX',
-          BANK_SLIP: 'Boleto',
-          CASH: 'Dinheiro',
-          OTHER: 'Outro'
+          credit_card: 'Cartão de Crédito',
+          debit_card: 'Cartão de Débito',
+          pix: 'PIX',
+          bank_slip: 'Boleto',
+          cash: 'Dinheiro',
+          other: 'Outro'
         };
         
         const methodsArray = Object.entries(methods).map(([key, value]) => ({

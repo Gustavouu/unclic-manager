@@ -7,13 +7,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useTenant } from "@/contexts/TenantContext";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Professional {
   id: string;
   name: string;
-  photo_url?: string;
+  avatar?: string;
 }
 
 interface ProfessionalSelectWrapperProps {
@@ -25,7 +25,7 @@ export default function ProfessionalSelectWrapper({ form, serviceId }: Professio
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const { businessId } = useTenant();
+  const { businessId } = useCurrentBusiness();
   
   // Fetch professionals from the database
   useEffect(() => {
@@ -37,9 +37,10 @@ export default function ProfessionalSelectWrapper({ form, serviceId }: Professio
         console.log('Fetching professionals for business ID:', businessId);
         
         const { data: professionalsData, error } = await supabase
-          .from('employees')
-          .select('id, name, photo_url')
-          .eq('business_id', businessId);
+          .from('professionals')
+          .select('id, name, avatar')
+          .eq('business_id', businessId)
+          .eq('isActive', true);
           
         if (!error && professionalsData?.length) {
           console.log('Found professionals:', professionalsData.length);
@@ -104,7 +105,7 @@ export default function ProfessionalSelectWrapper({ form, serviceId }: Professio
                     >
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                          <AvatarImage src={professional.photo_url || undefined} alt={professional.name} />
+                          <AvatarImage src={professional.avatar || undefined} alt={professional.name} />
                           <AvatarFallback>{professional.name?.charAt(0) || 'P'}</AvatarFallback>
                         </Avatar>
                         <span>{professional.name}</span>

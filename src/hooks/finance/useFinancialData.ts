@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
@@ -35,35 +36,35 @@ export const useFinancialData = (): UseFinancialDataReturn => {
 
         console.log('Loading financial data for business:', businessId);
 
-        // Buscar transações financeiras dos últimos 6 meses
+        // Buscar pagamentos dos últimos 6 meses
         const sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-        const { data: transactions, error: transactionsError } = await supabase
-          .from('financial_transactions')
-          .select('amount, type, paymentDate, createdAt')
-          .eq('tenantId', businessId)
-          .eq('status', 'PAID')
-          .gte('paymentDate', sixMonthsAgo.toISOString())
-          .order('paymentDate', { ascending: true });
+        const { data: payments, error: paymentsError } = await supabase
+          .from('payments')
+          .select('amount, status, payment_date, created_at')
+          .eq('business_id', businessId)
+          .eq('status', 'paid')
+          .gte('payment_date', sixMonthsAgo.toISOString())
+          .order('payment_date', { ascending: true });
 
-        if (transactionsError) {
-          console.error('Error fetching transactions:', transactionsError);
-          throw transactionsError;
+        if (paymentsError) {
+          console.error('Error fetching payments:', paymentsError);
+          throw paymentsError;
         }
 
-        console.log('Fetched transactions:', transactions);
+        console.log('Fetched payments:', payments);
 
-        // Se não há transações, criar dados dos últimos 6 meses com valores zero
-        if (!transactions || transactions.length === 0) {
+        // Se não há pagamentos, criar dados dos últimos 6 meses com valores zero
+        if (!payments || payments.length === 0) {
           const emptyData = generateEmptyMonthlyData();
           setChartData(emptyData);
           setIsLoading(false);
           return;
         }
 
-        // Processar transações por mês
-        const monthlyData = processTransactionsByMonth(transactions);
+        // Processar pagamentos por mês
+        const monthlyData = processPaymentsByMonth(payments);
         setChartData(monthlyData);
 
       } catch (err) {
@@ -113,8 +114,8 @@ const generateEmptyMonthlyData = (): FinancialChartData[] => {
   return data;
 };
 
-// Função para processar transações por mês
-const processTransactionsByMonth = (transactions: any[]): FinancialChartData[] => {
+// Função para processar pagamentos por mês
+const processPaymentsByMonth = (payments: any[]): FinancialChartData[] => {
   const monthlyMap = new Map<string, { receita: number; despesa: number }>();
   
   // Inicializar os últimos 6 meses
@@ -122,24 +123,18 @@ const processTransactionsByMonth = (transactions: any[]): FinancialChartData[] =
   for (let i = 5; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    const monthName = date.toLocaleDateString('pt-BR', { month: 'short' });
     
     monthlyMap.set(key, { receita: 0, despesa: 0 });
   }
 
-  // Processar transações
-  transactions.forEach(transaction => {
-    const date = new Date(transaction.paymentDate || transaction.createdAt);
+  // Processar pagamentos (todos são receitas no schema atual)
+  payments.forEach(payment => {
+    const date = new Date(payment.payment_date || payment.created_at);
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     
     if (monthlyMap.has(key)) {
       const monthData = monthlyMap.get(key)!;
-      
-      if (transaction.type === 'INCOME') {
-        monthData.receita += Number(transaction.amount) || 0;
-      } else if (transaction.type === 'EXPENSE') {
-        monthData.despesa += Number(transaction.amount) || 0;
-      }
+      monthData.receita += Number(payment.amount) || 0;
     }
   });
 

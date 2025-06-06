@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -25,16 +26,18 @@ export const ProfessionalFilter = ({
       setIsLoading(true);
       try {
         const { data, error } = await supabase
-          .from('funcionarios')
-          .select('id, nome')
-          .order('nome');
+          .from('professionals')
+          .select('id, name')
+          .eq('isActive', true)
+          .order('name');
           
         if (error) throw error;
         
-        setProfessionals(data.map(item => ({
-          id: item.id,
-          name: item.nome
-        })));
+        if (data) {
+          setProfessionals(data);
+        } else {
+          setProfessionals([]);
+        }
       } catch (error) {
         console.error("Erro ao buscar profissionais:", error);
         // Carregar dados de exemplo caso ocorra erro
@@ -81,4 +84,4 @@ export const ProfessionalFilter = ({
       </Select>
     </div>
   );
-}; 
+};

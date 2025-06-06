@@ -18,34 +18,30 @@ export const usePaymentConfig = () => {
   useEffect(() => {
     const checkConfiguration = async () => {
       try {
-        // Check if any transaction has payment gateway configuration
+        // Check if any payment provider is configured
         const { data, error } = await supabase
-          .from('financial_transactions')
-          .select('paymentGatewayData')
-          .not('paymentGatewayData', 'is', null)
+          .from('payment_providers')
+          .select('configuration, is_active')
+          .eq('is_active', true)
           .limit(1);
 
         if (error) {
           console.error("Erro ao verificar configuração de pagamento:", error);
         }
 
-        // Check if any transaction has payment gateway config
-        if (data && data.length > 0 && data[0].paymentGatewayData) {
-          try {
-            const gatewayData = data[0].paymentGatewayData;
-            if (typeof gatewayData === 'object' && gatewayData !== null) {
-              setState({
-                isConfigured: true,
-                isWebhookConfigured: true,
-                isLoading: false
-              });
-            } else {
-              setState(prev => ({ ...prev, isLoading: false }));
-            }
-          } catch (parseError) {
-            console.error("Error parsing gateway data:", parseError);
-            setState(prev => ({ ...prev, isLoading: false }));
-          }
+        // Check if any active payment provider exists
+        if (data && data.length > 0) {
+          const hasConfig = data.some(provider => 
+            provider.configuration && 
+            typeof provider.configuration === 'object' && 
+            Object.keys(provider.configuration).length > 0
+          );
+          
+          setState({
+            isConfigured: hasConfig,
+            isWebhookConfigured: hasConfig,
+            isLoading: false
+          });
         } else {
           setState(prev => ({ ...prev, isLoading: false }));
         }

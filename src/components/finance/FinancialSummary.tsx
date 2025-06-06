@@ -28,47 +28,34 @@ export function FinancialSummary({ isLoading }: FinancialSummaryProps) {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         
-        // Buscar receitas
-        const { data: receitasData, error: receitasError } = await supabase
-          .from('financial_transactions')
-          .select('amount')
-          .eq('type', 'INCOME')
-          .eq('status', 'PAID')
-          .eq('tenantId', businessId)
-          .gte('createdAt', thirtyDaysAgo.toISOString());
+        // Buscar receitas do período (usando payments table)
+        const { data: paymentsData, error: paymentsError } = await supabase
+          .from('payments')
+          .select('amount, status')
+          .eq('business_id', businessId)
+          .eq('status', 'paid')
+          .gte('payment_date', thirtyDaysAgo.toISOString());
         
-        if (receitasError) throw receitasError;
-        
-        // Buscar despesas
-        const { data: despesasData, error: despesasError } = await supabase
-          .from('financial_transactions')
-          .select('amount')
-          .eq('type', 'EXPENSE')
-          .eq('status', 'PAID')
-          .eq('tenantId', businessId)
-          .gte('createdAt', thirtyDaysAgo.toISOString());
-        
-        if (despesasError) throw despesasError;
+        if (paymentsError) throw paymentsError;
         
         // Buscar transações pendentes
-        const { data: pendentesData, error: pendentesError } = await supabase
-          .from('financial_transactions')
+        const { data: pendingData, error: pendingError } = await supabase
+          .from('payments')
           .select('id')
-          .eq('status', 'PENDING')
-          .eq('tenantId', businessId)
-          .gte('createdAt', thirtyDaysAgo.toISOString());
+          .eq('business_id', businessId)
+          .eq('status', 'pending')
+          .gte('payment_date', thirtyDaysAgo.toISOString());
         
-        if (pendentesError) throw pendentesError;
+        if (pendingError) throw pendingError;
         
         // Calcular totais
-        const totalReceitas = receitasData?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
-        const totalDespesas = despesasData?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
+        const totalReceitas = paymentsData?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
         
         setSummaryData({
           receitas: totalReceitas,
-          despesas: totalDespesas,
-          saldo: totalReceitas - totalDespesas,
-          transacoesPendentes: pendentesData?.length || 0
+          despesas: 0, // No expense tracking in current schema
+          saldo: totalReceitas,
+          transacoesPendentes: pendingData?.length || 0
         });
       } catch (error) {
         console.error("Erro ao buscar dados do resumo financeiro:", error);

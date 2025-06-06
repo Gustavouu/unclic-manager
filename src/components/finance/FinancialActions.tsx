@@ -34,67 +34,50 @@ import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 // Definindo os schemas para os formulários
 const transactionSchema = z.object({
-  type: z.enum(["INCOME", "EXPENSE"]),
+  type: z.enum(["income", "expense"]),
   amount: z.coerce.number().positive("O valor deve ser maior que zero"),
   paymentMethod: z.string().min(1, "Selecione um método de pagamento"),
   description: z.string().min(3, "Adicione uma descrição para a transação"),
   categoryId: z.string().optional(),
   paymentDate: z.string().optional(),
-  status: z.string().default("PAID")
+  status: z.string().default("paid")
 });
 
 export function FinancialActions() {
   const [isOpen, setIsOpen] = useState(false);
-  const [transactionType, setTransactionType] = useState<"INCOME" | "EXPENSE" | null>(null);
+  const [transactionType, setTransactionType] = useState<"income" | "expense" | null>(null);
   const { businessId } = useCurrentBusiness();
   
   const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      type: "INCOME",
+      type: "income",
       amount: undefined,
       paymentMethod: "",
       description: "",
-      status: "PAID"
+      status: "paid"
     }
   });
   
   const onSubmit = async (data: z.infer<typeof transactionSchema>) => {
     try {
-      // Get a default financial account
-      const { data: accounts } = await supabase
-        .from('financial_accounts')
-        .select('id')
-        .eq('tenantId', businessId)
-        .eq('isActive', true)
-        .limit(1);
-      
-      if (!accounts || accounts.length === 0) {
-        toast.error("Nenhuma conta financeira configurada");
-        return;
-      }
-      
-      // Register the transaction in the database
+      // Register the payment in the payments table
       const { error } = await supabase
-        .from('financial_transactions')
+        .from('payments')
         .insert({
           id: crypto.randomUUID(),
-          type: data.type,
           amount: data.amount,
-          description: data.description,
-          paymentMethod: data.paymentMethod as any,
-          categoryId: data.categoryId,
-          paymentDate: data.paymentDate,
-          status: data.status as any,
-          tenantId: businessId,
-          accountId: accounts[0].id,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          payment_method: data.paymentMethod,
+          status: data.status,
+          business_id: businessId,
+          payment_date: data.paymentDate ? new Date(data.paymentDate).toISOString() : new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         });
       
       if (error) throw error;
       
-      toast.success(`${data.type === "INCOME" ? "Receita" : "Despesa"} registrada com sucesso!`);
+      toast.success(`${data.type === "income" ? "Receita" : "Despesa"} registrada com sucesso!`);
       form.reset();
       setIsOpen(false);
     } catch (error) {
@@ -103,14 +86,14 @@ export function FinancialActions() {
     }
   };
   
-  const openDialog = (type: "INCOME" | "EXPENSE") => {
+  const openDialog = (type: "income" | "expense") => {
     setTransactionType(type);
     form.reset({
       type: type,
       amount: undefined,
       paymentMethod: "",
       description: "",
-      status: "PAID"
+      status: "paid"
     });
     setIsOpen(true);
   };
@@ -120,7 +103,7 @@ export function FinancialActions() {
       <Button
         variant="outline"
         className="gap-2 text-green-600"
-        onClick={() => openDialog("INCOME")}
+        onClick={() => openDialog("income")}
       >
         <ArrowUpCircle className="h-4 w-4" />
         Nova Receita
@@ -129,7 +112,7 @@ export function FinancialActions() {
       <Button
         variant="outline"
         className="gap-2 text-red-600"
-        onClick={() => openDialog("EXPENSE")}
+        onClick={() => openDialog("expense")}
       >
         <ArrowDownCircle className="h-4 w-4" />
         Nova Despesa
@@ -145,7 +128,7 @@ export function FinancialActions() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {transactionType === "INCOME" ? "Adicionar Receita" : "Adicionar Despesa"}
+              {transactionType === "income" ? "Adicionar Receita" : "Adicionar Despesa"}
             </DialogTitle>
           </DialogHeader>
           
@@ -182,7 +165,7 @@ export function FinancialActions() {
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder={`Descreva ${transactionType === "INCOME" ? "a receita" : "a despesa"}`}
+                        placeholder={`Descreva ${transactionType === "income" ? "a receita" : "a despesa"}`}
                       />
                     </FormControl>
                   </FormItem>
@@ -202,11 +185,11 @@ export function FinancialActions() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="CREDIT_CARD">Cartão de Crédito</SelectItem>
-                        <SelectItem value="DEBIT_CARD">Cartão de Débito</SelectItem>
-                        <SelectItem value="PIX">PIX</SelectItem>
-                        <SelectItem value="BANK_SLIP">Boleto</SelectItem>
-                        <SelectItem value="CASH">Dinheiro</SelectItem>
+                        <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
+                        <SelectItem value="debit_card">Cartão de Débito</SelectItem>
+                        <SelectItem value="pix">PIX</SelectItem>
+                        <SelectItem value="bank_slip">Boleto</SelectItem>
+                        <SelectItem value="cash">Dinheiro</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>

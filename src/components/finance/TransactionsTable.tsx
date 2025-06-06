@@ -15,20 +15,12 @@ import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 interface Transaction {
   id: string;
-  tipo: string;
-  valor: number;
-  metodo_pagamento: string;
+  amount: number;
+  payment_method: string;
   status: string;
-  descricao: string;
-  criado_em: string;
-  data_pagamento?: string;
-  customer_name?: string;
-  cliente?: {
-    nome: string;
-  };
-  servico?: {
-    nome: string;
-  };
+  payment_date: string;
+  created_at: string;
+  booking_id?: string;
 }
 
 interface TransactionsTableProps {
@@ -57,149 +49,32 @@ export function TransactionsTable({
       try {
         setLoading(true);
         
-        // First try modern table (financial_transactions)
-        let data: any[] = [];
-        
-        try {
-          const response = await supabase
-            .from('financial_transactions')
-            .select(`
-              id,
-              type as tipo,
-              amount as valor,
-              paymentMethod as metodo_pagamento,
-              status,
-              description as descricao,
-              createdAt as criado_em,
-              paymentDate as data_pagamento,
-              customer:customerId (
-                name as nome
-              )
-            `)
-            .eq('tenantId', businessId);
-            
-          if (!response.error && response.data && response.data.length > 0) {
-            data = response.data;
-          }
-        } catch (error) {
-          console.error("Error fetching from financial_transactions:", error);
-        }
-        
-        // If no data, try legacy table
-        if (data.length === 0) {
-          try {
-            console.log("Trying legacy transactions table");
-            const { data: legacyData, error: legacyError } = await supabase
-              .from('transactions')
-              .select(`
-                id,
-                type as tipo,
-                amount as valor,
-                payment_method as metodo_pagamento,
-                status,
-                description as descricao,
-                created_at as criado_em,
-                payment_date as data_pagamento,
-                client:client_id (
-                  name as nome
-                )
-              `)
-              .eq('business_id', businessId);
-              
-            if (!legacyError && legacyData && legacyData.length > 0) {
-              data = legacyData;
-            }
-          } catch (legacyError) {
-            console.error("Error fetching from transactions:", legacyError);
-          }
-        }
-        
-        // Filter by type if needed
-        if (filterType !== "all") {
-          data = data.filter(item => 
-            (item.tipo === filterType) || 
-            (filterType === "receita" && item.tipo === "INCOME") ||
-            (filterType === "despesa" && item.tipo === "EXPENSE")
-          );
-        }
+        let query = supabase
+          .from('payments')
+          .select('*')
+          .eq('business_id', businessId)
+          .order('payment_date', { ascending: false });
         
         // Filter by period
         if (period === "7days") {
           const sevenDaysAgo = new Date();
           sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-          data = data.filter(item => new Date(item.criado_em) >= sevenDaysAgo);
+          query = query.gte('payment_date', sevenDaysAgo.toISOString());
         } else if (period === "30days") {
           const thirtyDaysAgo = new Date();
           thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          data = data.filter(item => new Date(item.criado_em) >= thirtyDaysAgo);
+          query = query.gte('payment_date', thirtyDaysAgo.toISOString());
         } else if (period === "90days") {
           const ninetyDaysAgo = new Date();
           ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-          data = data.filter(item => new Date(item.criado_em) >= ninetyDaysAgo);
+          query = query.gte('payment_date', ninetyDaysAgo.toISOString());
         }
         
-        // Filter by specific date
-        if (searchDate) {
-          const startOfDay = new Date(searchDate);
-          startOfDay.setHours(0, 0, 0, 0);
-          
-          const endOfDay = new Date(searchDate);
-          endOfDay.setHours(23, 59, 59, 999);
-          
-          data = data.filter(item => {
-            const itemDate = new Date(item.criado_em);
-            return itemDate >= startOfDay && itemDate <= endOfDay;
-          });
-        }
+        const { data, error } = await query;
         
-        // Text search
-        if (searchQuery) {
-          const query = searchQuery.toLowerCase();
-          data = data.filter(item => 
-            (item.descricao && item.descricao.toLowerCase().includes(query)) ||
-            (item.customer_name && item.customer_name.toLowerCase().includes(query)) ||
-            (item.customer && item.customer.nome && item.customer.nome.toLowerCase().includes(query)) ||
-            (item.client && item.client.nome && item.client.nome.toLowerCase().includes(query))
-          );
-        }
-
-        // Process the data to ensure it matches our Transaction interface
-        const processedData: Transaction[] = data.map(item => {
-          // Handle cliente properly
-          let customerName = "Cliente não identificado";
-          let cliente: { nome: string } | undefined = undefined;
-          
-          if (item.customer) {
-            if (typeof item.customer === 'object' && item.customer !== null) {
-              if ('nome' in item.customer) {
-                customerName = item.customer.nome || "Cliente não identificado";
-                cliente = { nome: customerName };
-              }
-            }
-          } else if (item.client) {
-            if (typeof item.client === 'object' && item.client !== null) {
-              if ('nome' in item.client) {
-                customerName = item.client.nome || "Cliente não identificado";
-                cliente = { nome: customerName };
-              }
-            }
-          }
-          
-          return {
-            id: item.id,
-            tipo: item.tipo,
-            valor: item.valor,
-            metodo_pagamento: item.metodo_pagamento,
-            status: item.status,
-            descricao: item.descricao,
-            criado_em: item.criado_em,
-            data_pagamento: item.data_pagamento,
-            customer_name: customerName,
-            cliente
-          };
-        });
+        if (error) throw error;
         
-        setTransactions(processedData);
+        setTransactions(data || []);
       } catch (error) {
         console.error("Erro ao buscar transações:", error);
         setTransactions([]);
@@ -293,8 +168,7 @@ export function TransactionsTable({
           <TableHeader>
             <TableRow>
               <TableHead>Data</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Cliente</TableHead>
+              <TableHead>ID Agendamento</TableHead>
               <TableHead>Pagamento</TableHead>
               <TableHead>Valor</TableHead>
               <TableHead>Status</TableHead>
@@ -308,19 +182,16 @@ export function TransactionsTable({
               currentTransactions.map((transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell>
-                    {formatDate(transaction.criado_em)}
-                  </TableCell>
-                  <TableCell className="max-w-[200px] truncate" title={transaction.descricao}>
-                    {transaction.descricao || "—"}
+                    {formatDate(transaction.payment_date)}
                   </TableCell>
                   <TableCell>
-                    {transaction.cliente?.nome || transaction.customer_name || "Cliente não identificado"}
+                    {transaction.booking_id || "—"}
                   </TableCell>
                   <TableCell>
-                    {getPaymentMethodLabel(transaction.metodo_pagamento)}
+                    {getPaymentMethodLabel(transaction.payment_method)}
                   </TableCell>
-                  <TableCell className={transaction.tipo === "receita" || transaction.tipo === "INCOME" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-                    {transaction.tipo === "despesa" || transaction.tipo === "EXPENSE" ? "- " : ""}{formatCurrency(transaction.valor)}
+                  <TableCell className="text-green-600 font-medium">
+                    {formatCurrency(transaction.amount)}
                   </TableCell>
                   <TableCell>
                     <PaymentStatusBadge status={transaction.status as any} />
@@ -335,7 +206,7 @@ export function TransactionsTable({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
-                        {transaction.status === "pendente" && (
+                        {transaction.status === "pending" && (
                           <DropdownMenuItem>Marcar como pago</DropdownMenuItem>
                         )}
                         <DropdownMenuItem>Exportar recibo</DropdownMenuItem>
@@ -346,7 +217,7 @@ export function TransactionsTable({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6">
+                <TableCell colSpan={6} className="text-center py-6">
                   Nenhuma transação encontrada
                 </TableCell>
               </TableRow>
