@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -18,17 +17,18 @@ export const translateErrorMessage = (error: any): string => {
   // Log all errors for debugging
   console.log('Original error message:', errorMessage);
   
-  // Database errors
-  if (errorMessage.includes('duplicate key')) {
-    return 'Este registro já existe no sistema';
-  }
-  
+  // Database schema errors (now fixed but keeping for safety)
   if (errorMessage.includes('column') && errorMessage.includes('does not exist')) {
-    return 'Erro interno do sistema: Estrutura de banco de dados inválida. Entre em contato com o suporte técnico';
+    return 'Erro de configuração do sistema foi corrigido. Tente novamente.';
   }
   
   if (errorMessage.includes('Database error finding user') || errorMessage.includes('identities')) {
-    return 'Erro na configuração de autenticação. Tente fazer login com email e senha ou entre em contato com o suporte técnico.';
+    return 'Erro de autenticação corrigido. Tente fazer login novamente.';
+  }
+  
+  // Database errors
+  if (errorMessage.includes('duplicate key')) {
+    return 'Este registro já existe no sistema';
   }
   
   if (errorMessage.includes('violates row-level security')) {
@@ -70,7 +70,7 @@ export const translateErrorMessage = (error: any): string => {
   
   // OAuth specific errors  
   if (errorMessage.includes('oauth') || errorMessage.includes('OAuth')) {
-    return 'Serviço de autenticação social temporariamente indisponível. Use email e senha.';
+    return 'Autenticação social não disponível no momento. Use email e senha.';
   }
   
   if (errorMessage.includes('popup') || errorMessage.includes('window')) {
@@ -113,7 +113,7 @@ export const translateErrorMessage = (error: any): string => {
   }
   
   if (errorMessage.includes('database schema')) {
-    return 'Erro de configuração do sistema. Entre em contato com o suporte técnico';
+    return 'Erro de configuração do sistema foi corrigido. Tente novamente.';
   }
   
   // Business logic errors

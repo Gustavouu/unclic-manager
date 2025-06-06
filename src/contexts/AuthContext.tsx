@@ -1,8 +1,10 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { translateErrorMessage } from '@/utils/errorHandler';
+import { ensureUserBusinessAccess } from '@/utils/businessAccess';
 
 interface Profile {
   id: string;
@@ -73,19 +75,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const ensureUserBusinessAccess = async () => {
-    try {
-      const { data, error } = await supabase.rpc('ensure_user_business_access');
-      if (error) {
-        console.error('Error ensuring user business access:', error);
-      } else {
-        console.log('User business access ensured');
-      }
-    } catch (error) {
-      console.error('Exception ensuring user business access:', error);
-    }
-  };
-
   useEffect(() => {
     console.log('AuthProvider: Setting up auth state listener');
     
@@ -97,12 +86,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user profile
-          const profileData = await fetchProfile(session.user.id);
-          setProfile(profileData);
-          
-          // Ensure user business access
-          await ensureUserBusinessAccess();
+          // Use setTimeout to defer business access setup to avoid blocking auth flow
+          setTimeout(async () => {
+            try {
+              console.log('Setting up business access for user:', session.user.id);
+              const businessAccessSetup = await ensureUserBusinessAccess();
+              
+              if (businessAccessSetup) {
+                // Fetch updated profile after business setup
+                const profileData = await fetchProfile(session.user.id);
+                setProfile(profileData);
+                console.log('Business access and profile setup completed');
+              } else {
+                console.warn('Failed to set up business access');
+              }
+            } catch (error) {
+              console.error('Error setting up business access:', error);
+            }
+          }, 100);
         } else {
           setProfile(null);
         }
@@ -123,12 +124,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(session?.user ?? null);
           
           if (session?.user) {
-            // Fetch user profile
-            const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData);
-            
-            // Ensure user business access for initial session as well
-            await ensureUserBusinessAccess();
+            // Setup business access for initial session as well
+            setTimeout(async () => {
+              try {
+                const businessAccessSetup = await ensureUserBusinessAccess();
+                if (businessAccessSetup) {
+                  const profileData = await fetchProfile(session.user.id);
+                  setProfile(profileData);
+                }
+              } catch (error) {
+                console.error('Error in initial business setup:', error);
+              }
+            }, 100);
           }
         }
       } catch (error) {

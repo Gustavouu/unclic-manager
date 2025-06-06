@@ -2830,7 +2830,7 @@ export type Database = {
       }
       ensure_user_business_access: {
         Args: Record<PropertyKey, never>
-        Returns: undefined
+        Returns: boolean
       }
       fetch_agendamentos: {
         Args: { business_id_param: string }
