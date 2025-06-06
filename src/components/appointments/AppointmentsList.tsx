@@ -19,6 +19,36 @@ const statusConfig = {
   no_show: { label: 'Faltou', color: 'bg-yellow-100 text-yellow-800' },
 };
 
+// Map Portuguese status to English for API calls
+const mapStatusToEnglish = (status: AppointmentStatus): "scheduled" | "confirmed" | "completed" | "canceled" | "no_show" => {
+  const statusMap: Record<AppointmentStatus, "scheduled" | "confirmed" | "completed" | "canceled" | "no_show"> = {
+    'agendado': 'scheduled',
+    'confirmado': 'confirmed',
+    'concluido': 'completed',
+    'cancelado': 'canceled',
+    'faltou': 'no_show',
+    'scheduled': 'scheduled',
+    'confirmed': 'confirmed',
+    'completed': 'completed',
+    'canceled': 'canceled',
+    'no_show': 'no_show',
+    'pendente': 'scheduled'
+  };
+  return statusMap[status] || 'scheduled';
+};
+
+// Map English status to Portuguese for display
+const mapStatusToPortuguese = (status: string): AppointmentStatus => {
+  const statusMap: Record<string, AppointmentStatus> = {
+    'scheduled': 'agendado',
+    'confirmed': 'confirmado',
+    'completed': 'concluido',
+    'canceled': 'cancelado',
+    'no_show': 'faltou'
+  };
+  return statusMap[status] as AppointmentStatus || status as AppointmentStatus;
+};
+
 interface AppointmentsListProps {
   appointments?: Appointment[];
   showActions?: boolean;
@@ -37,7 +67,8 @@ export const AppointmentsList: React.FC<AppointmentsListProps> = ({
 
   const handleStatusUpdate = async (appointmentId: string, newStatus: AppointmentStatus) => {
     try {
-      await updateAppointment(appointmentId, { status: newStatus });
+      const englishStatus = mapStatusToEnglish(newStatus);
+      await updateAppointment(appointmentId, { status: englishStatus });
       toast.success('Status do agendamento atualizado!');
     } catch (error) {
       console.error('Error updating appointment status:', error);
@@ -64,6 +95,12 @@ export const AppointmentsList: React.FC<AppointmentsListProps> = ({
     }).format(value);
   };
 
+  // Get status config with fallback
+  const getStatusConfig = (status: AppointmentStatus) => {
+    const englishStatus = mapStatusToEnglish(status);
+    return statusConfig[englishStatus] || { label: status, color: 'bg-gray-100 text-gray-800' };
+  };
+
   if (isLoading && !propAppointments) {
     return <Loading size="lg" className="h-64" />;
   }
@@ -88,117 +125,120 @@ export const AppointmentsList: React.FC<AppointmentsListProps> = ({
 
   return (
     <div className="space-y-4">
-      {appointments.map((appointment) => (
-        <Card key={appointment.id} className="transition-shadow hover:shadow-md">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-2">
-                <Calendar className="h-4 w-4 text-gray-500" />
-                <CardTitle className="text-lg">
-                  {format(appointment.date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                </CardTitle>
+      {appointments.map((appointment) => {
+        const statusInfo = getStatusConfig(appointment.status);
+        return (
+          <Card key={appointment.id} className="transition-shadow hover:shadow-md">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <CardTitle className="text-lg">
+                    {format(appointment.date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  </CardTitle>
+                </div>
+                <Badge className={statusInfo.color}>
+                  {statusInfo.label}
+                </Badge>
               </div>
-              <Badge 
-                className={statusConfig[appointment.status]?.color || 'bg-gray-100 text-gray-800'}
-              >
-                {statusConfig[appointment.status]?.label || appointment.status}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <User className="h-4 w-4 text-gray-500" />
-                  <span className="font-medium">{appointment.clientName}</span>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <User className="h-4 w-4 text-gray-500" />
+                    <span className="font-medium">{appointment.clientName}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-gray-500" />
+                    <span>{appointment.time} - {appointment.endTime}</span>
+                    <span className="text-sm text-gray-500">({appointment.duration}min)</span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-gray-500" />
-                  <span>{appointment.time} - {appointment.endTime}</span>
-                  <span className="text-sm text-gray-500">({appointment.duration}min)</span>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium">Serviço:</span>
-                  <span>{appointment.serviceName}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium">Profissional:</span>
-                  <span>{appointment.professionalName}</span>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium">Serviço:</span>
+                    <span>{appointment.serviceName}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium">Profissional:</span>
+                    <span>{appointment.professionalName}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {appointment.price > 0 && (
-              <div className="flex items-center space-x-2">
-                <DollarSign className="h-4 w-4 text-gray-500" />
-                <span className="font-medium">{formatCurrency(appointment.price)}</span>
-                {appointment.paymentMethod && (
-                  <span className="text-sm text-gray-500">
-                    • {appointment.paymentMethod}
-                  </span>
-                )}
-              </div>
-            )}
+              {appointment.price > 0 && (
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">{formatCurrency(appointment.price)}</span>
+                  {appointment.paymentMethod && (
+                    <span className="text-sm text-gray-500">
+                      • {appointment.paymentMethod}
+                    </span>
+                  )}
+                </div>
+              )}
 
-            {appointment.notes && (
-              <div className="bg-gray-50 p-3 rounded-md">
-                <p className="text-sm text-gray-700">{appointment.notes}</p>
-              </div>
-            )}
+              {appointment.notes && (
+                <div className="bg-gray-50 p-3 rounded-md">
+                  <p className="text-sm text-gray-700">{appointment.notes}</p>
+                </div>
+              )}
 
-            {showActions && (
-              <div className="flex flex-wrap gap-2 pt-2 border-t">
-                {appointment.status === 'scheduled' && (
+              {showActions && (
+                <div className="flex flex-wrap gap-2 pt-2 border-t">
+                  {(appointment.status === 'scheduled' || appointment.status === 'agendado') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleStatusUpdate(appointment.id, 'confirmado')}
+                    >
+                      Confirmar
+                    </Button>
+                  )}
+                  {(appointment.status === 'scheduled' || appointment.status === 'confirmed' || 
+                    appointment.status === 'agendado' || appointment.status === 'confirmado') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleStatusUpdate(appointment.id, 'concluido')}
+                    >
+                      Concluir
+                    </Button>
+                  )}
+                  {(appointment.status === 'scheduled' || appointment.status === 'confirmed' || 
+                    appointment.status === 'agendado' || appointment.status === 'confirmado') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleStatusUpdate(appointment.id, 'cancelado')}
+                    >
+                      Cancelar
+                    </Button>
+                  )}
+                  {onEditAppointment && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onEditAppointment(appointment)}
+                    >
+                      Editar
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleStatusUpdate(appointment.id, 'confirmed')}
+                    className="text-red-600 hover:text-red-700"
+                    onClick={() => handleDelete(appointment.id)}
                   >
-                    Confirmar
+                    Excluir
                   </Button>
-                )}
-                {(appointment.status === 'scheduled' || appointment.status === 'confirmed') && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleStatusUpdate(appointment.id, 'completed')}
-                  >
-                    Concluir
-                  </Button>
-                )}
-                {(appointment.status === 'scheduled' || appointment.status === 'confirmed') && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleStatusUpdate(appointment.id, 'canceled')}
-                  >
-                    Cancelar
-                  </Button>
-                )}
-                {onEditAppointment && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onEditAppointment(appointment)}
-                  >
-                    Editar
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-red-600 hover:text-red-700"
-                  onClick={() => handleDelete(appointment.id)}
-                >
-                  Excluir
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };
