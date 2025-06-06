@@ -26,6 +26,56 @@ const queryClient = new QueryClient({
   },
 });
 
+// Placeholder components for missing pages
+const ServicesPage = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-bold mb-4">Serviços</h1>
+    <p>Página de serviços em desenvolvimento...</p>
+  </div>
+);
+
+const ProfessionalsPage = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-bold mb-4">Profissionais</h1>
+    <p>Página de profissionais em desenvolvimento...</p>
+  </div>
+);
+
+const InventoryPage = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-bold mb-4">Estoque</h1>
+    <p>Página de estoque em desenvolvimento...</p>
+  </div>
+);
+
+const PaymentsPage = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-bold mb-4">Pagamentos</h1>
+    <p>Página de pagamentos em desenvolvimento...</p>
+  </div>
+);
+
+const ReportsPage = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-bold mb-4">Relatórios</h1>
+    <p>Página de relatórios em desenvolvimento...</p>
+  </div>
+);
+
+const MarketingPage = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-bold mb-4">Marketing</h1>
+    <p>Página de marketing em desenvolvimento...</p>
+  </div>
+);
+
+const DocumentsPage = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-bold mb-4">Documentos</h1>
+    <p>Página de documentos em desenvolvimento...</p>
+  </div>
+);
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -69,11 +119,67 @@ function App() {
                     </AppLayout>
                   </ProtectedRoute>
                 } />
+
+                <Route path="/services" element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ServicesPage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/professionals" element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ProfessionalsPage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/inventory" element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <InventoryPage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } />
                 
                 <Route path="/financial" element={
                   <ProtectedRoute>
                     <AppLayout>
                       <Finance />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/payments" element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <PaymentsPage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/reports" element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <ReportsPage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/marketing" element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <MarketingPage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/documents" element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <DocumentsPage />
                     </AppLayout>
                   </ProtectedRoute>
                 } />
