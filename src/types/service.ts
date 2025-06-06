@@ -15,6 +15,8 @@ export interface Service {
   categoria?: string;
   is_active?: boolean;
   ativo?: boolean;
+  image_url?: string;
+  commission_percentage?: number;
   created_at?: string;
   criado_em?: string;
   updated_at?: string;
@@ -27,6 +29,8 @@ export interface ServiceFormData {
   duration: number;
   price: number;
   category?: string;
+  image_url?: string;
+  commission_percentage?: number;
 }
 
 export interface ServiceSearchParams {
