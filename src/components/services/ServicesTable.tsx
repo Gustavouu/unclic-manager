@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Table,
   TableBody,
@@ -18,8 +18,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { ServiceFormDialog } from './ServiceFormDialog';
-import { DeleteServiceDialog } from './DeleteServiceDialog';
 import { useServiceOperations } from '@/hooks/services/useServiceOperations';
+import { toast } from 'sonner';
 import type { Service } from '@/types/service';
 
 interface ServicesTableProps {
@@ -33,24 +33,15 @@ export const ServicesTable: React.FC<ServicesTableProps> = ({
   isLoading,
   onRefresh
 }) => {
-  const [editingService, setEditingService] = useState<Service | null>(null);
-  const [deletingService, setDeletingService] = useState<Service | null>(null);
-  const { toggleServiceStatus, isSubmitting } = useServiceOperations();
+  const { deleteService, toggleServiceStatus } = useServiceOperations();
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
-
-  const formatDuration = (minutes: number) => {
-    if (minutes < 60) {
-      return `${minutes}min`;
+  const handleDelete = async (service: Service) => {
+    if (window.confirm(`Tem certeza que deseja excluir o serviço "${service.name || service.nome}"?`)) {
+      const success = await deleteService(service.id);
+      if (success) {
+        onRefresh();
+      }
     }
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}min` : `${hours}h`;
   };
 
   const handleToggleStatus = async (service: Service) => {
@@ -61,138 +52,144 @@ export const ServicesTable: React.FC<ServicesTableProps> = ({
     }
   };
 
-  const handleServiceUpdated = () => {
-    setEditingService(null);
-    onRefresh();
+  const formatPrice = (price: number | undefined) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(price || 0);
   };
 
-  const handleServiceDeleted = () => {
-    setDeletingService(null);
-    onRefresh();
+  const formatDuration = (duration: number | undefined) => {
+    const mins = duration || 0;
+    const hours = Math.floor(mins / 60);
+    const minutes = mins % 60;
+    
+    if (hours > 0) {
+      return `${hours}h${minutes > 0 ? ` ${minutes}min` : ''}`;
+    }
+    return `${minutes}min`;
   };
 
   if (isLoading) {
     return (
-      <div className="w-full p-8 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-2 text-sm text-muted-foreground">Carregando serviços...</p>
+      <div className="space-y-4">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="h-16 bg-gray-100 rounded animate-pulse" />
+        ))}
       </div>
     );
   }
 
   if (services.length === 0) {
     return (
-      <div className="w-full p-8 text-center">
-        <p className="text-muted-foreground">Nenhum serviço encontrado</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          Crie seu primeiro serviço para começar
-        </p>
+      <div className="text-center py-12">
+        <p className="text-gray-500">Nenhum serviço encontrado</p>
+        <ServiceFormDialog onServiceSaved={onRefresh} />
       </div>
     );
   }
 
   return (
-    <>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Duração</TableHead>
-              <TableHead>Preço</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[70px]">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {services.map((service) => {
-              const isActive = service.is_active ?? service.ativo ?? true;
-              const name = service.name || service.nome || '';
-              const description = service.description || service.descricao || '';
-              const duration = service.duration || service.duracao || 0;
-              const price = service.price || service.preco || 0;
-              const category = service.category || service.categoria || 'Geral';
-
-              return (
-                <TableRow key={service.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{name}</div>
-                      {description && (
-                        <div className="text-sm text-muted-foreground truncate max-w-[200px]">
-                          {description}
-                        </div>
-                      )}
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Imagem</TableHead>
+            <TableHead>Nome</TableHead>
+            <TableHead>Categoria</TableHead>
+            <TableHead>Duração</TableHead>
+            <TableHead>Preço</TableHead>
+            <TableHead>Comissão</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="w-[100px]">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {services.map((service) => (
+            <TableRow key={service.id}>
+              <TableCell>
+                {service.image_url ? (
+                  <img
+                    src={service.image_url}
+                    alt={service.name || service.nome}
+                    className="w-12 h-12 object-cover rounded-lg"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <span className="text-xs text-gray-400">Sem imagem</span>
+                  </div>
+                )}
+              </TableCell>
+              <TableCell>
+                <div>
+                  <div className="font-medium">{service.name || service.nome}</div>
+                  {(service.description || service.descricao) && (
+                    <div className="text-sm text-gray-500 truncate max-w-[200px]">
+                      {service.description || service.descricao}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{category}</Badge>
-                  </TableCell>
-                  <TableCell>{formatDuration(duration)}</TableCell>
-                  <TableCell className="font-medium">
-                    {formatCurrency(price)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={isActive ? "default" : "secondary"}>
-                      {isActive ? 'Ativo' : 'Inativo'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => setEditingService(service)}
-                        >
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline">
+                  {service.category || service.categoria || 'Geral'}
+                </Badge>
+              </TableCell>
+              <TableCell>{formatDuration(service.duration || service.duracao)}</TableCell>
+              <TableCell>{formatPrice(service.price || service.preco)}</TableCell>
+              <TableCell>
+                {service.commission_percentage ? `${service.commission_percentage}%` : '-'}
+              </TableCell>
+              <TableCell>
+                <Badge variant={service.is_active ?? service.ativo ? 'default' : 'secondary'}>
+                  {service.is_active ?? service.ativo ? 'Ativo' : 'Inativo'}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <ServiceFormDialog
+                      service={service}
+                      onServiceSaved={onRefresh}
+                      trigger={
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                           <Edit className="mr-2 h-4 w-4" />
                           Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleToggleStatus(service)}
-                          disabled={isSubmitting}
-                        >
-                          {isActive ? (
-                            <EyeOff className="mr-2 h-4 w-4" />
-                          ) : (
-                            <Eye className="mr-2 h-4 w-4" />
-                          )}
-                          {isActive ? 'Desativar' : 'Ativar'}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setDeletingService(service)}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-
-      <ServiceFormDialog
-        open={!!editingService}
-        onOpenChange={(open) => !open && setEditingService(null)}
-        service={editingService}
-        onServiceSaved={handleServiceUpdated}
-      />
-
-      <DeleteServiceDialog
-        open={!!deletingService}
-        onOpenChange={(open) => !open && setDeletingService(null)}
-        service={deletingService}
-        onServiceDeleted={handleServiceDeleted}
-      />
-    </>
+                      }
+                    />
+                    <DropdownMenuItem onClick={() => handleToggleStatus(service)}>
+                      {service.is_active ?? service.ativo ? (
+                        <>
+                          <EyeOff className="mr-2 h-4 w-4" />
+                          Desativar
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ativar
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleDelete(service)}
+                      className="text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };

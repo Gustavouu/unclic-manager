@@ -21,6 +21,7 @@ import {
 import { Plus, Edit } from 'lucide-react';
 import { useServiceOperations } from '@/hooks/services/useServiceOperations';
 import { ServiceService } from '@/services/service/serviceService';
+import { ServiceImageUpload } from './ServiceImageUpload';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import type { Service, ServiceFormData } from '@/types/service';
 
@@ -41,12 +42,14 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>(['Geral']);
-  const [formData, setFormData] = useState<ServiceFormData>({
+  const [formData, setFormData] = useState<ServiceFormData & { image_url?: string; commission_percentage?: number }>({
     name: '',
     description: '',
     duration: 30,
     price: 0,
     category: 'Geral',
+    image_url: '',
+    commission_percentage: 0,
   });
 
   const { createService, updateService, isSubmitting } = useServiceOperations();
@@ -83,6 +86,8 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
         duration: service.duration || service.duracao || 30,
         price: service.price || service.preco || 0,
         category: service.category || service.categoria || 'Geral',
+        image_url: service.image_url || '',
+        commission_percentage: service.commission_percentage || 0,
       });
     } else {
       setFormData({
@@ -91,6 +96,8 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
         duration: 30,
         price: 0,
         category: 'Geral',
+        image_url: '',
+        commission_percentage: 0,
       });
     }
   }, [service, isOpen]);
@@ -103,11 +110,21 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
     }
 
     try {
+      const serviceData: ServiceFormData & { image_url?: string; commission_percentage?: number } = {
+        name: formData.name,
+        description: formData.description,
+        duration: formData.duration,
+        price: formData.price,
+        category: formData.category,
+        image_url: formData.image_url,
+        commission_percentage: formData.commission_percentage,
+      };
+
       let result;
       if (isEditing && service) {
-        result = await updateService(service.id, formData);
+        result = await updateService(service.id, serviceData);
       } else {
-        result = await createService(formData);
+        result = await createService(serviceData);
       }
 
       if (result) {
@@ -119,11 +136,15 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
     }
   };
 
-  const handleInputChange = (field: keyof ServiceFormData, value: any) => {
+  const handleInputChange = (field: keyof typeof formData, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleImageChange = (imageUrl: string | null) => {
+    handleInputChange('image_url', imageUrl || '');
   };
 
   const defaultTrigger = (
@@ -134,14 +155,21 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
   );
 
   const content = (
-    <DialogContent className="sm:max-w-[500px]">
+    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>
           {isEditing ? 'Editar Serviço' : 'Novo Serviço'}
         </DialogTitle>
       </DialogHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <ServiceImageUpload
+          currentImageUrl={formData.image_url}
+          onImageChange={handleImageChange}
+          serviceId={service?.id}
+          disabled={isSubmitting}
+        />
+
         <div className="space-y-2">
           <Label htmlFor="name">Nome do Serviço *</Label>
           <Input
@@ -150,6 +178,7 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
             onChange={(e) => handleInputChange('name', e.target.value)}
             placeholder="Ex: Corte Masculino"
             required
+            disabled={isSubmitting}
           />
         </div>
 
@@ -161,6 +190,7 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
             onChange={(e) => handleInputChange('description', e.target.value)}
             placeholder="Descreva o serviço..."
             rows={3}
+            disabled={isSubmitting}
           />
         </div>
 
@@ -175,6 +205,7 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
               value={formData.duration}
               onChange={(e) => handleInputChange('duration', parseInt(e.target.value) || 30)}
               required
+              disabled={isSubmitting}
             />
           </div>
 
@@ -188,27 +219,46 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
               value={formData.price}
               onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
               required
+              disabled={isSubmitting}
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="category">Categoria</Label>
-          <Select
-            value={formData.category}
-            onValueChange={(value) => handleInputChange('category', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione uma categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="category">Categoria</Label>
+            <Select
+              value={formData.category}
+              onValueChange={(value) => handleInputChange('category', value)}
+              disabled={isSubmitting}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="commission">Comissão (%)</Label>
+            <Input
+              id="commission"
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              value={formData.commission_percentage}
+              onChange={(e) => handleInputChange('commission_percentage', parseFloat(e.target.value) || 0)}
+              placeholder="0"
+              disabled={isSubmitting}
+            />
+          </div>
         </div>
 
         <div className="flex justify-end space-x-2 pt-4">

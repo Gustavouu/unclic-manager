@@ -2,12 +2,11 @@
 import { useState, useEffect } from 'react';
 import { ServiceService } from '@/services/service/serviceService';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
-import type { Service } from '@/types/service';
-import { toast } from 'sonner';
+import type { Service, ServiceSearchParams } from '@/types/service';
 
 export const useServicesList = () => {
   const [services, setServices] = useState<Service[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { businessId } = useCurrentBusiness();
 
@@ -28,35 +27,35 @@ export const useServicesList = () => {
       const data = await serviceService.getByBusinessId(businessId);
       console.log('Services fetched:', data);
       setServices(data);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching services:', err);
-      const errorMessage = err.message || 'Erro ao carregar serviços';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      setError(err instanceof Error ? err.message : 'Failed to fetch services');
+      setServices([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const searchServices = async (searchTerm: string, category?: string) => {
+  const searchServices = async (search?: string, category?: string) => {
     if (!businessId) return;
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const data = await serviceService.search({
+      const params: ServiceSearchParams = {
         business_id: businessId,
-        search: searchTerm,
+        search,
         category,
-        is_active: true
-      });
+        is_active: true,
+      };
+
+      const data = await serviceService.search(params);
       setServices(data);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error searching services:', err);
-      const errorMessage = err.message || 'Erro ao buscar serviços';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      setError(err instanceof Error ? err.message : 'Failed to search services');
+      setServices([]);
     } finally {
       setIsLoading(false);
     }
