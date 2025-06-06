@@ -12,7 +12,7 @@ import AuthPremium from '@/pages/AuthPremium';
 import Dashboard from '@/pages/Dashboard';
 import Clients from '@/pages/Clients';
 import Appointments from '@/pages/Appointments';
-import Financial from '@/pages/Financial';
+import Finance from '@/pages/Finance';
 import Settings from '@/pages/Settings';
 
 // Create a client
@@ -71,7 +71,7 @@ function App() {
               <Route path="/financial" element={
                 <ProtectedRoute>
                   <AppLayout>
-                    <Financial />
+                    <Finance />
                   </AppLayout>
                 </ProtectedRoute>
               } />
