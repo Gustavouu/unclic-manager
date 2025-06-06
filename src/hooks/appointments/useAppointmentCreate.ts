@@ -38,16 +38,11 @@ export const useAppointmentCreate = (
         updated_at: new Date().toISOString(),
       };
 
-      // Use the bookings table which exists in the database
-      const { data, error } = await supabase
+      // First create the booking
+      const { data: bookingData, error } = await supabase
         .from('bookings')
         .insert(dbData)
-        .select(`
-          *,
-          clients!inner(name),
-          services!inner(name),
-          professionals!inner(name)
-        `)
+        .select()
         .single();
 
       if (error) {
@@ -55,27 +50,62 @@ export const useAppointmentCreate = (
         throw new Error(`Failed to create appointment: ${error.message}`);
       }
 
-      if (!data) {
+      if (!bookingData) {
         throw new Error("No data returned from appointment creation");
+      }
+
+      // Now fetch related data separately
+      let clientName = appointmentData.clientName || 'Cliente';
+      let serviceName = appointmentData.serviceName || 'Serviço';
+      let professionalName = appointmentData.professionalName || 'Profissional';
+
+      // Fetch client name
+      if (bookingData.client_id) {
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('name')
+          .eq('id', bookingData.client_id)
+          .single();
+        if (clientData) clientName = clientData.name;
+      }
+
+      // Fetch service name
+      if (bookingData.service_id) {
+        const { data: serviceData } = await supabase
+          .from('services')
+          .select('name')
+          .eq('id', bookingData.service_id)
+          .single();
+        if (serviceData) serviceName = serviceData.name;
+      }
+
+      // Fetch professional name
+      if (bookingData.employee_id) {
+        const { data: professionalData } = await supabase
+          .from('professionals')
+          .select('name')
+          .eq('id', bookingData.employee_id)
+          .single();
+        if (professionalData) professionalName = professionalData.name;
       }
 
       // Transform the database result back to our Appointment type
       const appointment: Appointment = {
-        id: data.id,
-        clientId: data.client_id,
-        clientName: data.clients?.name || appointmentData.clientName || 'Cliente',
-        serviceId: data.service_id,
-        serviceName: data.services?.name || appointmentData.serviceName || 'Serviço',
+        id: bookingData.id,
+        clientId: bookingData.client_id,
+        clientName,
+        serviceId: bookingData.service_id,
+        serviceName,
         serviceType: appointmentData.serviceType || 'service',
-        professionalId: data.employee_id,
-        professionalName: data.professionals?.name || appointmentData.professionalName || 'Profissional',
-        date: new Date(`${data.booking_date}T${data.start_time}`),
-        duration: data.duration,
-        price: data.price,
-        status: mapStatusFromDb(data.status),
-        notes: data.notes || '',
-        paymentMethod: data.payment_method,
-        businessId: data.business_id,
+        professionalId: bookingData.employee_id,
+        professionalName,
+        date: new Date(`${bookingData.booking_date}T${bookingData.start_time}`),
+        duration: bookingData.duration,
+        price: bookingData.price,
+        status: mapStatusFromDb(bookingData.status),
+        notes: bookingData.notes || '',
+        paymentMethod: bookingData.payment_method,
+        businessId: bookingData.business_id,
       };
 
       // Update local state if provided

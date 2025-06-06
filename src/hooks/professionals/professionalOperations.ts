@@ -32,19 +32,15 @@ export const useProfessionalOperations = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('employees')
+        .from('professionals')
         .insert([
           {
             business_id: businessId,
             name: professionalData.name,
             email: professionalData.email,
             phone: professionalData.phone,
-            position: professionalData.position,
             bio: professionalData.bio,
-            photo_url: professionalData.photoUrl,
-            specialties: professionalData.specialties,
-            commission_percentage: professionalData.commissionPercentage,
-            hire_date: professionalData.hireDate,
+            avatar: professionalData.photoUrl,
             status: professionalData.status || 'active',
           }
         ])
@@ -73,17 +69,13 @@ export const useProfessionalOperations = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('employees')
+        .from('professionals')
         .update({
           name: updates.name,
           email: updates.email,
           phone: updates.phone,
-          position: updates.position,
           bio: updates.bio,
-          photo_url: updates.photoUrl,
-          specialties: updates.specialties,
-          commission_percentage: updates.commissionPercentage,
-          hire_date: updates.hireDate,
+          avatar: updates.photoUrl,
           status: updates.status,
         })
         .eq('id', id)
@@ -113,7 +105,7 @@ export const useProfessionalOperations = () => {
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('employees')
+        .from('professionals')
         .delete()
         .eq('id', id)
         .eq('business_id', businessId);

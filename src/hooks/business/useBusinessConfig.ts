@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -41,7 +42,7 @@ export const useBusinessConfig = () => {
     const fetchConfig = async () => {
       try {
         const { data: businessConfig, error } = await supabase
-          .from("configuracoes_negocio")
+          .from("business_settings")
           .select("*")
           .limit(1)
           .maybeSingle();
@@ -52,14 +53,13 @@ export const useBusinessConfig = () => {
         }
 
         if (businessConfig) {
-          // Converter as configurações do banco para o formato do hook
-          // Aqui estamos usando valores padrão caso os campos não existam
+          // Convert business settings to config format
           setConfig({
-            businessHours: defaultConfig.businessHours, // Usar campo JSON específico ou o padrão
-            bufferTime: businessConfig.aviso_minimo_agendamento || defaultConfig.bufferTime,
-            minAdvanceTime: businessConfig.aviso_minimo_agendamento || defaultConfig.minAdvanceTime,
-            maxFutureDays: businessConfig.dias_maximos_antecedencia || defaultConfig.maxFutureDays,
-            requireConfirmation: businessConfig.pagamento_antecipado_obrigatorio ?? defaultConfig.requireConfirmation,
+            businessHours: defaultConfig.businessHours, // Use default for now
+            bufferTime: businessConfig.minimum_notice_time || defaultConfig.bufferTime,
+            minAdvanceTime: businessConfig.minimum_notice_time || defaultConfig.minAdvanceTime,
+            maxFutureDays: businessConfig.maximum_days_in_advance || defaultConfig.maxFutureDays,
+            requireConfirmation: businessConfig.require_advance_payment ?? defaultConfig.requireConfirmation,
           });
         }
       } catch (error) {

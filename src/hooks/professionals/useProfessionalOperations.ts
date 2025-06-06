@@ -20,20 +20,15 @@ export const useProfessionalOperations = () => {
       console.log('Creating professional:', professionalData);
       
       const { data, error } = await supabase
-        .from('funcionarios')
+        .from('professionals')
         .insert({
           business_id: businessId,
-          id_negocio: businessId,
-          nome: professionalData.name,
+          name: professionalData.name,
           email: professionalData.email || null,
-          telefone: professionalData.phone || null,
-          cargo: professionalData.position || null,
+          phone: professionalData.phone || null,
           bio: professionalData.bio || null,
-          foto_url: professionalData.photo_url || null,
-          especializacoes: professionalData.specialties || [],
-          comissao_percentual: professionalData.commission_percentage || 0,
-          data_contratacao: professionalData.hire_date || null,
-          status: professionalData.status || 'ativo',
+          avatar: professionalData.photo_url || null,
+          status: professionalData.status || 'active',
         })
         .select()
         .single();
@@ -59,19 +54,15 @@ export const useProfessionalOperations = () => {
       console.log('Updating professional:', professionalId, professionalData);
       
       const { data, error } = await supabase
-        .from('funcionarios')
+        .from('professionals')
         .update({
-          nome: professionalData.name,
+          name: professionalData.name,
           email: professionalData.email || null,
-          telefone: professionalData.phone || null,
-          cargo: professionalData.position || null,
+          phone: professionalData.phone || null,
           bio: professionalData.bio || null,
-          foto_url: professionalData.photo_url || null,
-          especializacoes: professionalData.specialties || [],
-          comissao_percentual: professionalData.commission_percentage || 0,
-          data_contratacao: professionalData.hire_date || null,
-          status: professionalData.status || 'ativo',
-          atualizado_em: new Date().toISOString(),
+          avatar: professionalData.photo_url || null,
+          status: professionalData.status || 'active',
+          updatedAt: new Date().toISOString(),
         })
         .eq('id', professionalId)
         .select()
@@ -98,7 +89,7 @@ export const useProfessionalOperations = () => {
       console.log('Deleting professional:', professionalId);
       
       const { error } = await supabase
-        .from('funcionarios')
+        .from('professionals')
         .delete()
         .eq('id', professionalId);
 

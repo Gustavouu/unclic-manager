@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   Table,
@@ -71,7 +70,7 @@ export function ClientAppointmentsTab({ clientId }: ClientAppointmentsTabProps) 
     const statusMap = {
       scheduled: { label: 'Agendado', variant: 'default' as const },
       confirmed: { label: 'Confirmado', variant: 'secondary' as const },
-      completed: { label: 'Concluído', variant: 'success' as const },
+      completed: { label: 'Concluído', variant: 'secondary' as const },
       canceled: { label: 'Cancelado', variant: 'destructive' as const },
       no_show: { label: 'Faltou', variant: 'outline' as const },
     };
