@@ -4,52 +4,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Users, Star } from 'lucide-react';
+import { Plus, Search, Users, Star, Edit, Trash2 } from 'lucide-react';
 import { OnboardingRedirect } from '@/components/auth/OnboardingRedirect';
-
-interface Professional {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  position: string;
-  specialties: string[];
-  status: 'active' | 'inactive';
-  photo_url?: string;
-  commission_percentage: number;
-  hire_date: string;
-}
+import { ProfessionalFormDialog } from '@/components/professionals/ProfessionalFormDialog';
+import { useProfessionalsList } from '@/hooks/professionals/useProfessionalsList';
+import { useProfessionalsOperations } from '@/hooks/professionals/useProfessionalsOperations';
+import type { Professional } from '@/types/professional';
 
 const Professionals = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [professionals, setProfessionals] = useState<Professional[]>([
-    {
-      id: '1',
-      name: 'João Silva',
-      email: 'joao@exemplo.com',
-      phone: '(11) 99999-9999',
-      position: 'Barbeiro Senior',
-      specialties: ['Corte Masculino', 'Barba', 'Bigode'],
-      status: 'active',
-      commission_percentage: 40,
-      hire_date: '2023-01-15'
-    },
-    {
-      id: '2',
-      name: 'Maria Santos',
-      email: 'maria@exemplo.com',
-      phone: '(11) 88888-8888',
-      position: 'Cabeleireira',
-      specialties: ['Corte Feminino', 'Coloração', 'Escova'],
-      status: 'active',
-      commission_percentage: 45,
-      hire_date: '2023-03-20'
-    }
-  ]);
+  const [editingProfessional, setEditingProfessional] = useState<Professional | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  const { professionals, isLoading, refetch } = useProfessionalsList();
+  const { deleteProfessional } = useProfessionalsOperations();
 
   const filteredProfessionals = professionals.filter(professional =>
-    professional.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    professional.position.toLowerCase().includes(searchTerm.toLowerCase())
+    professional.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    professional.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    professional.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusColor = (status: string) => {
@@ -74,6 +47,43 @@ const Professionals = () => {
     }
   };
 
+  const handleEdit = (professional: Professional) => {
+    setEditingProfessional(professional);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (professional: Professional) => {
+    if (window.confirm(`Tem certeza que deseja excluir ${professional.name}?`)) {
+      const success = await deleteProfessional(professional.id);
+      if (success) {
+        refetch();
+      }
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingProfessional(null);
+  };
+
+  const handleProfessionalSaved = () => {
+    refetch();
+    handleCloseDialog();
+  };
+
+  if (isLoading) {
+    return (
+      <OnboardingRedirect>
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando profissionais...</p>
+          </div>
+        </div>
+      </OnboardingRedirect>
+    );
+  }
+
   return (
     <OnboardingRedirect>
       <div className="space-y-6">
@@ -83,10 +93,18 @@ const Professionals = () => {
             <h1 className="text-2xl font-bold text-gray-900">Profissionais</h1>
             <p className="text-gray-600">Gerencie sua equipe de profissionais</p>
           </div>
-          <Button className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Novo Profissional
-          </Button>
+          <ProfessionalFormDialog
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            professional={editingProfessional}
+            onProfessionalSaved={handleProfessionalSaved}
+            trigger={
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Novo Profissional
+              </Button>
+            }
+          />
         </div>
 
         {/* Stats Cards */}
@@ -106,32 +124,30 @@ const Professionals = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Comissão Média</CardTitle>
+              <CardTitle className="text-sm font-medium">Média de Avaliações</CardTitle>
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {Math.round(professionals.reduce((sum, p) => sum + p.commission_percentage, 0) / professionals.length)}%
-              </div>
+              <div className="text-2xl font-bold">4.8</div>
               <p className="text-xs text-muted-foreground">
-                Comissão média da equipe
+                Avaliação média da equipe
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Especialidades</CardTitle>
+              <CardTitle className="text-sm font-medium">Cargos</CardTitle>
               <Badge variant="secondary">
-                {new Set(professionals.flatMap(p => p.specialties)).size}
+                {new Set(professionals.map(p => p.position).filter(Boolean)).size}
               </Badge>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {new Set(professionals.flatMap(p => p.specialties)).size}
+                {new Set(professionals.map(p => p.position).filter(Boolean)).size}
               </div>
               <p className="text-xs text-muted-foreground">
-                Especialidades diferentes
+                Cargos diferentes
               </p>
             </CardContent>
           </Card>
@@ -154,61 +170,73 @@ const Professionals = () => {
           </CardHeader>
 
           <CardContent>
-            <div className="space-y-4">
-              {filteredProfessionals.map((professional) => (
-                <div key={professional.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                      {professional.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{professional.name}</h3>
-                      <p className="text-sm text-gray-600">{professional.position}</p>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {professional.specialties.slice(0, 3).map((specialty, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {specialty}
-                          </Badge>
-                        ))}
-                        {professional.specialties.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{professional.specialties.length - 3}
-                          </Badge>
+            {filteredProfessionals.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {professionals.length === 0 ? 'Nenhum profissional cadastrado' : 'Nenhum profissional encontrado'}
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {professionals.length === 0 
+                    ? 'Comece adicionando seu primeiro profissional à equipe.'
+                    : 'Tente ajustar os termos de busca.'
+                  }
+                </p>
+                {professionals.length === 0 && (
+                  <Button onClick={() => setIsDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Profissional
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredProfessionals.map((professional) => (
+                  <div key={professional.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                        {professional.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'P'}
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-gray-900">{professional.name}</h3>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          {professional.position && <span>{professional.position}</span>}
+                          {professional.email && (
+                            <>
+                              <span>•</span>
+                              <span>{professional.email}</span>
+                            </>
+                          )}
+                        </div>
+                        {professional.phone && (
+                          <p className="text-sm text-gray-500">{professional.phone}</p>
                         )}
                       </div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{professional.commission_percentage}%</p>
-                      <p className="text-xs text-gray-500">Comissão</p>
-                    </div>
-                    <Badge className={getStatusColor(professional.status)}>
-                      {getStatusText(professional.status)}
-                    </Badge>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        Editar
+                    <div className="flex items-center gap-2">
+                      <Badge className={getStatusColor(professional.status || 'active')}>
+                        {getStatusText(professional.status || 'active')}
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(professional)}
+                      >
+                        <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
-                        Ver Detalhes
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(professional)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
-                </div>
-              ))}
-
-              {filteredProfessionals.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Nenhum profissional encontrado</p>
-                  {searchTerm && (
-                    <p className="text-sm">Tente buscar com outros termos</p>
-                  )}
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

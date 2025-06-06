@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { OnboardingRedirect } from '@/components/auth/OnboardingRedirect';
-import { AdvancedReportsPage } from '@/components/reports/AdvancedReportsPage';
+import { RealTimeReportsPage } from '@/components/reports/RealTimeReportsPage';
 
 const ReportsPage: React.FC = () => {
   return (
     <OnboardingRedirect>
-      <AdvancedReportsPage />
+      <RealTimeReportsPage />
     </OnboardingRedirect>
   );
 };
