@@ -19,7 +19,7 @@ export const useClientOperations = () => {
     try {
       console.log('Creating client with data:', { ...clientData, business_id: businessId });
       
-      // Prepare the data for unified table
+      // Prepare the data for clients table
       const insertData = {
         business_id: businessId,
         name: clientData.name?.trim(),
@@ -49,7 +49,7 @@ export const useClientOperations = () => {
       }
 
       const { data, error } = await supabase
-        .from('clients_unified')
+        .from('clients')
         .insert(insertData)
         .select()
         .single();
@@ -94,7 +94,7 @@ export const useClientOperations = () => {
     try {
       console.log('Updating client:', clientId, clientData);
       
-      // Prepare the update data for unified table
+      // Prepare the update data for clients table
       const updateData = {
         name: clientData.name?.trim(),
         email: clientData.email?.toLowerCase().trim() || null,
@@ -110,7 +110,7 @@ export const useClientOperations = () => {
       };
 
       const { data, error } = await supabase
-        .from('clients_unified')
+        .from('clients')
         .update(updateData)
         .eq('id', clientId)
         .select()
@@ -139,7 +139,7 @@ export const useClientOperations = () => {
       console.log('Deleting client:', clientId);
       
       const { error } = await supabase
-        .from('clients_unified')
+        .from('clients')
         .delete()
         .eq('id', clientId);
 

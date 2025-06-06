@@ -5,6 +5,20 @@ import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import { toast } from 'sonner';
 import type { Client, ClientFormData } from '@/types/client';
 
+// Helper function to safely parse JSON preferences
+const safeParsePreferences = (preferences: any): Record<string, any> => {
+  if (!preferences) return {};
+  if (typeof preferences === 'object' && preferences !== null) return preferences;
+  if (typeof preferences === 'string') {
+    try {
+      return JSON.parse(preferences);
+    } catch {
+      return {};
+    }
+  }
+  return {};
+};
+
 export const useClientsData = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,9 +37,9 @@ export const useClientsData = () => {
     try {
       console.log(`Fetching clients for business: ${businessId}`);
       
-      // Query the unified clients table
+      // Query the clients table (consolidated)
       const { data, error } = await supabase
-        .from('clients_unified')
+        .from('clients')
         .select('*')
         .eq('business_id', businessId)
         .order('created_at', { ascending: false });
@@ -56,9 +70,7 @@ export const useClientsData = () => {
         last_visit: client.last_visit,
         total_spent: client.total_spent || 0,
         status: client.status || 'active',
-        preferences: typeof client.preferences === 'object' && client.preferences !== null 
-          ? client.preferences as Record<string, any>
-          : {}
+        preferences: safeParsePreferences(client.preferences)
       }));
 
       console.log('Mapped clients:', mappedClients);
@@ -98,7 +110,7 @@ export const useClientsData = () => {
     };
 
     const { data, error } = await supabase
-      .from('clients_unified')
+      .from('clients')
       .insert(dbData)
       .select()
       .single();
@@ -129,9 +141,7 @@ export const useClientsData = () => {
       last_visit: data.last_visit,
       total_spent: data.total_spent || 0,
       status: data.status || 'active',
-      preferences: typeof data.preferences === 'object' && data.preferences !== null 
-        ? data.preferences as Record<string, any>
-        : {}
+      preferences: safeParsePreferences(data.preferences)
     };
 
     // Update local state
@@ -156,7 +166,7 @@ export const useClientsData = () => {
     if (clientData.notes !== undefined) dbData.notes = clientData.notes;
 
     const { data, error } = await supabase
-      .from('clients_unified')
+      .from('clients')
       .update(dbData)
       .eq('id', id)
       .select()
@@ -188,9 +198,7 @@ export const useClientsData = () => {
       last_visit: data.last_visit,
       total_spent: data.total_spent || 0,
       status: data.status || 'active',
-      preferences: typeof data.preferences === 'object' && data.preferences !== null 
-        ? data.preferences as Record<string, any>
-        : {}
+      preferences: safeParsePreferences(data.preferences)
     };
 
     // Update local state
@@ -205,7 +213,7 @@ export const useClientsData = () => {
     console.log('Deleting client:', id);
 
     const { error } = await supabase
-      .from('clients_unified')
+      .from('clients')
       .delete()
       .eq('id', id);
 

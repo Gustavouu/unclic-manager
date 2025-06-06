@@ -1,139 +1,119 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { format, addMinutes, isBefore, isAfter, parse } from "date-fns";
-import { useBusinessHours } from "./useBusinessHours";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-export const useAvailableTimeSlots = (
-  selectedDate: Date | undefined,
-  professionalId: string | undefined, 
-  serviceDuration: number = 60
-) => {
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+export interface TimeSlot {
+  time: string;
+  available: boolean;
+}
+
+interface UseAvailableTimeSlotsParams {
+  employeeId?: string;
+  serviceId?: string;
+  date?: string;
+  businessId?: string;
+}
+
+export const useAvailableTimeSlots = ({
+  employeeId,
+  serviceId,
+  date,
+  businessId
+}: UseAvailableTimeSlotsParams) => {
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { businessHours } = useBusinessHours();
-  
-  useEffect(() => {
-    if (!selectedDate || !professionalId) {
-      setAvailableSlots([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const generateTimeSlots = () => {
+    const slots: TimeSlot[] = [];
+    const startHour = 8; // 8 AM
+    const endHour = 18; // 6 PM
+    const intervalMinutes = 30;
+
+    for (let hour = startHour; hour < endHour; hour++) {
+      for (let minute = 0; minute < 60; minute += intervalMinutes) {
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        slots.push({
+          time: timeString,
+          available: true
+        });
+      }
+    }
+
+    return slots;
+  };
+
+  const fetchAvailableTimeSlots = async () => {
+    if (!employeeId || !date || !businessId) {
+      setTimeSlots(generateTimeSlots());
       return;
     }
-    
-    const fetchAvailability = async () => {
-      setIsLoading(true);
-      try {
-        // Format date for database query
-        const dateStr = format(selectedDate, 'yyyy-MM-dd');
-        
-        // Get day of week (0-6, where 0 is Sunday)
-        const dayOfWeek = selectedDate.getDay();
-        const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-        const dayName = dayNames[dayOfWeek];
-        
-        // If business is closed on this day, return empty slots
-        if (!businessHours[dayName]?.enabled) {
-          setAvailableSlots([]);
-          setIsLoading(false);
-          return;
-        }
-        
-        // Get business hours for this day
-        const openTime = businessHours[dayName]?.start || "09:00";
-        const closeTime = businessHours[dayName]?.end || "18:00";
-        
-        // Get existing appointments for this professional on this date
-        // Use Appointments table (capital A) which exists in the schema
-        const { data: appointments, error } = await supabase
-          .from('Appointments')
-          .select('hora_inicio, hora_fim, duracao')
-          .eq('data', dateStr)
-          .eq('id_funcionario', professionalId);
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Fetch existing appointments for the employee on the selected date
+      const { data: appointments, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select('start_time, end_time, duration')
+        .eq('employee_id', employeeId)
+        .eq('booking_date', date)
+        .not('status', 'eq', 'cancelled');
+
+      if (appointmentsError) {
+        console.error('Error fetching appointments:', appointmentsError);
+        throw appointmentsError;
+      }
+
+      const allSlots = generateTimeSlots();
+      const bookedTimes = new Set<string>();
+
+      // Mark booked times
+      if (appointments) {
+        appointments.forEach((appointment: any) => {
+          const startTime = appointment.start_time;
+          const duration = appointment.duration || 60;
           
-        if (error) {
-          console.error('Error fetching appointments:', error);
-          // If Appointments table doesn't work, try bookings
-          const { data: bookingsData, error: bookingsError } = await supabase
-            .from('bookings')
-            .select('start_time, end_time, duration')
-            .eq('booking_date', dateStr)
-            .eq('employee_id', professionalId);
-            
-          if (bookingsError) {
-            console.error('Error fetching bookings:', bookingsError);
-            setAvailableSlots([]);
-            setIsLoading(false);
-            return;
+          // Calculate end time based on start time and duration
+          const [startHour, startMinute] = startTime.split(':').map(Number);
+          const startTotalMinutes = startHour * 60 + startMinute;
+          const endTotalMinutes = startTotalMinutes + duration;
+          
+          // Mark all slots within this appointment as booked
+          for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += 30) {
+            const hour = Math.floor(minutes / 60);
+            const minute = minutes % 60;
+            const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            bookedTimes.add(timeString);
           }
-          
-          // Convert bookings format to appointments format for processing
-          const convertedAppointments = bookingsData?.map(booking => ({
-            hora_inicio: booking.start_time,
-            hora_fim: booking.end_time,
-            duracao: booking.duration
-          })) || [];
-          
-          processTimeSlots(convertedAppointments, openTime, closeTime, selectedDate, serviceDuration);
-          return;
-        }
-        
-        processTimeSlots(appointments || [], openTime, closeTime, selectedDate, serviceDuration);
-      } catch (error) {
-        console.error('Error checking available time slots:', error);
-        setAvailableSlots([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    const processTimeSlots = (appointments: any[], openTime: string, closeTime: string, selectedDate: Date, serviceDuration: number) => {
-      // Generate all possible time slots in 30-minute increments
-      const slots: string[] = [];
-      const startTime = parse(openTime, 'HH:mm', new Date());
-      const endTime = parse(closeTime, 'HH:mm', new Date());
-      
-      let currentSlot = startTime;
-      while (isBefore(currentSlot, endTime)) {
-        const timeString = format(currentSlot, 'HH:mm');
-        slots.push(timeString);
-        currentSlot = addMinutes(currentSlot, 30);
-      }
-      
-      // Filter out slots that overlap with existing appointments
-      const availableTimeSlots = slots.filter(slot => {
-        // Convert slot to Date object
-        const [hours, minutes] = slot.split(':').map(Number);
-        const slotDate = new Date(selectedDate);
-        slotDate.setHours(hours, minutes, 0, 0);
-        
-        // Calculate end time of this appointment
-        const endSlotDate = addMinutes(slotDate, serviceDuration);
-        
-        // Check if this slot overlaps with any existing appointment
-        return !appointments?.some(appointment => {
-          const [apptStartHours, apptStartMinutes] = appointment.hora_inicio.split(':').map(Number);
-          const [apptEndHours, apptEndMinutes] = appointment.hora_fim.split(':').map(Number);
-          
-          const apptStartDate = new Date(selectedDate);
-          apptStartDate.setHours(apptStartHours, apptStartMinutes, 0, 0);
-          
-          const apptEndDate = new Date(selectedDate);
-          apptEndDate.setHours(apptEndHours, apptEndMinutes, 0, 0);
-          
-          // Check for overlap
-          return (
-            (isAfter(endSlotDate, apptStartDate) && isBefore(slotDate, apptEndDate))
-          );
         });
-      });
-      
-      setAvailableSlots(availableTimeSlots);
-    };
-    
-    fetchAvailability();
-  }, [selectedDate, professionalId, serviceDuration, businessHours]);
-  
-  return { 
-    availableSlots, 
-    isLoading 
+      }
+
+      // Update availability
+      const availableSlots = allSlots.map(slot => ({
+        ...slot,
+        available: !bookedTimes.has(slot.time)
+      }));
+
+      setTimeSlots(availableSlots);
+    } catch (err: any) {
+      console.error('Error fetching available time slots:', err);
+      setError(err.message || 'Failed to fetch available time slots');
+      setTimeSlots(generateTimeSlots()); // Fallback to all available
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAvailableTimeSlots();
+  }, [employeeId, serviceId, date, businessId]);
+
+  return {
+    timeSlots,
+    isLoading,
+    error,
+    refetch: fetchAvailableTimeSlots
   };
 };

@@ -31,9 +31,9 @@ export default function ClientSelectWrapper({ form }: ClientSelectWrapperProps) 
       try {
         console.log('Fetching clients for business ID:', businessId);
         
-        // Use the unified clients table
+        // Use the clients table
         const { data, error } = await supabase
-          .from('clients_unified')
+          .from('clients')
           .select('*')
           .eq('business_id', businessId);
           
@@ -66,7 +66,7 @@ export default function ClientSelectWrapper({ form }: ClientSelectWrapperProps) 
       
       try {
         const { data, error } = await supabase
-          .from('clients_unified')
+          .from('clients')
           .select('*')
           .eq('business_id', businessId);
           

@@ -3,13 +3,27 @@ import { supabase } from '@/integrations/supabase/client';
 import { validateEmail, validatePhone, validateZipCode, formatValidationError } from '@/utils/databaseUtils';
 import type { Client } from '@/types/client';
 
+// Helper function to safely parse JSON preferences
+const safeParsePreferences = (preferences: any): Record<string, any> => {
+  if (!preferences) return {};
+  if (typeof preferences === 'object' && preferences !== null) return preferences;
+  if (typeof preferences === 'string') {
+    try {
+      return JSON.parse(preferences);
+    } catch {
+      return {};
+    }
+  }
+  return {};
+};
+
 export const fetchClients = async (businessId: string): Promise<Client[]> => {
   try {
     console.log('Fetching clients for business:', businessId);
     
-    // Use unified table
+    // Use clients table (consolidated)
     const { data: clients, error } = await supabase
-      .from('clients_unified')
+      .from('clients')
       .select('*')
       .eq('business_id', businessId)
       .order('created_at', { ascending: false });
@@ -20,7 +34,12 @@ export const fetchClients = async (businessId: string): Promise<Client[]> => {
     }
 
     console.log('Successfully fetched clients:', clients?.length || 0);
-    return clients || [];
+    
+    // Convert to Client type with proper preference parsing
+    return (clients || []).map(client => ({
+      ...client,
+      preferences: safeParsePreferences(client.preferences)
+    }));
   } catch (error) {
     console.error('Error fetching clients:', error);
     throw error;
@@ -61,7 +80,7 @@ export const createClient = async (clientData: Partial<Client>): Promise<Client>
 
     // Insert with server-side validation via triggers
     const { data: client, error } = await supabase
-      .from('clients_unified')
+      .from('clients')
       .insert([{
         business_id: normalizedData.business_id,
         name: normalizedData.name,
@@ -74,7 +93,8 @@ export const createClient = async (clientData: Partial<Client>): Promise<Client>
         state: normalizedData.state || null,
         zip_code: normalizedData.zip_code || null,
         notes: normalizedData.notes || null,
-        status: normalizedData.status || 'active'
+        status: normalizedData.status || 'active',
+        preferences: normalizedData.preferences || {}
       }])
       .select()
       .single();
@@ -85,7 +105,10 @@ export const createClient = async (clientData: Partial<Client>): Promise<Client>
     }
 
     console.log('Successfully created client');
-    return client;
+    return {
+      ...client,
+      preferences: safeParsePreferences(client.preferences)
+    };
   } catch (error: any) {
     console.error('Error creating client:', error);
     throw new Error(formatValidationError(error));
@@ -139,9 +162,10 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
     if (normalizedData.zip_code !== undefined) updateData.zip_code = normalizedData.zip_code || null;
     if (normalizedData.notes !== undefined) updateData.notes = normalizedData.notes || null;
     if (normalizedData.status !== undefined) updateData.status = normalizedData.status;
+    if (normalizedData.preferences !== undefined) updateData.preferences = normalizedData.preferences || {};
 
     const { data: client, error } = await supabase
-      .from('clients_unified')
+      .from('clients')
       .update(updateData)
       .eq('id', id)
       .select()
@@ -153,7 +177,10 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
     }
 
     console.log('Successfully updated client');
-    return client;
+    return {
+      ...client,
+      preferences: safeParsePreferences(client.preferences)
+    };
   } catch (error: any) {
     console.error('Error updating client:', error);
     throw new Error(formatValidationError(error));
@@ -165,7 +192,7 @@ export const deleteClient = async (id: string): Promise<void> => {
     console.log('Deleting client:', id);
 
     const { error } = await supabase
-      .from('clients_unified')
+      .from('clients')
       .delete()
       .eq('id', id);
 
@@ -190,7 +217,7 @@ export const searchClients = async (params: { search?: string; business_id?: str
     console.log('Searching clients with params:', params);
 
     let query = supabase
-      .from('clients_unified')
+      .from('clients')
       .select('*')
       .eq('business_id', params.business_id);
 
@@ -216,7 +243,10 @@ export const searchClients = async (params: { search?: string; business_id?: str
     }
 
     console.log('Successfully searched clients:', clients?.length || 0, 'results');
-    return clients || [];
+    return (clients || []).map(client => ({
+      ...client,
+      preferences: safeParsePreferences(client.preferences)
+    }));
   } catch (error) {
     console.error('Error searching clients:', error);
     return [];
@@ -228,7 +258,7 @@ export const getClientById = async (id: string): Promise<Client | null> => {
     console.log('Getting client by ID:', id);
 
     const { data: client, error } = await supabase
-      .from('clients_unified')
+      .from('clients')
       .select('*')
       .eq('id', id)
       .single();
@@ -243,7 +273,10 @@ export const getClientById = async (id: string): Promise<Client | null> => {
     }
 
     console.log('Successfully found client');
-    return client;
+    return {
+      ...client,
+      preferences: safeParsePreferences(client.preferences)
+    };
   } catch (error) {
     console.error('Error getting client by ID:', error);
     return null;
@@ -259,7 +292,7 @@ export const findClientByEmail = async (email: string, businessId: string): Prom
     }
 
     const { data: client, error } = await supabase
-      .from('clients_unified')
+      .from('clients')
       .select('*')
       .eq('email', email.toLowerCase().trim())
       .eq('business_id', businessId)
@@ -275,7 +308,10 @@ export const findClientByEmail = async (email: string, businessId: string): Prom
     }
 
     console.log('Successfully found client by email');
-    return client;
+    return {
+      ...client,
+      preferences: safeParsePreferences(client.preferences)
+    };
   } catch (error) {
     console.error('Error finding client by email:', error);
     return null;
@@ -293,7 +329,7 @@ export const findClientByPhone = async (phone: string, businessId: string): Prom
     const cleanPhone = phone.replace(/[^0-9+\-\(\)\s]/g, '');
 
     const { data: client, error } = await supabase
-      .from('clients_unified')
+      .from('clients')
       .select('*')
       .eq('phone', cleanPhone)
       .eq('business_id', businessId)
@@ -309,7 +345,10 @@ export const findClientByPhone = async (phone: string, businessId: string): Prom
     }
 
     console.log('Successfully found client by phone');
-    return client;
+    return {
+      ...client,
+      preferences: safeParsePreferences(client.preferences)
+    };
   } catch (error) {
     console.error('Error finding client by phone:', error);
     return null;

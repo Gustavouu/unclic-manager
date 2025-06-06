@@ -223,13 +223,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "agendamentos_id_cliente_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "agendamentos_id_funcionario_fkey"
             columns: ["staff_id"]
             isOneToOne: false
@@ -312,13 +305,6 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_appointments_client"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients_standardized"
             referencedColumns: ["id"]
           },
           {
@@ -410,7 +396,7 @@ export type Database = {
             foreignKeyName: "fk_appointments_client"
             columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "clients_unified"
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -831,202 +817,6 @@ export type Database = {
         ]
       }
       clients: {
-        Row: {
-          address: string | null
-          atualizado_em: string | null
-          birth_date: string | null
-          business_id: string
-          cep: string | null
-          cidade: string | null
-          city: string | null
-          created_at: string | null
-          criado_em: string | null
-          data_nascimento: string | null
-          email: string | null
-          endereco: string | null
-          estado: string | null
-          gender: string | null
-          genero: string | null
-          id: string
-          id_negocio: string
-          id_usuario: string | null
-          last_visit: string | null
-          name: string
-          nome: string
-          notas: string | null
-          notes: string | null
-          phone: string | null
-          preferences: Json | null
-          preferencias: Json | null
-          state: string | null
-          status: string | null
-          telefone: string | null
-          tenant_id: string | null
-          total_spent: number | null
-          ultima_visita: string | null
-          updated_at: string | null
-          user_id: string | null
-          valor_total_gasto: number | null
-          zip_code: string | null
-        }
-        Insert: {
-          address?: string | null
-          atualizado_em?: string | null
-          birth_date?: string | null
-          business_id: string
-          cep?: string | null
-          cidade?: string | null
-          city?: string | null
-          created_at?: string | null
-          criado_em?: string | null
-          data_nascimento?: string | null
-          email?: string | null
-          endereco?: string | null
-          estado?: string | null
-          gender?: string | null
-          genero?: string | null
-          id?: string
-          id_negocio: string
-          id_usuario?: string | null
-          last_visit?: string | null
-          name: string
-          nome: string
-          notas?: string | null
-          notes?: string | null
-          phone?: string | null
-          preferences?: Json | null
-          preferencias?: Json | null
-          state?: string | null
-          status?: string | null
-          telefone?: string | null
-          tenant_id?: string | null
-          total_spent?: number | null
-          ultima_visita?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          valor_total_gasto?: number | null
-          zip_code?: string | null
-        }
-        Update: {
-          address?: string | null
-          atualizado_em?: string | null
-          birth_date?: string | null
-          business_id?: string
-          cep?: string | null
-          cidade?: string | null
-          city?: string | null
-          created_at?: string | null
-          criado_em?: string | null
-          data_nascimento?: string | null
-          email?: string | null
-          endereco?: string | null
-          estado?: string | null
-          gender?: string | null
-          genero?: string | null
-          id?: string
-          id_negocio?: string
-          id_usuario?: string | null
-          last_visit?: string | null
-          name?: string
-          nome?: string
-          notas?: string | null
-          notes?: string | null
-          phone?: string | null
-          preferences?: Json | null
-          preferencias?: Json | null
-          state?: string | null
-          status?: string | null
-          telefone?: string | null
-          tenant_id?: string | null
-          total_spent?: number | null
-          ultima_visita?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          valor_total_gasto?: number | null
-          zip_code?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "clientes_id_usuario_fkey"
-            columns: ["id_usuario"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      clients_standardized: {
-        Row: {
-          address: string | null
-          birth_date: string | null
-          business_id: string
-          city: string | null
-          created_at: string | null
-          email: string | null
-          gender: string | null
-          id: string
-          last_visit: string | null
-          name: string
-          notes: string | null
-          phone: string | null
-          preferences: Json | null
-          state: string | null
-          status: string | null
-          total_spent: number | null
-          updated_at: string | null
-          zip_code: string | null
-        }
-        Insert: {
-          address?: string | null
-          birth_date?: string | null
-          business_id: string
-          city?: string | null
-          created_at?: string | null
-          email?: string | null
-          gender?: string | null
-          id?: string
-          last_visit?: string | null
-          name: string
-          notes?: string | null
-          phone?: string | null
-          preferences?: Json | null
-          state?: string | null
-          status?: string | null
-          total_spent?: number | null
-          updated_at?: string | null
-          zip_code?: string | null
-        }
-        Update: {
-          address?: string | null
-          birth_date?: string | null
-          business_id?: string
-          city?: string | null
-          created_at?: string | null
-          email?: string | null
-          gender?: string | null
-          id?: string
-          last_visit?: string | null
-          name?: string
-          notes?: string | null
-          phone?: string | null
-          preferences?: Json | null
-          state?: string | null
-          status?: string | null
-          total_spent?: number | null
-          updated_at?: string | null
-          zip_code?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_clients_business"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      clients_unified: {
         Row: {
           address: string | null
           birth_date: string | null
@@ -2246,13 +2036,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "invoices_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "invoices_subscription_id_fkey"
             columns: ["subscription_id"]
             isOneToOne: false
@@ -2877,15 +2660,7 @@ export type Database = {
           type?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "payment_methods_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       payment_providers: {
         Row: {
@@ -3926,13 +3701,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "subscriptions_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "subscriptions_plan_id_fkey"
             columns: ["plan_id"]
