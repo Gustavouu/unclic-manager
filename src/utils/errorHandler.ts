@@ -14,13 +14,20 @@ export const translateErrorMessage = (error: any): string => {
     ? error 
     : error.message || error.toString();
   
+  // Log all errors for debugging
+  console.log('Original error message:', errorMessage);
+  
   // Database errors
   if (errorMessage.includes('duplicate key')) {
     return 'Este registro já existe no sistema';
   }
   
   if (errorMessage.includes('column') && errorMessage.includes('does not exist')) {
-    return 'Erro interno do sistema. Entre em contato com o suporte técnico';
+    return 'Erro interno do sistema: Estrutura de banco de dados inválida. Entre em contato com o suporte técnico';
+  }
+  
+  if (errorMessage.includes('identities.email') || errorMessage.includes('identities') || errorMessage.includes('identity')) {
+    return 'Erro na configuração de autenticação OAuth. Verifique se os provedores estão configurados corretamente no Supabase.';
   }
   
   if (errorMessage.includes('violates row-level security')) {
@@ -97,7 +104,7 @@ export const translateErrorMessage = (error: any): string => {
   
   // OAuth specific errors
   if (errorMessage.includes('OAuth') || errorMessage.includes('oauth')) {
-    return 'Erro na autenticação com provedor externo. Tente novamente mais tarde';
+    return 'Erro na autenticação com provedor externo. Verifique se o provedor está configurado corretamente no Supabase';
   }
   
   if (errorMessage.includes('popup') || errorMessage.includes('window')) {
@@ -108,10 +115,6 @@ export const translateErrorMessage = (error: any): string => {
     return 'Erro de configuração do sistema. Entre em contato com o suporte técnico';
   }
   
-  if (errorMessage.includes('identities') || errorMessage.includes('identity')) {
-    return 'Erro de autenticação. O provedor pode estar com problemas temporários';
-  }
-
   // Business logic errors
   if (errorMessage.includes('insufficient')) {
     return 'Recursos insuficientes para completar a operação';
@@ -121,8 +124,11 @@ export const translateErrorMessage = (error: any): string => {
     return 'Conflito detectado. Verifique os dados e tente novamente';
   }
   
-  // If we couldn't identify the error, return a generic message
-  return 'Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde';
+  // Return original error for developer debugging
+  console.warn('Untranslated error:', errorMessage);
+  
+  // If we couldn't identify the error, return a more specific message with the original error
+  return `Erro no sistema: ${errorMessage.substring(0, 100)}${errorMessage.length > 100 ? '...' : ''}`;
 };
 
 /**

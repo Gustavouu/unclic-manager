@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -189,41 +190,83 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signInWithProvider = async (provider: 'google' | 'facebook' | 'github') => {
-    console.log(`Signing in with provider: ${provider}`);
+    console.log(`Starting OAuth flow for provider: ${provider}`);
     setLoading(true);
     
     try {
-      // Setup redirect URL to the current origin
-      const redirectTo = `${window.location.origin}/auth`;
+      // Check the current URL to determine the correct redirect
+      const currentUrl = window.location.origin;
+      const redirectTo = `${currentUrl}/auth`;
+      
+      console.log(`OAuth redirect URL: ${redirectTo}`);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo
+          redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
       
-      // If there's an immediate error (rare with OAuth)
+      // Log detailed response for debugging
+      console.log(`${provider} OAuth response:`, { 
+        data, 
+        error,
+        url: data?.url,
+        provider: data?.provider 
+      });
+      
       if (error) {
-        console.error(`${provider} OAuth error:`, error);
-        const translatedError = {
-          ...error,
-          message: translateErrorMessage(error.message)
-        };
+        console.error(`${provider} OAuth error details:`, {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+          cause: error.cause
+        });
+        
         setLoading(false);
-        return { error: translatedError };
+        
+        // Return the raw error for better debugging
+        return { 
+          error: {
+            message: error.message || `Erro na autenticação com ${provider}`,
+            details: `Status: ${error.status}, Name: ${error.name}`,
+            originalError: error
+          }
+        };
       }
       
-      console.log(`${provider} OAuth initiated, URL:`, data?.url);
-      // Don't reset loading state here since we're redirecting
+      if (data?.url) {
+        console.log(`${provider} OAuth redirect initiated to: ${data.url}`);
+        // Don't reset loading state here since we're redirecting
+        return { error: null };
+      } else {
+        console.warn(`${provider} OAuth: No redirect URL received`);
+        setLoading(false);
+        return { 
+          error: {
+            message: `Erro: Nenhuma URL de redirecionamento recebida do ${provider}`
+          }
+        };
+      }
       
-      return { error: null };
     } catch (error: any) {
-      console.error(`${provider} OAuth exception:`, error);
+      console.error(`${provider} OAuth exception details:`, {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        error
+      });
+      
       setLoading(false);
       return { 
         error: {
-          message: translateErrorMessage(error.message || `Erro na autenticação com ${provider}`)
+          message: error.message || `Erro na autenticação com ${provider}`,
+          details: `Exception: ${error.name}`,
+          originalError: error
         } 
       };
     }

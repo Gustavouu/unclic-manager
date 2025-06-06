@@ -17,6 +17,35 @@ export function AuthForm() {
   const { signIn, signUp, signInWithProvider } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Parse hash parameters from OAuth redirect
+  const parseHashParams = () => {
+    if (!window.location.hash) return null;
+    
+    try {
+      // Extract error details if present in the URL hash
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const error = hashParams.get('error');
+      const errorDescription = hashParams.get('error_description');
+      
+      if (error) {
+        console.error('OAuth error from URL:', { error, description: errorDescription });
+        return { error, description: errorDescription };
+      }
+    } catch (err) {
+      console.error('Failed to parse hash params:', err);
+    }
+    
+    return null;
+  };
+  
+  // Check for OAuth errors on component mount
+  useState(() => {
+    const oauthError = parseHashParams();
+    if (oauthError) {
+      toast.error(`Erro de autenticação: ${oauthError.description || oauthError.error}`);
+    }
+  });
 
   // Get redirect location or default to dashboard
   const from = location.state?.from?.pathname || "/dashboard";
@@ -112,19 +141,31 @@ export function AuthForm() {
   const handleOAuthSignIn = async (provider: 'google' | 'facebook' | 'github') => {
     setOauthLoading(provider);
     
+    // Clear any existing error hash from the URL for cleaner UX
+    if (window.location.hash && window.location.hash.includes('error=')) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+    
     try {
+      console.log(`Iniciando autenticação com ${provider}`);
       const { error } = await signInWithProvider(provider);
       
       if (error) {
-        console.error(`Erro no login com ${provider}:`, error);
-        const errorMessage = handleAuthError(error, `OAuth ${provider}`);
-        toast.error(errorMessage);
+        console.error(`Erro detalhado no login com ${provider}:`, error);
+        
+        // Show full error details for debugging
+        const errorDetails = error.details ? 
+          `${error.message} (${error.details})` : error.message;
+        
+        toast.error(errorDetails || `Falha na autenticação com ${provider}`);
+      } else {
+        // No need for toast success here as we'll be redirected
+        console.log(`Redirecionando para ${provider}...`);
       }
       
-      // No success toast here as we'll be redirected to the provider's login page
     } catch (error) {
-      console.error(`Exceção no login com ${provider}:`, error);
-      const errorMessage = handleAuthError(error, `OAuth ${provider}`);
+      console.error(`Exceção completa no login com ${provider}:`, error);
+      const errorMessage = translateErrorMessage(error);
       toast.error(errorMessage);
     } finally {
       setOauthLoading(null);
