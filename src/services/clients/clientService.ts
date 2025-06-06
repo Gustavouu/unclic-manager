@@ -197,10 +197,11 @@ export class ClientService {
       state: dbClient.state,
       zip_code: dbClient.zip_code,
       notes: dbClient.notes,
-      status: dbClient.status,
+      status: (dbClient.status === 'active' || dbClient.status === 'inactive') ? dbClient.status : 'active',
       preferences: dbClient.preferences || {},
       last_visit: dbClient.last_visit,
       total_spent: Number(dbClient.total_spent) || 0,
+      total_appointments: dbClient.total_appointments || 0,
       created_at: dbClient.created_at,
       updated_at: dbClient.updated_at,
     };

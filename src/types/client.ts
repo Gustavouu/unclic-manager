@@ -16,6 +16,7 @@ export interface Client {
   preferences: Record<string, any>;
   last_visit?: string | null;
   total_spent: number;
+  total_appointments?: number;
   created_at: string;
   updated_at: string;
 }
@@ -53,4 +54,13 @@ export interface ClientStats {
   total_spent: number;
   average_spent: number;
   last_30_days: number;
+}
+
+export interface ClientFilters {
+  search: string;
+  status: string;
+  city: string;
+  gender: string;
+  dateRange: string;
+  spendingRange: string;
 }

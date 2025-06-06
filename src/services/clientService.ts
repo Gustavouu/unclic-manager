@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { validateEmail, validatePhone, validateZipCode, formatValidationError } from '@/utils/databaseUtils';
 import type { Client } from '@/types/client';
@@ -15,6 +14,14 @@ const safeParsePreferences = (preferences: any): Record<string, any> => {
     }
   }
   return {};
+};
+
+// Helper function to normalize status
+const normalizeStatus = (status: any): 'active' | 'inactive' => {
+  if (status === 'active' || status === 'inactive') {
+    return status;
+  }
+  return 'active'; // default fallback
 };
 
 export const fetchClients = async (businessId: string): Promise<Client[]> => {
@@ -35,10 +42,12 @@ export const fetchClients = async (businessId: string): Promise<Client[]> => {
 
     console.log('Successfully fetched clients:', clients?.length || 0);
     
-    // Convert to Client type with proper preference parsing
+    // Convert to Client type with proper preference parsing and status normalization
     return (clients || []).map(client => ({
       ...client,
-      preferences: safeParsePreferences(client.preferences)
+      status: normalizeStatus(client.status),
+      preferences: safeParsePreferences(client.preferences),
+      total_appointments: client.total_appointments || 0
     }));
   } catch (error) {
     console.error('Error fetching clients:', error);
@@ -107,7 +116,9 @@ export const createClient = async (clientData: Partial<Client>): Promise<Client>
     console.log('Successfully created client');
     return {
       ...client,
-      preferences: safeParsePreferences(client.preferences)
+      status: normalizeStatus(client.status),
+      preferences: safeParsePreferences(client.preferences),
+      total_appointments: client.total_appointments || 0
     };
   } catch (error: any) {
     console.error('Error creating client:', error);
@@ -179,7 +190,9 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
     console.log('Successfully updated client');
     return {
       ...client,
-      preferences: safeParsePreferences(client.preferences)
+      status: normalizeStatus(client.status),
+      preferences: safeParsePreferences(client.preferences),
+      total_appointments: client.total_appointments || 0
     };
   } catch (error: any) {
     console.error('Error updating client:', error);
@@ -245,7 +258,9 @@ export const searchClients = async (params: { search?: string; business_id?: str
     console.log('Successfully searched clients:', clients?.length || 0, 'results');
     return (clients || []).map(client => ({
       ...client,
-      preferences: safeParsePreferences(client.preferences)
+      status: normalizeStatus(client.status),
+      preferences: safeParsePreferences(client.preferences),
+      total_appointments: client.total_appointments || 0
     }));
   } catch (error) {
     console.error('Error searching clients:', error);
@@ -275,7 +290,9 @@ export const getClientById = async (id: string): Promise<Client | null> => {
     console.log('Successfully found client');
     return {
       ...client,
-      preferences: safeParsePreferences(client.preferences)
+      status: normalizeStatus(client.status),
+      preferences: safeParsePreferences(client.preferences),
+      total_appointments: client.total_appointments || 0
     };
   } catch (error) {
     console.error('Error getting client by ID:', error);
@@ -310,7 +327,9 @@ export const findClientByEmail = async (email: string, businessId: string): Prom
     console.log('Successfully found client by email');
     return {
       ...client,
-      preferences: safeParsePreferences(client.preferences)
+      status: normalizeStatus(client.status),
+      preferences: safeParsePreferences(client.preferences),
+      total_appointments: client.total_appointments || 0
     };
   } catch (error) {
     console.error('Error finding client by email:', error);
@@ -347,7 +366,9 @@ export const findClientByPhone = async (phone: string, businessId: string): Prom
     console.log('Successfully found client by phone');
     return {
       ...client,
-      preferences: safeParsePreferences(client.preferences)
+      status: normalizeStatus(client.status),
+      preferences: safeParsePreferences(client.preferences),
+      total_appointments: client.total_appointments || 0
     };
   } catch (error) {
     console.error('Error finding client by phone:', error);

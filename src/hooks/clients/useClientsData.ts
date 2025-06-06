@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
@@ -17,6 +16,14 @@ const safeParsePreferences = (preferences: any): Record<string, any> => {
     }
   }
   return {};
+};
+
+// Helper function to normalize status
+const normalizeStatus = (status: any): 'active' | 'inactive' => {
+  if (status === 'active' || status === 'inactive') {
+    return status;
+  }
+  return 'active'; // default fallback
 };
 
 export const useClientsData = () => {
@@ -69,7 +76,8 @@ export const useClientsData = () => {
         updated_at: client.updated_at,
         last_visit: client.last_visit,
         total_spent: client.total_spent || 0,
-        status: client.status || 'active',
+        total_appointments: client.total_appointments || 0,
+        status: normalizeStatus(client.status),
         preferences: safeParsePreferences(client.preferences)
       }));
 
@@ -140,7 +148,8 @@ export const useClientsData = () => {
       updated_at: data.updated_at,
       last_visit: data.last_visit,
       total_spent: data.total_spent || 0,
-      status: data.status || 'active',
+      total_appointments: data.total_appointments || 0,
+      status: normalizeStatus(data.status),
       preferences: safeParsePreferences(data.preferences)
     };
 
@@ -197,7 +206,8 @@ export const useClientsData = () => {
       updated_at: data.updated_at,
       last_visit: data.last_visit,
       total_spent: data.total_spent || 0,
-      status: data.status || 'active',
+      total_appointments: data.total_appointments || 0,
+      status: normalizeStatus(data.status),
       preferences: safeParsePreferences(data.preferences)
     };
 
