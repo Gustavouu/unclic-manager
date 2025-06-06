@@ -1,5 +1,7 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.cdnfonts.com/css/sf-pro-display');
+@import './styles/animations.css';
 
 @tailwind base;
 @tailwind components;
@@ -124,73 +126,54 @@
     @apply truncate;
   }
 
-  /* Card Components */
+  /* Premium Card Components */
   .stat-card {
-    @apply bg-white dark:bg-card rounded-lg shadow-sm border border-border/40 p-4 flex flex-col transition-all duration-300 hover:shadow-md hover:border-border/60;
+    @apply bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 rounded-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 p-6 flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
   }
 
   .glass-card {
-    @apply bg-white/80 dark:bg-black/20 backdrop-blur-sm rounded-lg shadow-sm border border-white/20 transition-all duration-300;
+    @apply bg-white/80 dark:bg-black/20 backdrop-blur-sm rounded-xl shadow-xl border border-white/20 transition-all duration-300 hover:bg-white/90 dark:hover:bg-black/30;
   }
 
   .animated-border {
-    @apply relative before:absolute before:inset-0 before:rounded-lg before:p-[1px] before:bg-gradient-to-r before:from-primary/30 before:via-primary/40 before:to-primary/30 before:opacity-0 hover:before:opacity-100 before:transition-opacity;
+    @apply relative before:absolute before:inset-0 before:rounded-xl before:p-[1px] before:bg-gradient-to-r before:from-primary/30 before:via-primary/40 before:to-primary/30 before:opacity-0 hover:before:opacity-100 before:transition-opacity;
   }
   
-  /* Responsive Utilities */
+  /* Enhanced Responsive Utilities */
   .responsive-container {
     @apply container mx-auto px-4 sm:px-6 lg:px-8;
   }
   
   .responsive-grid {
-    @apply grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+    @apply grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
   }
   
-  /* Animation Utilities */
-  .fade-in {
-    animation: fadeIn 0.3s ease-out forwards;
+  /* Premium Button Styles */
+  .btn-premium {
+    @apply bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200;
   }
-  
-  .slide-in {
-    animation: slideIn 0.4s ease-out forwards;
-  }
-  
-  .scale-in {
-    animation: scaleIn 0.3s ease-out forwards;
-  }
-}
 
-/* Animation Keyframes */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+  .btn-premium-outline {
+    @apply border-2 border-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-border text-transparent bg-white dark:bg-gray-900 font-semibold py-3 px-6 rounded-xl hover:text-white hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 transition-all duration-200;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
+  /* Enhanced Input Styles */
+  .input-premium {
+    @apply bg-gray-50 dark:bg-gray-800 border-0 focus:ring-2 focus:ring-blue-500/20 rounded-xl px-4 py-3 transition-all duration-200;
   }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
 
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
+  /* Text Gradient */
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
   }
-  to {
-    opacity: 1;
-    transform: scale(1);
+
+  /* Enhanced Hover Effects */
+  .hover-lift {
+    @apply transition-transform duration-200 hover:-translate-y-1;
+  }
+
+  .hover-glow {
+    @apply transition-shadow duration-300 hover:shadow-lg hover:shadow-blue-500/25;
   }
 }
 
@@ -204,4 +187,31 @@
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  .mobile-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Performance Optimizations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.gpu-acceleration {
+  transform: translateZ(0);
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus Improvements */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900;
 }

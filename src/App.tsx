@@ -1,34 +1,25 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/contexts/AuthContext';
-import { TenantProvider } from '@/contexts/TenantContext';
-import { Layout } from '@/components/layout/Layout';
-import { RequireAuth } from '@/components/auth/RequireAuth';
-import AuthPage from '@/pages/Auth';
+import { Toaster } from 'sonner';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { AppLayout } from '@/components/layout/AppLayout';
 
-// Import pages
-import DashboardEnhanced from '@/pages/DashboardEnhanced';
-import AppointmentsPage from '@/pages/Appointments';
-import ClientsPage from '@/pages/Clients';
-import ServicesPage from '@/pages/Services';
-import ProfessionalsPage from '@/pages/Professionals';
-import InventoryPage from '@/pages/Inventory';
-import FinancePage from '@/pages/Finance';
-import PaymentsPage from '@/pages/Payments';
-import ReportsPage from '@/pages/Reports';
-import MarketingPage from '@/pages/Marketing';
-import DocumentsPage from '@/pages/Documents';
-import SettingsPage from '@/pages/Settings';
-import OnboardingPage from '@/pages/Onboarding';
+// Pages
+import AuthPremium from '@/pages/AuthPremium';
+import Dashboard from '@/pages/Dashboard';
+import Clients from '@/pages/Clients';
+import Appointments from '@/pages/Appointments';
+import Financial from '@/pages/Financial';
+import Settings from '@/pages/Settings';
 
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 1000 * 60 * 5, // 5 minutes
       retry: 1,
     },
   },
@@ -37,168 +28,83 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" enableSystem>
-        <AuthProvider>
-          <TenantProvider>
-            <Router>
-              <div className="min-h-screen bg-background">
-                <Routes>
-                  {/* Public routes - não precisam de autenticação */}
-                  <Route path="/auth" element={<AuthPage />} />
-                  <Route path="/onboarding" element={<OnboardingPage />} />
+      <AuthProvider>
+        <Router>
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/auth" element={<AuthPremium />} />
+              
+              {/* Protected Routes */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/clients" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Clients />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/appointments" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Appointments />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/financial" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Financial />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Settings />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
 
-                  {/* Protected routes - precisam de autenticação */}
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <RequireAuth>
-                        <Layout>
-                          <DashboardEnhanced />
-                        </Layout>
-                      </RequireAuth>
-                    }
-                  />
-                  
-                  <Route
-                    path="/appointments/*"
-                    element={
-                      <RequireAuth>
-                        <Layout>
-                          <AppointmentsPage />
-                        </Layout>
-                      </RequireAuth>
-                    }
-                  />
-                  
-                  <Route
-                    path="/clients/*"
-                    element={
-                      <RequireAuth>
-                        <Layout>
-                          <ClientsPage />
-                        </Layout>
-                      </RequireAuth>
-                    }
-                  />
-                  
-                  <Route
-                    path="/services/*"
-                    element={
-                      <RequireAuth>
-                        <Layout>
-                          <ServicesPage />
-                        </Layout>
-                      </RequireAuth>
-                    }
-                  />
-                  
-                  <Route
-                    path="/professionals/*"
-                    element={
-                      <RequireAuth>
-                        <Layout>
-                          <ProfessionalsPage />
-                        </Layout>
-                      </RequireAuth>
-                    }
-                  />
-                  
-                  <Route
-                    path="/inventory/*"
-                    element={
-                      <RequireAuth>
-                        <Layout>
-                          <InventoryPage />
-                        </Layout>
-                      </RequireAuth>
-                    }
-                  />
-                  
-                  <Route
-                    path="/finance/*"
-                    element={
-                      <RequireAuth>
-                        <Layout>
-                          <FinancePage />
-                        </Layout>
-                      </RequireAuth>
-                    }
-                  />
-                  
-                  <Route
-                    path="/payments/*"
-                    element={
-                      <RequireAuth>
-                        <Layout>
-                          <PaymentsPage />
-                        </Layout>
-                      </RequireAuth>
-                    }
-                  />
-                  
-                  <Route
-                    path="/reports/*"
-                    element={
-                      <RequireAuth>
-                        <Layout>
-                          <ReportsPage />
-                        </Layout>
-                      </RequireAuth>
-                    }
-                  />
-                  
-                  <Route
-                    path="/marketing/*"
-                    element={
-                      <RequireAuth>
-                        <Layout>
-                          <MarketingPage />
-                        </Layout>
-                      </RequireAuth>
-                    }
-                  />
-                  
-                  <Route
-                    path="/documents/*"
-                    element={
-                      <RequireAuth>
-                        <Layout>
-                          <DocumentsPage />
-                        </Layout>
-                      </RequireAuth>
-                    }
-                  />
-                  
-                  <Route
-                    path="/settings/*"
-                    element={
-                      <RequireAuth>
-                        <Layout>
-                          <SettingsPage />
-                        </Layout>
-                      </RequireAuth>
-                    }
-                  />
-
-                  {/* Redirect root to dashboard */}
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                </Routes>
-
-                <Toaster 
-                  position="bottom-right"
-                  toastOptions={{
-                    style: {
-                      background: 'hsl(var(--background))',
-                      color: 'hsl(var(--foreground))',
-                      border: '1px solid hsl(var(--border))',
-                    },
-                  }}
-                />
-              </div>
-            </Router>
-          </TenantProvider>
-        </AuthProvider>
-      </ThemeProvider>
+              {/* Redirect to auth for any unmatched routes */}
+              <Route path="*" element={<Navigate to="/auth" replace />} />
+            </Routes>
+            
+            <Toaster 
+              position="top-right" 
+              richColors 
+              closeButton
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                },
+              }}
+            />
+          </div>
+        </Router>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
