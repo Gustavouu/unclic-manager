@@ -32,7 +32,7 @@ interface UserPermissions {
 
 const defaultPermissions: UserPermissions = {
   isAdmin: false,
-  isProfessional: true, // Por padrão, assume que é profissional
+  isProfessional: true,
   canCreateService: false,
   canEditService: false,
   canDeleteService: false,
@@ -43,8 +43,8 @@ const defaultPermissions: UserPermissions = {
   canManageAuthentication: false,
   canManageBusiness: false,
   canViewAnalytics: false,
-  canCreateClient: true, // Permite criar cliente por padrão
-  canManageAppointments: true // Permite gerenciar agendamentos por padrão
+  canCreateClient: true,
+  canManageAppointments: true
 };
 
 export const useUserPermissions = () => {
@@ -78,17 +78,6 @@ export const useUserPermissions = () => {
 
         if (!businessError && businessUser?.roles) {
           userRole = businessUser.roles.role_type;
-        } else {
-          // Fallback to legacy application_users table if needed
-          const { data: appUser, error: appUserError } = await supabase
-            .from('application_users')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-            
-          if (!appUserError && appUser && appUser.role) {
-            userRole = appUser.role;
-          }
         }
 
         setPermissions({

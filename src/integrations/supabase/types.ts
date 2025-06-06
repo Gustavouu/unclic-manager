@@ -65,65 +65,6 @@ export type Database = {
           },
         ]
       }
-      application_users: {
-        Row: {
-          avatar_url: string | null
-          birth_date: string | null
-          business_id: string | null
-          created_at: string | null
-          email: string
-          full_name: string
-          id: string
-          last_access: string | null
-          password_hash: string | null
-          phone: string | null
-          role: string | null
-          status: string | null
-          tax_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          birth_date?: string | null
-          business_id?: string | null
-          created_at?: string | null
-          email: string
-          full_name: string
-          id?: string
-          last_access?: string | null
-          password_hash?: string | null
-          phone?: string | null
-          role?: string | null
-          status?: string | null
-          tax_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          birth_date?: string | null
-          business_id?: string | null
-          created_at?: string | null
-          email?: string
-          full_name?: string
-          id?: string
-          last_access?: string | null
-          password_hash?: string | null
-          phone?: string | null
-          role?: string | null
-          status?: string | null
-          tax_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "application_users_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       Appointments: {
         Row: {
           booking_date: string
@@ -1787,62 +1728,6 @@ export type Database = {
           },
         ]
       }
-      perfis_acesso: {
-        Row: {
-          acesso_agendamentos: boolean | null
-          acesso_clientes: boolean | null
-          acesso_configuracoes: boolean | null
-          acesso_estoque: boolean | null
-          acesso_financeiro: boolean | null
-          acesso_marketing: boolean | null
-          acesso_relatorios: boolean | null
-          atualizado_em: string | null
-          criado_em: string | null
-          e_administrador: boolean | null
-          id: string
-          id_negocio: string
-          id_usuario: string
-        }
-        Insert: {
-          acesso_agendamentos?: boolean | null
-          acesso_clientes?: boolean | null
-          acesso_configuracoes?: boolean | null
-          acesso_estoque?: boolean | null
-          acesso_financeiro?: boolean | null
-          acesso_marketing?: boolean | null
-          acesso_relatorios?: boolean | null
-          atualizado_em?: string | null
-          criado_em?: string | null
-          e_administrador?: boolean | null
-          id?: string
-          id_negocio: string
-          id_usuario: string
-        }
-        Update: {
-          acesso_agendamentos?: boolean | null
-          acesso_clientes?: boolean | null
-          acesso_configuracoes?: boolean | null
-          acesso_estoque?: boolean | null
-          acesso_financeiro?: boolean | null
-          acesso_marketing?: boolean | null
-          acesso_relatorios?: boolean | null
-          atualizado_em?: string | null
-          criado_em?: string | null
-          e_administrador?: boolean | null
-          id?: string
-          id_negocio?: string
-          id_usuario?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "perfis_acesso_id_usuario_fkey"
-            columns: ["id_usuario"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       permissions: {
         Row: {
           created_at: string | null
@@ -2674,13 +2559,6 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "application_users"
             referencedColumns: ["id"]
           },
         ]

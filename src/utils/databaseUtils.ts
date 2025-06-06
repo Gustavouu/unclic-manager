@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export const normalizeClientData = (client: any) => {
@@ -29,59 +30,50 @@ export const normalizeClientData = (client: any) => {
 export const normalizeProfessionalData = (professional: any) => {
   return {
     id: professional.id,
-    name: professional.name || professional.nome || '',
+    name: professional.name || '',
     email: professional.email || '',
-    phone: professional.phone || professional.telefone || '',
-    photo_url: professional.photo_url || professional.foto_url,
-    position: professional.position || professional.cargo || '',
-    specialties: professional.specialties || professional.especializacoes || [],
+    phone: professional.phone || '',
+    photo_url: professional.photo_url || professional.avatar_url,
+    position: professional.position || '',
+    specialties: professional.specialties || [],
     status: professional.status || 'active',
-    commission_percentage: professional.commission_percentage || professional.comissao_percentual || 0,
-    hire_date: professional.hire_date || professional.data_contratacao,
+    commission_percentage: professional.commission_percentage || 0,
+    hire_date: professional.hire_date,
     bio: professional.bio || '',
-    business_id: professional.business_id || professional.id_negocio
+    business_id: professional.business_id
   };
 };
 
 export const normalizeServiceData = (service: any) => {
   return {
     id: service.id,
-    name: service.name || service.nome || '',
-    nome: service.name || service.nome || '',
-    description: service.description || service.descricao || '',
-    descricao: service.description || service.descricao || '',
-    price: service.price || service.preco || 0,
-    preco: service.price || service.preco || 0,
-    duration: service.duration || service.duracao || 60,
-    duracao: service.duration || service.duracao || 60,
-    category_id: service.category_id || service.categoria_id || service.id_categoria,
-    categoria_id: service.category_id || service.categoria_id || service.id_categoria,
-    categoryId: service.category_id || service.categoria_id || service.id_categoria,
-    is_active: service.is_active !== undefined ? service.is_active : (service.ativo !== undefined ? service.ativo : true),
-    ativo: service.is_active !== undefined ? service.is_active : (service.ativo !== undefined ? service.ativo : true),
-    isActive: service.is_active !== undefined ? service.is_active : (service.ativo !== undefined ? service.ativo : true),
-    image_url: service.image_url || service.imagem_url || '',
-    imagem_url: service.image_url || service.imagem_url || ''
+    name: service.name || '',
+    description: service.description || '',
+    price: service.price || 0,
+    duration: service.duration || 60,
+    category_id: service.category_id,
+    is_active: service.is_active !== undefined ? service.is_active : true,
+    image_url: service.image_url || ''
   };
 };
 
 export const normalizeAppointmentData = (appointment: any) => {
   return {
     id: appointment.id,
-    date: new Date(appointment.booking_date || appointment.data || appointment.data_agendamento),
-    clientId: appointment.client_id || appointment.id_cliente,
-    clientName: appointment.clients?.name || appointment.clientes?.nome || appointment.cliente_nome || 'Cliente',
-    serviceId: appointment.service_id || appointment.id_servico,
-    serviceName: appointment.services_v2?.name || appointment.servicos?.nome || appointment.service_name || 'Serviço',
-    serviceType: appointment.services_v2?.category || appointment.servicos?.categoria || 'Geral',
-    professionalId: appointment.employee_id || appointment.id_funcionario,
-    professionalName: appointment.employees?.name || appointment.funcionarios?.nome || appointment.professional_name || 'Profissional',
-    duration: appointment.duration || appointment.duracao || 60,
-    price: appointment.price || appointment.valor || 0,
-    status: appointment.status || 'agendado',
-    notes: appointment.notes || appointment.observacoes || '',
-    paymentMethod: appointment.payment_method || appointment.forma_pagamento,
-    confirmed: appointment.status === 'confirmado' || appointment.status === 'confirmed',
+    date: new Date(appointment.booking_date),
+    clientId: appointment.client_id,
+    clientName: appointment.clients?.name || 'Cliente',
+    serviceId: appointment.service_id,
+    serviceName: appointment.services?.name || 'Serviço',
+    serviceType: appointment.services?.category || 'Geral',
+    professionalId: appointment.employee_id,
+    professionalName: appointment.professionals?.name || 'Profissional',
+    duration: appointment.duration || 60,
+    price: appointment.price || 0,
+    status: appointment.status || 'scheduled',
+    notes: appointment.notes || '',
+    paymentMethod: appointment.payment_method,
+    confirmed: appointment.status === 'confirmed',
     notifications: {
       sendConfirmation: true,
       sendReminder: true
@@ -93,33 +85,33 @@ export const normalizeAppointmentData = (appointment: any) => {
 export const normalizeBusinessData = (business: any) => {
   return {
     id: business.id,
-    name: business.name || business.nome || '',
+    name: business.name || '',
     slug: business.slug || '',
-    admin_email: business.admin_email || business.email_admin || '',
-    phone: business.phone || business.telefone || '',
-    zip_code: business.zip_code || business.cep || '',
-    address: business.address || business.endereco || '',
-    address_number: business.address_number || business.numero || '',
-    address_complement: business.address_complement || business.complemento || '',
-    neighborhood: business.neighborhood || business.bairro || '',
-    city: business.city || business.cidade || '',
-    state: business.state || business.estado || '',
-    logo_url: business.logo_url || business.url_logo || '',
-    description: business.description || business.descricao || '',
-    ein: business.ein || business.cnpj || '',
-    legal_name: business.legal_name || business.razao_social || '',
-    trade_name: business.trade_name || business.nome_fantasia || '',
+    admin_email: business.admin_email || '',
+    phone: business.phone || '',
+    zip_code: business.zip_code || '',
+    address: business.address || '',
+    address_number: business.address_number || '',
+    address_complement: business.address_complement || '',
+    neighborhood: business.neighborhood || '',
+    city: business.city || '',
+    state: business.state || '',
+    logo_url: business.logo_url || '',
+    description: business.description || '',
+    ein: business.ein || '',
+    legal_name: business.legal_name || '',
+    trade_name: business.trade_name || '',
     status: business.status || 'pending',
-    subscription_status: business.subscription_status || business.status_assinatura || 'trial',
-    timezone: business.timezone || business.fuso_horario || 'America/Sao_Paulo',
-    currency: business.currency || business.moeda || 'BRL',
-    language: business.language || business.idioma || 'pt-BR',
+    subscription_status: business.subscription_status || 'trial',
+    timezone: business.timezone || 'America/Sao_Paulo',
+    currency: business.currency || 'BRL',
+    language: business.language || 'pt-BR',
     latitude: business.latitude || null,
     longitude: business.longitude || null,
-    trial_end_date: business.trial_end_date || business.data_fim_teste,
-    subscription_end_date: business.subscription_end_date || business.data_fim_assinatura,
-    created_at: business.created_at || business.criado_em,
-    updated_at: business.updated_at || business.atualizado_em
+    trial_end_date: business.trial_end_date,
+    subscription_end_date: business.subscription_end_date,
+    created_at: business.created_at,
+    updated_at: business.updated_at
   };
 };
 
@@ -153,19 +145,51 @@ export const normalizeClientInput = (clientData: any) => {
   };
 };
 
-// Data integrity check function
+// Data integrity check function - updated to work with new tables
 export const checkDataIntegrity = async (): Promise<any[]> => {
   try {
-    const { data, error } = await supabase.rpc('check_data_integrity');
+    const results = [];
     
-    if (error) {
-      console.error('Error checking data integrity:', error);
-      return [];
+    // Check clients with invalid emails
+    const { data: clientsWithInvalidEmails, error: emailError } = await supabase
+      .from('clients')
+      .select('id, email')
+      .not('email', 'is', null)
+      .neq('email', '');
+    
+    if (!emailError && clientsWithInvalidEmails) {
+      const invalidEmails = clientsWithInvalidEmails.filter(client => 
+        !validateEmail(client.email)
+      );
+      
+      if (invalidEmails.length > 0) {
+        results.push({
+          table_name: 'clients',
+          issue_type: 'invalid_email',
+          issue_count: invalidEmails.length,
+          description: 'Clientes com emails inválidos'
+        });
+      }
     }
     
-    return data || [];
+    // Check appointments with time inconsistencies
+    const { data: appointments, error: appointmentError } = await supabase
+      .from('Appointments')
+      .select('id, start_time, end_time')
+      .gte('start_time', 'end_time');
+    
+    if (!appointmentError && appointments && appointments.length > 0) {
+      results.push({
+        table_name: 'Appointments',
+        issue_type: 'invalid_time',
+        issue_count: appointments.length,
+        description: 'Agendamentos com horários inconsistentes'
+      });
+    }
+    
+    return results;
   } catch (error) {
-    console.error('Error calling integrity check function:', error);
+    console.error('Error checking data integrity:', error);
     return [];
   }
 };
@@ -205,7 +229,7 @@ export const formatValidationError = (error: any): string => {
   return 'Erro de validação. Verifique os dados inseridos.';
 };
 
-// Legacy functions maintained for compatibility
+// Simplified table existence check
 export const tableExists = async (tableName: string): Promise<boolean> => {
   try {
     const { error } = await supabase
