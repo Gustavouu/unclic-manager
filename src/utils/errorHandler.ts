@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -26,8 +27,8 @@ export const translateErrorMessage = (error: any): string => {
     return 'Erro interno do sistema: Estrutura de banco de dados inválida. Entre em contato com o suporte técnico';
   }
   
-  if (errorMessage.includes('identities.email') || errorMessage.includes('identities') || errorMessage.includes('identity')) {
-    return 'Erro na configuração de autenticação OAuth. Verifique se os provedores estão configurados corretamente no Supabase.';
+  if (errorMessage.includes('Database error finding user') || errorMessage.includes('identities')) {
+    return 'Erro na configuração de autenticação. Tente fazer login com email e senha ou entre em contato com o suporte técnico.';
   }
   
   if (errorMessage.includes('violates row-level security')) {
@@ -67,6 +68,15 @@ export const translateErrorMessage = (error: any): string => {
     return 'Muitas tentativas. Aguarde um momento antes de tentar novamente';
   }
   
+  // OAuth specific errors  
+  if (errorMessage.includes('oauth') || errorMessage.includes('OAuth')) {
+    return 'Serviço de autenticação social temporariamente indisponível. Use email e senha.';
+  }
+  
+  if (errorMessage.includes('popup') || errorMessage.includes('window')) {
+    return 'Erro ao abrir janela de autenticação. Verifique se o bloqueador de pop-ups está desativado';
+  }
+  
   // Network errors
   if (errorMessage.includes('network') || errorMessage.includes('connection') || errorMessage.includes('fetch')) {
     return 'Erro de conexão. Verifique sua internet e tente novamente';
@@ -100,15 +110,6 @@ export const translateErrorMessage = (error: any): string => {
   
   if (errorMessage.includes('required')) {
     return 'Campos obrigatórios não preenchidos';
-  }
-  
-  // OAuth specific errors
-  if (errorMessage.includes('OAuth') || errorMessage.includes('oauth')) {
-    return 'Erro na autenticação com provedor externo. Verifique se o provedor está configurado corretamente no Supabase';
-  }
-  
-  if (errorMessage.includes('popup') || errorMessage.includes('window')) {
-    return 'Erro ao abrir janela de autenticação. Verifique se o bloqueador de pop-ups está desativado';
   }
   
   if (errorMessage.includes('database schema')) {

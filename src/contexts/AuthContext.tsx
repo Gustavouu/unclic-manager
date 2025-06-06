@@ -21,7 +21,6 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error?: any }>;
-  signInWithProvider: (provider: 'google' | 'facebook' | 'github') => Promise<{ error?: any }>;
   signUp: (email: string, password: string) => Promise<{ error?: any }>;
   resetPassword: (email: string) => Promise<{ error?: any }>;
   refreshProfile: () => Promise<void>;
@@ -74,6 +73,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const ensureUserBusinessAccess = async () => {
+    try {
+      const { data, error } = await supabase.rpc('ensure_user_business_access');
+      if (error) {
+        console.error('Error ensuring user business access:', error);
+      } else {
+        console.log('User business access ensured');
+      }
+    } catch (error) {
+      console.error('Exception ensuring user business access:', error);
+    }
+  };
+
   useEffect(() => {
     console.log('AuthProvider: Setting up auth state listener');
     
@@ -90,12 +102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setProfile(profileData);
           
           // Ensure user business access
-          try {
-            await supabase.rpc('ensure_user_business_access');
-            console.log('User business access ensured');
-          } catch (error) {
-            console.error('Error ensuring user business access:', error);
-          }
+          await ensureUserBusinessAccess();
         } else {
           setProfile(null);
         }
@@ -121,12 +128,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setProfile(profileData);
             
             // Ensure user business access for initial session as well
-            try {
-              await supabase.rpc('ensure_user_business_access');
-              console.log('Initial user business access ensured');
-            } catch (error) {
-              console.error('Error ensuring initial user business access:', error);
-            }
+            await ensureUserBusinessAccess();
           }
         }
       } catch (error) {
@@ -147,14 +149,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signOut = async () => {
     console.log('Signing out...');
     setLoading(true);
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error);
+    
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        throw error;
+      }
+      console.log('Sign out successful');
+      setProfile(null);
+    } catch (error) {
+      console.error('Exception during sign out:', error);
       throw error;
+    } finally {
+      setLoading(false);
     }
-    console.log('Sign out successful');
-    setProfile(null);
-    setLoading(false);
   };
 
   const signIn = async (email: string, password: string) => {
@@ -188,88 +197,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signInWithProvider = async (provider: 'google' | 'facebook' | 'github') => {
-    console.log(`Starting OAuth flow for provider: ${provider}`);
-    setLoading(true);
-    
-    try {
-      // Check the current URL to determine the correct redirect
-      const currentUrl = window.location.origin;
-      const redirectTo = `${currentUrl}/auth`;
-      
-      console.log(`OAuth redirect URL: ${redirectTo}`);
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
-        }
-      });
-      
-      // Log detailed response for debugging
-      console.log(`${provider} OAuth response:`, { 
-        data, 
-        error,
-        url: data?.url,
-        provider: data?.provider 
-      });
-      
-      if (error) {
-        console.error(`${provider} OAuth error details:`, {
-          message: error.message,
-          status: error.status,
-          name: error.name
-        });
-        
-        setLoading(false);
-        
-        // Return the raw error for better debugging
-        return { 
-          error: {
-            message: error.message || `Erro na autenticação com ${provider}`,
-            details: `Status: ${error.status}, Name: ${error.name}`,
-            originalError: error
-          }
-        };
-      }
-      
-      if (data?.url) {
-        console.log(`${provider} OAuth redirect initiated to: ${data.url}`);
-        // Don't reset loading state here since we're redirecting
-        return { error: null };
-      } else {
-        console.warn(`${provider} OAuth: No redirect URL received`);
-        setLoading(false);
-        return { 
-          error: {
-            message: `Erro: Nenhuma URL de redirecionamento recebida do ${provider}`
-          }
-        };
-      }
-      
-    } catch (error: any) {
-      console.error(`${provider} OAuth exception details:`, {
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-        error
-      });
-      
-      setLoading(false);
-      return { 
-        error: {
-          message: error.message || `Erro na autenticação com ${provider}`,
-          details: `Exception: ${error.name}`,
-          originalError: error
-        } 
-      };
-    }
-  };
-
   const signUp = async (email: string, password: string) => {
     console.log('Signing up with email:', email);
     setLoading(true);
@@ -295,7 +222,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       
       setLoading(false);
-      return { error };
+      return { error: null };
     } catch (error) {
       console.error('Sign up exception:', error);
       setLoading(false);
@@ -305,21 +232,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const resetPassword = async (email: string) => {
     console.log('Resetting password for email:', email);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`
-    });
     
-    if (error) {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`
+      });
+      
+      if (error) {
+        const translatedError = {
+          ...error,
+          message: translateErrorMessage(error.message)
+        };
+        console.log('Reset password response:', { error: translatedError });
+        return { error: translatedError };
+      }
+      
+      console.log('Reset password response: success');
+      return { error: null };
+    } catch (error) {
+      console.error('Reset password exception:', error);
       const translatedError = {
-        ...error,
-        message: translateErrorMessage(error.message)
+        message: translateErrorMessage(error)
       };
-      console.log('Reset password response:', { error: translatedError });
       return { error: translatedError };
     }
-    
-    console.log('Reset password response: success');
-    return { error: null };
   };
 
   const value = {
@@ -329,7 +265,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     signOut,
     signIn,
-    signInWithProvider,
     signUp,
     resetPassword,
     refreshProfile,
