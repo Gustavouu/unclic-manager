@@ -3,28 +3,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import { useInventoryOperations, type InventoryItem, type InventoryFormData } from './useInventoryOperations';
+import { Product } from './types';
 
-export interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  sku?: string;
-  barcode?: string;
-  quantity: number;
-  minQuantity: number;
-  price: number;
-  costPrice?: number;
-  category?: string;
-  supplier?: string;
-  location?: string;
-  imageUrl?: string;
-  expiryDate?: string;
-  isEquipment: boolean;
-  lastSoldAt?: Date;
-  salesCount?: number;
-  created_at?: string;
-  updated_at?: string;
-}
+export type NewProduct = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>;
 
 interface InventoryAnalytics {
   totalValue: number;
@@ -72,22 +53,15 @@ export const useInventory = () => {
         id: item.id,
         name: item.name,
         description: item.description,
-        sku: item.sku,
-        barcode: item.barcode,
+        category: item.category_id || 'general',
+        price: item.sale_price || 0,
         quantity: item.quantity,
         minQuantity: item.min_quantity,
-        price: item.sale_price || 0,
-        costPrice: item.cost_price,
-        category: item.category_id,
         supplier: item.supplier_id,
-        location: item.location,
-        imageUrl: item.image_url,
-        expiryDate: item.expiry_date,
-        isEquipment: item.is_equipment,
-        lastSoldAt: undefined, // Would need to join with sales data
+        createdAt: new Date(item.created_at || Date.now()),
+        updatedAt: new Date(item.updated_at || Date.now()),
         salesCount: 0, // Would need to calculate from sales data
-        created_at: item.created_at,
-        updated_at: item.updated_at,
+        lastSoldAt: undefined, // Would need to join with sales data
       }));
       
       setProducts(mappedProducts);
@@ -104,22 +78,22 @@ export const useInventory = () => {
     fetchInventory();
   }, [businessId]);
 
-  const addProduct = async (productData: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
+  const addProduct = async (productData: NewProduct) => {
     const inventoryData: InventoryFormData = {
       name: productData.name,
       description: productData.description,
-      sku: productData.sku,
-      barcode: productData.barcode,
+      sku: undefined,
+      barcode: undefined,
       quantity: productData.quantity,
       min_quantity: productData.minQuantity,
-      cost_price: productData.costPrice,
+      cost_price: undefined,
       sale_price: productData.price,
       category_id: productData.category,
       supplier_id: productData.supplier,
-      location: productData.location,
-      image_url: productData.imageUrl,
-      expiry_date: productData.expiryDate,
-      is_equipment: productData.isEquipment,
+      location: undefined,
+      image_url: undefined,
+      expiry_date: undefined,
+      is_equipment: false,
     };
 
     const result = await createInventoryItem(inventoryData);
@@ -129,22 +103,15 @@ export const useInventory = () => {
     return result;
   };
 
-  const updateProduct = async (productId: string, productData: Partial<Omit<Product, 'id' | 'created_at' | 'updated_at'>>) => {
+  const updateProduct = async (productId: string, productData: Partial<NewProduct>) => {
     const inventoryData: Partial<InventoryFormData> = {
       name: productData.name,
       description: productData.description,
-      sku: productData.sku,
-      barcode: productData.barcode,
       quantity: productData.quantity,
       min_quantity: productData.minQuantity,
-      cost_price: productData.costPrice,
       sale_price: productData.price,
       category_id: productData.category,
       supplier_id: productData.supplier,
-      location: productData.location,
-      image_url: productData.imageUrl,
-      expiry_date: productData.expiryDate,
-      is_equipment: productData.isEquipment,
     };
 
     const result = await updateInventoryItem(productId, inventoryData);
@@ -168,7 +135,6 @@ export const useInventory = () => {
     const totalItems = products.length;
     
     // For now, using mock data for complex analytics
-    // In a real implementation, these would be calculated from sales data
     const bestSellers = products.slice(0, 5).map(product => ({
       ...product,
       salesCount: Math.floor(Math.random() * 100)

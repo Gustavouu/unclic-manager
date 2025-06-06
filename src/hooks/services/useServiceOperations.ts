@@ -63,10 +63,27 @@ export const useServiceOperations = () => {
     }
   };
 
+  const toggleServiceStatus = async (serviceId: string, currentStatus: boolean): Promise<Service | null> => {
+    setIsSubmitting(true);
+    try {
+      console.log('Toggling service status:', serviceId, currentStatus);
+      const result = await serviceService.update(serviceId, { is_active: !currentStatus });
+      toast.success(`Serviço ${!currentStatus ? 'ativado' : 'desativado'} com sucesso!`);
+      return result;
+    } catch (error: any) {
+      console.error('Error toggling service status:', error);
+      toast.error('Erro ao alterar status do serviço');
+      return null;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return {
     createService,
     updateService,
     deleteService,
+    toggleServiceStatus,
     isSubmitting,
   };
 };
