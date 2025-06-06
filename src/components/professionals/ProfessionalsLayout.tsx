@@ -1,7 +1,7 @@
 
-import { useProfessionals } from "@/hooks/professionals/useProfessionals";
+import { useProfessionalsList } from "@/hooks/professionals/useProfessionalsList";
 import { ProfessionalsContent } from "./ProfessionalsContent";
-import { Professional } from "@/hooks/professionals/types";
+import { Professional } from "@/types/professional";
 import React from "react";
 
 interface ProfessionalsLayoutProps {
@@ -16,7 +16,7 @@ export const ProfessionalsLayout = ({
   onEditProfessional,
   onDeleteProfessional
 }: ProfessionalsLayoutProps) => {
-  const { professionals, isLoading } = useProfessionals();
+  const { professionals, isLoading } = useProfessionalsList();
   
   if (isLoading) {
     return <div className="flex justify-center py-8">Carregando colaboradores...</div>;

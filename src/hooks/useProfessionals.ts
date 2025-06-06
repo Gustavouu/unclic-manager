@@ -72,10 +72,13 @@ export const useProfessionals = () => {
   return {
     professionals,
     isLoading,
+    loading: isLoading, // Alias para compatibilidade
     error,
     refetch: fetchProfessionals,
     createProfessional,
     updateProfessional,
     deleteProfessional,
+    // Adicionar propriedades de compatibilidade
+    specialties: Array.from(new Set(professionals.flatMap(p => p.specialties || []))),
   };
 };

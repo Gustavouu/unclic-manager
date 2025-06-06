@@ -1,11 +1,10 @@
 
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Eye } from "lucide-react";
-import { Professional } from "@/hooks/professionals/types";
-import { ProfessionalStatusBadge } from "./ProfessionalStatusBadge";
-import { useState } from "react";
-import { ProfessionalsPagination } from "./ProfessionalsPagination";
+import React from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Edit, Trash2 } from 'lucide-react';
+import { Professional } from '@/types/professional';
 
 export interface ProfessionalsTableProps {
   professionals: Professional[];
@@ -14,124 +13,91 @@ export interface ProfessionalsTableProps {
   onDeleteClick: (professional: Professional, e: React.MouseEvent) => void;
 }
 
-export const ProfessionalsTable = ({ 
+export const ProfessionalsTable: React.FC<ProfessionalsTableProps> = ({
   professionals,
   onProfessionalClick,
   onEditClick,
   onDeleteClick
-}: ProfessionalsTableProps) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  
-  const indexOfLastProfessional = currentPage * itemsPerPage;
-  const indexOfFirstProfessional = indexOfLastProfessional - itemsPerPage;
-  const currentProfessionals = professionals.slice(indexOfFirstProfessional, indexOfLastProfessional);
-  const totalPages = Math.ceil(professionals.length / itemsPerPage);
-  
-  const paginate = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
+}) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'inactive':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
-  
-  if (!professionals || professionals.length === 0) {
-    return (
-      <div className="p-4 text-center">
-        <p className="text-muted-foreground">Nenhum profissional encontrado.</p>
-        <p className="text-sm text-muted-foreground">Cadastre profissionais para vê-los aqui.</p>
-      </div>
-    );
-  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'Ativo';
+      case 'inactive':
+        return 'Inativo';
+      default:
+        return status;
+    }
+  };
 
   return (
-    <div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[250px]">Nome</TableHead>
-              <TableHead>Especialidades</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {currentProfessionals.map((professional) => (
-              <TableRow 
-                key={professional.id}
-                className="cursor-pointer hover:bg-slate-50"
-                onClick={() => onProfessionalClick(professional.id)}
-              >
-                <TableCell className="font-medium">
-                  {professional.name}
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {(professional.specialties || []).slice(0, 2).map((specialty, index) => (
-                      <span key={index} className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full">
-                        {specialty}
-                      </span>
-                    ))}
-                    {(professional.specialties || []).length > 2 && (
-                      <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full">
-                        +{(professional.specialties || []).length - 2}
-                      </span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>{professional.email}</TableCell>
-                <TableCell>{professional.phone}</TableCell>
-                <TableCell>
-                  <ProfessionalStatusBadge status={professional.status || 'ACTIVE'} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onProfessionalClick(professional.id);
-                      }}
-                    >
-                      <Eye size={16} />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEditClick(professional, e);
-                      }}
-                    >
-                      <Edit size={16} />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteClick(professional, e);
-                      }}
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      
-      <ProfessionalsPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={paginate}
-      />
-    </div>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Nome</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Telefone</TableHead>
+          <TableHead>Cargo</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="w-[100px]">Ações</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {professionals.map((professional) => (
+          <TableRow 
+            key={professional.id}
+            className="cursor-pointer hover:bg-gray-50"
+            onClick={() => onProfessionalClick(professional.id)}
+          >
+            <TableCell className="font-medium">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-semibold">
+                  {professional.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'P'}
+                </div>
+                {professional.name}
+              </div>
+            </TableCell>
+            <TableCell>{professional.email || '-'}</TableCell>
+            <TableCell>{professional.phone || '-'}</TableCell>
+            <TableCell>{professional.position || '-'}</TableCell>
+            <TableCell>
+              <Badge className={getStatusColor(professional.status || 'active')}>
+                {getStatusText(professional.status || 'active')}
+              </Badge>
+            </TableCell>
+            <TableCell>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => onEditClick(professional, e)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => onDeleteClick(professional, e)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 };

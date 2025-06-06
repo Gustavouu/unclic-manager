@@ -1,5 +1,5 @@
 
-import { Professional } from "@/hooks/professionals/types";
+import { Professional } from "@/types/professional";
 import { ProfessionalsTable, ProfessionalsTableProps } from "./ProfessionalsTable";
 import React from "react";
 
