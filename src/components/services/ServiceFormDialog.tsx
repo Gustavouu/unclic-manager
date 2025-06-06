@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -132,9 +131,14 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
 
   const handleSubmit = async (data: ServiceFormValues) => {
     try {
-      const serviceData: ServiceFormData & { image_url?: string; commission_percentage?: number } = {
-        ...data,
+      const serviceData: ServiceFormData = {
+        name: data.name,
+        description: data.description,
+        duration: data.duration,
+        price: data.price,
+        category: data.category,
         image_url: imageUrl,
+        commission_percentage: data.commission_percentage,
       };
 
       let result;
