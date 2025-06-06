@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { translateErrorMessage } from "@/utils/errorHandler";
 
 export function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -37,23 +39,25 @@ export function AuthForm() {
     }
 
     setIsLoading(true);
-    console.log('Attempting login with:', loginData.email);
+    console.log('Tentando login com:', loginData.email);
     
     try {
       const { error } = await signIn(loginData.email, loginData.password);
       
       if (error) {
-        console.error('Login error:', error);
-        toast.error(error.message || "Erro ao fazer login");
+        console.error('Erro no login:', error);
+        const errorMessage = translateErrorMessage(error.message || error);
+        toast.error(errorMessage);
         return;
       }
 
-      console.log('Login successful, redirecting to:', from);
+      console.log('Login realizado com sucesso, redirecionando para:', from);
       toast.success("Login realizado com sucesso!");
       navigate(from, { replace: true });
     } catch (error) {
-      console.error("Login exception:", error);
-      toast.error("Erro inesperado ao fazer login");
+      console.error("Exceção no login:", error);
+      const errorMessage = translateErrorMessage(error);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -78,24 +82,26 @@ export function AuthForm() {
     }
 
     setIsLoading(true);
-    console.log('Attempting signup with:', signupData.email);
+    console.log('Tentando cadastro com:', signupData.email);
     
     try {
       const { error } = await signUp(signupData.email, signupData.password);
       
       if (error) {
-        console.error('Signup error:', error);
-        toast.error(error.message || "Erro ao criar conta");
+        console.error('Erro no cadastro:', error);
+        const errorMessage = translateErrorMessage(error.message || error);
+        toast.error(errorMessage);
         return;
       }
 
-      toast.success("Conta criada com sucesso! Faça login para continuar.");
+      toast.success("Conta criada com sucesso! Verifique seu email para confirmar.");
       // Switch to login tab after successful signup
       const loginTab = document.querySelector('[value="login"]') as HTMLElement;
       loginTab?.click();
     } catch (error) {
-      console.error("Signup exception:", error);
-      toast.error("Erro inesperado ao criar conta");
+      console.error("Exceção no cadastro:", error);
+      const errorMessage = translateErrorMessage(error);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +118,7 @@ export function AuthForm() {
       <CardContent>
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
+            <TabsTrigger value="login">Entrar</TabsTrigger>
             <TabsTrigger value="signup">Criar Conta</TabsTrigger>
           </TabsList>
           

@@ -188,6 +188,7 @@ export type Database = {
           duration: number
           employee_id: string
           end_time: string
+          error_messages: Json | null
           feedback_comment: string | null
           id: string
           notes: string | null
@@ -208,6 +209,7 @@ export type Database = {
           duration?: number
           employee_id: string
           end_time: string
+          error_messages?: Json | null
           feedback_comment?: string | null
           id?: string
           notes?: string | null
@@ -228,6 +230,7 @@ export type Database = {
           duration?: number
           employee_id?: string
           end_time?: string
+          error_messages?: Json | null
           feedback_comment?: string | null
           id?: string
           notes?: string | null
@@ -439,6 +442,7 @@ export type Database = {
           currency: string | null
           description: string | null
           ein: string | null
+          error_messages: Json | null
           id: string
           language: string | null
           latitude: number | null
@@ -469,6 +473,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           ein?: string | null
+          error_messages?: Json | null
           id?: string
           language?: string | null
           latitude?: number | null
@@ -499,6 +504,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           ein?: string | null
+          error_messages?: Json | null
           id?: string
           language?: string | null
           latitude?: number | null
@@ -573,6 +579,7 @@ export type Database = {
           city: string | null
           created_at: string | null
           email: string | null
+          error_messages: Json | null
           gender: string | null
           id: string
           last_visit: string | null
@@ -593,6 +600,7 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           email?: string | null
+          error_messages?: Json | null
           gender?: string | null
           id?: string
           last_visit?: string | null
@@ -613,6 +621,7 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           email?: string | null
+          error_messages?: Json | null
           gender?: string | null
           id?: string
           last_visit?: string | null
@@ -2044,6 +2053,36 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          business_id: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          business_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          business_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       role_permissions: {
         Row: {
           created_at: string | null
@@ -2829,6 +2868,10 @@ export type Database = {
       }
       get_current_tenant_id: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_error_message: {
+        Args: { error_code: string; default_message?: string }
         Returns: string
       }
       get_user_business_id: {

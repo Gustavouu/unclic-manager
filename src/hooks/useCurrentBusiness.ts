@@ -7,7 +7,7 @@ export const useCurrentBusiness = () => {
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   useEffect(() => {
     const fetchBusinessId = async () => {
@@ -21,10 +21,14 @@ export const useCurrentBusiness = () => {
         setIsLoading(true);
         setError(null);
 
-        // First ensure the user has proper business access
-        await supabase.rpc('ensure_user_business_access');
+        // First try to get from profile (fastest)
+        if (profile?.business_id) {
+          setBusinessId(profile.business_id);
+          setIsLoading(false);
+          return;
+        }
 
-        // Then get the business ID using our safe function
+        // Then try the safe function
         const { data: businessIdData, error: businessIdError } = await supabase
           .rpc('get_user_business_id_safe');
 
@@ -57,7 +61,7 @@ export const useCurrentBusiness = () => {
         }
       } catch (err: any) {
         console.error('Error fetching business ID:', err);
-        setError(err.message || 'Failed to fetch business information');
+        setError('Falha ao buscar informações do negócio');
         setBusinessId(null);
       } finally {
         setIsLoading(false);
@@ -65,7 +69,7 @@ export const useCurrentBusiness = () => {
     };
 
     fetchBusinessId();
-  }, [user]);
+  }, [user, profile]);
 
   return {
     businessId,

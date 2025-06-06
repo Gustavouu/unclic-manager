@@ -1,16 +1,27 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+interface Profile {
+  id: string;
+  email: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  business_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 interface AuthContextType {
   user: User | null;
+  profile: Profile | null;
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error?: any }>;
   signUp: (email: string, password: string) => Promise<{ error?: any }>;
   resetPassword: (email: string) => Promise<{ error?: any }>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,8 +40,36 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Exception fetching profile:', error);
+      return null;
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (user) {
+      const profileData = await fetchProfile(user.id);
+      setProfile(profileData);
+    }
+  };
 
   useEffect(() => {
     console.log('AuthProvider: Setting up auth state listener');
@@ -42,14 +81,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // When user signs in, ensure they have proper business access
-        if (session?.user && event === 'SIGNED_IN') {
+        if (session?.user) {
+          // Fetch user profile
+          const profileData = await fetchProfile(session.user.id);
+          setProfile(profileData);
+          
+          // Ensure user business access
           try {
             await supabase.rpc('ensure_user_business_access');
             console.log('User business access ensured');
           } catch (error) {
             console.error('Error ensuring user business access:', error);
           }
+        } else {
+          setProfile(null);
         }
         
         setLoading(false);
@@ -67,8 +112,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setSession(session);
           setUser(session?.user ?? null);
           
-          // Ensure user business access for initial session as well
           if (session?.user) {
+            // Fetch user profile
+            const profileData = await fetchProfile(session.user.id);
+            setProfile(profileData);
+            
+            // Ensure user business access for initial session as well
             try {
               await supabase.rpc('ensure_user_business_access');
               console.log('Initial user business access ensured');
@@ -101,6 +150,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw error;
     }
     console.log('Sign out successful');
+    setProfile(null);
     setLoading(false);
   };
 
@@ -118,7 +168,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (error) {
         setLoading(false);
-        return { error };
+        // Translate error messages to Portuguese
+        const translatedError = {
+          ...error,
+          message: translateAuthError(error.message)
+        };
+        return { error: translatedError };
       }
       
       // Don't set loading to false here - let onAuthStateChange handle it
@@ -144,6 +199,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
       
       console.log('Sign up response:', { user: data?.user?.id, error });
+      
+      if (error) {
+        const translatedError = {
+          ...error,
+          message: translateAuthError(error.message)
+        };
+        setLoading(false);
+        return { error: translatedError };
+      }
+      
       setLoading(false);
       return { error };
     } catch (error) {
@@ -159,18 +224,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       redirectTo: `${window.location.origin}/auth/reset-password`
     });
     
-    console.log('Reset password response:', { error });
-    return { error };
+    if (error) {
+      const translatedError = {
+        ...error,
+        message: translateAuthError(error.message)
+      };
+      console.log('Reset password response:', { error: translatedError });
+      return { error: translatedError };
+    }
+    
+    console.log('Reset password response: success');
+    return { error: null };
   };
 
   const value = {
     user,
+    profile,
     session,
     loading,
     signOut,
     signIn,
     signUp,
     resetPassword,
+    refreshProfile,
   };
 
   console.log('AuthProvider render - user:', user?.id, 'loading:', loading);
@@ -180,6 +256,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Function to translate authentication errors to Portuguese
+const translateAuthError = (errorMessage: string): string => {
+  const translations: Record<string, string> = {
+    'Invalid login credentials': 'Credenciais de login inválidas',
+    'Email not confirmed': 'Email não confirmado',
+    'User already registered': 'Usuário já registrado',
+    'Password should be at least 6 characters': 'A senha deve ter pelo menos 6 caracteres',
+    'Unable to validate email address: invalid format': 'Formato de email inválido',
+    'For security purposes, you can only request this once every 60 seconds': 'Por motivos de segurança, você só pode solicitar isso uma vez a cada 60 segundos',
+    'Email rate limit exceeded': 'Limite de taxa de email excedido',
+    'signups not allowed': 'Cadastros não permitidos',
+    'Invalid email or password': 'Email ou senha inválidos',
+    'Too many requests': 'Muitas solicitações',
+    'Network request failed': 'Falha na solicitação de rede',
+    'Session expired': 'Sessão expirada',
+    'User not found': 'Usuário não encontrado',
+    'Password is too short': 'Senha muito curta',
+    'Password is too weak': 'Senha muito fraca',
+    'Email already registered': 'Email já registrado',
+    'Invalid email': 'Email inválido'
+  };
+
+  // Try to find an exact match first
+  if (translations[errorMessage]) {
+    return translations[errorMessage];
+  }
+
+  // Try to find a partial match
+  for (const [key, value] of Object.entries(translations)) {
+    if (errorMessage.toLowerCase().includes(key.toLowerCase())) {
+      return value;
+    }
+  }
+
+  // Default fallback
+  return 'Ocorreu um erro durante a autenticação. Tente novamente.';
 };
 
 // Keep the old export for backward compatibility
