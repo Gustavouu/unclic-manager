@@ -31,6 +31,7 @@ export interface ServiceFormData {
   category?: string;
   image_url?: string;
   commission_percentage?: number;
+  is_active?: boolean;
 }
 
 export interface ServiceSearchParams {
