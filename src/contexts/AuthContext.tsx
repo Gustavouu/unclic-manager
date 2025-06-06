@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { translateErrorMessage } from '@/utils/errorHandler';
 
 interface Profile {
   id: string;
@@ -19,6 +21,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error?: any }>;
+  signInWithProvider: (provider: 'google' | 'facebook' | 'github') => Promise<{ error?: any }>;
   signUp: (email: string, password: string) => Promise<{ error?: any }>;
   resetPassword: (email: string) => Promise<{ error?: any }>;
   refreshProfile: () => Promise<void>;
@@ -171,7 +174,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Translate error messages to Portuguese
         const translatedError = {
           ...error,
-          message: translateAuthError(error.message)
+          message: translateErrorMessage(error.message)
         };
         return { error: translatedError };
       }
@@ -182,6 +185,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Sign in exception:', error);
       setLoading(false);
       return { error };
+    }
+  };
+
+  const signInWithProvider = async (provider: 'google' | 'facebook' | 'github') => {
+    console.log(`Signing in with provider: ${provider}`);
+    setLoading(true);
+    
+    try {
+      // Setup redirect URL to the current origin
+      const redirectTo = `${window.location.origin}/auth`;
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo
+        }
+      });
+      
+      // If there's an immediate error (rare with OAuth)
+      if (error) {
+        console.error(`${provider} OAuth error:`, error);
+        const translatedError = {
+          ...error,
+          message: translateErrorMessage(error.message)
+        };
+        setLoading(false);
+        return { error: translatedError };
+      }
+      
+      console.log(`${provider} OAuth initiated, URL:`, data?.url);
+      // Don't reset loading state here since we're redirecting
+      
+      return { error: null };
+    } catch (error: any) {
+      console.error(`${provider} OAuth exception:`, error);
+      setLoading(false);
+      return { 
+        error: {
+          message: translateErrorMessage(error.message || `Erro na autenticação com ${provider}`)
+        } 
+      };
     }
   };
 
@@ -203,7 +247,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (error) {
         const translatedError = {
           ...error,
-          message: translateAuthError(error.message)
+          message: translateErrorMessage(error.message)
         };
         setLoading(false);
         return { error: translatedError };
@@ -227,7 +271,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (error) {
       const translatedError = {
         ...error,
-        message: translateAuthError(error.message)
+        message: translateErrorMessage(error.message)
       };
       console.log('Reset password response:', { error: translatedError });
       return { error: translatedError };
@@ -244,6 +288,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     signOut,
     signIn,
+    signInWithProvider,
     signUp,
     resetPassword,
     refreshProfile,
@@ -256,44 +301,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-// Function to translate authentication errors to Portuguese
-const translateAuthError = (errorMessage: string): string => {
-  const translations: Record<string, string> = {
-    'Invalid login credentials': 'Credenciais de login inválidas',
-    'Email not confirmed': 'Email não confirmado',
-    'User already registered': 'Usuário já registrado',
-    'Password should be at least 6 characters': 'A senha deve ter pelo menos 6 caracteres',
-    'Unable to validate email address: invalid format': 'Formato de email inválido',
-    'For security purposes, you can only request this once every 60 seconds': 'Por motivos de segurança, você só pode solicitar isso uma vez a cada 60 segundos',
-    'Email rate limit exceeded': 'Limite de taxa de email excedido',
-    'signups not allowed': 'Cadastros não permitidos',
-    'Invalid email or password': 'Email ou senha inválidos',
-    'Too many requests': 'Muitas solicitações',
-    'Network request failed': 'Falha na solicitação de rede',
-    'Session expired': 'Sessão expirada',
-    'User not found': 'Usuário não encontrado',
-    'Password is too short': 'Senha muito curta',
-    'Password is too weak': 'Senha muito fraca',
-    'Email already registered': 'Email já registrado',
-    'Invalid email': 'Email inválido'
-  };
-
-  // Try to find an exact match first
-  if (translations[errorMessage]) {
-    return translations[errorMessage];
-  }
-
-  // Try to find a partial match
-  for (const [key, value] of Object.entries(translations)) {
-    if (errorMessage.toLowerCase().includes(key.toLowerCase())) {
-      return value;
-    }
-  }
-
-  // Default fallback
-  return 'Ocorreu um erro durante a autenticação. Tente novamente.';
 };
 
 // Keep the old export for backward compatibility

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -96,6 +95,23 @@ export const translateErrorMessage = (error: any): string => {
     return 'Campos obrigatórios não preenchidos';
   }
   
+  // OAuth specific errors
+  if (errorMessage.includes('OAuth') || errorMessage.includes('oauth')) {
+    return 'Erro na autenticação com provedor externo. Tente novamente mais tarde';
+  }
+  
+  if (errorMessage.includes('popup') || errorMessage.includes('window')) {
+    return 'Erro ao abrir janela de autenticação. Verifique se o bloqueador de pop-ups está desativado';
+  }
+  
+  if (errorMessage.includes('database schema')) {
+    return 'Erro de configuração do sistema. Entre em contato com o suporte técnico';
+  }
+  
+  if (errorMessage.includes('identities') || errorMessage.includes('identity')) {
+    return 'Erro de autenticação. O provedor pode estar com problemas temporários';
+  }
+
   // Business logic errors
   if (errorMessage.includes('insufficient')) {
     return 'Recursos insuficientes para completar a operação';
@@ -149,10 +165,27 @@ export const handleClientError = (error: any, operation: string): string => {
 };
 
 /**
- * Authentication-specific error handler
+ * Authentication-specific error handler with OAuth support
  */
 export const handleAuthError = (error: any, operation: string): string => {
   const context = `Operação de autenticação: ${operation}`;
+  
+  // Special handling for OAuth errors
+  if (operation.includes('OAuth') || operation.includes('Provider')) {
+    logError(`OAuth ${operation}`, error);
+    
+    // Check for specific OAuth errors
+    if (error.message?.includes('popup')) {
+      return 'Falha ao abrir janela de autenticação. Desative o bloqueador de pop-ups e tente novamente.';
+    }
+    
+    if (error.message?.includes('identities') || error.message?.includes('identity')) {
+      return 'Erro na configuração de autenticação. Entre em contato com o suporte técnico.';
+    }
+    
+    return 'Falha na autenticação com provedor externo. Por favor, tente novamente mais tarde.';
+  }
+  
   return handleError(context, error);
 };
 
