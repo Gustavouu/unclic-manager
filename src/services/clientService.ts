@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { validateEmail, validatePhone, validateZipCode, formatValidationError } from '@/utils/databaseUtils';
 import type { Client } from '@/types/client';
@@ -47,7 +48,7 @@ export const fetchClients = async (businessId: string): Promise<Client[]> => {
       ...client,
       status: normalizeStatus(client.status),
       preferences: safeParsePreferences(client.preferences),
-      total_appointments: client.total_appointments || 0
+      total_appointments: (client as any).total_appointments || 0
     }));
   } catch (error) {
     console.error('Error fetching clients:', error);
@@ -118,7 +119,7 @@ export const createClient = async (clientData: Partial<Client>): Promise<Client>
       ...client,
       status: normalizeStatus(client.status),
       preferences: safeParsePreferences(client.preferences),
-      total_appointments: client.total_appointments || 0
+      total_appointments: (client as any).total_appointments || 0
     };
   } catch (error: any) {
     console.error('Error creating client:', error);
@@ -192,7 +193,7 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
       ...client,
       status: normalizeStatus(client.status),
       preferences: safeParsePreferences(client.preferences),
-      total_appointments: client.total_appointments || 0
+      total_appointments: (client as any).total_appointments || 0
     };
   } catch (error: any) {
     console.error('Error updating client:', error);
@@ -260,7 +261,7 @@ export const searchClients = async (params: { search?: string; business_id?: str
       ...client,
       status: normalizeStatus(client.status),
       preferences: safeParsePreferences(client.preferences),
-      total_appointments: client.total_appointments || 0
+      total_appointments: (client as any).total_appointments || 0
     }));
   } catch (error) {
     console.error('Error searching clients:', error);
@@ -292,7 +293,7 @@ export const getClientById = async (id: string): Promise<Client | null> => {
       ...client,
       status: normalizeStatus(client.status),
       preferences: safeParsePreferences(client.preferences),
-      total_appointments: client.total_appointments || 0
+      total_appointments: (client as any).total_appointments || 0
     };
   } catch (error) {
     console.error('Error getting client by ID:', error);
@@ -329,7 +330,7 @@ export const findClientByEmail = async (email: string, businessId: string): Prom
       ...client,
       status: normalizeStatus(client.status),
       preferences: safeParsePreferences(client.preferences),
-      total_appointments: client.total_appointments || 0
+      total_appointments: (client as any).total_appointments || 0
     };
   } catch (error) {
     console.error('Error finding client by email:', error);
@@ -368,7 +369,7 @@ export const findClientByPhone = async (phone: string, businessId: string): Prom
       ...client,
       status: normalizeStatus(client.status),
       preferences: safeParsePreferences(client.preferences),
-      total_appointments: client.total_appointments || 0
+      total_appointments: (client as any).total_appointments || 0
     };
   } catch (error) {
     console.error('Error finding client by phone:', error);
