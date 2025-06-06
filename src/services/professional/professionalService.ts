@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { Professional, ProfessionalFormData } from '@/types/professional';
 
@@ -15,60 +16,53 @@ export class ProfessionalService {
 
   async create(data: ProfessionalFormData & { business_id: string }): Promise<Professional> {
     const { data: professional, error } = await supabase
-      .from('funcionarios')
+      .from('professionals')
       .insert({
         business_id: data.business_id,
-        id_negocio: data.business_id,
-        nome: data.name,
+        tenantId: data.business_id,
+        establishmentId: data.business_id, // Using business_id as fallback
+        name: data.name,
         email: data.email || null,
-        telefone: data.phone || null,
-        cargo: data.position || null,
+        phone: data.phone || null,
         bio: data.bio || null,
-        foto_url: data.photo_url || null,
-        especializacoes: data.specialties || [],
-        comissao_percentual: data.commission_percentage || 0,
-        data_contratacao: data.hire_date || null,
-        status: data.status || 'ativo',
+        avatar: data.photo_url || null,
+        status: data.status || 'active',
       })
       .select()
       .single();
 
     if (error) throw error;
     
-    // Map the response to include both Portuguese and English field names
+    // Map the response to include expected field names
     return {
       ...professional,
-      business_id: professional.id_negocio,
-      name: professional.nome,
-      phone: professional.telefone,
-      position: professional.cargo,
-      photo_url: professional.foto_url,
-      specialties: professional.especializacoes,
-      commission_percentage: professional.comissao_percentual,
-      hire_date: professional.data_contratacao,
-      created_at: professional.criado_em,
-      updated_at: professional.atualizado_em,
+      business_id: professional.business_id,
+      name: professional.name,
+      phone: professional.phone,
+      position: '', // Not available in current schema
+      photo_url: professional.avatar,
+      specialties: [], // Not available in current schema
+      commission_percentage: 0, // Not available in current schema
+      hire_date: null, // Not available in current schema
+      created_at: professional.createdAt,
+      updated_at: professional.updatedAt,
     };
   }
 
   async update(id: string, data: Partial<ProfessionalFormData>): Promise<Professional> {
     const updateData: any = {};
     
-    if (data.name) updateData.nome = data.name;
+    if (data.name) updateData.name = data.name;
     if (data.email !== undefined) updateData.email = data.email;
-    if (data.phone !== undefined) updateData.telefone = data.phone;
-    if (data.position !== undefined) updateData.cargo = data.position;
+    if (data.phone !== undefined) updateData.phone = data.phone;
     if (data.bio !== undefined) updateData.bio = data.bio;
-    if (data.photo_url !== undefined) updateData.foto_url = data.photo_url;
-    if (data.specialties !== undefined) updateData.especializacoes = data.specialties;
-    if (data.commission_percentage !== undefined) updateData.comissao_percentual = data.commission_percentage;
-    if (data.hire_date !== undefined) updateData.data_contratacao = data.hire_date;
+    if (data.photo_url !== undefined) updateData.avatar = data.photo_url;
     if (data.status !== undefined) updateData.status = data.status;
     
-    updateData.atualizado_em = new Date().toISOString();
+    updateData.updatedAt = new Date().toISOString();
 
     const { data: professional, error } = await supabase
-      .from('funcionarios')
+      .from('professionals')
       .update(updateData)
       .eq('id', id)
       .select()
@@ -76,75 +70,75 @@ export class ProfessionalService {
 
     if (error) throw error;
     
-    // Map the response to include both Portuguese and English field names
+    // Map the response to include expected field names
     return {
       ...professional,
-      business_id: professional.id_negocio,
-      name: professional.nome,
-      phone: professional.telefone,
-      position: professional.cargo,
-      photo_url: professional.foto_url,
-      specialties: professional.especializacoes,
-      commission_percentage: professional.comissao_percentual,
-      hire_date: professional.data_contratacao,
-      created_at: professional.criado_em,
-      updated_at: professional.atualizado_em,
+      business_id: professional.business_id,
+      name: professional.name,
+      phone: professional.phone,
+      position: '', // Not available in current schema
+      photo_url: professional.avatar,
+      specialties: [], // Not available in current schema
+      commission_percentage: 0, // Not available in current schema
+      hire_date: null, // Not available in current schema
+      created_at: professional.createdAt,
+      updated_at: professional.updatedAt,
     };
   }
 
   async getById(id: string): Promise<Professional> {
     const { data: professional, error } = await supabase
-      .from('funcionarios')
+      .from('professionals')
       .select()
       .eq('id', id)
       .single();
 
     if (error) throw error;
     
-    // Map the response to include both Portuguese and English field names
+    // Map the response to include expected field names
     return {
       ...professional,
-      business_id: professional.id_negocio,
-      name: professional.nome,
-      phone: professional.telefone,
-      position: professional.cargo,
-      photo_url: professional.foto_url,
-      specialties: professional.especializacoes,
-      commission_percentage: professional.comissao_percentual,
-      hire_date: professional.data_contratacao,
-      created_at: professional.criado_em,
-      updated_at: professional.atualizado_em,
+      business_id: professional.business_id,
+      name: professional.name,
+      phone: professional.phone,
+      position: '', // Not available in current schema
+      photo_url: professional.avatar,
+      specialties: [], // Not available in current schema
+      commission_percentage: 0, // Not available in current schema
+      hire_date: null, // Not available in current schema
+      created_at: professional.createdAt,
+      updated_at: professional.updatedAt,
     };
   }
 
   async getByBusinessId(businessId: string): Promise<Professional[]> {
     const { data: professionals, error } = await supabase
-      .from('funcionarios')
+      .from('professionals')
       .select()
-      .eq('id_negocio', businessId)
-      .order('nome');
+      .eq('business_id', businessId)
+      .order('name');
 
     if (error) throw error;
     
-    // Map the response to include both Portuguese and English field names
+    // Map the response to include expected field names
     return (professionals || []).map(professional => ({
       ...professional,
-      business_id: professional.id_negocio,
-      name: professional.nome,
-      phone: professional.telefone,
-      position: professional.cargo,
-      photo_url: professional.foto_url,
-      specialties: professional.especializacoes,
-      commission_percentage: professional.comissao_percentual,
-      hire_date: professional.data_contratacao,
-      created_at: professional.criado_em,
-      updated_at: professional.atualizado_em,
+      business_id: professional.business_id,
+      name: professional.name,
+      phone: professional.phone,
+      position: '', // Not available in current schema
+      photo_url: professional.avatar,
+      specialties: [], // Not available in current schema
+      commission_percentage: 0, // Not available in current schema
+      hire_date: null, // Not available in current schema
+      created_at: professional.createdAt,
+      updated_at: professional.updatedAt,
     }));
   }
 
   async delete(id: string): Promise<void> {
     const { error } = await supabase
-      .from('funcionarios')
+      .from('professionals')
       .delete()
       .eq('id', id);
 
@@ -153,27 +147,27 @@ export class ProfessionalService {
 
   async search(params: { business_id: string; search: string }): Promise<Professional[]> {
     const { data: professionals, error } = await supabase
-      .from('funcionarios')
+      .from('professionals')
       .select()
-      .eq('id_negocio', params.business_id)
-      .or(`nome.ilike.%${params.search}%,email.ilike.%${params.search}%,cargo.ilike.%${params.search}%`)
-      .order('nome');
+      .eq('business_id', params.business_id)
+      .or(`name.ilike.%${params.search}%,email.ilike.%${params.search}%`)
+      .order('name');
 
     if (error) throw error;
     
-    // Map the response to include both Portuguese and English field names
+    // Map the response to include expected field names
     return (professionals || []).map(professional => ({
       ...professional,
-      business_id: professional.id_negocio,
-      name: professional.nome,
-      phone: professional.telefone,
-      position: professional.cargo,
-      photo_url: professional.foto_url,
-      specialties: professional.especializacoes,
-      commission_percentage: professional.comissao_percentual,
-      hire_date: professional.data_contratacao,
-      created_at: professional.criado_em,
-      updated_at: professional.atualizado_em,
+      business_id: professional.business_id,
+      name: professional.name,
+      phone: professional.phone,
+      position: '', // Not available in current schema
+      photo_url: professional.avatar,
+      specialties: [], // Not available in current schema
+      commission_percentage: 0, // Not available in current schema
+      hire_date: null, // Not available in current schema
+      created_at: professional.createdAt,
+      updated_at: professional.updatedAt,
     }));
   }
 

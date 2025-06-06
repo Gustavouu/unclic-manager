@@ -29,19 +29,12 @@ export const WebhookProcessingService = {
           };
         }
         
-        // Update the transaction status in the financial_transactions table
+        // Update the transaction status in the payments table
         const { error } = await supabase
-          .from('financial_transactions')
+          .from('payments')
           .update({ 
             status: status,
-            paymentDate: status === 'PAID' ? new Date().toISOString() : null,
-            notes: JSON.stringify({
-              webhook_notification: {
-                provider: providerName,
-                received_at: new Date().toISOString(),
-                payload
-              }
-            })
+            payment_date: status === 'paid' ? new Date().toISOString() : null,
           })
           .eq('id', paymentId);
         

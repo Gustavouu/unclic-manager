@@ -12,9 +12,9 @@ export const WebhookConfigService = {
   async getWebhookConfig(): Promise<WebhookConfig | null> {
     try {
       const { data, error } = await supabase
-        .from('financial_transactions')
+        .from('business_settings')
         .select('notes')
-        .eq('tenantId', "1")
+        .eq('business_id', "00000000-0000-0000-0000-000000000000")
         .limit(1);
 
       if (error) {
@@ -24,7 +24,7 @@ export const WebhookConfigService = {
 
       if (data && data.length > 0 && data[0].notes) {
         try {
-          const notes = JSON.parse(data[0].notes);
+          const notes = typeof data[0].notes === 'string' ? JSON.parse(data[0].notes) : data[0].notes;
           if (notes.webhook_config) {
             return {
               webhookUrl: notes.webhook_config.webhook_url || "",
