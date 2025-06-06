@@ -14,6 +14,12 @@ interface UseAvailableTimeSlotsParams {
   businessId?: string;
 }
 
+// Simplified appointment interface to avoid type instantiation issues
+interface SimpleAppointment {
+  start_time: string;
+  duration: number;
+}
+
 export const useAvailableTimeSlots = ({
   employeeId,
   serviceId,
@@ -53,13 +59,13 @@ export const useAvailableTimeSlots = ({
     setError(null);
 
     try {
-      // Fetch existing appointments for the employee on the selected date
+      // Fetch existing appointments for the employee on the selected date using the correct table
       const { data: appointments, error: appointmentsError } = await supabase
-        .from('appointments')
-        .select('start_time, end_time, duration')
+        .from('bookings')
+        .select('start_time, duration')
         .eq('employee_id', employeeId)
         .eq('booking_date', date)
-        .not('status', 'eq', 'cancelled');
+        .neq('status', 'canceled');
 
       if (appointmentsError) {
         console.error('Error fetching appointments:', appointmentsError);
@@ -71,7 +77,7 @@ export const useAvailableTimeSlots = ({
 
       // Mark booked times
       if (appointments) {
-        appointments.forEach((appointment: any) => {
+        appointments.forEach((appointment: SimpleAppointment) => {
           const startTime = appointment.start_time;
           const duration = appointment.duration || 60;
           

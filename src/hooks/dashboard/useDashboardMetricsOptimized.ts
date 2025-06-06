@@ -4,16 +4,65 @@ import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import { supabase } from '@/integrations/supabase/client';
 import { CacheService, CacheKeys } from '@/services/cache/CacheService';
 import { PerformanceMonitor } from '@/services/monitoring/PerformanceMonitor';
-import type {
-  DashboardMetrics,
-  RevenueDataPoint,
-  PopularService,
-  AppointmentData,
-  ClientData,
-  SupabaseResponse,
-  DashboardData,
-  UseDashboardMetricsReturn
-} from './types';
+
+// Simplified type definitions to avoid deep instantiation
+export interface DashboardMetrics {
+  totalAppointments: number;
+  totalClients: number;
+  monthlyRevenue: number;
+  todayAppointments: number;
+  pendingAppointments: number;
+  completedAppointments: number;
+  activeClients: number;
+  newClientsThisMonth: number;
+  servicesCompleted: number;
+  averageTicket: number;
+  growthRate: number;
+  retentionRate: number;
+}
+
+export interface RevenueDataPoint {
+  date: string;
+  value: number;
+}
+
+export interface PopularService {
+  id: string;
+  name: string;
+  count: number;
+  percentage: number;
+}
+
+interface AppointmentData {
+  id: string;
+  booking_date: string;
+  status: string;
+  price: number;
+  created_at: string;
+}
+
+interface ClientData {
+  id: string;
+  status: string;
+  created_at: string;
+}
+
+interface DashboardData {
+  metrics: DashboardMetrics;
+  revenueData: RevenueDataPoint[];
+  popularServices: PopularService[];
+}
+
+export interface UseDashboardMetricsReturn {
+  metrics: DashboardMetrics;
+  revenueData: RevenueDataPoint[];
+  popularServices: PopularService[];
+  isLoading: boolean;
+  error: string | null;
+  lastUpdate: Date | null;
+  refreshData: () => void;
+  formatCurrency: (value: number) => string;
+}
 
 export const useDashboardMetricsOptimized = (): UseDashboardMetricsReturn => {
   const [metrics, setMetrics] = useState<DashboardMetrics>({
@@ -55,7 +104,7 @@ export const useDashboardMetricsOptimized = (): UseDashboardMetricsReturn => {
 
       console.log('Loading optimized dashboard data for business:', businessId);
 
-      // Tentar cache primeiro
+      // Try cache first
       const cachedData = cache.get<DashboardData>(cacheKey);
 
       if (cachedData) {
@@ -71,12 +120,12 @@ export const useDashboardMetricsOptimized = (): UseDashboardMetricsReturn => {
 
       monitor.trackMetric('dashboard_cache_miss', 1);
 
-      // Carregar dados frescos do banco
+      // Load fresh data from database
       const data = await monitor.measureAsync('dashboard_load', async () => {
         return await loadFreshData(businessId);
       });
 
-      // Cache por 2 minutos
+      // Cache for 2 minutes
       cache.set(cacheKey, data, 2 * 60 * 1000);
 
       setMetrics(data.metrics);
@@ -102,38 +151,36 @@ export const useDashboardMetricsOptimized = (): UseDashboardMetricsReturn => {
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
     const today = now.toISOString().split('T')[0];
 
-    // Queries paralelas para melhor performance com tipos corretos
+    // Parallel queries for better performance using correct table names
     const [clientsResponse, appointmentsResponse] = await Promise.all([
       monitor.measureAsync('clients_query', async () => {
-        const result = await supabase
-          .from('clients_unified')
+        return await supabase
+          .from('clients')
           .select('id, status, created_at')
           .eq('business_id', businessId);
-        return result as SupabaseResponse<ClientData>;
       }),
       monitor.measureAsync('appointments_query', async () => {
-        const result = await supabase
-          .from('appointments_unified')
+        return await supabase
+          .from('bookings')
           .select('id, booking_date, status, price, created_at')
           .eq('business_id', businessId)
           .gte('booking_date', startOfMonth)
           .lte('booking_date', endOfMonth);
-        return result as SupabaseResponse<AppointmentData>;
       })
     ]);
 
     if (clientsResponse.error) {
-      monitor.trackQuery('clients_unified_select', 0, false, clientsResponse.error.message);
+      monitor.trackQuery('clients_select', 0, false, clientsResponse.error.message);
       throw new Error(`Erro ao carregar clientes: ${clientsResponse.error.message}`);
     }
     
     if (appointmentsResponse.error) {
-      monitor.trackQuery('appointments_unified_select', 0, false, appointmentsResponse.error.message);
+      monitor.trackQuery('bookings_select', 0, false, appointmentsResponse.error.message);
       throw new Error(`Erro ao carregar agendamentos: ${appointmentsResponse.error.message}`);
     }
 
-    monitor.trackQuery('clients_unified_select', 0, true);
-    monitor.trackQuery('appointments_unified_select', 0, true);
+    monitor.trackQuery('clients_select', 0, true);
+    monitor.trackQuery('bookings_select', 0, true);
 
     const clients = clientsResponse.data || [];
     const appointments = appointmentsResponse.data || [];
@@ -165,21 +212,21 @@ export const useDashboardMetricsOptimized = (): UseDashboardMetricsReturn => {
     ).length;
 
     const averageTicket = totalAppointments > 0 ? totalRevenue / totalAppointments : 0;
-    const growthRate = Math.random() * 20; // Placeholder - calcular baseado em dados históricos
-    const retentionRate = activeClients.length > 0 ? 85 : 0; // Placeholder - calcular baseado em dados reais
+    const growthRate = Math.random() * 20; // Placeholder - calculate based on historical data
+    const retentionRate = activeClients.length > 0 ? 85 : 0; // Placeholder - calculate based on real data
 
-    // Gerar dados de receita dos últimos 6 meses
+    // Generate revenue data for last 6 months
     const revenueData: RevenueDataPoint[] = [];
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now);
       date.setMonth(now.getMonth() - i);
       revenueData.push({
         date: date.toLocaleDateString('pt-BR', { month: 'short' }),
-        value: Math.floor(Math.random() * 5000) + 2000 // Placeholder - usar dados reais
+        value: Math.floor(Math.random() * 5000) + 2000 // Placeholder - use real data
       });
     }
 
-    // Serviços populares baseados nos agendamentos
+    // Popular services based on appointments
     const services = [
       { id: '1', name: 'Corte de Cabelo', count: Math.floor(totalAppointments * 0.4) },
       { id: '2', name: 'Barba', count: Math.floor(totalAppointments * 0.25) },
@@ -216,7 +263,7 @@ export const useDashboardMetricsOptimized = (): UseDashboardMetricsReturn => {
   }, [loadDashboardData]);
 
   const refreshData = useCallback((): void => {
-    // Invalidar cache e recarregar
+    // Invalidate cache and reload
     if (businessId) {
       cache.delete(CacheKeys.DASHBOARD_METRICS(businessId));
     }
