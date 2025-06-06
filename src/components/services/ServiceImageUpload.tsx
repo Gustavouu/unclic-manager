@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, X, ImageIcon } from 'lucide-react';
-import { ServiceImageService } from '@/services/service/serviceImageService';
-import { toast } from 'sonner';
+import { useServiceImageUpload } from '@/hooks/services/useServiceImageUpload';
 
 interface ServiceImageUploadProps {
   currentImageUrl?: string;
@@ -20,38 +19,15 @@ export const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
   serviceId,
   disabled = false
 }) => {
-  const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
-
-  const serviceImageService = ServiceImageService.getInstance();
+  const { uploadImage, deleteImage, isUploading } = useServiceImageUpload();
 
   const handleFileSelect = async (file: File) => {
-    if (!file) return;
+    if (!file || disabled || isUploading) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Por favor, selecione apenas arquivos de imagem');
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('A imagem deve ter no máximo 5MB');
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      const tempServiceId = serviceId || `temp-${Date.now()}`;
-      const imageUrl = await serviceImageService.uploadImage(file, tempServiceId);
+    const imageUrl = await uploadImage(file, serviceId);
+    if (imageUrl) {
       onImageChange(imageUrl);
-      toast.success('Imagem enviada com sucesso!');
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      toast.error('Erro ao enviar imagem');
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -83,13 +59,9 @@ export const ServiceImageUpload: React.FC<ServiceImageUploadProps> = ({
 
   const handleRemoveImage = async () => {
     if (currentImageUrl) {
-      try {
-        await serviceImageService.deleteImage(currentImageUrl);
+      const success = await deleteImage(currentImageUrl);
+      if (success) {
         onImageChange(null);
-        toast.success('Imagem removida com sucesso!');
-      } catch (error) {
-        console.error('Error removing image:', error);
-        toast.error('Erro ao remover imagem');
       }
     } else {
       onImageChange(null);

@@ -1,5 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Dialog,
   DialogContent,
@@ -23,7 +26,20 @@ import { useServiceOperations } from '@/hooks/services/useServiceOperations';
 import { ServiceService } from '@/services/service/serviceService';
 import { ServiceImageUpload } from './ServiceImageUpload';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
+import { toast } from 'sonner';
 import type { Service, ServiceFormData } from '@/types/service';
+
+const serviceSchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório').min(3, 'Nome deve ter pelo menos 3 caracteres'),
+  description: z.string().optional(),
+  duration: z.coerce.number().min(1, 'Duração deve ser pelo menos 1 minuto').max(480, 'Duração máxima de 8 horas'),
+  price: z.coerce.number().min(0, 'Preço não pode ser negativo'),
+  category: z.string().optional(),
+  image_url: z.string().optional(),
+  commission_percentage: z.coerce.number().min(0, 'Comissão não pode ser negativa').max(100, 'Comissão não pode ser maior que 100%').optional(),
+});
+
+type ServiceFormValues = z.infer<typeof serviceSchema>;
 
 interface ServiceFormDialogProps {
   open?: boolean;
@@ -42,15 +58,7 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>(['Geral']);
-  const [formData, setFormData] = useState<ServiceFormData & { image_url?: string; commission_percentage?: number }>({
-    name: '',
-    description: '',
-    duration: 30,
-    price: 0,
-    category: 'Geral',
-    image_url: '',
-    commission_percentage: 0,
-  });
+  const [imageUrl, setImageUrl] = useState<string>('');
 
   const { createService, updateService, isSubmitting } = useServiceOperations();
   const { businessId } = useCurrentBusiness();
@@ -58,29 +66,39 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
 
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = controlledOnOpenChange || setInternalOpen;
-
   const isEditing = !!service;
+
+  const form = useForm<ServiceFormValues>({
+    resolver: zodResolver(serviceSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      duration: 30,
+      price: 0,
+      category: 'Geral',
+      image_url: '',
+      commission_percentage: 0,
+    }
+  });
 
   useEffect(() => {
     const loadCategories = async () => {
-      if (businessId) {
+      if (businessId && isOpen) {
         try {
           const cats = await serviceService.getCategories(businessId);
-          setCategories(cats);
+          setCategories(cats.length > 0 ? cats : ['Geral']);
         } catch (error) {
           console.error('Error loading categories:', error);
+          setCategories(['Geral']);
         }
       }
     };
-
-    if (isOpen) {
-      loadCategories();
-    }
+    loadCategories();
   }, [isOpen, businessId]);
 
   useEffect(() => {
-    if (service) {
-      setFormData({
+    if (service && isOpen) {
+      const serviceData = {
         name: service.name || service.nome || '',
         description: service.description || service.descricao || '',
         duration: service.duration || service.duracao || 30,
@@ -88,9 +106,12 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
         category: service.category || service.categoria || 'Geral',
         image_url: service.image_url || '',
         commission_percentage: service.commission_percentage || 0,
-      });
-    } else {
-      setFormData({
+      };
+      
+      form.reset(serviceData);
+      setImageUrl(serviceData.image_url);
+    } else if (!service && isOpen) {
+      form.reset({
         name: '',
         description: '',
         duration: 30,
@@ -99,25 +120,21 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
         image_url: '',
         commission_percentage: 0,
       });
+      setImageUrl('');
     }
-  }, [service, isOpen]);
+  }, [service, isOpen, form]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleImageChange = (newImageUrl: string | null) => {
+    const url = newImageUrl || '';
+    setImageUrl(url);
+    form.setValue('image_url', url);
+  };
 
-    if (!formData.name.trim()) {
-      return;
-    }
-
+  const handleSubmit = async (data: ServiceFormValues) => {
     try {
       const serviceData: ServiceFormData & { image_url?: string; commission_percentage?: number } = {
-        name: formData.name,
-        description: formData.description,
-        duration: formData.duration,
-        price: formData.price,
-        category: formData.category,
-        image_url: formData.image_url,
-        commission_percentage: formData.commission_percentage,
+        ...data,
+        image_url: imageUrl,
       };
 
       let result;
@@ -130,21 +147,12 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
       if (result) {
         setOpen(false);
         onServiceSaved?.();
+        toast.success(isEditing ? 'Serviço atualizado com sucesso!' : 'Serviço criado com sucesso!');
       }
     } catch (error) {
       console.error('Error saving service:', error);
+      toast.error('Erro ao salvar serviço');
     }
-  };
-
-  const handleInputChange = (field: keyof typeof formData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleImageChange = (imageUrl: string | null) => {
-    handleInputChange('image_url', imageUrl || '');
   };
 
   const defaultTrigger = (
@@ -162,9 +170,9 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
         </DialogTitle>
       </DialogHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <ServiceImageUpload
-          currentImageUrl={formData.image_url}
+          currentImageUrl={imageUrl}
           onImageChange={handleImageChange}
           serviceId={service?.id}
           disabled={isSubmitting}
@@ -174,20 +182,20 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
           <Label htmlFor="name">Nome do Serviço *</Label>
           <Input
             id="name"
-            value={formData.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
+            {...form.register('name')}
             placeholder="Ex: Corte Masculino"
-            required
             disabled={isSubmitting}
           />
+          {form.formState.errors.name && (
+            <p className="text-sm text-red-600">{form.formState.errors.name.message}</p>
+          )}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="description">Descrição</Label>
           <Textarea
             id="description"
-            value={formData.description}
-            onChange={(e) => handleInputChange('description', e.target.value)}
+            {...form.register('description')}
             placeholder="Descreva o serviço..."
             rows={3}
             disabled={isSubmitting}
@@ -202,11 +210,12 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
               type="number"
               min="1"
               max="480"
-              value={formData.duration}
-              onChange={(e) => handleInputChange('duration', parseInt(e.target.value) || 30)}
-              required
+              {...form.register('duration')}
               disabled={isSubmitting}
             />
+            {form.formState.errors.duration && (
+              <p className="text-sm text-red-600">{form.formState.errors.duration.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -216,11 +225,12 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
               type="number"
               min="0"
               step="0.01"
-              value={formData.price}
-              onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
-              required
+              {...form.register('price')}
               disabled={isSubmitting}
             />
+            {form.formState.errors.price && (
+              <p className="text-sm text-red-600">{form.formState.errors.price.message}</p>
+            )}
           </div>
         </div>
 
@@ -228,8 +238,8 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
           <div className="space-y-2">
             <Label htmlFor="category">Categoria</Label>
             <Select
-              value={formData.category}
-              onValueChange={(value) => handleInputChange('category', value)}
+              value={form.watch('category') || 'Geral'}
+              onValueChange={(value) => form.setValue('category', value)}
               disabled={isSubmitting}
             >
               <SelectTrigger>
@@ -253,11 +263,13 @@ export const ServiceFormDialog: React.FC<ServiceFormDialogProps> = ({
               min="0"
               max="100"
               step="0.1"
-              value={formData.commission_percentage}
-              onChange={(e) => handleInputChange('commission_percentage', parseFloat(e.target.value) || 0)}
+              {...form.register('commission_percentage')}
               placeholder="0"
               disabled={isSubmitting}
             />
+            {form.formState.errors.commission_percentage && (
+              <p className="text-sm text-red-600">{form.formState.errors.commission_percentage.message}</p>
+            )}
           </div>
         </div>
 

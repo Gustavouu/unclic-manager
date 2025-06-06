@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { Service, ServiceFormData, ServiceSearchParams, ServiceStats } from '@/types/service';
 
@@ -31,6 +30,9 @@ export class ServiceService {
         price: data.price,
         preco: data.price,
         category: data.category || 'Geral',
+        categoria: data.category || 'Geral',
+        image_url: data.image_url || null,
+        commission_percentage: data.commission_percentage || 0,
         is_active: true,
         ativo: true,
       })
@@ -39,7 +41,7 @@ export class ServiceService {
 
     if (error) {
       console.error('Error creating service:', error);
-      throw error;
+      throw new Error(`Erro ao criar serviço: ${error.message}`);
     }
     
     return this.mapServiceFromDb(service);
@@ -50,7 +52,7 @@ export class ServiceService {
     
     const updateData: any = {};
     
-    if (data.name) {
+    if (data.name !== undefined) {
       updateData.name = data.name;
       updateData.nome = data.name;
     }
@@ -58,7 +60,7 @@ export class ServiceService {
       updateData.description = data.description;
       updateData.descricao = data.description;
     }
-    if (data.duration) {
+    if (data.duration !== undefined) {
       updateData.duration = data.duration;
       updateData.duracao = data.duration;
     }
@@ -66,8 +68,15 @@ export class ServiceService {
       updateData.price = data.price;
       updateData.preco = data.price;
     }
-    if (data.category) {
+    if (data.category !== undefined) {
       updateData.category = data.category;
+      updateData.categoria = data.category;
+    }
+    if (data.image_url !== undefined) {
+      updateData.image_url = data.image_url;
+    }
+    if (data.commission_percentage !== undefined) {
+      updateData.commission_percentage = data.commission_percentage;
     }
     
     updateData.updated_at = new Date().toISOString();
@@ -82,7 +91,7 @@ export class ServiceService {
 
     if (error) {
       console.error('Error updating service:', error);
-      throw error;
+      throw new Error(`Erro ao atualizar serviço: ${error.message}`);
     }
     
     return this.mapServiceFromDb(service);
@@ -99,7 +108,7 @@ export class ServiceService {
 
     if (error) {
       console.error('Error getting service:', error);
-      throw error;
+      throw new Error(`Erro ao buscar serviço: ${error.message}`);
     }
     
     return this.mapServiceFromDb(service);
@@ -112,12 +121,11 @@ export class ServiceService {
       .from('services')
       .select()
       .or(`business_id.eq.${businessId},id_negocio.eq.${businessId}`)
-      .eq('is_active', true)
       .order('name');
 
     if (error) {
       console.error('Error getting services:', error);
-      throw error;
+      throw new Error(`Erro ao buscar serviços: ${error.message}`);
     }
     
     return (services || []).map(service => this.mapServiceFromDb(service));
@@ -149,7 +157,7 @@ export class ServiceService {
 
     if (error) {
       console.error('Error searching services:', error);
-      throw error;
+      throw new Error(`Erro ao pesquisar serviços: ${error.message}`);
     }
     
     return (services || []).map(service => this.mapServiceFromDb(service));
@@ -165,7 +173,7 @@ export class ServiceService {
 
     if (error) {
       console.error('Error deleting service:', error);
-      throw error;
+      throw new Error(`Erro ao excluir serviço: ${error.message}`);
     }
   }
 
@@ -186,7 +194,7 @@ export class ServiceService {
 
     if (error) {
       console.error('Error updating service status:', error);
-      throw error;
+      throw new Error(`Erro ao atualizar status do serviço: ${error.message}`);
     }
     
     return this.mapServiceFromDb(service);
@@ -195,8 +203,6 @@ export class ServiceService {
   async getStats(id: string): Promise<ServiceStats> {
     console.log('Getting service stats for:', id);
     
-    // In a real implementation, this would query appointment/booking data
-    // For now, return mock stats that could be replaced with real queries later
     return {
       totalAppointments: 0,
       completedAppointments: 0,
@@ -220,7 +226,7 @@ export class ServiceService {
 
     if (error) {
       console.error('Error getting service categories:', error);
-      throw error;
+      return ['Geral'];
     }
 
     const categories = [...new Set((services || []).map(s => s.category).filter(Boolean))];
@@ -240,10 +246,12 @@ export class ServiceService {
       duracao: service.duracao || service.duration,
       price: service.price || service.preco,
       preco: service.preco || service.price,
-      category: service.category || 'Geral',
-      categoria: service.category || 'Geral',
+      category: service.category || service.categoria || 'Geral',
+      categoria: service.categoria || service.category || 'Geral',
       is_active: service.is_active ?? service.ativo ?? true,
       ativo: service.ativo ?? service.is_active ?? true,
+      image_url: service.image_url,
+      commission_percentage: service.commission_percentage || 0,
       created_at: service.created_at || service.criado_em,
       criado_em: service.criado_em || service.created_at,
       updated_at: service.updated_at || service.atualizado_em,
