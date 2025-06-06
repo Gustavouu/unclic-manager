@@ -1,8 +1,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 
-export type Role = 'admin' | 'manager' | 'staff';
+export type Role = 'admin' | 'manager' | 'staff' | 'owner';
 
 export interface Permission {
   id: string;
@@ -15,6 +16,7 @@ export function useUserPermissions() {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { businessId } = useCurrentBusiness();
 
   const fetchUserRole = useCallback(async () => {
     try {
@@ -27,60 +29,74 @@ export function useUserPermissions() {
       if (!user) {
         throw new Error('Usuário não autenticado');
       }
+
+      if (!businessId) {
+        throw new Error('Business ID não encontrado');
+      }
       
-      // Get business association to determine role
+      // Get user's role from business_users and roles tables
       const { data: businessUser, error: businessError } = await supabase
         .from('business_users')
-        .select('role')
+        .select(`
+          role,
+          roles!inner(
+            id,
+            name,
+            role_type,
+            role_permissions!inner(
+              permissions!inner(
+                id,
+                name,
+                description
+              )
+            )
+          )
+        `)
         .eq('user_id', user.id)
+        .eq('business_id', businessId)
+        .eq('status', 'active')
         .single();
       
       if (businessError && businessError.code !== 'PGRST116') {
         throw businessError;
       }
       
-      // Default to staff if no specific role found
-      const userRole = (businessUser?.role as Role) || 'staff';
-      setRole(userRole);
-      
-      // Set default permissions based on role
-      const defaultPermissions: Permission[] = [];
-      
-      if (userRole === 'admin') {
-        defaultPermissions.push(
-          { id: '1', name: 'manage_all', description: 'Gerenciar tudo' },
-          { id: '2', name: 'view_reports', description: 'Ver relatórios' },
-          { id: '3', name: 'manage_users', description: 'Gerenciar usuários' },
-          { id: '4', name: 'manage_appointments', description: 'Gerenciar agendamentos' },
-          { id: '5', name: 'manage_clients', description: 'Gerenciar clientes' }
-        );
-      } else if (userRole === 'manager') {
-        defaultPermissions.push(
-          { id: '2', name: 'view_reports', description: 'Ver relatórios' },
-          { id: '4', name: 'manage_appointments', description: 'Gerenciar agendamentos' },
-          { id: '5', name: 'manage_clients', description: 'Gerenciar clientes' }
-        );
+      // Set role and permissions based on the new system
+      if (businessUser?.roles) {
+        const userRole = businessUser.roles.role_type as Role;
+        setRole(userRole);
+        
+        // Extract permissions from the nested structure
+        const userPermissions: Permission[] = businessUser.roles.role_permissions
+          ?.map(rp => rp.permissions)
+          .filter(Boolean) || [];
+        
+        setPermissions(userPermissions);
       } else {
-        defaultPermissions.push(
-          { id: '4', name: 'manage_appointments', description: 'Gerenciar agendamentos' },
-          { id: '5', name: 'manage_clients', description: 'Gerenciar clientes' }
-        );
+        // Fallback: set default staff role with basic permissions
+        setRole('staff');
+        setPermissions([
+          { id: '4', name: 'appointments.view', description: 'Ver agendamentos' },
+          { id: '5', name: 'appointments.create', description: 'Criar agendamentos' },
+          { id: '6', name: 'clients.view', description: 'Ver clientes' },
+          { id: '7', name: 'clients.create', description: 'Criar clientes' }
+        ]);
       }
-      
-      setPermissions(defaultPermissions);
     } catch (error: any) {
       console.error('Erro ao buscar papel e permissões do usuário:', error);
       setError(error.message);
       // Set default staff role on error
       setRole('staff');
       setPermissions([
-        { id: '4', name: 'manage_appointments', description: 'Gerenciar agendamentos' },
-        { id: '5', name: 'manage_clients', description: 'Gerenciar clientes' }
+        { id: '4', name: 'appointments.view', description: 'Ver agendamentos' },
+        { id: '5', name: 'appointments.create', description: 'Criar agendamentos' },
+        { id: '6', name: 'clients.view', description: 'Ver clientes' },
+        { id: '7', name: 'clients.create', description: 'Criar clientes' }
       ]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [businessId]);
 
   // Check if user has a specific permission
   const hasPermission = useCallback((permissionName: string): boolean => {
@@ -89,12 +105,12 @@ export function useUserPermissions() {
 
   // Check if user is admin
   const isAdmin = useCallback((): boolean => {
-    return role === 'admin';
+    return role === 'admin' || role === 'owner';
   }, [role]);
 
   // Check if user is manager
   const isManager = useCallback((): boolean => {
-    return role === 'manager' || role === 'admin';
+    return role === 'manager' || role === 'admin' || role === 'owner';
   }, [role]);
 
   // Check if user can access a protected section

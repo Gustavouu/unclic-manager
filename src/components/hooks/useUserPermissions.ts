@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useTenant } from '@/contexts/TenantContext';
+import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import { toast } from 'sonner';
 
 type Permission = 'agendamentos' | 'clientes' | 'financeiro' | 'estoque' | 'relatorios' | 'configuracoes' | 'marketing';
@@ -17,7 +18,7 @@ export const useUserPermissions = () => {
   });
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const { businessId } = useTenant();
+  const { businessId } = useCurrentBusiness();
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -29,7 +30,7 @@ export const useUserPermissions = () => {
       try {
         setLoading(true);
 
-        // Check if user is admin
+        // Check if user is admin using the updated function
         const { data: isAdminData, error: isAdminError } = await supabase.rpc('user_is_admin_for_tenant', {
           tenant_id: businessId
         });

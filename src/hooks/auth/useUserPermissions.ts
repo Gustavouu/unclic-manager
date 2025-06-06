@@ -2,6 +2,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 interface UserPermissions {
   // Permissões básicas
@@ -48,29 +49,37 @@ const defaultPermissions: UserPermissions = {
 
 export const useUserPermissions = () => {
   const { user } = useAuth();
+  const { businessId } = useCurrentBusiness();
   const [permissions, setPermissions] = useState<UserPermissions>(defaultPermissions);
 
   useEffect(() => {
     const fetchPermissions = async () => {
-      if (!user) {
+      if (!user || !businessId) {
         setPermissions(defaultPermissions);
         return;
       }
 
       try {
-        // Try to get role from business_users table
+        // Get role from the modern business_users table
         const { data: businessUser, error: businessError } = await supabase
           .from('business_users')
-          .select('role')
+          .select(`
+            role,
+            roles!inner(
+              role_type
+            )
+          `)
           .eq('user_id', user.id)
+          .eq('business_id', businessId)
+          .eq('status', 'active')
           .single();
 
         let userRole = 'staff'; // default role
 
-        if (!businessError && businessUser) {
-          userRole = businessUser.role;
+        if (!businessError && businessUser?.roles) {
+          userRole = businessUser.roles.role_type;
         } else {
-          // Fallback to application_users table
+          // Fallback to legacy application_users table if needed
           const { data: appUser, error: appUserError } = await supabase
             .from('application_users')
             .select('role')
@@ -105,7 +114,7 @@ export const useUserPermissions = () => {
     };
 
     fetchPermissions();
-  }, [user]);
+  }, [user, businessId]);
 
   return permissions;
 };
