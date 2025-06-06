@@ -82,8 +82,6 @@ export default function DashboardReal() {
                 icon={DollarSign}
                 format="currency"
                 loading={isLoading}
-                highlight={true}
-                tooltip="Receita total dos agendamentos concluídos este mês"
               />
               
               <MetricCard
@@ -96,7 +94,6 @@ export default function DashboardReal() {
                 }}
                 icon={Calendar}
                 loading={isLoading}
-                tooltip="Total de agendamentos do mês atual"
               />
               
               <MetricCard
@@ -109,7 +106,6 @@ export default function DashboardReal() {
                 }}
                 icon={Users}
                 loading={isLoading}
-                tooltip="Clientes que fizeram agendamentos nos últimos 30 dias"
               />
               
               <MetricCard
@@ -122,7 +118,6 @@ export default function DashboardReal() {
                 }}
                 icon={Clock}
                 loading={isLoading}
-                tooltip="Agendamentos marcados para hoje"
               />
             </MetricGrid>
 

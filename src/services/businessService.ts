@@ -62,21 +62,21 @@ export const getBusinessData = async (userId: string, skipCache = false): Promis
     
     console.log(`Buscando dados do negócio para o usuário ${userId}`);
     
-    // Try application_users table first (standardized table)
+    // Try business_users table first (standardized table)
     const { data: userData, error: userError } = await supabase
-      .from('application_users')
+      .from('business_users')
       .select('business_id')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .maybeSingle();
       
     if (userError) {
-      console.warn('Erro ao buscar em application_users:', userError);
+      console.warn('Erro ao buscar em business_users:', userError);
     }
     
     let businessId = userData?.business_id;
     
     if (!businessId) {
-      console.log('Usuário não tem negócio associado em application_users');
+      console.log('Usuário não tem negócio associado em business_users');
       return null;
     }
     
@@ -132,11 +132,11 @@ export const checkOnboardingStatus = async (userId: string, skipCache = false): 
     
     console.log(`Verificando status de onboarding para usuário ${userId}`);
     
-    // Fetch user data
+    // Fetch user data from business_users
     const { data: userData, error: userError } = await supabase
-      .from('application_users')
+      .from('business_users')
       .select('business_id')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .maybeSingle();
       
     if (userError) {
@@ -219,11 +219,11 @@ export const verifyAndRepairBusinessStatus = async (userId: string): Promise<boo
   try {
     console.log(`Verificando e tentando reparar status do negócio para usuário ${userId}`);
     
-    // Get user's business
+    // Get user's business from business_users
     const { data: userData, error: userError } = await supabase
-      .from('application_users')
+      .from('business_users')
       .select('business_id')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .maybeSingle();
       
     if (userError || !userData?.business_id) {

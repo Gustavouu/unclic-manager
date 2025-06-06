@@ -33,26 +33,18 @@ export const PaymentService = {
       const paymentId = crypto.randomUUID();
       const now = new Date().toISOString();
       
-      // Create transaction in financial_transactions table
+      // Create transaction in payments table
       const { data, error } = await supabase
-        .from('financial_transactions')
+        .from('payments')
         .insert({
           id: paymentId,
-          type: 'INCOME',
           amount: request.amount,
-          paymentMethod: request.paymentMethod as any,
-          status: request.paymentMethod === 'CASH' ? 'PAID' : 'PENDING',
-          description: request.description,
-          notes: JSON.stringify({ 
-            serviceId: request.serviceId,
-            source: 'payment_service' 
-          }),
-          customerId: request.customerId,
-          appointmentId: request.appointmentId,
-          tenantId: request.businessId || "1",
-          accountId: "default-account",
-          createdAt: now,
-          updatedAt: now
+          payment_method: request.paymentMethod,
+          status: request.paymentMethod === 'cash' ? 'paid' : 'pending',
+          booking_id: request.appointmentId,
+          business_id: request.businessId || "1",
+          created_at: now,
+          updated_at: now
         })
         .select()
         .single();
@@ -64,11 +56,11 @@ export const PaymentService = {
       
       let paymentUrl = null;
       
-      if (request.paymentMethod === 'PIX') {
+      if (request.paymentMethod === 'pix') {
         const webhookUrl = new URL(window.location.origin);
         webhookUrl.pathname = "/api/webhook-handler";
         paymentUrl = `https://efi-bank.com/payment/${paymentId}?callback=${encodeURIComponent(webhookUrl.toString())}`;
-      } else if (request.paymentMethod === 'CREDIT_CARD') {
+      } else if (request.paymentMethod === 'credit_card') {
         const webhookUrl = new URL(window.location.origin);
         webhookUrl.pathname = "/api/webhook-handler";
         paymentUrl = `https://efi-bank.com/payment/${paymentId}?callback=${encodeURIComponent(webhookUrl.toString())}`;
@@ -86,7 +78,7 @@ export const PaymentService = {
               payment_id: paymentId,
               status: data.status,
               amount: data.amount,
-              payment_method: data.paymentMethod
+              payment_method: data.payment_method
             }
           })
         });
@@ -98,8 +90,8 @@ export const PaymentService = {
         id: paymentId,
         status: data.status as any,
         amount: data.amount,
-        paymentMethod: data.paymentMethod,
-        createdAt: data.createdAt,
+        paymentMethod: data.payment_method,
+        createdAt: data.created_at,
         paymentUrl: paymentUrl,
         transactionId: paymentId
       };
@@ -115,7 +107,7 @@ export const PaymentService = {
   async getPaymentStatus(paymentId: string): Promise<PaymentResponse> {
     try {
       const { data, error } = await supabase
-        .from('financial_transactions')
+        .from('payments')
         .select()
         .eq('id', paymentId)
         .single();
@@ -125,18 +117,18 @@ export const PaymentService = {
         throw new Error(`Erro ao consultar o status: ${error.message}`);
       }
       
-      if (data && data.status === 'PENDING') {
+      if (data && data.status === 'pending') {
         const shouldUpdateStatus = Math.random() > 0.7;
         
         if (shouldUpdateStatus) {
-          const newStatus = Math.random() > 0.5 ? 'PAID' : 'PENDING';
+          const newStatus = Math.random() > 0.5 ? 'paid' : 'pending';
           
           const { error: updateError } = await supabase
-            .from('financial_transactions')
+            .from('payments')
             .update({ 
               status: newStatus,
-              paymentDate: newStatus === 'PAID' ? new Date().toISOString() : null,
-              updatedAt: new Date().toISOString()
+              payment_date: newStatus === 'paid' ? new Date().toISOString() : null,
+              updated_at: new Date().toISOString()
             })
             .eq('id', paymentId);
           
@@ -171,8 +163,8 @@ export const PaymentService = {
         id: data.id,
         status: data.status as any,
         amount: data.amount,
-        paymentMethod: data.paymentMethod,
-        createdAt: data.createdAt,
+        paymentMethod: data.payment_method,
+        createdAt: data.created_at,
         transactionId: data.id
       };
     } catch (error) {

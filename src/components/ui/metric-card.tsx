@@ -1,181 +1,130 @@
 
 import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { Card, CardContent } from './card';
+import { ArrowUpIcon, ArrowDownIcon } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+export interface MetricCardChange {
+  value: number;
+  type: 'increase' | 'decrease' | 'neutral';
+  label?: string;
+}
 
 export interface MetricCardProps {
   title: string;
   value: string | number;
-  previousValue?: string | number;
-  change?: {
-    value: number;
-    type: 'increase' | 'decrease' | 'neutral';
-    label?: string;
-  };
+  change?: MetricCardChange;
   icon?: React.ComponentType<{ className?: string }>;
-  format?: 'currency' | 'percentage' | 'number';
+  format?: 'currency' | 'number' | 'percentage';
   loading?: boolean;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  highlight?: boolean;
+  tooltip?: string;
 }
 
-export const MetricCard: React.FC<MetricCardProps> = ({
+export function MetricCard({
   title,
   value,
-  previousValue,
   change,
   icon: Icon,
   format = 'number',
   loading = false,
   className,
-  size = 'md'
-}) => {
+  highlight = false,
+  tooltip,
+}: MetricCardProps) {
   const formatValue = (val: string | number) => {
-    const numVal = typeof val === 'string' ? parseFloat(val) : val;
+    if (typeof val === 'string') return val;
     
     switch (format) {
       case 'currency':
         return new Intl.NumberFormat('pt-BR', {
           style: 'currency',
-          currency: 'BRL'
-        }).format(numVal);
+          currency: 'BRL',
+        }).format(val);
       case 'percentage':
-        return `${numVal}%`;
+        return `${val}%`;
       default:
-        return numVal.toLocaleString('pt-BR');
+        return val.toLocaleString('pt-BR');
     }
   };
 
-  const sizeClasses = {
-    sm: {
-      card: 'p-4',
-      title: 'text-sm',
-      value: 'text-lg',
-      icon: 'h-4 w-4',
-      change: 'text-xs'
-    },
-    md: {
-      card: 'p-6',
-      title: 'text-sm',
-      value: 'text-2xl',
-      icon: 'h-5 w-5',
-      change: 'text-sm'
-    },
-    lg: {
-      card: 'p-8',
-      title: 'text-base',
-      value: 'text-3xl',
-      icon: 'h-6 w-6',
-      change: 'text-base'
-    }
-  };
-
-  const classes = sizeClasses[size];
-
-  const getTrendIcon = () => {
-    if (!change) return null;
-    
-    switch (change.type) {
-      case 'increase':
-        return <TrendingUp className="h-3 w-3" />;
-      case 'decrease':
-        return <TrendingDown className="h-3 w-3" />;
-      default:
-        return <Minus className="h-3 w-3" />;
-    }
-  };
-
-  const getTrendColor = () => {
-    if (!change) return 'text-muted-foreground';
-    
+  const getChangeColor = () => {
+    if (!change) return '';
     switch (change.type) {
       case 'increase':
         return 'text-green-600';
       case 'decrease':
         return 'text-red-600';
       default:
-        return 'text-muted-foreground';
+        return 'text-gray-600';
+    }
+  };
+
+  const getChangeIcon = () => {
+    if (!change) return null;
+    switch (change.type) {
+      case 'increase':
+        return <ArrowUpIcon className="h-4 w-4" />;
+      case 'decrease':
+        return <ArrowDownIcon className="h-4 w-4" />;
+      default:
+        return null;
     }
   };
 
   if (loading) {
     return (
-      <Card className={className}>
-        <CardContent className={classes.card}>
-          <div className="space-y-3">
-            <div className="h-4 bg-muted animate-pulse rounded w-24"></div>
-            <div className="h-8 bg-muted animate-pulse rounded w-16"></div>
-            <div className="h-3 bg-muted animate-pulse rounded w-20"></div>
-          </div>
+      <Card className={cn(className)}>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-4" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-8 w-24 mb-2" />
+          <Skeleton className="h-3 w-16" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className={cn('transition-all duration-200 hover:shadow-md', className)}>
-      <CardContent className={classes.card}>
-        <div className="flex items-center justify-between">
-          <div className="space-y-2 flex-1">
-            <p className={cn('font-medium text-muted-foreground', classes.title)}>
-              {title}
-            </p>
-            <p className={cn('font-bold text-foreground', classes.value)}>
-              {formatValue(value)}
-            </p>
-            
-            {change && (
-              <div className={cn(
-                'flex items-center gap-1 font-medium',
-                classes.change,
-                getTrendColor()
-              )}>
-                {getTrendIcon()}
-                <span>
-                  {change.value > 0 ? '+' : ''}{change.value}%
-                </span>
-                {change.label && (
-                  <span className="text-muted-foreground ml-1">
-                    {change.label}
-                  </span>
-                )}
-              </div>
-            )}
+    <Card 
+      className={cn(
+        className,
+        highlight && "border-primary/50 bg-primary/5"
+      )}
+      title={tooltip}
+    >
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
+        {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{formatValue(value)}</div>
+        {change && (
+          <div className={cn("flex items-center text-xs", getChangeColor())}>
+            {getChangeIcon()}
+            <span className="ml-1">
+              {change.value > 0 && change.type !== 'decrease' && '+'}
+              {change.value}
+              {format === 'percentage' ? 'pp' : '%'}
+              {change.label && ` ${change.label}`}
+            </span>
           </div>
-          
-          {Icon && (
-            <div className="flex-shrink-0">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Icon className={cn('text-primary', classes.icon)} />
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </CardContent>
     </Card>
   );
-};
+}
 
-export const MetricGrid: React.FC<{
-  children: React.ReactNode;
-  columns?: 1 | 2 | 3 | 4;
-  className?: string;
-}> = ({ children, columns = 4, className }) => {
-  const gridClasses = {
-    1: 'grid-cols-1',
-    2: 'grid-cols-1 md:grid-cols-2',
-    3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
-  };
-
+export function MetricGrid({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn(
-      'grid gap-4',
-      gridClasses[columns],
-      className
-    )}>
+    <div className={cn("grid gap-4 md:grid-cols-2 lg:grid-cols-4", className)}>
       {children}
     </div>
   );
-};
+}

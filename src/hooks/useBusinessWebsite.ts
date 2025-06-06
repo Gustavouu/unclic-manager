@@ -91,29 +91,46 @@ export const useBusinessWebsite = (businessId?: string) => {
           });
         }
 
-        // Fetch staff from employees table
-        const { data: employeesData, error: employeesError } = await supabase
-          .from('employees')
+        // Fetch staff from professionals table (not employees)
+        const { data: professionalsData, error: professionalsError } = await supabase
+          .from('professionals')
           .select('*')
           .eq('business_id', businessId);
           
         let staffInfo: SimpleStaff[] = [];
-        if (!employeesError && employeesData?.length) {
-          staffInfo = employeesData.map((staff: any) => ({
+        if (!professionalsError && professionalsData?.length) {
+          staffInfo = professionalsData.map((staff: any) => ({
             id: staff.id,
             name: staff.name,
             bio: staff.bio,
-            photo_url: staff.photo_url,
+            photo_url: staff.avatar || staff.avatar_url,
             business_id: staff.business_id,
-            specialties: staff.specialties || [],
-            role: staff.position || 'staff'
+            specialties: [],
+            role: 'professional'
           }));
         }
 
         setStaff(staffInfo);
 
-        // Mock services data for now
-        setServices([]);
+        // Fetch services
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('services')
+          .select('*')
+          .eq('business_id', businessId);
+
+        if (!servicesError && servicesData?.length) {
+          const servicesList = servicesData.map((service: any) => ({
+            id: service.id,
+            name: service.name,
+            description: service.description,
+            price: service.price,
+            duration: service.duration,
+            business_id: service.business_id
+          }));
+          setServices(servicesList);
+        } else {
+          setServices([]);
+        }
       } catch (err: any) {
         console.error("Error loading website data:", err);
         setError(err.message || 'Error loading data');
