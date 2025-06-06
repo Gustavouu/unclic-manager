@@ -31,21 +31,22 @@ export const useProfessionals = (options?: {
         setLoading(true);
         setError(null);
         
-        // Try funcionarios table (legacy schema) with correct columns
+        // Use the correct professionals table
         const { data, error } = await supabase
-          .from('funcionarios')
-          .select('id, nome, cargo, foto_url, comissao_percentual, status')
-          .eq('id_negocio', businessId);
+          .from('professionals')
+          .select('id, name, email, phone, bio, avatar, status, business_id, isActive')
+          .eq('business_id', businessId);
           
         if (!error && data) {
           const mappedData: Professional[] = data.map(item => ({
             id: item.id,
-            name: item.nome,
-            position: item.cargo,
-            photo_url: item.foto_url,
+            name: item.name,
+            email: item.email,
+            phone: item.phone,
+            bio: item.bio,
+            photo_url: item.avatar,
             specialties: [],
-            commission_percentage: item.comissao_percentual,
-            status: item.status === 'ativo' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
+            status: item.status === 'active' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
             business_id: businessId,
           })) || [];
           
@@ -54,7 +55,7 @@ export const useProfessionals = (options?: {
           return;
         }
         
-        // If both tables failed, return empty array
+        // If failed, return empty array
         setProfessionals([]);
         
       } catch (err: any) {

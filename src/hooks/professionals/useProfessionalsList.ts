@@ -23,12 +23,12 @@ export const useProfessionalsList = () => {
     try {
       console.log('Fetching professionals for business:', businessId);
       
-      // Try funcionarios table first, then fallback to professionals if it exists
+      // Use the correct professionals table from Supabase schema
       const { data: professionalsData, error: professionalsError } = await supabase
-        .from('funcionarios')
+        .from('professionals')
         .select('*')
-        .eq('id_negocio', businessId)
-        .order('criado_em', { ascending: false });
+        .eq('business_id', businessId)
+        .order('createdAt', { ascending: false });
 
       if (professionalsError) {
         console.log('Error from professionals table:', professionalsError);
@@ -36,7 +36,22 @@ export const useProfessionalsList = () => {
       }
 
       console.log('Fetched professionals:', professionalsData);
-      setProfessionals(professionalsData || []);
+      
+      // Map the data to match our Professional interface
+      const mappedProfessionals = (professionalsData || []).map(item => ({
+        id: item.id,
+        business_id: item.business_id,
+        name: item.name,
+        email: item.email,
+        phone: item.phone,
+        bio: item.bio,
+        photo_url: item.avatar,
+        status: item.status,
+        created_at: item.createdAt,
+        updated_at: item.updatedAt,
+      }));
+      
+      setProfessionals(mappedProfessionals);
     } catch (err) {
       console.error('Error fetching professionals:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch professionals');
@@ -57,17 +72,31 @@ export const useProfessionalsList = () => {
 
     try {
       const { data, error } = await supabase
-        .from('funcionarios')
+        .from('professionals')
         .select('*')
-        .eq('id_negocio', businessId)
-        .or(`nome.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,cargo.ilike.%${searchTerm}%`)
-        .order('criado_em', { ascending: false });
+        .eq('business_id', businessId)
+        .or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
+        .order('createdAt', { ascending: false });
 
       if (error) {
         throw error;
       }
 
-      return data || [];
+      // Map the data to match our Professional interface
+      const mappedProfessionals = (data || []).map(item => ({
+        id: item.id,
+        business_id: item.business_id,
+        name: item.name,
+        email: item.email,
+        phone: item.phone,
+        bio: item.bio,
+        photo_url: item.avatar,
+        status: item.status,
+        created_at: item.createdAt,
+        updated_at: item.updatedAt,
+      }));
+
+      return mappedProfessionals;
     } catch (error) {
       console.error('Error searching professionals:', error);
       return [];

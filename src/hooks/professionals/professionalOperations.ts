@@ -31,19 +31,28 @@ export const useProfessionalOperations = () => {
 
     setIsLoading(true);
     try {
+      // Generate required IDs
+      const professionalId = crypto.randomUUID();
+      const tenantId = businessId;
+      const establishmentId = crypto.randomUUID(); // In a real app, this should come from existing establishments
+
       const { data, error } = await supabase
         .from('professionals')
-        .insert([
-          {
-            business_id: businessId,
-            name: professionalData.name,
-            email: professionalData.email,
-            phone: professionalData.phone,
-            bio: professionalData.bio,
-            avatar: professionalData.photoUrl,
-            status: professionalData.status || 'active',
-          }
-        ])
+        .insert({
+          id: professionalId,
+          tenantId: tenantId,
+          establishmentId: establishmentId,
+          business_id: businessId,
+          name: professionalData.name,
+          email: professionalData.email,
+          phone: professionalData.phone,
+          bio: professionalData.bio,
+          avatar: professionalData.photoUrl,
+          status: professionalData.status || 'active',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
         .select()
         .single();
 
@@ -77,6 +86,7 @@ export const useProfessionalOperations = () => {
           bio: updates.bio,
           avatar: updates.photoUrl,
           status: updates.status,
+          updatedAt: new Date().toISOString(),
         })
         .eq('id', id)
         .eq('business_id', businessId)

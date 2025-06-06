@@ -40,7 +40,7 @@ export const ProfessionalFilter = ({
         }
       } catch (error) {
         console.error("Erro ao buscar profissionais:", error);
-        // Carregar dados de exemplo caso ocorra erro
+        // Load example data in case of error
         setProfessionals([
           { id: "1", name: "João Silva" },
           { id: "2", name: "Ana Oliveira" },
