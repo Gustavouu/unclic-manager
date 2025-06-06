@@ -1,4 +1,6 @@
 
+import { supabase } from '@/integrations/supabase/client';
+
 /**
  * General error handler utility for the application with Portuguese translations
  */
