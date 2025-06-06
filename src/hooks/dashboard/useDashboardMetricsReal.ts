@@ -93,7 +93,7 @@ export const useDashboardMetricsReal = (): UseDashboardMetricsRealReturn => {
         servicesResponse,
         lastMonthAppointmentsResponse
       ] = await Promise.all([
-        // Current month appointments
+        // Current month appointments with services
         supabase
           .from('bookings')
           .select(`
@@ -142,20 +142,20 @@ export const useDashboardMetricsReal = (): UseDashboardMetricsRealReturn => {
       const todayAppointments = appointments.filter(apt => apt.booking_date === today).length;
       
       const pendingAppointments = appointments.filter(apt => 
-        apt.status === 'scheduled' || apt.status === 'agendado'
+        apt.status === 'scheduled' || apt.status === 'confirmed'
       ).length;
       
       const completedAppointments = appointments.filter(apt => 
-        apt.status === 'completed' || apt.status === 'concluido'
+        apt.status === 'completed'
       ).length;
 
       const canceledAppointments = appointments.filter(apt => 
-        apt.status === 'canceled' || apt.status === 'cancelado'
+        apt.status === 'canceled'
       ).length;
 
       // Calculate revenue from completed appointments
       const monthlyRevenue = appointments
-        .filter(apt => apt.status === 'completed' || apt.status === 'concluido')
+        .filter(apt => apt.status === 'completed')
         .reduce((sum, apt) => sum + (apt.price || 0), 0);
 
       // Active clients (those with appointments in last 30 days)
@@ -203,7 +203,7 @@ export const useDashboardMetricsReal = (): UseDashboardMetricsRealReturn => {
           .lte('booking_date', monthEnd);
 
         const monthRevenue = (monthAppointments || [])
-          .filter(apt => apt.status === 'completed' || apt.status === 'concluido')
+          .filter(apt => apt.status === 'completed')
           .reduce((sum, apt) => sum + (apt.price || 0), 0);
 
         const monthAppointmentCount = (monthAppointments || []).length;
@@ -230,7 +230,7 @@ export const useDashboardMetricsReal = (): UseDashboardMetricsRealReturn => {
             };
           }
           serviceCount[serviceId].count++;
-          if (appointment.status === 'completed' || appointment.status === 'concluido') {
+          if (appointment.status === 'completed') {
             serviceCount[serviceId].revenue += appointment.price || 0;
           }
         }

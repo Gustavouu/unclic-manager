@@ -24,7 +24,6 @@ export function useAppointmentsFetch() {
     try {
       console.log('Fetching appointments for business ID:', businessId);
       
-      // Use the bookings table with proper joins
       const { data, error } = await supabase
         .from('bookings')
         .select(`
@@ -36,44 +35,44 @@ export function useAppointmentsFetch() {
         .eq('business_id', businessId)
         .order('booking_date', { ascending: false })
         .order('start_time', { ascending: false });
-          
+      
       if (error) {
-        console.error('Error fetching from bookings:', error);
+        console.error("Error fetching appointments:", error);
         throw error;
       }
       
-      if (!data || data.length === 0) {
-        console.log('No appointment data found');
-        setAppointments([]);
-        setIsLoading(false);
-        return;
-      }
-      
-      // Map database response to our Appointment interface
-      const mappedAppointments: Appointment[] = data.map((booking: any) => ({
-        id: booking.id,
-        clientId: booking.client_id,
-        clientName: booking.clients?.name || 'Cliente',
-        serviceId: booking.service_id,
-        serviceName: booking.services?.name || 'Serviço',
-        serviceType: 'service',
-        professionalId: booking.employee_id,
-        professionalName: booking.professionals?.name || 'Profissional',
-        date: new Date(`${booking.booking_date}T${booking.start_time}`),
-        duration: booking.duration,
-        price: booking.price,
-        status: mapStatusFromDb(booking.status),
-        notes: booking.notes || '',
-        paymentMethod: booking.payment_method,
-        businessId: booking.business_id,
+      const formattedAppointments: Appointment[] = (data || []).map((apt: any) => ({
+        id: apt.id,
+        clientId: apt.client_id,
+        clientName: apt.clients?.name || 'Cliente não informado',
+        serviceId: apt.service_id,
+        serviceName: apt.services?.name || 'Serviço não informado',
+        professionalId: apt.employee_id,
+        professionalName: apt.professionals?.name || 'Profissional não informado',
+        date: new Date(apt.booking_date),
+        time: apt.start_time,
+        endTime: apt.end_time,
+        duration: apt.duration || 60,
+        status: apt.status as AppointmentStatus,
+        serviceType: 'general',
+        price: Number(apt.price) || 0,
+        paymentMethod: apt.payment_method || '',
+        notes: apt.notes || '',
+        rating: apt.rating,
+        feedbackComment: apt.feedback_comment,
+        reminderSent: apt.reminder_sent || false,
+        createdAt: apt.created_at,
+        updatedAt: apt.updated_at,
       }));
       
-      setAppointments(mappedAppointments);
-      console.log('Successfully mapped', mappedAppointments.length, 'appointments');
-    } catch (err: any) {
-      console.error("Error fetching appointments:", err);
-      setError(err.message);
-      toast.error("Erro ao carregar agendamentos");
+      setAppointments(formattedAppointments);
+      console.log(`Successfully loaded ${formattedAppointments.length} appointments`);
+    } catch (err) {
+      console.error("Error in fetchAppointments:", err);
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar agendamentos';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      setAppointments([]);
     } finally {
       setIsLoading(false);
     }
@@ -84,23 +83,6 @@ export function useAppointmentsFetch() {
     setAppointments,
     isLoading,
     error,
-    fetchAppointments,
+    fetchAppointments
   };
-}
-
-function mapStatusFromDb(status: string): AppointmentStatus {
-  const statusMap: Record<string, AppointmentStatus> = {
-    'scheduled': 'agendado',
-    'confirmed': 'confirmado',
-    'completed': 'concluido',
-    'canceled': 'cancelado',
-    'no_show': 'faltou',
-    // Handle Portuguese statuses directly
-    'agendado': 'agendado',
-    'confirmado': 'confirmado',
-    'concluido': 'concluido',
-    'cancelado': 'cancelado',
-    'faltou': 'faltou',
-  };
-  return statusMap[status] || 'agendado';
 }

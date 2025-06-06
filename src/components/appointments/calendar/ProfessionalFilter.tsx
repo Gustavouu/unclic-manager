@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 interface Professional {
   id: string;
@@ -20,39 +21,34 @@ export const ProfessionalFilter = ({
 }: ProfessionalFilterProps) => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { businessId } = useCurrentBusiness();
   
   useEffect(() => {
     const fetchProfessionals = async () => {
+      if (!businessId) return;
+      
       setIsLoading(true);
       try {
         const { data, error } = await supabase
           .from('professionals')
           .select('id, name')
+          .eq('business_id', businessId)
           .eq('isActive', true)
           .order('name');
           
         if (error) throw error;
         
-        if (data) {
-          setProfessionals(data);
-        } else {
-          setProfessionals([]);
-        }
+        setProfessionals(data || []);
       } catch (error) {
         console.error("Erro ao buscar profissionais:", error);
-        // Load example data in case of error
-        setProfessionals([
-          { id: "1", name: "João Silva" },
-          { id: "2", name: "Ana Oliveira" },
-          { id: "3", name: "Carlos Mendes" }
-        ]);
+        setProfessionals([]);
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchProfessionals();
-  }, []);
+  }, [businessId]);
   
   const handleChange = (value: string) => {
     if (value === "all") {

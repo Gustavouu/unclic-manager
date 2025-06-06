@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import type { 
   Appointment, 
   AppointmentCreate, 
@@ -25,7 +25,7 @@ export class StandardizedAppointmentService {
    */
   async create(data: AppointmentCreate): Promise<Appointment> {
     const { data: appointment, error } = await supabase
-      .from('appointments_standardized')
+      .from('bookings')
       .insert({
         business_id: data.business_id,
         client_id: data.client_id,
@@ -42,9 +42,9 @@ export class StandardizedAppointmentService {
       })
       .select(`
         *,
-        clients:client_id(name, email, phone),
-        employees:employee_id(name, email),
-        services:service_id(name, price, duration)
+        clients!inner(name, email, phone),
+        professionals!inner(name, email, phone),
+        services!inner(name, description, price, duration)
       `)
       .single();
 
@@ -68,14 +68,14 @@ export class StandardizedAppointmentService {
     if (data.price) updateData.price = data.price;
 
     const { data: appointment, error } = await supabase
-      .from('appointments_standardized')
+      .from('bookings')
       .update(updateData)
       .eq('id', id)
       .select(`
         *,
-        clients:client_id(name, email, phone),
-        employees:employee_id(name, email),
-        services:service_id(name, price, duration)
+        clients!inner(name, email, phone),
+        professionals!inner(name, email, phone),
+        services!inner(name, description, price, duration)
       `)
       .single();
 
@@ -88,12 +88,12 @@ export class StandardizedAppointmentService {
    */
   async getById(id: string): Promise<Appointment> {
     const { data: appointment, error } = await supabase
-      .from('appointments_standardized')
+      .from('bookings')
       .select(`
         *,
-        clients:client_id(name, email, phone),
-        employees:employee_id(name, email),
-        services:service_id(name, price, duration)
+        clients!inner(name, email, phone),
+        professionals!inner(name, email, phone),
+        services!inner(name, description, price, duration)
       `)
       .eq('id', id)
       .single();
@@ -107,12 +107,12 @@ export class StandardizedAppointmentService {
    */
   async search(params: AppointmentSearchParams): Promise<Appointment[]> {
     let query = supabase
-      .from('appointments_standardized')
+      .from('bookings')
       .select(`
         *,
-        clients:client_id(name, email, phone),
-        employees:employee_id(name, email),
-        services:service_id(name, price, duration)
+        clients!inner(name, email, phone),
+        professionals!inner(name, email, phone),
+        services!inner(name, description, price, duration)
       `)
       .eq('business_id', params.business_id);
 
@@ -151,12 +151,12 @@ export class StandardizedAppointmentService {
    */
   async getByDateRange(businessId: string, startDate: string, endDate: string): Promise<Appointment[]> {
     const { data: appointments, error } = await supabase
-      .from('appointments_standardized')
+      .from('bookings')
       .select(`
         *,
-        clients:client_id(name, email, phone),
-        employees:employee_id(name, email),
-        services:service_id(name, price, duration)
+        clients!inner(name, email, phone),
+        professionals!inner(name, email, phone),
+        services!inner(name, description, price, duration)
       `)
       .eq('business_id', businessId)
       .gte('booking_date', startDate)
@@ -173,7 +173,7 @@ export class StandardizedAppointmentService {
    */
   async getStats(businessId: string, dateFrom?: string, dateTo?: string): Promise<AppointmentStats> {
     let query = supabase
-      .from('appointments_standardized')
+      .from('bookings')
       .select('status, price')
       .eq('business_id', businessId);
 
@@ -225,7 +225,7 @@ export class StandardizedAppointmentService {
    */
   async delete(id: string): Promise<void> {
     const { error } = await supabase
-      .from('appointments_standardized')
+      .from('bookings')
       .delete()
       .eq('id', id);
 
@@ -254,7 +254,7 @@ export class StandardizedAppointmentService {
       feedback_comment: dbAppointment.feedback_comment,
       reminder_sent: dbAppointment.reminder_sent,
       client_name: dbAppointment.clients?.name,
-      professional_name: dbAppointment.employees?.name,
+      professional_name: dbAppointment.professionals?.name,
       service_name: dbAppointment.services?.name,
       created_at: dbAppointment.created_at,
       updated_at: dbAppointment.updated_at,
