@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Clock, Calendar as CalendarIcon, User, Scissors } from "lucide-react";
@@ -6,13 +7,16 @@ import { SearchBar } from "./list/SearchBar";
 import { FiltersButton } from "./list/FiltersButton";
 import { FiltersPanel } from "./list/FiltersPanel";
 import { useAppointmentsFilter } from "./list/hooks/useAppointmentsFilter";
-import { appointments } from "./data/appointmentsSampleData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Appointment } from "@/hooks/appointments/types";
+import { useAppointments } from "@/hooks/appointments/useAppointments";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const AppointmentsList = () => {
+  const { appointments, isLoading, fetchAppointments } = useAppointments();
+  
   const { 
     searchTerm,
     setSearchTerm,
@@ -28,7 +32,12 @@ export const AppointmentsList = () => {
     setShowFilters,
     filteredAppointments,
     handleResetFilters
-  } = useAppointmentsFilter(appointments as Appointment[]);
+  } = useAppointmentsFilter(appointments);
+
+  // Fetch appointments on component mount
+  useEffect(() => {
+    fetchAppointments();
+  }, [fetchAppointments]);
 
   // Sort appointments chronologically
   const sortedAppointments = [...filteredAppointments].sort((a, b) => {
@@ -44,6 +53,32 @@ export const AppointmentsList = () => {
     groups[dateStr].push(appointment);
     return groups;
   }, {} as Record<string, Appointment[]>);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col space-y-3">
+          <div className="flex flex-col sm:flex-row items-center gap-2">
+            <Skeleton className="h-10 w-full sm:flex-1" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="overflow-hidden border border-blue-100">
+              <CardHeader className="bg-blue-50 py-3 px-4 border-b border-blue-100">
+                <Skeleton className="h-6 w-64" />
+              </CardHeader>
+              <CardContent className="p-4">
+                <Skeleton className="h-16 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

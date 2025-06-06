@@ -3,9 +3,8 @@ import { useState, useEffect } from 'react';
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '@/integrations/supabase/client';
-import { useTenant } from '@/contexts/TenantContext';
+import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
 import { format, parseISO, isEqual } from 'date-fns';
-import { tableExists, safeDataExtract, safeJsonArray } from '@/utils/databaseUtils';
 import { DayClickEventHandler } from 'react-day-picker';
 
 export interface AppointmentType {
@@ -17,15 +16,9 @@ export interface AppointmentType {
   serviceName?: string;
 }
 
-export interface ServiceType {
-  id: string;
-  name: string;
-}
-
 interface DayComponentProps {
   date: Date;
   displayMonth: Date;
-  // Other props from react-day-picker
   [key: string]: any;
 }
 
@@ -33,7 +26,7 @@ export function Calendar() {
   const [date, setDate] = useState<Date>(new Date());
   const [appointments, setAppointments] = useState<AppointmentType[]>([]);
   const [selectedDayAppointments, setSelectedDayAppointments] = useState<AppointmentType[]>([]);
-  const { businessId } = useTenant();
+  const { businessId } = useCurrentBusiness();
 
   // Fetch appointments
   useEffect(() => {
@@ -41,116 +34,38 @@ export function Calendar() {
       if (!businessId) return;
 
       try {
-        let fetchedAppointments: AppointmentType[] = [];
-        let hasData = false;
+        console.log('Fetching calendar appointments for business:', businessId);
         
-        // First try the modern bookings table
-        try {
-          const bookingsExists = await tableExists('bookings');
-          
-          if (bookingsExists) {
-            const response = await supabase
-              .from('bookings')
-              .select(`
-                id, 
-                status, 
-                booking_date,
-                start_time,
-                clients:client_id (name)
-              `)
-              .eq('business_id', businessId)
-              .order('booking_date', { ascending: true });
+        const { data, error } = await supabase
+          .from('bookings')
+          .select(`
+            id, 
+            status, 
+            booking_date,
+            start_time,
+            clients:client_id (name),
+            services:service_id (name)
+          `)
+          .eq('business_id', businessId)
+          .order('booking_date', { ascending: true });
 
-            const modernData = safeDataExtract(response);
-
-            if (modernData && modernData.length > 0) {
-              // Map modern data
-              fetchedAppointments = modernData.map((app: any) => ({
-                id: app.id,
-                date: app.booking_date,
-                startTime: app.start_time,
-                status: app.status,
-                clientName: app.clients?.name ?? "Cliente"
-              }));
-              setAppointments(fetchedAppointments);
-              hasData = true;
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching from bookings table:', error);
+        if (error) {
+          console.error('Error fetching appointments:', error);
+          setAppointments([]);
+          return;
         }
 
-        // Try legacy table if no data yet
-        if (!hasData) {
-          try {
-            // Check if the table exists
-            const appointmentsExists = await tableExists('Appointments');
-              
-            if (appointmentsExists) {
-              // Try legacy Appointments table (uppercase A)
-              const response = await supabase
-                .from('Appointments')
-                .select(`
-                  id, 
-                  data, 
-                  hora_inicio, 
-                  status,
-                  clientes:id_cliente (nome)
-                `)
-                .eq('id_negocio', businessId);
-
-              const legacyData = safeDataExtract(response);
-
-              if (legacyData && legacyData.length > 0) {
-                // Map legacy data
-                fetchedAppointments = legacyData.map((app: any) => ({
-                  id: app.id,
-                  date: app.data,
-                  startTime: app.hora_inicio,
-                  status: app.status,
-                  clientName: app.clientes?.nome ?? "Cliente"
-                }));
-                setAppointments(fetchedAppointments);
-                hasData = true;
-              }
-            }
-          } catch (error) {
-            console.error('Error checking Appointments table:', error);
-          }
-        }
-        
-        // Try using the fetch_agendamentos function we created
-        if (!hasData) {
-          try {
-            const { data, error } = await supabase.rpc('fetch_agendamentos', {
-              business_id_param: businessId
-            });
-
-            if (error) {
-              console.error('Error calling fetch_agendamentos:', error);
-            } else {
-              const agendamentosData = safeJsonArray(data, []);
-              
-              if (agendamentosData.length > 0) {
-                // Map agendamentos data
-                fetchedAppointments = agendamentosData.map((app: any) => ({
-                  id: app.id,
-                  date: app.data,
-                  startTime: app.hora_inicio,
-                  status: app.status,
-                  clientName: app.cliente_nome ?? "Cliente"
-                }));
-                setAppointments(fetchedAppointments);
-                hasData = true;
-              }
-            }
-          } catch (error) {
-            console.error('Error calling fetch_agendamentos function:', error);
-          }
-        }
-        
-        // If no data found, set empty array
-        if (!hasData) {
+        if (data && data.length > 0) {
+          const mappedAppointments: AppointmentType[] = data.map((app: any) => ({
+            id: app.id,
+            date: app.booking_date,
+            startTime: app.start_time,
+            status: app.status,
+            clientName: app.clients?.name ?? "Cliente",
+            serviceName: app.services?.name ?? "Serviço"
+          }));
+          setAppointments(mappedAppointments);
+        } else {
           setAppointments([]);
         }
       } catch (error) {

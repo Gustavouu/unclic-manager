@@ -179,6 +179,91 @@ export type Database = {
         }
         Relationships: []
       }
+      bookings: {
+        Row: {
+          booking_date: string
+          business_id: string
+          client_id: string
+          created_at: string | null
+          duration: number
+          employee_id: string
+          end_time: string
+          feedback_comment: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          price: number
+          rating: number | null
+          reminder_sent: boolean | null
+          service_id: string
+          start_time: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          booking_date: string
+          business_id: string
+          client_id: string
+          created_at?: string | null
+          duration?: number
+          employee_id: string
+          end_time: string
+          feedback_comment?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          price?: number
+          rating?: number | null
+          reminder_sent?: boolean | null
+          service_id: string
+          start_time: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          booking_date?: string
+          business_id?: string
+          client_id?: string
+          created_at?: string | null
+          duration?: number
+          employee_id?: string
+          end_time?: string
+          feedback_comment?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          price?: number
+          rating?: number | null
+          reminder_sent?: boolean | null
+          service_id?: string
+          start_time?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_bookings_business"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bookings_client"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bookings_service"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_analysis: {
         Row: {
           agendamentos_concluidos: number | null
@@ -2711,6 +2796,28 @@ export type Database = {
       fetch_agendamentos: {
         Args: { business_id_param: string }
         Returns: Json[]
+      }
+      get_appointments_with_details: {
+        Args: { p_business_id: string }
+        Returns: {
+          id: string
+          business_id: string
+          client_id: string
+          client_name: string
+          employee_id: string
+          employee_name: string
+          service_id: string
+          service_name: string
+          booking_date: string
+          start_time: string
+          end_time: string
+          duration: number
+          price: number
+          status: string
+          notes: string
+          payment_method: string
+          created_at: string
+        }[]
       }
       get_business_metrics: {
         Args: { p_business_id: string }

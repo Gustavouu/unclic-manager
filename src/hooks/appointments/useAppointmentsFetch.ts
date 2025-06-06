@@ -3,13 +3,13 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Appointment, AppointmentStatus } from "./types";
-import { useTenant } from "@/contexts/TenantContext";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 export function useAppointmentsFetch() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { businessId } = useTenant();
+  const { businessId } = useCurrentBusiness();
 
   const fetchAppointments = useCallback(async () => {
     if (!businessId) {
@@ -30,7 +30,8 @@ export function useAppointmentsFetch() {
         .select(`
           *,
           clients!inner(name, email, phone),
-          employees!inner(name, email, phone)
+          services!inner(name, description, price, duration),
+          professionals!inner(name, email, phone)
         `)
         .eq('business_id', businessId)
         .order('booking_date', { ascending: false })
@@ -54,10 +55,10 @@ export function useAppointmentsFetch() {
         clientId: booking.client_id,
         clientName: booking.clients?.name || 'Cliente',
         serviceId: booking.service_id,
-        serviceName: 'Serviço', // Default since we don't have services table yet
+        serviceName: booking.services?.name || 'Serviço',
         serviceType: 'service',
         professionalId: booking.employee_id,
-        professionalName: booking.employees?.name || 'Profissional',
+        professionalName: booking.professionals?.name || 'Profissional',
         date: new Date(`${booking.booking_date}T${booking.start_time}`),
         duration: booking.duration,
         price: booking.price,

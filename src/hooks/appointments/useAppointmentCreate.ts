@@ -3,20 +3,26 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateAppointmentData, Appointment } from "./types";
 import { toast } from "sonner";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 export const useAppointmentCreate = (
   setAppointments?: React.Dispatch<React.SetStateAction<Appointment[]>>
 ) => {
   const queryClient = useQueryClient();
+  const { businessId } = useCurrentBusiness();
 
   const createAppointment = useMutation({
     mutationFn: async (appointmentData: CreateAppointmentData): Promise<Appointment> => {
       console.log("Creating appointment with data:", appointmentData);
       
+      if (!businessId) {
+        throw new Error("Business ID is required");
+      }
+      
       // Convert the appointment data to match database schema
       const dbData = {
         id: crypto.randomUUID(),
-        business_id: appointmentData.businessId || crypto.randomUUID(),
+        business_id: businessId,
         client_id: appointmentData.clientId,
         service_id: appointmentData.serviceId,
         employee_id: appointmentData.professionalId,
@@ -36,7 +42,12 @@ export const useAppointmentCreate = (
       const { data, error } = await supabase
         .from('bookings')
         .insert(dbData)
-        .select()
+        .select(`
+          *,
+          clients!inner(name),
+          services!inner(name),
+          professionals!inner(name)
+        `)
         .single();
 
       if (error) {
@@ -52,12 +63,12 @@ export const useAppointmentCreate = (
       const appointment: Appointment = {
         id: data.id,
         clientId: data.client_id,
-        clientName: appointmentData.clientName || 'Cliente',
+        clientName: data.clients?.name || appointmentData.clientName || 'Cliente',
         serviceId: data.service_id,
-        serviceName: appointmentData.serviceName || 'Serviço',
+        serviceName: data.services?.name || appointmentData.serviceName || 'Serviço',
         serviceType: appointmentData.serviceType || 'service',
         professionalId: data.employee_id,
-        professionalName: appointmentData.professionalName || 'Profissional',
+        professionalName: data.professionals?.name || appointmentData.professionalName || 'Profissional',
         date: new Date(`${data.booking_date}T${data.start_time}`),
         duration: data.duration,
         price: data.price,
