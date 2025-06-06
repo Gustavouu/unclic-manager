@@ -18,15 +18,19 @@ export class ProfessionalService {
     const { data: professional, error } = await supabase
       .from('professionals')
       .insert({
-        business_id: data.business_id,
+        id: crypto.randomUUID(),
         tenantId: data.business_id,
-        establishmentId: data.business_id, // Using business_id as fallback
+        establishmentId: data.business_id,
+        business_id: data.business_id,
         name: data.name,
         email: data.email || null,
         phone: data.phone || null,
         bio: data.bio || null,
         avatar: data.photo_url || null,
         status: data.status || 'active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isActive: true,
       })
       .select()
       .single();
