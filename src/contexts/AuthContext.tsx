@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -223,8 +222,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error(`${provider} OAuth error details:`, {
           message: error.message,
           status: error.status,
-          name: error.name,
-          cause: error.cause
+          name: error.name
         });
         
         setLoading(false);
