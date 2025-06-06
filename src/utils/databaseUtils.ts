@@ -1,29 +1,28 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export const normalizeClientData = (client: any) => {
   return {
     id: client.id,
-    name: client.name || client.nome || '',
+    name: client.name || '',
     email: client.email || '',
-    phone: client.phone || client.telefone || '',
-    birth_date: client.birth_date || client.data_nascimento || '',
-    last_visit: client.last_visit || client.ultima_visita,
-    total_spent: client.total_spent || client.valor_total_gasto || 0,
-    total_appointments: client.total_appointments || client.total_agendamentos || 0,
-    city: client.city || client.cidade || '',
-    state: client.state || client.estado || '',
-    zip_code: client.zip_code || client.cep || '',
+    phone: client.phone || '',
+    birth_date: client.birth_date || '',
+    last_visit: client.last_visit,
+    total_spent: client.total_spent || 0,
+    total_appointments: client.total_appointments || 0,
+    city: client.city || '',
+    state: client.state || '',
+    zip_code: client.zip_code || '',
     avatar: client.avatar || client.image_url || client.url_avatar,
     status: client.status || 'active',
-    address: client.address || client.endereco || '',
-    gender: client.gender || client.genero || '',
-    notes: client.notes || client.notas || '',
-    created_at: client.created_at || client.criado_em,
-    updated_at: client.updated_at || client.atualizado_em || client.created_at || client.criado_em,
-    business_id: client.business_id || client.id_negocio,
-    user_id: client.user_id || client.id_usuario,
-    preferences: client.preferences || client.preferencias || {}
+    address: client.address || '',
+    gender: client.gender || '',
+    notes: client.notes || '',
+    created_at: client.created_at,
+    updated_at: client.updated_at,
+    business_id: client.business_id,
+    user_id: client.user_id,
+    preferences: client.preferences || {}
   };
 };
 

@@ -162,83 +162,83 @@ export type Database = {
       }
       Appointments: {
         Row: {
+          amount: number
+          appointment_date: string
           atualizado_em: string | null
           avaliacao: number | null
+          client_id: string
           comentario_avaliacao: string | null
           criado_em: string | null
-          data: string
           duracao: number
-          forma_pagamento: string | null
           hora_fim: string
           hora_inicio: string
           id: string
-          id_cliente: string
-          id_funcionario: string
           id_negocio: string
-          id_servico: string
           lembrete_enviado: boolean | null
           observacoes: string | null
+          payment_method: string | null
+          service_id: string
+          staff_id: string
           status: string | null
-          valor: number
         }
         Insert: {
+          amount: number
+          appointment_date: string
           atualizado_em?: string | null
           avaliacao?: number | null
+          client_id: string
           comentario_avaliacao?: string | null
           criado_em?: string | null
-          data: string
           duracao: number
-          forma_pagamento?: string | null
           hora_fim: string
           hora_inicio: string
           id?: string
-          id_cliente: string
-          id_funcionario: string
           id_negocio: string
-          id_servico: string
           lembrete_enviado?: boolean | null
           observacoes?: string | null
+          payment_method?: string | null
+          service_id: string
+          staff_id: string
           status?: string | null
-          valor: number
         }
         Update: {
+          amount?: number
+          appointment_date?: string
           atualizado_em?: string | null
           avaliacao?: number | null
+          client_id?: string
           comentario_avaliacao?: string | null
           criado_em?: string | null
-          data?: string
           duracao?: number
-          forma_pagamento?: string | null
           hora_fim?: string
           hora_inicio?: string
           id?: string
-          id_cliente?: string
-          id_funcionario?: string
           id_negocio?: string
-          id_servico?: string
           lembrete_enviado?: boolean | null
           observacoes?: string | null
+          payment_method?: string | null
+          service_id?: string
+          staff_id?: string
           status?: string | null
-          valor?: number
         }
         Relationships: [
           {
             foreignKeyName: "agendamentos_id_cliente_fkey"
-            columns: ["id_cliente"]
+            columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "agendamentos_id_funcionario_fkey"
-            columns: ["id_funcionario"]
+            columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "funcionarios"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "agendamentos_id_servico_fkey"
-            columns: ["id_servico"]
+            columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
             referencedColumns: ["id"]

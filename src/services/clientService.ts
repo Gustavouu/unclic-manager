@@ -1,13 +1,13 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { normalizeClientData, normalizeClientInput, validateEmail, validatePhone, validateZipCode, formatValidationError } from '@/utils/databaseUtils';
+import { validateEmail, validatePhone, validateZipCode, formatValidationError } from '@/utils/databaseUtils';
 import type { Client } from '@/types/client';
 
 export const fetchClients = async (businessId: string): Promise<Client[]> => {
   try {
     console.log('Fetching clients for business:', businessId);
     
-    // Use unified table with data integrity validations
+    // Use unified table
     const { data: clients, error } = await supabase
       .from('clients_unified')
       .select('*')
@@ -20,7 +20,7 @@ export const fetchClients = async (businessId: string): Promise<Client[]> => {
     }
 
     console.log('Successfully fetched clients:', clients?.length || 0);
-    return (clients || []).map(normalizeClientData);
+    return clients || [];
   } catch (error) {
     console.error('Error fetching clients:', error);
     throw error;
@@ -32,7 +32,15 @@ export const createClient = async (clientData: Partial<Client>): Promise<Client>
     console.log('Creating client with data:', clientData);
 
     // Normalize input data before validation
-    const normalizedData = normalizeClientInput(clientData);
+    const normalizedData = {
+      ...clientData,
+      name: clientData.name?.trim() || '',
+      email: clientData.email?.toLowerCase().trim() || '',
+      city: clientData.city?.trim() || '',
+      state: clientData.state?.toUpperCase().trim() || '',
+      phone: clientData.phone?.replace(/[^0-9+\-\(\)\s]/g, '') || '',
+      zip_code: clientData.zip_code?.replace(/[^0-9]/g, '') || ''
+    };
 
     // Client-side validation for better UX
     if (!normalizedData.name || normalizedData.name.trim() === '') {
@@ -77,7 +85,7 @@ export const createClient = async (clientData: Partial<Client>): Promise<Client>
     }
 
     console.log('Successfully created client');
-    return normalizeClientData(client);
+    return client;
   } catch (error: any) {
     console.error('Error creating client:', error);
     throw new Error(formatValidationError(error));
@@ -89,7 +97,15 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
     console.log('Updating client:', id, 'with data:', clientData);
 
     // Normalize input data
-    const normalizedData = normalizeClientInput(clientData);
+    const normalizedData = {
+      ...clientData,
+      name: clientData.name?.trim() || '',
+      email: clientData.email?.toLowerCase().trim() || '',
+      city: clientData.city?.trim() || '',
+      state: clientData.state?.toUpperCase().trim() || '',
+      phone: clientData.phone?.replace(/[^0-9+\-\(\)\s]/g, '') || '',
+      zip_code: clientData.zip_code?.replace(/[^0-9]/g, '') || ''
+    };
 
     // Client-side validation
     if (normalizedData.name !== undefined && (!normalizedData.name || normalizedData.name.trim() === '')) {
@@ -137,7 +153,7 @@ export const updateClient = async (id: string, clientData: Partial<Client>): Pro
     }
 
     console.log('Successfully updated client');
-    return normalizeClientData(client);
+    return client;
   } catch (error: any) {
     console.error('Error updating client:', error);
     throw new Error(formatValidationError(error));
@@ -200,7 +216,7 @@ export const searchClients = async (params: { search?: string; business_id?: str
     }
 
     console.log('Successfully searched clients:', clients?.length || 0, 'results');
-    return (clients || []).map(normalizeClientData);
+    return clients || [];
   } catch (error) {
     console.error('Error searching clients:', error);
     return [];
@@ -227,7 +243,7 @@ export const getClientById = async (id: string): Promise<Client | null> => {
     }
 
     console.log('Successfully found client');
-    return normalizeClientData(client);
+    return client;
   } catch (error) {
     console.error('Error getting client by ID:', error);
     return null;
@@ -259,7 +275,7 @@ export const findClientByEmail = async (email: string, businessId: string): Prom
     }
 
     console.log('Successfully found client by email');
-    return normalizeClientData(client);
+    return client;
   } catch (error) {
     console.error('Error finding client by email:', error);
     return null;
@@ -293,7 +309,7 @@ export const findClientByPhone = async (phone: string, businessId: string): Prom
     }
 
     console.log('Successfully found client by phone');
-    return normalizeClientData(client);
+    return client;
   } catch (error) {
     console.error('Error finding client by phone:', error);
     return null;

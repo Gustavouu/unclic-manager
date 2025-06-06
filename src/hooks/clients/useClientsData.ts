@@ -23,9 +23,9 @@ export const useClientsData = () => {
     try {
       console.log(`Fetching clients for business: ${businessId}`);
       
-      // Query the clients table using standardized English field names
+      // Query the unified clients table
       const { data, error } = await supabase
-        .from('clients')
+        .from('clients_unified')
         .select('*')
         .eq('business_id', businessId)
         .order('created_at', { ascending: false });
@@ -79,38 +79,26 @@ export const useClientsData = () => {
 
     console.log('Creating client with data:', clientData);
 
-    // Map form data to database schema using both English and Portuguese fields
+    // Map form data to database schema
     const dbData = {
       business_id: businessId,
-      id_negocio: businessId, // Portuguese field for compatibility
       name: clientData.name,
-      nome: clientData.name, // Portuguese field for compatibility
       email: clientData.email || null,
       phone: clientData.phone || null,
-      telefone: clientData.phone || null, // Portuguese field for compatibility
       birth_date: clientData.birth_date || null,
-      data_nascimento: clientData.birth_date || null, // Portuguese field for compatibility
       gender: clientData.gender || null,
-      genero: clientData.gender || null, // Portuguese field for compatibility
       address: clientData.address || null,
-      endereco: clientData.address || null, // Portuguese field for compatibility
       city: clientData.city || null,
-      cidade: clientData.city || null, // Portuguese field for compatibility
       state: clientData.state || null,
-      estado: clientData.state || null, // Portuguese field for compatibility
       zip_code: clientData.zip_code || null,
-      cep: clientData.zip_code || null, // Portuguese field for compatibility
       notes: clientData.notes || null,
-      notas: clientData.notes || null, // Portuguese field for compatibility
       status: 'active',
       total_spent: 0,
-      valor_total_gasto: 0, // Portuguese field for compatibility
-      preferences: {},
-      preferencias: {} // Portuguese field for compatibility
+      preferences: {}
     };
 
     const { data, error } = await supabase
-      .from('clients')
+      .from('clients_unified')
       .insert(dbData)
       .select()
       .single();
@@ -154,48 +142,21 @@ export const useClientsData = () => {
   const updateClient = async (id: string, clientData: Partial<ClientFormData>): Promise<Client> => {
     console.log('Updating client:', id, clientData);
 
-    // Map form data to database schema using both English and Portuguese fields
+    // Map form data to database schema
     const dbData: any = {};
-    if (clientData.name !== undefined) {
-      dbData.name = clientData.name;
-      dbData.nome = clientData.name; // Portuguese field for compatibility
-    }
+    if (clientData.name !== undefined) dbData.name = clientData.name;
     if (clientData.email !== undefined) dbData.email = clientData.email;
-    if (clientData.phone !== undefined) {
-      dbData.phone = clientData.phone;
-      dbData.telefone = clientData.phone; // Portuguese field for compatibility
-    }
-    if (clientData.birth_date !== undefined) {
-      dbData.birth_date = clientData.birth_date;
-      dbData.data_nascimento = clientData.birth_date; // Portuguese field for compatibility
-    }
-    if (clientData.gender !== undefined) {
-      dbData.gender = clientData.gender;
-      dbData.genero = clientData.gender; // Portuguese field for compatibility
-    }
-    if (clientData.address !== undefined) {
-      dbData.address = clientData.address;
-      dbData.endereco = clientData.address; // Portuguese field for compatibility
-    }
-    if (clientData.city !== undefined) {
-      dbData.city = clientData.city;
-      dbData.cidade = clientData.city; // Portuguese field for compatibility
-    }
-    if (clientData.state !== undefined) {
-      dbData.state = clientData.state;
-      dbData.estado = clientData.state; // Portuguese field for compatibility
-    }
-    if (clientData.zip_code !== undefined) {
-      dbData.zip_code = clientData.zip_code;
-      dbData.cep = clientData.zip_code; // Portuguese field for compatibility
-    }
-    if (clientData.notes !== undefined) {
-      dbData.notes = clientData.notes;
-      dbData.notas = clientData.notes; // Portuguese field for compatibility
-    }
+    if (clientData.phone !== undefined) dbData.phone = clientData.phone;
+    if (clientData.birth_date !== undefined) dbData.birth_date = clientData.birth_date;
+    if (clientData.gender !== undefined) dbData.gender = clientData.gender;
+    if (clientData.address !== undefined) dbData.address = clientData.address;
+    if (clientData.city !== undefined) dbData.city = clientData.city;
+    if (clientData.state !== undefined) dbData.state = clientData.state;
+    if (clientData.zip_code !== undefined) dbData.zip_code = clientData.zip_code;
+    if (clientData.notes !== undefined) dbData.notes = clientData.notes;
 
     const { data, error } = await supabase
-      .from('clients')
+      .from('clients_unified')
       .update(dbData)
       .eq('id', id)
       .select()
@@ -244,7 +205,7 @@ export const useClientsData = () => {
     console.log('Deleting client:', id);
 
     const { error } = await supabase
-      .from('clients')
+      .from('clients_unified')
       .delete()
       .eq('id', id);
 

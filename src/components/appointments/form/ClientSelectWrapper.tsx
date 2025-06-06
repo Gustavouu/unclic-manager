@@ -10,7 +10,6 @@ import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
-import { normalizeClientData } from "@/utils/databaseUtils";
 import { NewClientDialog } from "@/components/clients/NewClientDialog";
 
 export type ClientSelectWrapperProps = {
@@ -32,9 +31,9 @@ export default function ClientSelectWrapper({ form }: ClientSelectWrapperProps) 
       try {
         console.log('Fetching clients for business ID:', businessId);
         
-        // Use the migrated clients table
+        // Use the unified clients table
         const { data, error } = await supabase
-          .from('clients')
+          .from('clients_unified')
           .select('*')
           .eq('business_id', businessId);
           
@@ -43,8 +42,7 @@ export default function ClientSelectWrapper({ form }: ClientSelectWrapperProps) 
           setClients([]);
         } else if (data && data.length > 0) {
           console.log('Found clients:', data.length);
-          const normalizedClients = data.map(normalizeClientData);
-          setClients(normalizedClients);
+          setClients(data);
         } else {
           console.log('No clients found');
           setClients([]);
@@ -68,13 +66,12 @@ export default function ClientSelectWrapper({ form }: ClientSelectWrapperProps) 
       
       try {
         const { data, error } = await supabase
-          .from('clients')
+          .from('clients_unified')
           .select('*')
           .eq('business_id', businessId);
           
         if (!error && data) {
-          const normalizedClients = data.map(normalizeClientData);
-          setClients(normalizedClients);
+          setClients(data);
         }
       } catch (error) {
         console.error('Error fetching clients:', error);
