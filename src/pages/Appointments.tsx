@@ -17,6 +17,9 @@ const Appointments = () => {
   const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
   const { calendarView, updateUrlView } = useRouteCalendarView();
 
+  // Ensure calendarView is restricted to only "month" | "week"
+  const validCalendarView: "month" | "week" = calendarView === "day" ? "month" : calendarView;
+
   return (
     <OnboardingProvider>
       <div className="space-y-6">
@@ -71,7 +74,7 @@ const Appointments = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className={`h-9 ${calendarView === 'month' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
+                    className={`h-9 ${validCalendarView === 'month' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
                     onClick={() => updateUrlView('month')}
                   >
                     <Grid3X3 size={16} className="mr-1" />
@@ -80,7 +83,7 @@ const Appointments = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className={`h-9 ${calendarView === 'week' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
+                    className={`h-9 ${validCalendarView === 'week' ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : ''}`}
                     onClick={() => updateUrlView('week')}
                   >
                     <Calendar size={16} className="mr-1" />
@@ -93,7 +96,7 @@ const Appointments = () => {
             {/* Conteúdo das abas */}
             <TabsContent value="calendar" className="mt-0 p-0">
               <div className="p-6">
-                <AppointmentCalendar initialView={calendarView} />
+                <AppointmentCalendar initialView={validCalendarView} />
               </div>
             </TabsContent>
             

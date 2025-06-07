@@ -6,12 +6,12 @@ import { ChevronLeft, ChevronRight, Calendar, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CalendarGrid } from './CalendarGrid';
-import { Appointment } from '@/hooks/appointments/types';
+import { UnifiedAppointment } from '@/types/appointment-unified';
 
 interface CalendarViewProps {
-  appointments: Appointment[];
+  appointments: UnifiedAppointment[];
   onNewAppointment: () => void;
-  onSelectAppointment: (appointment: Appointment) => void;
+  onSelectAppointment: (appointment: UnifiedAppointment) => void;
 }
 
 export function CalendarView({ appointments, onNewAppointment, onSelectAppointment }: CalendarViewProps) {
@@ -38,9 +38,9 @@ export function CalendarView({ appointments, onNewAppointment, onSelectAppointme
 
   const stats = {
     total: monthAppointments.length,
-    concluidos: monthAppointments.filter(apt => apt.status === 'concluido').length,
-    agendados: monthAppointments.filter(apt => apt.status === 'agendado').length,
-    cancelados: monthAppointments.filter(apt => apt.status === 'cancelado').length,
+    concluidos: monthAppointments.filter(apt => apt.status === 'concluido' || apt.status === 'completed').length,
+    agendados: monthAppointments.filter(apt => apt.status === 'agendado' || apt.status === 'scheduled').length,
+    cancelados: monthAppointments.filter(apt => apt.status === 'cancelado' || apt.status === 'canceled').length,
   };
 
   const handleSelectDay = (day: Date) => {

@@ -1,4 +1,3 @@
-
 // Unified appointment types that work with both legacy and standardized data
 export interface UnifiedAppointment {
   id: string;
@@ -9,7 +8,7 @@ export interface UnifiedAppointment {
   professional_name?: string;
   service_id: string;
   service_name?: string;
-  service_type?: string;
+  service_type: string; // Made required to match Appointment type
   date: Date | string;
   start_time: string;
   end_time: string;
@@ -32,6 +31,7 @@ export interface UnifiedAppointment {
   serviceName?: string;
   professionalId?: string;
   professionalName?: string;
+  time: string; // Add time field for compatibility
 }
 
 export function normalizeStatus(status: string): string {

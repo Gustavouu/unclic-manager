@@ -1,17 +1,16 @@
-
 import React from 'react';
 import { format, isSameDay, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { Appointment } from '@/hooks/appointments/types';
+import { UnifiedAppointment } from '@/types/appointment-unified';
 
 interface CalendarGridProps {
   calendarDays: (Date | null)[];
-  appointments: Appointment[];
+  appointments: UnifiedAppointment[];
   selectedDate: Date;
   onSelectDay: (day: Date) => void;
-  onSelectAppointment: (appointment: Appointment) => void;
+  onSelectAppointment: (appointment: UnifiedAppointment) => void;
 }
 
 const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -169,7 +168,7 @@ export function CalendarGrid({
                             )}
                           />
                           <span className="truncate">
-                            {appointment.time} - {appointment.clientName}
+                            {appointment.time} - {appointment.client_name}
                           </span>
                         </div>
                         <Badge 

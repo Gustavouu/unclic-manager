@@ -39,7 +39,7 @@ export const useAppointments = () => {
           professional_name: appointment.professional_name || 'Profissional',
           service_id: appointment.service_id,
           service_name: appointment.service_name || 'Serviço',
-          service_type: 'general',
+          service_type: 'general', // Set default service_type
           date: new Date(appointment.date),
           start_time: appointment.start_time,
           end_time: appointment.end_time,
