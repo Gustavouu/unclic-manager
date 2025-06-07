@@ -3,7 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
-import { TenantProvider } from '@/contexts/TenantContext';
+import { MultiTenantProvider } from '@/contexts/MultiTenantContext';
 import { Toaster } from 'sonner';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -37,7 +37,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TenantProvider>
+        <MultiTenantProvider>
           <Router>
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
               <Routes>
@@ -169,7 +169,7 @@ function App() {
               />
             </div>
           </Router>
-        </TenantProvider>
+        </MultiTenantProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
