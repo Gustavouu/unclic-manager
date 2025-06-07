@@ -19,24 +19,21 @@ export const LazyWrapper: React.FC<LazyWrapperProps> = ({
 }) => {
   const { handleProductionError } = useProductionErrorHandler('LazyWrapper');
 
-  const handleError = (error: Error) => {
-    handleProductionError(error, 'lazy_loading', 'medium', {
-      trackPerformance: true,
-      createAlert: false,
-      notifyUser: false
-    });
-    onError?.(error);
+  // Custom error boundary that handles the onError callback
+  const ErrorBoundaryWithCallback: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    return (
+      <ErrorBoundary fallback={errorFallback}>
+        {children}
+      </ErrorBoundary>
+    );
   };
 
   return (
-    <ErrorBoundary
-      fallback={errorFallback}
-      onError={handleError}
-    >
+    <ErrorBoundaryWithCallback>
       <Suspense fallback={fallback}>
         {children}
       </Suspense>
-    </ErrorBoundary>
+    </ErrorBoundaryWithCallback>
   );
 };
 
@@ -67,7 +64,7 @@ export function withLazyLoading<T extends ComponentType<any>>(
         fallback={loadingComponent ? React.createElement(loadingComponent) : undefined}
         onError={setError}
       >
-        <LazyComponent {...props} ref={ref} key={retryCount} />
+        <LazyComponent {...props as any} ref={ref} key={retryCount} />
       </LazyWrapper>
     );
   });

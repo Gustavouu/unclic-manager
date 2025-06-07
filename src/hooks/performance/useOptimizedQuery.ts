@@ -31,8 +31,13 @@ export function useOptimizedQuery<T>(
   const monitor = PerformanceMonitor.getInstance();
   const lastQueryTime = useRef<number>(0);
 
-  // Debounced query function
-  const debouncedQueryFn = useDebouncedCallback(queryFn, debounceMs);
+  // Debounced query function - fix the return type issue
+  const debouncedQueryFn = useDebouncedCallback(
+    async (): Promise<T> => {
+      return await queryFn();
+    },
+    debounceMs
+  );
 
   // Enhanced query function with caching and monitoring
   const enhancedQueryFn = useCallback(async (): Promise<T> => {

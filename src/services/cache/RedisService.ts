@@ -11,6 +11,8 @@ interface CacheMetrics {
   evictions: number;
   memoryUsage: number;
   hitRate: number;
+  totalHits: number;
+  totalMisses: number;
 }
 
 export class RedisService {
@@ -21,7 +23,9 @@ export class RedisService {
     misses: 0,
     evictions: 0,
     memoryUsage: 0,
-    hitRate: 0
+    hitRate: 0,
+    totalHits: 0,
+    totalMisses: 0
   };
   
   private config: CacheConfig = {
@@ -64,6 +68,7 @@ export class RedisService {
     
     if (!entry) {
       this.metrics.misses++;
+      this.metrics.totalMisses++;
       this.updateHitRate();
       return null;
     }
@@ -71,11 +76,13 @@ export class RedisService {
     if (Date.now() > entry.expiry) {
       this.delete(key);
       this.metrics.misses++;
+      this.metrics.totalMisses++;
       this.updateHitRate();
       return null;
     }
 
     this.metrics.hits++;
+    this.metrics.totalHits++;
     this.updateHitRate();
     return this.deserialize<T>(entry.data);
   }
