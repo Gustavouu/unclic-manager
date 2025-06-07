@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { appointmentFormSchema } from "../schemas/appointmentFormSchema";
+import { appointmentFormSchema, AppointmentFormData } from "../schemas/appointmentFormSchema";
 import { useServices } from "@/hooks/useServices"; 
 import { useProfessionals } from "@/hooks/professionals/useProfessionals";
 import { StandardizedAppointmentService } from "@/services/appointments/standardizedAppointmentService";
@@ -32,7 +32,7 @@ export function AppointmentStepperForm({
   const [selectedService, setSelectedService] = useState<any>(null);
   const appointmentService = StandardizedAppointmentService.getInstance();
 
-  const form = useForm({
+  const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       clientId: preselectedClientId || "",
@@ -67,7 +67,7 @@ export function AppointmentStepperForm({
     }
   }, [serviceId, services, form]);
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: AppointmentFormData) => {
     try {
       if (!businessId) {
         toast.error("Nenhum negócio selecionado");
@@ -116,7 +116,7 @@ export function AppointmentStepperForm({
         end_time: endTime,
         duration: service.duration,
         price: service.price,
-        status: data.status,
+        status: data.status as any,
         payment_method: data.paymentMethod,
         notes: data.notes
       };

@@ -16,3 +16,4 @@ export const appointmentFormSchema = z.object({
 });
 
 export type AppointmentFormData = z.infer<typeof appointmentFormSchema>;
+export type AppointmentFormValues = AppointmentFormData; // Alias para compatibilidade

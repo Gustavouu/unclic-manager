@@ -61,16 +61,16 @@ export const useProfessionals = () => {
         name: item.name,
         email: item.email,
         phone: item.phone,
-        position: undefined, // Not available in current schema
+        position: undefined,
         photo_url: item.avatar_url,
         bio: item.bio,
-        specialties: undefined, // Not available in current schema
-        status: 'active' as any, // Convert string to ProfessionalStatus
+        specialties: undefined,
+        status: 'active' as any,
         business_id: item.business_id,
         user_id: item.userId,
-        commission_percentage: undefined, // Not available in current schema
-        hire_date: undefined, // Not available in current schema
-        working_hours: item.working_hours || {},
+        commission_percentage: undefined,
+        hire_date: undefined,
+        working_hours: typeof item.working_hours === 'object' ? item.working_hours || {} : {},
         created_at: item.createdAt,
         updated_at: item.updatedAt,
       }));
