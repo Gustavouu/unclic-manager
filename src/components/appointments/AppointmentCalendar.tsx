@@ -1,150 +1,107 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CalendarView } from './calendar/CalendarView';
-import { AppointmentDetailsDialog } from './dialogs/AppointmentDetailsDialog';
 import { useAppointments } from '@/hooks/useAppointments';
-import { UnifiedAppointment, normalizeStatus } from '@/types/appointment-unified';
-import { Appointment } from './types';
-import { CalendarViewType } from '@/types/calendar';
-import { Skeleton } from '@/components/ui/skeleton';
+import { TestDataHelper } from './TestDataHelper';
+import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { Info } from 'lucide-react';
 
-export interface AppointmentCalendarProps {
-  initialView?: CalendarViewType;
+interface AppointmentCalendarProps {
+  initialView?: 'month' | 'week';
 }
 
-export const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({ 
-  initialView = 'month' 
-}) => {
-  const { appointments, isLoading, error, updateAppointment } = useAppointments();
-  const [selectedAppointment, setSelectedAppointment] = useState<UnifiedAppointment | null>(null);
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+export function AppointmentCalendar({ initialView = 'month' }: AppointmentCalendarProps) {
+  const { appointments, isLoading, error, refetch } = useAppointments();
+  const [showTestHelper, setShowTestHelper] = useState(false);
 
-  // Convert UnifiedAppointment to Appointment format for calendar compatibility
-  const calendarAppointments: Appointment[] = appointments.map(apt => ({
-    id: apt.id,
-    clientId: apt.client_id,
-    clientName: apt.client_name || 'Cliente',
-    serviceId: apt.service_id,
-    serviceName: apt.service_name || 'Serviço',
-    serviceType: apt.service_type || 'general', // Add default serviceType
-    professionalId: apt.professional_id,
-    professionalName: apt.professional_name || 'Profissional',
-    date: typeof apt.date === 'string' ? new Date(apt.date) : apt.date,
-    duration: apt.duration,
-    price: apt.price,
-    status: normalizeStatus(apt.status) as any,
-    notes: apt.notes || '',
-    paymentMethod: apt.payment_method,
-    businessId: apt.business_id
-  }));
-
-  const handleSelectAppointment = (appointment: Appointment) => {
-    // Find the original unified appointment
-    const unifiedAppointment = appointments.find(apt => apt.id === appointment.id);
-    if (unifiedAppointment) {
-      setSelectedAppointment(unifiedAppointment);
-      setShowDetailsDialog(true);
+  // Show test helper if no appointments exist
+  useEffect(() => {
+    if (!isLoading && appointments.length === 0) {
+      setShowTestHelper(true);
+    } else {
+      setShowTestHelper(false);
     }
-  };
+  }, [appointments, isLoading]);
+
+  console.log('AppointmentCalendar - appointments:', appointments.length);
+  console.log('AppointmentCalendar - isLoading:', isLoading);
+  console.log('AppointmentCalendar - error:', error);
 
   const handleNewAppointment = () => {
-    console.log('Novo agendamento');
+    console.log('New appointment requested');
   };
 
-  // Convert UnifiedAppointment to Appointment for the handlers
-  const handleEditAppointment = (unifiedAppointment: UnifiedAppointment) => {
-    console.log('Editar agendamento:', unifiedAppointment.id);
-    setShowDetailsDialog(false);
+  const handleSelectAppointment = (appointment: any) => {
+    console.log('Selected appointment:', appointment);
   };
 
-  const handleCancelAppointment = async (unifiedAppointment: UnifiedAppointment) => {
-    try {
-      // Use English status for backend compatibility
-      await updateAppointment(unifiedAppointment.id, { status: 'canceled' });
-      setShowDetailsDialog(false);
-    } catch (error) {
-      console.error('Erro ao cancelar agendamento:', error);
-    }
+  const handleTestDataCreated = () => {
+    console.log('Test data created, refreshing appointments...');
+    refetch();
   };
-
-  // Create wrapper functions that convert between types
-  const handleEditAppointmentWrapper = (appointment: Appointment) => {
-    const unifiedAppointment = appointments.find(apt => apt.id === appointment.id);
-    if (unifiedAppointment) {
-      handleEditAppointment(unifiedAppointment);
-    }
-  };
-
-  const handleCancelAppointmentWrapper = (appointment: Appointment) => {
-    const unifiedAppointment = appointments.find(apt => apt.id === appointment.id);
-    if (unifiedAppointment) {
-      handleCancelAppointment(unifiedAppointment);
-    }
-  };
-
-  // Convert UnifiedAppointment to Appointment for the dialog
-  const selectedAppointmentForDialog: Appointment | null = selectedAppointment ? {
-    id: selectedAppointment.id,
-    clientId: selectedAppointment.client_id,
-    clientName: selectedAppointment.client_name || 'Cliente',
-    serviceId: selectedAppointment.service_id,
-    serviceName: selectedAppointment.service_name || 'Serviço',
-    serviceType: selectedAppointment.service_type || 'general',
-    professionalId: selectedAppointment.professional_id,
-    professionalName: selectedAppointment.professional_name || 'Profissional',
-    date: typeof selectedAppointment.date === 'string' ? new Date(selectedAppointment.date) : selectedAppointment.date,
-    duration: selectedAppointment.duration,
-    price: selectedAppointment.price,
-    status: normalizeStatus(selectedAppointment.status) as any,
-    notes: selectedAppointment.notes || '',
-    paymentMethod: selectedAppointment.payment_method,
-    businessId: selectedAppointment.business_id
-  } : null;
 
   if (isLoading) {
     return (
-      <div className="p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <div className="grid grid-cols-7 gap-2">
-          {Array.from({ length: 35 }).map((_, i) => (
-            <Skeleton key={i} className="h-24" />
-          ))}
-        </div>
-      </div>
+      <Card>
+        <CardContent className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Carregando calendário...</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <Alert className="m-4">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Erro ao carregar agendamentos: {error}
-        </AlertDescription>
-      </Alert>
+      <Card>
+        <CardContent className="p-6">
+          <Alert className="border-red-200 bg-red-50">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Erro ao carregar agendamentos: {error}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="h-full">
+    <div className="space-y-4">
+      {/* Debug info */}
+      <div className="bg-gray-50 p-3 rounded-md text-sm">
+        <strong>Debug Info:</strong> {appointments.length} agendamentos carregados
+        {appointments.length > 0 && (
+          <div className="mt-1 text-xs text-gray-600">
+            Status encontrados: {[...new Set(appointments.map(apt => apt.status))].join(', ')}
+          </div>
+        )}
+      </div>
+
+      {/* Test Data Helper */}
+      {showTestHelper && (
+        <TestDataHelper onDataCreated={handleTestDataCreated} />
+      )}
+
+      {/* No appointments message */}
+      {appointments.length === 0 && !showTestHelper && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Nenhum agendamento encontrado. Os indicadores aparecerão quando houver agendamentos cadastrados.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Calendar */}
       <CalendarView
-        appointments={calendarAppointments}
+        appointments={appointments}
         onNewAppointment={handleNewAppointment}
         onSelectAppointment={handleSelectAppointment}
       />
-
-      <AppointmentDetailsDialog
-        appointment={selectedAppointmentForDialog}
-        open={showDetailsDialog}
-        onOpenChange={setShowDetailsDialog}
-        onEdit={handleEditAppointmentWrapper}
-        onCancel={handleCancelAppointmentWrapper}
-      />
     </div>
   );
-};
+}

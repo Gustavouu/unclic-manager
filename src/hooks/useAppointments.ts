@@ -26,43 +26,57 @@ export const useAppointments = () => {
       console.log('Fetching appointments for business ID:', businessId);
       
       const data = await appointmentService.search({ business_id: businessId });
+      console.log('Raw appointments data:', data);
       
-      // Convert to unified format
-      const unifiedData: UnifiedAppointment[] = data.map((appointment) => ({
-        id: appointment.id,
-        business_id: appointment.business_id,
-        client_id: appointment.client_id,
-        client_name: appointment.client_name,
-        professional_id: appointment.professional_id,
-        professional_name: appointment.professional_name,
-        service_id: appointment.service_id,
-        service_name: appointment.service_name,
-        service_type: 'general',
-        date: new Date(appointment.date),
-        start_time: appointment.start_time,
-        end_time: appointment.end_time,
-        duration: appointment.duration,
-        price: appointment.price,
-        status: normalizeStatus(appointment.status),
-        notes: appointment.notes,
-        payment_method: appointment.payment_method,
-        payment_status: 'pending',
-        rating: appointment.rating,
-        feedback_comment: appointment.feedback_comment,
-        reminder_sent: appointment.reminder_sent,
-        created_at: appointment.created_at,
-        updated_at: appointment.updated_at,
-        // Legacy compatibility
-        clientId: appointment.client_id,
-        clientName: appointment.client_name,
-        serviceId: appointment.service_id,
-        serviceName: appointment.service_name,
-        professionalId: appointment.professional_id,
-        professionalName: appointment.professional_name,
-      }));
+      // Convert to unified format with enhanced debugging
+      const unifiedData: UnifiedAppointment[] = data.map((appointment) => {
+        const unified: UnifiedAppointment = {
+          id: appointment.id,
+          business_id: appointment.business_id,
+          client_id: appointment.client_id,
+          client_name: appointment.client_name || 'Cliente',
+          professional_id: appointment.professional_id,
+          professional_name: appointment.professional_name || 'Profissional',
+          service_id: appointment.service_id,
+          service_name: appointment.service_name || 'Serviço',
+          service_type: 'general',
+          date: new Date(appointment.date),
+          start_time: appointment.start_time,
+          end_time: appointment.end_time,
+          duration: appointment.duration,
+          price: appointment.price,
+          status: normalizeStatus(appointment.status),
+          notes: appointment.notes,
+          payment_method: appointment.payment_method,
+          payment_status: 'pending',
+          rating: appointment.rating,
+          feedback_comment: appointment.feedback_comment,
+          reminder_sent: appointment.reminder_sent,
+          created_at: appointment.created_at,
+          updated_at: appointment.updated_at,
+          // Legacy compatibility
+          clientId: appointment.client_id,
+          clientName: appointment.client_name || 'Cliente',
+          serviceId: appointment.service_id,
+          serviceName: appointment.service_name || 'Serviço',
+          professionalId: appointment.professional_id,
+          professionalName: appointment.professional_name || 'Profissional',
+          time: appointment.start_time, // Add time field for compatibility
+        };
+        
+        console.log('Unified appointment:', unified);
+        return unified;
+      });
       
       setAppointments(unifiedData);
       console.log('Successfully loaded', unifiedData.length, 'appointments');
+      
+      // Log some sample data for debugging
+      if (unifiedData.length > 0) {
+        console.log('Sample appointment:', unifiedData[0]);
+        console.log('Sample appointment date type:', typeof unifiedData[0].date);
+        console.log('Sample appointment status:', unifiedData[0].status);
+      }
     } catch (err) {
       console.error('Error fetching appointments:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch appointments');
@@ -93,6 +107,11 @@ export const useAppointments = () => {
     await fetchAppointments();
   };
 
+  const updateAppointmentStatus = async (id: string, status: string) => {
+    await appointmentService.update(id, { status: status as any });
+    await fetchAppointments();
+  };
+
   const deleteAppointment = async (id: string) => {
     await appointmentService.delete(id);
     await fetchAppointments();
@@ -115,6 +134,7 @@ export const useAppointments = () => {
     refetch: fetchAppointments,
     createAppointment,
     updateAppointment,
+    updateAppointmentStatus,
     deleteAppointment,
     getAppointmentsByDateRange,
     getAppointmentStats,
