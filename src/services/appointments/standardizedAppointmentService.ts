@@ -24,31 +24,42 @@ export class StandardizedAppointmentService {
    * Creates a new appointment
    */
   async create(data: AppointmentCreate): Promise<Appointment> {
+    console.log('Creating appointment with standardized service:', data);
+    
+    const appointmentData = {
+      id: crypto.randomUUID(),
+      business_id: data.business_id,
+      client_id: data.client_id,
+      service_id: data.service_id,
+      employee_id: data.professional_id,
+      booking_date: data.date,
+      start_time: data.start_time,
+      end_time: data.end_time,
+      duration: data.duration,
+      price: data.price,
+      status: data.status || 'scheduled',
+      payment_method: data.payment_method,
+      notes: data.notes,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
     const { data: appointment, error } = await supabase
       .from('bookings')
-      .insert({
-        business_id: data.business_id,
-        client_id: data.client_id,
-        employee_id: data.professional_id,
-        service_id: data.service_id,
-        booking_date: data.date,
-        start_time: data.start_time,
-        end_time: data.end_time,
-        duration: data.duration,
-        price: data.price,
-        status: data.status || 'scheduled',
-        notes: data.notes,
-        payment_method: data.payment_method,
-      })
+      .insert(appointmentData)
       .select(`
         *,
         clients!inner(name, email, phone),
-        professionals!inner(name, email, phone),
-        services!inner(name, description, price, duration)
+        services!inner(name, description, price, duration),
+        professionals!inner(name, email, phone)
       `)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating appointment:', error);
+      throw error;
+    }
+
     return this.mapToAppointment(appointment);
   }
 
@@ -67,6 +78,8 @@ export class StandardizedAppointmentService {
     if (data.feedback_comment) updateData.feedback_comment = data.feedback_comment;
     if (data.price) updateData.price = data.price;
 
+    updateData.updated_at = new Date().toISOString();
+
     const { data: appointment, error } = await supabase
       .from('bookings')
       .update(updateData)
@@ -74,12 +87,16 @@ export class StandardizedAppointmentService {
       .select(`
         *,
         clients!inner(name, email, phone),
-        professionals!inner(name, email, phone),
-        services!inner(name, description, price, duration)
+        services!inner(name, description, price, duration),
+        professionals!inner(name, email, phone)
       `)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error updating appointment:', error);
+      throw error;
+    }
+
     return this.mapToAppointment(appointment);
   }
 
@@ -92,13 +109,17 @@ export class StandardizedAppointmentService {
       .select(`
         *,
         clients!inner(name, email, phone),
-        professionals!inner(name, email, phone),
-        services!inner(name, description, price, duration)
+        services!inner(name, description, price, duration),
+        professionals!inner(name, email, phone)
       `)
       .eq('id', id)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching appointment:', error);
+      throw error;
+    }
+
     return this.mapToAppointment(appointment);
   }
 
@@ -111,8 +132,8 @@ export class StandardizedAppointmentService {
       .select(`
         *,
         clients!inner(name, email, phone),
-        professionals!inner(name, email, phone),
-        services!inner(name, description, price, duration)
+        services!inner(name, description, price, duration),
+        professionals!inner(name, email, phone)
       `)
       .eq('business_id', params.business_id);
 
@@ -140,9 +161,15 @@ export class StandardizedAppointmentService {
       query = query.lte('booking_date', params.date_to);
     }
 
-    const { data: appointments, error } = await query.order('booking_date', { ascending: false });
+    const { data: appointments, error } = await query
+      .order('booking_date', { ascending: false })
+      .order('start_time', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error searching appointments:', error);
+      throw error;
+    }
+
     return appointments?.map(apt => this.mapToAppointment(apt)) || [];
   }
 
@@ -155,8 +182,8 @@ export class StandardizedAppointmentService {
       .select(`
         *,
         clients!inner(name, email, phone),
-        professionals!inner(name, email, phone),
-        services!inner(name, description, price, duration)
+        services!inner(name, description, price, duration),
+        professionals!inner(name, email, phone)
       `)
       .eq('business_id', businessId)
       .gte('booking_date', startDate)
@@ -164,7 +191,11 @@ export class StandardizedAppointmentService {
       .order('booking_date', { ascending: true })
       .order('start_time', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching appointments by date range:', error);
+      throw error;
+    }
+
     return appointments?.map(apt => this.mapToAppointment(apt)) || [];
   }
 
@@ -229,7 +260,10 @@ export class StandardizedAppointmentService {
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error deleting appointment:', error);
+      throw error;
+    }
   }
 
   /**

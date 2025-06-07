@@ -1,28 +1,31 @@
 
-import { useEffect, useState } from 'react';
-import { CalendarViewType } from '@/components/appointments/calendar/types';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
-export function useRouteCalendarView() {
-  const [calendarView, setCalendarView] = useState<CalendarViewType>("month");
-  
-  // Initialize view from URL parameter if present
+export type CalendarView = 'month' | 'week' | 'day';
+
+export const useRouteCalendarView = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [calendarView, setCalendarView] = useState<CalendarView>('month');
+
   useEffect(() => {
-    const url = new URL(window.location.href);
-    const viewParam = url.searchParams.get('view') as CalendarViewType | null;
+    const viewParam = searchParams.get('view') as CalendarView;
     if (viewParam && ['month', 'week', 'day'].includes(viewParam)) {
       setCalendarView(viewParam);
     }
-  }, []);
-  
-  // Function to update URL with the current view
-  const updateUrlView = (newView: CalendarViewType) => {
-    setCalendarView(newView);
-    
-    // Using browser history API to update the URL with the view parameter
-    const url = new URL(window.location.href);
-    url.searchParams.set('view', newView);
-    window.history.pushState({}, '', url);
+  }, [searchParams]);
+
+  const updateUrlView = (view: CalendarView) => {
+    setCalendarView(view);
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('view', view);
+      return newParams;
+    });
   };
-  
-  return { calendarView, updateUrlView };
-}
+
+  return {
+    calendarView,
+    updateUrlView,
+  };
+};
