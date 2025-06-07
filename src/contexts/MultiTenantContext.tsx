@@ -1,127 +1,101 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { getUserBusinessIdSafe, ensureUserBusinessAccess } from '@/utils/businessAccess';
-import { toast } from 'sonner';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Loader } from '@/components/ui/loader';
 
 interface Business {
   id: string;
   name: string;
-  role: string;
+  slug: string;
+  admin_email: string;
   status: string;
-  logo_url?: string;
 }
 
 interface MultiTenantContextType {
   currentBusiness: Business | null;
-  availableBusinesses: Business[];
+  businesses: Business[];
   isLoading: boolean;
-  error: string | null;
-  switchBusiness: (businessId: string) => Promise<void>;
-  refreshBusinesses: () => Promise<void>;
-  hasMultipleBusinesses: boolean;
+  switchBusiness: (businessId: string) => void;
+  refreshBusinessData: () => Promise<void>;
 }
 
 const MultiTenantContext = createContext<MultiTenantContextType | undefined>(undefined);
 
-export function MultiTenantProvider({ children }: { children: React.ReactNode }) {
+export const useMultiTenant = () => {
+  const context = useContext(MultiTenantContext);
+  if (!context) {
+    throw new Error('useMultiTenant must be used within a MultiTenantProvider');
+  }
+  return context;
+};
+
+interface MultiTenantProviderProps {
+  children: ReactNode;
+}
+
+export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ children }) => {
+  const { user, profile, loading: authLoading } = useAuth();
   const [currentBusiness, setCurrentBusiness] = useState<Business | null>(null);
-  const [availableBusinesses, setAvailableBusinesses] = useState<Business[]>([]);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchBusinesses = useCallback(async () => {
+  const refreshBusinessData = async () => {
+    if (!user || !profile?.business_id) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      setIsLoading(true);
-      setError(null);
+      // For now, create a mock business based on profile data
+      const mockBusiness: Business = {
+        id: profile.business_id,
+        name: 'Meu Negócio',
+        slug: `business-${profile.business_id.slice(0, 8)}`,
+        admin_email: user.email || '',
+        status: 'active'
+      };
 
-      const { data: user } = await supabase.auth.getUser();
-      if (!user?.user) {
-        setCurrentBusiness(null);
-        setAvailableBusinesses([]);
-        return;
-      }
-
-      console.log('Fetching businesses for user:', user.user.id);
-
-      // Ensure user has business access using the safe function
-      await ensureUserBusinessAccess();
-
-      // Get all businesses for the user using the fixed RLS policies
-      const { data: businessUsers, error: businessError } = await supabase
-        .from('business_users')
-        .select(`
-          business_id,
-          role,
-          status,
-          businesses!inner(
-            id,
-            name,
-            logo_url
-          )
-        `)
-        .eq('user_id', user.user.id)
-        .eq('status', 'active');
-
-      if (businessError) {
-        console.error('Error fetching businesses:', businessError);
-        setError('Failed to load businesses');
-        return;
-      }
-
-      const businesses: Business[] = (businessUsers || []).map(bu => ({
-        id: bu.business_id,
-        name: bu.businesses.name,
-        role: bu.role,
-        status: bu.status,
-        logo_url: bu.businesses.logo_url
-      }));
-
-      console.log('Loaded businesses:', businesses);
-      setAvailableBusinesses(businesses);
-
-      // Set current business if not set or if current business is not in the list
-      if (!currentBusiness || !businesses.find(b => b.id === currentBusiness.id)) {
-        if (businesses.length > 0) {
-          setCurrentBusiness(businesses[0]);
-          console.log('Set current business to:', businesses[0]);
-        }
-      }
-
-    } catch (err) {
-      console.error('Error in fetchBusinesses:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setCurrentBusiness(mockBusiness);
+      setBusinesses([mockBusiness]);
+      
+      console.log('Business data loaded:', mockBusiness);
+    } catch (error) {
+      console.error('Error loading business data:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [currentBusiness]);
+  };
 
-  const switchBusiness = useCallback(async (businessId: string) => {
-    const business = availableBusinesses.find(b => b.id === businessId);
+  const switchBusiness = (businessId: string) => {
+    const business = businesses.find(b => b.id === businessId);
     if (business) {
       setCurrentBusiness(business);
-      console.log('Switched to business:', business);
-      toast.success(`Switched to ${business.name}`);
     }
-  }, [availableBusinesses]);
-
-  const refreshBusinesses = useCallback(async () => {
-    console.log('Refreshing businesses...');
-    await fetchBusinesses();
-  }, [fetchBusinesses]);
+  };
 
   useEffect(() => {
-    fetchBusinesses();
-  }, [fetchBusinesses]);
+    if (!authLoading && user && profile) {
+      refreshBusinessData();
+    } else if (!authLoading && !user) {
+      setIsLoading(false);
+    }
+  }, [user, profile, authLoading]);
+
+  // Show loading only when auth is ready but we're still loading business data
+  if (!authLoading && isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader size="lg" text="Carregando dados do negócio..." />
+      </div>
+    );
+  }
 
   const value: MultiTenantContextType = {
     currentBusiness,
-    availableBusinesses,
+    businesses,
     isLoading,
-    error,
     switchBusiness,
-    refreshBusinesses,
-    hasMultipleBusinesses: availableBusinesses.length > 1,
+    refreshBusinessData,
   };
 
   return (
@@ -129,12 +103,4 @@ export function MultiTenantProvider({ children }: { children: React.ReactNode })
       {children}
     </MultiTenantContext.Provider>
   );
-}
-
-export function useMultiTenant() {
-  const context = useContext(MultiTenantContext);
-  if (context === undefined) {
-    throw new Error('useMultiTenant must be used within a MultiTenantProvider');
-  }
-  return context;
-}
+};

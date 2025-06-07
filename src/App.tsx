@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { QueryProvider } from './contexts/QueryContext';
 import { ErrorHandlingProvider } from './contexts/ErrorHandlingContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { RequireAuth } from './components/auth/RequireAuth';
 import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
 import Services from './pages/Services';
@@ -23,21 +24,66 @@ function App() {
         <QueryProvider>
           <ErrorHandlingProvider>
             <AuthProvider>
-              <MultiTenantProvider>
-                <div className="min-h-screen bg-background">
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/clients" element={<Clients />} />
-                    <Route path="/services" element={<Services />} />
-                    <Route path="/professionals" element={<Professionals />} />
-                    <Route path="/bookings" element={<Bookings />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                  </Routes>
-                  <Toaster />
-                </div>
-              </MultiTenantProvider>
+              <div className="min-h-screen bg-background">
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  
+                  {/* Protected routes */}
+                  <Route path="/" element={
+                    <RequireAuth>
+                      <MultiTenantProvider>
+                        <Dashboard />
+                      </MultiTenantProvider>
+                    </RequireAuth>
+                  } />
+                  
+                  <Route path="/clients" element={
+                    <RequireAuth>
+                      <MultiTenantProvider>
+                        <Clients />
+                      </MultiTenantProvider>
+                    </RequireAuth>
+                  } />
+                  
+                  <Route path="/services" element={
+                    <RequireAuth>
+                      <MultiTenantProvider>
+                        <Services />
+                      </MultiTenantProvider>
+                    </RequireAuth>
+                  } />
+                  
+                  <Route path="/professionals" element={
+                    <RequireAuth>
+                      <MultiTenantProvider>
+                        <Professionals />
+                      </MultiTenantProvider>
+                    </RequireAuth>
+                  } />
+                  
+                  <Route path="/bookings" element={
+                    <RequireAuth>
+                      <MultiTenantProvider>
+                        <Bookings />
+                      </MultiTenantProvider>
+                    </RequireAuth>
+                  } />
+                  
+                  <Route path="/settings" element={
+                    <RequireAuth>
+                      <MultiTenantProvider>
+                        <Settings />
+                      </MultiTenantProvider>
+                    </RequireAuth>
+                  } />
+                  
+                  {/* Redirect any unknown routes to home */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+                <Toaster />
+              </div>
             </AuthProvider>
           </ErrorHandlingProvider>
         </QueryProvider>

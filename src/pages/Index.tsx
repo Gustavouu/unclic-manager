@@ -1,21 +1,17 @@
 
 import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { useNeedsOnboarding } from "@/hooks/useNeedsOnboarding";
+import { useAuth } from "@/contexts/AuthContext";
 import { Loader } from "@/components/ui/loader";
 
 const Index = () => {
   const { user, loading } = useAuth();
-  const { loading: onboardingLoading } = useNeedsOnboarding();
   
   useEffect(() => {
     document.title = "Unclic Manager";
-    
-    // No redundant refreshes here - data fetching is now centralized in TenantContext
   }, []);
   
-  if (loading || (user && onboardingLoading)) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader size="lg" text="Carregando..." />
@@ -28,8 +24,8 @@ const Index = () => {
     return <Navigate to="/login" replace />;
   }
   
-  // Even if onboarding is needed, send to dashboard instead of forcing onboarding
-  return <Navigate to="/dashboard" replace />;
+  // If authenticated, redirect to home (which will be Dashboard)
+  return <Navigate to="/" replace />;
 };
 
 export default Index;

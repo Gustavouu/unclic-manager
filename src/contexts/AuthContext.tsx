@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -54,7 +53,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching profile:', error);
@@ -86,7 +85,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Use setTimeout to defer business access setup to avoid blocking auth flow
+          // Use setTimeout to defer business access setup
           setTimeout(async () => {
             try {
               console.log('Setting up business access for user:', session.user.id);
@@ -187,7 +186,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (error) {
         setLoading(false);
-        // Translate error messages to Portuguese
         const translatedError = {
           ...error,
           message: translateErrorMessage(error.message)
@@ -195,7 +193,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return { error: translatedError };
       }
       
-      // Don't set loading to false here - let onAuthStateChange handle it
       return { error: null };
     } catch (error) {
       console.error('Sign in exception:', error);
