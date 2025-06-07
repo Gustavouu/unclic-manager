@@ -21,32 +21,9 @@ export const AppointmentCalendarStandardized: React.FC<AppointmentCalendarStanda
   const [selectedAppointment, setSelectedAppointment] = useState<UnifiedAppointment | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-  // Convert UnifiedAppointment to Appointment format for calendar compatibility
-  const calendarAppointments: Appointment[] = appointments.map(apt => ({
-    id: apt.id,
-    clientId: apt.client_id,
-    clientName: apt.client_name || 'Cliente',
-    serviceId: apt.service_id,
-    serviceName: apt.service_name || 'Serviço',
-    serviceType: apt.service_type || 'general',
-    professionalId: apt.professional_id,
-    professionalName: apt.professional_name || 'Profissional',
-    date: typeof apt.date === 'string' ? new Date(apt.date) : apt.date,
-    duration: apt.duration,
-    price: apt.price,
-    status: normalizeStatus(apt.status) as any,
-    notes: apt.notes || '',
-    paymentMethod: apt.payment_method,
-    businessId: apt.business_id
-  }));
-
-  const handleSelectAppointment = (appointment: Appointment) => {
-    // Find the original unified appointment
-    const unifiedAppointment = appointments.find(apt => apt.id === appointment.id);
-    if (unifiedAppointment) {
-      setSelectedAppointment(unifiedAppointment);
-      setShowDetailsDialog(true);
-    }
+  const handleSelectAppointment = (appointment: UnifiedAppointment) => {
+    setSelectedAppointment(appointment);
+    setShowDetailsDialog(true);
   };
 
   const handleNewAppointment = () => {
@@ -131,7 +108,7 @@ export const AppointmentCalendarStandardized: React.FC<AppointmentCalendarStanda
   return (
     <div className="h-full">
       <CalendarView
-        appointments={calendarAppointments}
+        appointments={appointments}
         onNewAppointment={handleNewAppointment}
         onSelectAppointment={handleSelectAppointment}
       />

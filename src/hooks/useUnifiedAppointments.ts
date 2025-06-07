@@ -59,6 +59,7 @@ export const useUnifiedAppointments = () => {
         serviceName: appointment.service_name,
         professionalId: appointment.professional_id,
         professionalName: appointment.professional_name,
+        time: appointment.start_time, // Add missing time field
       }));
       
       setAppointments(unifiedData);
