@@ -1,5 +1,23 @@
 
-export type ProfessionalStatus = 'active' | 'inactive' | 'pending';
+export enum ProfessionalStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive', 
+  ON_LEAVE = 'pending'
+}
+
+// For backward compatibility, also export as const
+export const PROFESSIONAL_STATUS = {
+  ACTIVE: 'active' as const,
+  INACTIVE: 'inactive' as const,
+  ON_LEAVE: 'pending' as const
+} as const;
+
+// Status mapping for legacy support
+export const STATUS_MAPPING = {
+  active: ProfessionalStatus.ACTIVE,
+  inactive: ProfessionalStatus.INACTIVE,
+  pending: ProfessionalStatus.ON_LEAVE
+} as const;
 
 export interface Professional {
   id: string;

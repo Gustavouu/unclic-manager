@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
-import { Professional } from '@/hooks/professionals/types';
+import { Professional, ProfessionalStatus } from '@/hooks/professionals/types';
 
 // Re-export the Professional interface for external use
 export type { Professional };
@@ -56,24 +56,49 @@ export const useProfessionals = () => {
       }
       
       // Transform the data to match our Professional type
-      const transformedData: Professional[] = (data || []).map(item => ({
-        id: item.id,
-        name: item.name,
-        email: item.email,
-        phone: item.phone,
-        position: undefined,
-        photo_url: item.avatar_url,
-        bio: item.bio,
-        specialties: undefined,
-        status: 'active' as any,
-        business_id: item.business_id,
-        user_id: item.userId,
-        commission_percentage: undefined,
-        hire_date: undefined,
-        working_hours: typeof item.working_hours === 'object' ? item.working_hours || {} : {},
-        created_at: item.createdAt,
-        updated_at: item.updatedAt,
-      }));
+      const transformedData: Professional[] = (data || []).map(item => {
+        // Safely parse working_hours
+        let workingHours: { [day: string]: { start: string; end: string; isAvailable: boolean } } = {};
+        
+        if (item.working_hours && typeof item.working_hours === 'object') {
+          if (Array.isArray(item.working_hours)) {
+            // Handle array case - convert to object or use default
+            workingHours = {};
+          } else {
+            // Handle object case - ensure it matches our type
+            const whObject = item.working_hours as { [key: string]: any };
+            Object.keys(whObject).forEach(day => {
+              const dayData = whObject[day];
+              if (dayData && typeof dayData === 'object' && 'start' in dayData && 'end' in dayData) {
+                workingHours[day] = {
+                  start: String(dayData.start || '09:00'),
+                  end: String(dayData.end || '18:00'),
+                  isAvailable: Boolean(dayData.isAvailable !== false)
+                };
+              }
+            });
+          }
+        }
+
+        return {
+          id: item.id,
+          name: item.name,
+          email: item.email,
+          phone: item.phone,
+          position: undefined,
+          photo_url: item.avatar_url,
+          bio: item.bio,
+          specialties: undefined,
+          status: ProfessionalStatus.ACTIVE,
+          business_id: item.business_id,
+          user_id: item.userId,
+          commission_percentage: undefined,
+          hire_date: undefined,
+          working_hours: workingHours,
+          created_at: item.createdAt,
+          updated_at: item.updatedAt,
+        };
+      });
       
       setProfessionals(transformedData);
       console.log(`Successfully loaded ${transformedData.length} professionals`);

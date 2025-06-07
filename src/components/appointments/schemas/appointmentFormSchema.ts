@@ -10,6 +10,8 @@ export const appointmentFormSchema = z.object({
   }),
   time: z.string().min(1, "Horário é obrigatório"),
   endTime: z.string().optional(),
+  duration: z.number().optional(),
+  price: z.number().optional(),
   status: z.string().default("scheduled"),
   paymentMethod: z.string().default("cash"),
   notes: z.string().optional(),
