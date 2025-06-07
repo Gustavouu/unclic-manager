@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { getUserBusinessIdSafe } from '@/utils/businessAccess';
 
 export const useCurrentBusiness = () => {
   const [businessId, setBusinessId] = useState<string | null>(null);
@@ -11,32 +11,22 @@ export const useCurrentBusiness = () => {
     const getCurrentBusiness = async () => {
       try {
         setError(null);
+        setIsLoading(true);
         
-        // Verificar se há um usuário autenticado
-        const { data: { user } } = await supabase.auth.getUser();
+        console.log('useCurrentBusiness: Fetching business ID');
         
-        if (!user) {
-          setBusinessId(null);
-          setIsLoading(false);
-          return;
-        }
-
-        // Buscar o negócio do usuário
-        const { data: businessUser, error: businessError } = await supabase
-          .from('business_users')
-          .select('business_id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (businessError) {
-          console.warn('No business found for user:', businessError.message);
+        const fetchedBusinessId = await getUserBusinessIdSafe();
+        
+        if (fetchedBusinessId) {
+          console.log('useCurrentBusiness: Found business ID:', fetchedBusinessId);
+          setBusinessId(fetchedBusinessId);
+        } else {
+          console.warn('useCurrentBusiness: No business found for user');
           setError('Nenhum negócio encontrado para este usuário');
           setBusinessId(null);
-        } else {
-          setBusinessId(businessUser.business_id);
         }
       } catch (error) {
-        console.error('Error getting current business:', error);
+        console.error('useCurrentBusiness: Error getting current business:', error);
         setError('Erro ao carregar informações do negócio');
         setBusinessId(null);
       } finally {
