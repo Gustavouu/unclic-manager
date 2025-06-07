@@ -15,7 +15,7 @@ export const ensureUserBusinessAccess = async (): Promise<boolean> => {
 
     console.log('Ensuring business access for user:', user.user.id);
     
-    // Try to call the RPC function to ensure business access
+    // Use the safe function created in the database migration
     const { data, error } = await supabase.rpc('ensure_user_business_access');
     
     if (error) {
@@ -43,32 +43,7 @@ export const getUserBusinessIdSafe = async (): Promise<string | null> => {
       return null;
     }
 
-    // Direct query to avoid RLS recursion issues
-    const { data, error } = await supabase
-      .from('business_users')
-      .select('business_id')
-      .eq('user_id', user.user.id)
-      .eq('status', 'active')
-      .limit(1)
-      .maybeSingle();
-    
-    if (error) {
-      console.error('Error getting user business ID:', error);
-      return null;
-    }
-
-    return data?.business_id || null;
-  } catch (error) {
-    console.error('Exception getting user business ID:', error);
-    return null;
-  }
-};
-
-/**
- * Gets the user's business ID using RPC function (safer approach)
- */
-export const getUserBusinessId = async (): Promise<string | null> => {
-  try {
+    // Use the safe function created in the database migration
     const { data, error } = await supabase.rpc('get_user_business_id_safe');
     
     if (error) {
@@ -81,4 +56,12 @@ export const getUserBusinessId = async (): Promise<string | null> => {
     console.error('Exception getting user business ID:', error);
     return null;
   }
+};
+
+/**
+ * Gets the user's business ID using direct query (for compatibility)
+ */
+export const getUserBusinessId = async (): Promise<string | null> => {
+  // Use the safer RPC function approach
+  return await getUserBusinessIdSafe();
 };

@@ -11,6 +11,7 @@ export const useTenant = () => {
   return {
     businessId: currentBusiness?.id || null,
     businessName: currentBusiness?.name || null,
+    businessRole: currentBusiness?.role || null,
     isLoading,
     error,
   };

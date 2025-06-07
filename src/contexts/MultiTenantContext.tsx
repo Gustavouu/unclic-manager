@@ -42,10 +42,12 @@ export function MultiTenantProvider({ children }: { children: React.ReactNode })
         return;
       }
 
-      // Ensure user has business access
+      console.log('Fetching businesses for user:', user.user.id);
+
+      // Ensure user has business access using the safe function
       await ensureUserBusinessAccess();
 
-      // Get all businesses for the user
+      // Get all businesses for the user using the fixed RLS policies
       const { data: businessUsers, error: businessError } = await supabase
         .from('business_users')
         .select(`
@@ -75,12 +77,14 @@ export function MultiTenantProvider({ children }: { children: React.ReactNode })
         logo_url: bu.businesses.logo_url
       }));
 
+      console.log('Loaded businesses:', businesses);
       setAvailableBusinesses(businesses);
 
       // Set current business if not set or if current business is not in the list
       if (!currentBusiness || !businesses.find(b => b.id === currentBusiness.id)) {
         if (businesses.length > 0) {
           setCurrentBusiness(businesses[0]);
+          console.log('Set current business to:', businesses[0]);
         }
       }
 
@@ -96,11 +100,13 @@ export function MultiTenantProvider({ children }: { children: React.ReactNode })
     const business = availableBusinesses.find(b => b.id === businessId);
     if (business) {
       setCurrentBusiness(business);
+      console.log('Switched to business:', business);
       toast.success(`Switched to ${business.name}`);
     }
   }, [availableBusinesses]);
 
   const refreshBusinesses = useCallback(async () => {
+    console.log('Refreshing businesses...');
     await fetchBusinesses();
   }, [fetchBusinesses]);
 
