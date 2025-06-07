@@ -9,14 +9,20 @@ interface Business {
   slug: string;
   admin_email: string;
   status: string;
+  role?: string; // User's role in this business
+  logo_url?: string; // Business logo
 }
 
 interface MultiTenantContextType {
   currentBusiness: Business | null;
   businesses: Business[];
+  availableBusinesses: Business[]; // Alias for businesses for backward compatibility
   isLoading: boolean;
+  error: string | null;
+  hasMultipleBusinesses: boolean;
   switchBusiness: (businessId: string) => void;
   refreshBusinessData: () => Promise<void>;
+  refreshBusinesses: () => Promise<void>; // Alias for refreshBusinessData
 }
 
 const MultiTenantContext = createContext<MultiTenantContextType | undefined>(undefined);
@@ -38,21 +44,26 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
   const [currentBusiness, setCurrentBusiness] = useState<Business | null>(null);
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refreshBusinessData = async () => {
     if (!user || !profile?.business_id) {
       setIsLoading(false);
+      setError('Usuário não autenticado ou sem negócio associado');
       return;
     }
 
     try {
+      setError(null);
       // For now, create a mock business based on profile data
       const mockBusiness: Business = {
         id: profile.business_id,
         name: 'Meu Negócio',
         slug: `business-${profile.business_id.slice(0, 8)}`,
         admin_email: user.email || '',
-        status: 'active'
+        status: 'active',
+        role: 'owner', // Default role for the business owner
+        logo_url: undefined // No logo by default
       };
 
       setCurrentBusiness(mockBusiness);
@@ -61,6 +72,7 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
       console.log('Business data loaded:', mockBusiness);
     } catch (error) {
       console.error('Error loading business data:', error);
+      setError('Erro ao carregar dados do negócio');
     } finally {
       setIsLoading(false);
     }
@@ -78,6 +90,7 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
       refreshBusinessData();
     } else if (!authLoading && !user) {
       setIsLoading(false);
+      setError('Usuário não autenticado');
     }
   }, [user, profile, authLoading]);
 
@@ -90,12 +103,18 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
     );
   }
 
+  const hasMultipleBusinesses = businesses.length > 1;
+
   const value: MultiTenantContextType = {
     currentBusiness,
     businesses,
+    availableBusinesses: businesses, // Alias for backward compatibility
     isLoading,
+    error,
+    hasMultipleBusinesses,
     switchBusiness,
     refreshBusinessData,
+    refreshBusinesses: refreshBusinessData, // Alias for backward compatibility
   };
 
   return (
