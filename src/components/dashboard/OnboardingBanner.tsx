@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useTenant } from '@/contexts/TenantContext';
+import { useTenant } from '@/hooks/useTenant';
 import { safeJsonObject } from '@/utils/databaseUtils';
 
 interface OnboardingStep {

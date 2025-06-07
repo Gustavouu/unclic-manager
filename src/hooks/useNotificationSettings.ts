@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { useTenant } from '@/contexts/TenantContext';
+import { useTenant } from '@/hooks/useTenant';
 
 export interface NotificationSettings {
   push_enabled: boolean;

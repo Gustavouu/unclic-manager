@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useTenant } from "@/contexts/TenantContext";
+import { useTenant } from "@/hooks/useTenant";
 import { Building, Mail, Phone, MapPin } from "lucide-react";
 
 export function BusinessProfileCard() {
