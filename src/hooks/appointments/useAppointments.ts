@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { StandardizedAppointmentService } from '@/services/appointments/standardizedAppointmentService';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
@@ -92,6 +93,11 @@ export const useAppointments = () => {
     await fetchAppointments();
   };
 
+  const updateAppointmentStatus = async (id: string, status: string) => {
+    await appointmentService.update(id, { status: status as any });
+    await fetchAppointments();
+  };
+
   const deleteAppointment = async (id: string) => {
     await appointmentService.delete(id);
     await fetchAppointments();
@@ -114,6 +120,7 @@ export const useAppointments = () => {
     refetch: fetchAppointments,
     createAppointment,
     updateAppointment,
+    updateAppointmentStatus,
     deleteAppointment,
     getAppointmentsByDateRange,
     getAppointmentStats,

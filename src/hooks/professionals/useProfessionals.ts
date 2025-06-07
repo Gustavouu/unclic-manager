@@ -2,8 +2,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
+import { Professional } from '@/hooks/professionals/types';
 
-export interface Professional {
+// Re-export the Professional interface for external use
+export type { Professional };
+
+export interface ProfessionalLegacy {
   id: string;
   name: string;
   email?: string;
@@ -51,8 +55,28 @@ export const useProfessionals = () => {
         throw error;
       }
       
-      setProfessionals(data || []);
-      console.log(`Successfully loaded ${(data || []).length} professionals`);
+      // Transform the data to match our Professional type
+      const transformedData: Professional[] = (data || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        email: item.email,
+        phone: item.phone,
+        position: undefined, // Not available in current schema
+        photo_url: item.avatar_url,
+        bio: item.bio,
+        specialties: undefined, // Not available in current schema
+        status: 'active' as any, // Convert string to ProfessionalStatus
+        business_id: item.business_id,
+        user_id: item.userId,
+        commission_percentage: undefined, // Not available in current schema
+        hire_date: undefined, // Not available in current schema
+        working_hours: item.working_hours || {},
+        created_at: item.createdAt,
+        updated_at: item.updatedAt,
+      }));
+      
+      setProfessionals(transformedData);
+      console.log(`Successfully loaded ${transformedData.length} professionals`);
     } catch (err) {
       console.error("Error in fetchProfessionals:", err);
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar profissionais';
@@ -73,10 +97,20 @@ export const useProfessionals = () => {
     const { data, error } = await supabase
       .from('professionals')
       .insert({
-        ...professionalData,
+        id: crypto.randomUUID(),
+        name: professionalData.name,
+        email: professionalData.email,
+        phone: professionalData.phone,
+        avatar_url: professionalData.photo_url,
+        bio: professionalData.bio,
         business_id: businessId,
-        tenantId: businessId, // For compatibility
-        establishmentId: businessId, // For compatibility
+        tenantId: businessId,
+        establishmentId: businessId,
+        isActive: true,
+        status: 'active',
+        working_hours: professionalData.working_hours || {},
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       })
       .select()
       .single();
@@ -88,9 +122,19 @@ export const useProfessionals = () => {
   };
 
   const updateProfessional = async (id: string, professionalData: Partial<Professional>) => {
+    const updateData: any = {
+      name: professionalData.name,
+      email: professionalData.email,
+      phone: professionalData.phone,
+      avatar_url: professionalData.photo_url,
+      bio: professionalData.bio,
+      working_hours: professionalData.working_hours,
+      updatedAt: new Date().toISOString(),
+    };
+
     const { error } = await supabase
       .from('professionals')
-      .update(professionalData)
+      .update(updateData)
       .eq('id', id);
 
     if (error) throw error;
