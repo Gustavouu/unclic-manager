@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { QueryProvider } from './contexts/QueryContext';
 import { ErrorHandlingProvider } from './contexts/ErrorHandlingContext';
+import { AuthProvider } from './contexts/AuthContext';
 import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
 import Services from './pages/Services';
@@ -21,21 +22,23 @@ function App() {
       <BrowserRouter>
         <QueryProvider>
           <ErrorHandlingProvider>
-            <MultiTenantProvider>
-              <div className="min-h-screen bg-background">
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/clients" element={<Clients />} />
-                  <Route path="/services" element={<Services />} />
-                  <Route path="/professionals" element={<Professionals />} />
-                  <Route path="/bookings" element={<Bookings />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                </Routes>
-                <Toaster />
-              </div>
-            </MultiTenantProvider>
+            <AuthProvider>
+              <MultiTenantProvider>
+                <div className="min-h-screen bg-background">
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/clients" element={<Clients />} />
+                    <Route path="/services" element={<Services />} />
+                    <Route path="/professionals" element={<Professionals />} />
+                    <Route path="/bookings" element={<Bookings />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                  </Routes>
+                  <Toaster />
+                </div>
+              </MultiTenantProvider>
+            </AuthProvider>
           </ErrorHandlingProvider>
         </QueryProvider>
       </BrowserRouter>
