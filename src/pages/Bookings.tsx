@@ -1,82 +1,71 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Clock, User } from 'lucide-react';
+import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
+import { Loader2, AlertCircle, Calendar } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-export default function Bookings() {
+const Bookings = () => {
+  const { businessId, isLoading, error } = useCurrentBusiness();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Carregando agendamentos...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!businessId) {
+    return (
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Nenhum negócio selecionado. Por favor, selecione um negócio para continuar.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Agendamentos</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Agendamentos</h1>
           <p className="text-muted-foreground">
-            Gerencie todos os agendamentos do seu negócio
+            Gerencie os agendamentos do seu negócio.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Agendamentos Hoje
-            </CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">
-              +2 desde ontem
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Próximo Agendamento
-            </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">14:30</div>
-            <p className="text-xs text-muted-foreground">
-              Corte de cabelo - João Silva
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Clientes Atendidos
-            </CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">
-              +1 desde a última hora
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Agendamentos</CardTitle>
+          <CardTitle className="flex items-center space-x-2">
+            <Calendar className="h-5 w-5" />
+            <span>Lista de Agendamentos</span>
+          </CardTitle>
           <CardDescription>
-            Visualize e gerencie todos os agendamentos
+            Visualize e gerencie todos os seus agendamentos
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
-            <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nenhum agendamento encontrado</p>
-            <p className="text-sm">Os agendamentos aparecerão aqui quando criados</p>
+            Em desenvolvimento - Business ID: {businessId}
           </div>
         </CardContent>
       </Card>
     </div>
   );
-}
+};
+
+export default Bookings;

@@ -27,10 +27,10 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
     );
   }
 
-  // Redirect to auth if not authenticated
+  // Redirect to login if not authenticated
   if (!user) {
-    console.log('RequireAuth: No user, redirecting to /auth');
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    console.log('RequireAuth: No user, redirecting to /login');
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // User is authenticated, render children

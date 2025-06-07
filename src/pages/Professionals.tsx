@@ -1,10 +1,9 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
-import { Loader2, AlertCircle, Plus } from 'lucide-react';
+import { Loader2, AlertCircle, UserCheck } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 
 const Professionals = () => {
   const { businessId, isLoading, error } = useCurrentBusiness();
@@ -32,7 +31,7 @@ const Professionals = () => {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Nenhum negócio encontrado. Por favor, verifique suas permissões de acesso.
+          Nenhum negócio selecionado. Por favor, selecione um negócio para continuar.
         </AlertDescription>
       </Alert>
     );
@@ -40,26 +39,28 @@ const Professionals = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Profissionais</h1>
           <p className="text-muted-foreground">
-            Gerencie a equipe de profissionais do seu negócio.
+            Gerencie os profissionais do seu negócio.
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Profissional
-        </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Profissionais</CardTitle>
+          <CardTitle className="flex items-center space-x-2">
+            <UserCheck className="h-5 w-5" />
+            <span>Lista de Profissionais</span>
+          </CardTitle>
+          <CardDescription>
+            Visualize e gerencie todos os seus profissionais
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
-            Nenhum profissional encontrado. Clique em "Novo Profissional" para começar.
+            Em desenvolvimento - Business ID: {businessId}
           </div>
         </CardContent>
       </Card>

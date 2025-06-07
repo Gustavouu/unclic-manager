@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,24 +8,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader } from '@/components/ui/loader';
 import { Eye, EyeOff } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Register = () => {
   const { user, loading, signUp } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    businessName: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    document.title = 'Cadastro | Unclic';
+    document.title = 'Cadastro | Unclic Manager';
   }, []);
+
+  console.log('Register page - user:', user?.id, 'loading:', loading);
 
   if (loading) {
     return (
@@ -35,66 +37,63 @@ const Register = () => {
   }
 
   if (user) {
-    return <Navigate to="/onboarding" replace />;
+    console.log('Register: User authenticated, redirecting to dashboard');
+    return <Navigate to="/dashboard" replace />;
   }
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Nome é obrigatório';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email é obrigatório';
-    }
-
-    if (!formData.businessName.trim()) {
-      newErrors.businessName = 'Nome do negócio é obrigatório';
-    }
-
-    if (formData.password.length < 6) {
-      newErrors.password = 'Senha deve ter pelo menos 6 caracteres';
+    if (!formData.email || !formData.password || !formData.confirmPassword) {
+      toast.error('Por favor, preencha todos os campos');
+      return false;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Senhas não coincidem';
+      toast.error('As senhas não coincidem');
+      return false;
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (formData.password.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
-      await signUp(formData.email, formData.password);
+      console.log('Register: Attempting sign up with email:', formData.email);
+      const { error } = await signUp(formData.email, formData.password);
+      
+      if (error) {
+        console.error('Register error:', error);
+        toast.error(error.message || 'Erro ao criar conta');
+      } else {
+        console.log('Register: Sign up successful');
+        toast.success('Conta criada com sucesso! Faça login para continuar.');
+        navigate('/login');
+      }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Register exception:', error);
+      toast.error('Erro inesperado ao criar conta');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [e.target.name]: e.target.value,
     }));
-    
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: '',
-      }));
-    }
   };
 
   return (
@@ -103,41 +102,11 @@ const Register = () => {
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Criar conta</CardTitle>
           <CardDescription>
-            Cadastre-se para começar a usar o Unclic
+            Cadastre-se para começar a usar o Unclic Manager
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome completo</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Seu nome completo"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-              />
-              {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="businessName">Nome do negócio</Label>
-              <Input
-                id="businessName"
-                name="businessName"
-                type="text"
-                placeholder="Nome do seu negócio"
-                value={formData.businessName}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-              />
-              {errors.businessName && <p className="text-sm text-red-600">{errors.businessName}</p>}
-            </div>
-
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -150,7 +119,6 @@ const Register = () => {
                 required
                 disabled={isSubmitting}
               />
-              {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
             </div>
             
             <div className="space-y-2">
@@ -160,7 +128,7 @@ const Register = () => {
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Sua senha (mín. 6 caracteres)"
                   value={formData.password}
                   onChange={handleChange}
                   required
@@ -178,7 +146,6 @@ const Register = () => {
                   )}
                 </button>
               </div>
-              {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
             </div>
 
             <div className="space-y-2">
@@ -206,7 +173,6 @@ const Register = () => {
                   )}
                 </button>
               </div>
-              {errors.confirmPassword && <p className="text-sm text-red-600">{errors.confirmPassword}</p>}
             </div>
 
             <Button
@@ -226,7 +192,7 @@ const Register = () => {
             <p className="text-gray-600">
               Já tem uma conta?{' '}
               <Link to="/login" className="text-blue-600 hover:underline">
-                Fazer login
+                Faça login
               </Link>
             </p>
           </div>

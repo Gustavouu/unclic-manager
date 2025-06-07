@@ -2,17 +2,12 @@
 import { useMultiTenant } from '@/contexts/MultiTenantContext';
 
 export const useCurrentBusiness = () => {
-  const { 
-    currentBusiness, 
-    isLoading, 
-    error 
-  } = useMultiTenant();
-
+  const { currentBusiness, isLoading, error } = useMultiTenant();
+  
   return {
     businessId: currentBusiness?.id || null,
-    businessName: currentBusiness?.name || null,
-    businessRole: currentBusiness?.role || null,
+    business: currentBusiness,
     isLoading,
-    error: error || (currentBusiness ? null : 'Nenhum negócio selecionado'),
+    error
   };
 };

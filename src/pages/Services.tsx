@@ -1,10 +1,9 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
-import { Loader2, AlertCircle, Plus } from 'lucide-react';
+import { Loader2, AlertCircle, Scissors } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 
 const Services = () => {
   const { businessId, isLoading, error } = useCurrentBusiness();
@@ -32,7 +31,7 @@ const Services = () => {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Nenhum negócio encontrado. Por favor, verifique suas permissões de acesso.
+          Nenhum negócio selecionado. Por favor, selecione um negócio para continuar.
         </AlertDescription>
       </Alert>
     );
@@ -40,26 +39,28 @@ const Services = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Serviços</h1>
           <p className="text-muted-foreground">
             Gerencie os serviços oferecidos pelo seu negócio.
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Serviço
-        </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Serviços</CardTitle>
+          <CardTitle className="flex items-center space-x-2">
+            <Scissors className="h-5 w-5" />
+            <span>Lista de Serviços</span>
+          </CardTitle>
+          <CardDescription>
+            Visualize e gerencie todos os seus serviços
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
-            Nenhum serviço encontrado. Clique em "Novo Serviço" para começar.
+            Em desenvolvimento - Business ID: {businessId}
           </div>
         </CardContent>
       </Card>

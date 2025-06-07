@@ -14,6 +14,7 @@ import Bookings from './pages/Bookings';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Index from './pages/Index';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { MultiTenantProvider } from '@/contexts/MultiTenantContext';
 
@@ -26,12 +27,15 @@ function App() {
             <AuthProvider>
               <div className="min-h-screen bg-background">
                 <Routes>
+                  {/* Root route - handles authentication check and redirects */}
+                  <Route path="/" element={<Index />} />
+                  
                   {/* Public routes */}
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   
-                  {/* Protected routes */}
-                  <Route path="/" element={
+                  {/* Protected routes wrapped with RequireAuth and MultiTenantProvider */}
+                  <Route path="/dashboard" element={
                     <RequireAuth>
                       <MultiTenantProvider>
                         <Dashboard />
@@ -79,7 +83,7 @@ function App() {
                     </RequireAuth>
                   } />
                   
-                  {/* Redirect any unknown routes to home */}
+                  {/* Redirect any unknown routes to root */}
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
                 <Toaster />

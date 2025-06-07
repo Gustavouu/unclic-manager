@@ -11,6 +11,8 @@ const Index = () => {
     document.title = "Unclic Manager";
   }, []);
   
+  console.log('Index page - user:', user?.id, 'loading:', loading);
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -21,11 +23,13 @@ const Index = () => {
   
   // If not authenticated, redirect to login
   if (!user) {
+    console.log('Index: No user, redirecting to login');
     return <Navigate to="/login" replace />;
   }
   
-  // If authenticated, redirect to home (which will be Dashboard)
-  return <Navigate to="/" replace />;
+  // If authenticated, redirect to dashboard
+  console.log('Index: User authenticated, redirecting to dashboard');
+  return <Navigate to="/dashboard" replace />;
 };
 
 export default Index;
