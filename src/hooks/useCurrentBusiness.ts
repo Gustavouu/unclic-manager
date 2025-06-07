@@ -1,80 +1,46 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
 export const useCurrentBusiness = () => {
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { user, profile } = useAuth();
 
   useEffect(() => {
-    const fetchBusinessId = async () => {
-      if (!user) {
-        setBusinessId(null);
-        setIsLoading(false);
-        return;
-      }
-
+    const getCurrentBusiness = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
-
-        // First try to get from profile (fastest)
-        if (profile?.business_id) {
-          setBusinessId(profile.business_id);
+        // Verificar se há um usuário autenticado
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          setBusinessId(null);
           setIsLoading(false);
           return;
         }
 
-        // Use the new safe function
-        const { data: businessIdData, error: businessIdError } = await supabase
-          .rpc('get_user_business_id_safe');
+        // Buscar o negócio do usuário
+        const { data: businessUser, error } = await supabase
+          .from('business_users')
+          .select('business_id')
+          .eq('user_id', user.id)
+          .single();
 
-        if (businessIdError) {
-          console.error('Error calling get_user_business_id_safe:', businessIdError);
-          throw businessIdError;
-        }
-
-        if (businessIdData) {
-          setBusinessId(businessIdData);
+        if (error) {
+          console.warn('No business found for user:', error.message);
+          setBusinessId(null);
         } else {
-          // Fallback to business_users table query
-          const { data: businessUserData, error: businessUserError } = await supabase
-            .from('business_users')
-            .select('business_id')
-            .eq('user_id', user.id)
-            .eq('status', 'active')
-            .limit(1)
-            .maybeSingle();
-
-          if (businessUserError && businessUserError.code !== 'PGRST116') {
-            throw businessUserError;
-          }
-
-          if (businessUserData?.business_id) {
-            setBusinessId(businessUserData.business_id);
-          } else {
-            console.warn('No active business found for user:', user.id);
-            setBusinessId(null);
-          }
+          setBusinessId(businessUser.business_id);
         }
-      } catch (err: any) {
-        console.error('Error fetching business ID:', err);
-        setError('Falha ao buscar informações do negócio');
+      } catch (error) {
+        console.error('Error getting current business:', error);
         setBusinessId(null);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchBusinessId();
-  }, [user, profile]);
+    getCurrentBusiness();
+  }, []);
 
-  return {
-    businessId,
-    isLoading,
-    error,
-  };
+  return { businessId, isLoading };
 };

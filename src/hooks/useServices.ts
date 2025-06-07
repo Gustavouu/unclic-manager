@@ -10,9 +10,7 @@ export interface Service {
   price: number;
   duration: number;
   category?: string;
-  image_url?: string;
   is_active: boolean;
-  commission_percentage?: number;
   business_id: string;
   created_at: string;
   updated_at: string;
@@ -97,7 +95,7 @@ export const useServices = () => {
   const deleteService = async (id: string) => {
     const { error } = await supabase
       .from('services')
-      .delete()
+      .update({ is_active: false })
       .eq('id', id);
 
     if (error) throw error;
