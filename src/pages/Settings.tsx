@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Settings as SettingsIcon, Monitor, Bell, Shield, Database } from 'lucide-react';
+import { Settings as SettingsIcon, Monitor, Bell, Shield, Database, Zap } from 'lucide-react';
 import { MonitoringDashboard } from '@/components/monitoring/MonitoringDashboard';
 import { ErrorNotificationCenter } from '@/components/monitoring/ErrorNotificationCenter';
+import { PerformanceWidget } from '@/components/performance/PerformanceWidget';
 import { useErrorHandling } from '@/contexts/ErrorHandlingContext';
 
 export default function Settings() {
@@ -22,7 +22,7 @@ export default function Settings() {
             Configurações
           </h1>
           <p className="text-muted-foreground">
-            Gerencie as configurações do sistema e monitoramento
+            Gerencie as configurações do sistema, monitoramento e performance
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -37,10 +37,14 @@ export default function Settings() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="general" className="flex items-center gap-2">
             <SettingsIcon className="h-4 w-4" />
             Geral
+          </TabsTrigger>
+          <TabsTrigger value="performance" className="flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            Performance
           </TabsTrigger>
           <TabsTrigger value="monitoring" className="flex items-center gap-2">
             <Monitor className="h-4 w-4" />
@@ -90,6 +94,68 @@ export default function Settings() {
                   <Badge variant={isInitialized ? "default" : "secondary"}>
                     {isInitialized ? "Configurado" : "Configurando..."}
                   </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Cache Redis</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Sistema de cache para otimização de performance
+                    </p>
+                  </div>
+                  <Badge variant="default">Ativo</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="performance" className="space-y-6">
+          <PerformanceWidget />
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Otimizações de Performance</CardTitle>
+              <CardDescription>
+                Configurações avançadas de cache e performance
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Cache Inteligente</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Sistema de cache Redis com compressão automática
+                    </p>
+                  </div>
+                  <Badge variant="default">Ativo</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Lazy Loading</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Carregamento sob demanda de componentes
+                    </p>
+                  </div>
+                  <Badge variant="default">Ativo</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Query Optimization</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Otimização automática de consultas ao banco
+                    </p>
+                  </div>
+                  <Badge variant="default">Ativo</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Asset Preloading</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Pré-carregamento de imagens e recursos críticos
+                    </p>
+                  </div>
+                  <Badge variant="default">Ativo</Badge>
                 </div>
               </div>
             </CardContent>
