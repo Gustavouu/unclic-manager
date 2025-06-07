@@ -9,6 +9,7 @@ interface Business {
   name: string;
   role: string;
   status: string;
+  logo_url?: string;
 }
 
 interface MultiTenantContextType {
@@ -53,7 +54,8 @@ export function MultiTenantProvider({ children }: { children: React.ReactNode })
           status,
           businesses!inner(
             id,
-            name
+            name,
+            logo_url
           )
         `)
         .eq('user_id', user.user.id)
@@ -69,7 +71,8 @@ export function MultiTenantProvider({ children }: { children: React.ReactNode })
         id: bu.business_id,
         name: bu.businesses.name,
         role: bu.role,
-        status: bu.status
+        status: bu.status,
+        logo_url: bu.businesses.logo_url
       }));
 
       setAvailableBusinesses(businesses);
