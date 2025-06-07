@@ -1,15 +1,14 @@
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { useAuthContext } from './AuthContext';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getUserBusinessIdSafe, ensureUserBusinessAccess } from '@/utils/businessAccess';
 import { toast } from 'sonner';
 
 interface Business {
   id: string;
   name: string;
-  status: string;
   role: string;
-  logo_url?: string;
+  status: string;
 }
 
 interface MultiTenantContextType {
@@ -17,169 +16,116 @@ interface MultiTenantContextType {
   availableBusinesses: Business[];
   isLoading: boolean;
   error: string | null;
-  switchBusiness: (businessId: string) => Promise<boolean>;
+  switchBusiness: (businessId: string) => Promise<void>;
   refreshBusinesses: () => Promise<void>;
   hasMultipleBusinesses: boolean;
 }
 
 const MultiTenantContext = createContext<MultiTenantContextType | undefined>(undefined);
 
-export const useMultiTenant = () => {
-  const context = useContext(MultiTenantContext);
-  if (context === undefined) {
-    throw new Error('useMultiTenant must be used within a MultiTenantProvider');
-  }
-  return context;
-};
-
-interface MultiTenantProviderProps {
-  children: React.ReactNode;
-}
-
-const STORAGE_KEY = 'unclic_current_business_id';
-
-export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ children }) => {
+export function MultiTenantProvider({ children }: { children: React.ReactNode }) {
   const [currentBusiness, setCurrentBusiness] = useState<Business | null>(null);
   const [availableBusinesses, setAvailableBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user, loading: authLoading } = useAuthContext();
 
-  const fetchUserBusinesses = useCallback(async () => {
-    if (!user) {
-      setAvailableBusinesses([]);
-      setCurrentBusiness(null);
-      setIsLoading(false);
-      return;
-    }
-
+  const fetchBusinesses = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      console.log('Fetching businesses for user:', user.id);
+      const { data: user } = await supabase.auth.getUser();
+      if (!user?.user) {
+        setCurrentBusiness(null);
+        setAvailableBusinesses([]);
+        return;
+      }
 
-      // Get all businesses the user has access to
-      const { data: businessUsers, error: businessUsersError } = await supabase
+      // Ensure user has business access
+      await ensureUserBusinessAccess();
+
+      // Get all businesses for the user
+      const { data: businessUsers, error: businessError } = await supabase
         .from('business_users')
         .select(`
           business_id,
           role,
           status,
-          businesses!inner (
+          businesses!inner(
             id,
-            name,
-            status,
-            logo_url
+            name
           )
         `)
-        .eq('user_id', user.id)
+        .eq('user_id', user.user.id)
         .eq('status', 'active');
 
-      if (businessUsersError) {
-        console.error('Error fetching business users:', businessUsersError);
-        throw businessUsersError;
-      }
-
-      if (!businessUsers || businessUsers.length === 0) {
-        console.warn('No businesses found for user:', user.id);
-        setError('Nenhum negócio encontrado para este usuário');
-        setAvailableBusinesses([]);
-        setCurrentBusiness(null);
-        setIsLoading(false);
+      if (businessError) {
+        console.error('Error fetching businesses:', businessError);
+        setError('Failed to load businesses');
         return;
       }
 
-      // Transform the data
-      const businesses: Business[] = businessUsers.map((bu: any) => ({
+      const businesses: Business[] = (businessUsers || []).map(bu => ({
         id: bu.business_id,
         name: bu.businesses.name,
-        status: bu.businesses.status,
         role: bu.role,
-        logo_url: bu.businesses.logo_url,
+        status: bu.status
       }));
 
-      console.log('Found businesses:', businesses.length);
       setAvailableBusinesses(businesses);
 
-      // Try to load previously selected business
-      const savedBusinessId = localStorage.getItem(STORAGE_KEY);
-      let selectedBusiness: Business | null = null;
-
-      if (savedBusinessId) {
-        selectedBusiness = businesses.find(b => b.id === savedBusinessId) || null;
-        if (selectedBusiness) {
-          console.log('Restored business from storage:', selectedBusiness.name);
+      // Set current business if not set or if current business is not in the list
+      if (!currentBusiness || !businesses.find(b => b.id === currentBusiness.id)) {
+        if (businesses.length > 0) {
+          setCurrentBusiness(businesses[0]);
         }
       }
 
-      // If no saved business or saved business not found, select the first one
-      if (!selectedBusiness && businesses.length > 0) {
-        selectedBusiness = businesses[0];
-        console.log('Auto-selecting first business:', selectedBusiness.name);
-        localStorage.setItem(STORAGE_KEY, selectedBusiness.id);
-      }
-
-      setCurrentBusiness(selectedBusiness);
-
-    } catch (err: any) {
-      console.error('Error fetching businesses:', err);
-      setError('Erro ao carregar negócios do usuário');
-      setAvailableBusinesses([]);
-      setCurrentBusiness(null);
+    } catch (err) {
+      console.error('Error in fetchBusinesses:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [currentBusiness]);
 
-  const switchBusiness = useCallback(async (businessId: string): Promise<boolean> => {
-    const targetBusiness = availableBusinesses.find(b => b.id === businessId);
-    
-    if (!targetBusiness) {
-      toast.error('Negócio não encontrado');
-      return false;
-    }
-
-    try {
-      setCurrentBusiness(targetBusiness);
-      localStorage.setItem(STORAGE_KEY, businessId);
-      
-      console.log('Switched to business:', targetBusiness.name);
-      toast.success(`Negócio alterado para: ${targetBusiness.name}`);
-      
-      return true;
-    } catch (error) {
-      console.error('Error switching business:', error);
-      toast.error('Erro ao trocar de negócio');
-      return false;
+  const switchBusiness = useCallback(async (businessId: string) => {
+    const business = availableBusinesses.find(b => b.id === businessId);
+    if (business) {
+      setCurrentBusiness(business);
+      toast.success(`Switched to ${business.name}`);
     }
   }, [availableBusinesses]);
 
   const refreshBusinesses = useCallback(async () => {
-    await fetchUserBusinesses();
-  }, [fetchUserBusinesses]);
+    await fetchBusinesses();
+  }, [fetchBusinesses]);
 
   useEffect(() => {
-    if (!authLoading) {
-      fetchUserBusinesses();
-    }
-  }, [user, authLoading, fetchUserBusinesses]);
+    fetchBusinesses();
+  }, [fetchBusinesses]);
 
-  const hasMultipleBusinesses = availableBusinesses.length > 1;
+  const value: MultiTenantContextType = {
+    currentBusiness,
+    availableBusinesses,
+    isLoading,
+    error,
+    switchBusiness,
+    refreshBusinesses,
+    hasMultipleBusinesses: availableBusinesses.length > 1,
+  };
 
   return (
-    <MultiTenantContext.Provider
-      value={{
-        currentBusiness,
-        availableBusinesses,
-        isLoading,
-        error,
-        switchBusiness,
-        refreshBusinesses,
-        hasMultipleBusinesses,
-      }}
-    >
+    <MultiTenantContext.Provider value={value}>
       {children}
     </MultiTenantContext.Provider>
   );
-};
+}
+
+export function useMultiTenant() {
+  const context = useContext(MultiTenantContext);
+  if (context === undefined) {
+    throw new Error('useMultiTenant must be used within a MultiTenantProvider');
+  }
+  return context;
+}

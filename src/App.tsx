@@ -1,177 +1,41 @@
-
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { MultiTenantProvider } from '@/contexts/MultiTenantContext';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { AppLayout } from '@/components/layout/AppLayout';
-
-// Pages
-import AuthPremium from '@/pages/AuthPremium';
-import Dashboard from '@/pages/Dashboard';
-import Clients from '@/pages/Clients';
-import Appointments from '@/pages/Appointments';
-import Finance from '@/pages/Finance';
-import Settings from '@/pages/Settings';
-import Services from '@/pages/Services';
-import Professionals from '@/pages/Professionals';
-import Inventory from '@/pages/Inventory';
-import Payments from '@/pages/Payments';
-import Reports from '@/pages/Reports';
-import Marketing from '@/pages/Marketing';
-import Documents from '@/pages/Documents';
-
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-    },
-  },
-});
+import { QueryProvider } from './contexts/QueryContext';
+import Dashboard from './pages/Dashboard';
+import Clients from './pages/Clients';
+import Services from './pages/Services';
+import Professionals from './pages/Professionals';
+import Bookings from './pages/Bookings';
+import Settings from './pages/Settings';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { MultiTenantProvider } from '@/contexts/MultiTenantContext';
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <MultiTenantProvider>
-          <Router>
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <ErrorBoundary>
+      <BrowserRouter>
+        <QueryProvider>
+          <MultiTenantProvider>
+            <div className="min-h-screen bg-background">
               <Routes>
-                {/* Public Routes */}
-                <Route path="/auth" element={<AuthPremium />} />
-                
-                {/* Protected Routes */}
-                <Route path="/" element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Dashboard />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Dashboard />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/clients" element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Clients />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/appointments" element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Appointments />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } />
-
-                <Route path="/services" element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Services />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } />
-
-                <Route path="/professionals" element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Professionals />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } />
-
-                <Route path="/inventory" element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Inventory />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/financial" element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Finance />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } />
-
-                <Route path="/payments" element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Payments />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } />
-
-                <Route path="/reports" element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Reports />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } />
-
-                <Route path="/marketing" element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Marketing />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } />
-
-                <Route path="/documents" element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Documents />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } />
-                
-                <Route path="/settings" element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Settings />
-                    </AppLayout>
-                  </ProtectedRoute>
-                } />
-
-                {/* Redirect to auth for any unmatched routes */}
-                <Route path="*" element={<Navigate to="/auth" replace />} />
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/clients" element={<Clients />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/professionals" element={<Professionals />} />
+                <Route path="/bookings" element={<Bookings />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
               </Routes>
-              
-              <Toaster 
-                position="top-right" 
-                richColors 
-                closeButton
-                toastOptions={{
-                  duration: 4000,
-                  style: {
-                    background: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                  },
-                }}
-              />
+              <Toaster />
             </div>
-          </Router>
-        </MultiTenantProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+          </MultiTenantProvider>
+        </QueryProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 
