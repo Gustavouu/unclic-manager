@@ -60,7 +60,7 @@ export const useUserPermissions = () => {
       }
 
       try {
-        // Get role from the modern business_users table
+        // Get role from the business_users table with proper RLS
         const { data: businessUser, error: businessError } = await supabase
           .from('business_users')
           .select(`
@@ -78,6 +78,19 @@ export const useUserPermissions = () => {
 
         if (!businessError && businessUser?.roles) {
           userRole = businessUser.roles.role_type;
+        } else {
+          // Fallback to the role column if roles table join fails
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('business_users')
+            .select('role')
+            .eq('user_id', user.id)
+            .eq('business_id', businessId)
+            .eq('status', 'active')
+            .single();
+
+          if (!fallbackError && fallbackData?.role) {
+            userRole = fallbackData.role;
+          }
         }
 
         setPermissions({

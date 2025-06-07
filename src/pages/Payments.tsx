@@ -1,56 +1,68 @@
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { Loader } from "@/components/ui/loader";
-import { useQuery } from "@tanstack/react-query";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
+import { Loader2, AlertCircle, Plus } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
-const Payments: React.FC = () => {
-  const { data: payments, isLoading, error } = useQuery({
-    queryKey: ['payments'],
-    queryFn: async () => {
-      // In a real app, this would fetch data from your API
-      return [];
-    },
-  });
+const Payments = () => {
+  const { businessId, isLoading, error } = useCurrentBusiness();
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader size="lg" text="Carregando pagamentos..." />
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Carregando pagamentos...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4">
-        <h2 className="text-xl font-semibold">Erro ao carregar pagamentos</h2>
-        <p className="text-muted-foreground">{String(error)}</p>
-        <Button>Tentar novamente</Button>
-      </div>
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!businessId) {
+    return (
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Nenhum negócio encontrado. Por favor, verifique suas permissões de acesso.
+        </AlertDescription>
+      </Alert>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Pagamentos</h1>
-        <Button>Novo Pagamento</Button>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Pagamentos</h1>
+          <p className="text-muted-foreground">
+            Configure métodos de pagamento e acompanhe transações.
+          </p>
+        </div>
+        <Button>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo Método
+        </Button>
       </div>
 
-      <div className="border rounded-md">
-        {payments && payments.length > 0 ? (
-          <div className="p-4">Lista de pagamentos</div>
-        ) : (
-          <div className="flex flex-col items-center justify-center p-8 text-center">
-            <h3 className="text-lg font-medium">Nenhum pagamento encontrado</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Você ainda não tem nenhum pagamento registrado.
-            </p>
-            <Button className="mt-4">Registrar Pagamento</Button>
+      <Card>
+        <CardHeader>
+          <CardTitle>Métodos de Pagamento</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            Nenhum método de pagamento configurado. Clique em "Novo Método" para começar.
           </div>
-        )}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

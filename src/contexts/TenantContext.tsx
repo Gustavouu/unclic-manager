@@ -44,50 +44,48 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       setIsLoading(true);
       setError(null);
 
-      // First try business_users table
-      const { data: businessUserData, error: businessUserError } = await supabase
-        .from('business_users')
-        .select('business_id')
-        .eq('user_id', user.id)
-        .limit(1)
-        .maybeSingle();
+      // Use the new safe function
+      const { data: businessIdData, error: businessIdError } = await supabase
+        .rpc('get_user_business_id_safe');
 
-      if (businessUserError && businessUserError.code !== 'PGRST116') {
-        throw businessUserError;
+      if (businessIdError) {
+        console.error('Error calling get_user_business_id_safe:', businessIdError);
+        throw businessIdError;
       }
 
-      let foundBusinessId = businessUserData?.business_id;
+      let foundBusinessId = businessIdData;
 
       if (!foundBusinessId) {
-        // Try businesses table by admin email
-        const { data: businessData, error: businessError } = await supabase
-          .from('businesses')
-          .select('id')
-          .eq('admin_email', user.email)
+        // Fallback to business_users table
+        const { data: businessUserData, error: businessUserError } = await supabase
+          .from('business_users')
+          .select('business_id')
+          .eq('user_id', user.id)
+          .eq('status', 'active')
           .limit(1)
           .maybeSingle();
 
-        if (businessError && businessError.code !== 'PGRST116') {
-          throw businessError;
+        if (businessUserError && businessUserError.code !== 'PGRST116') {
+          throw businessUserError;
         }
 
-        foundBusinessId = businessData?.id;
+        foundBusinessId = businessUserData?.business_id;
       }
 
       if (foundBusinessId) {
         setBusinessId(foundBusinessId);
 
-        // Fetch business name
-        const { data: businessDetails, error: businessDetailsError } = await supabase
+        // Get business name
+        const { data: businessData, error: businessError } = await supabase
           .from('businesses')
           .select('name')
           .eq('id', foundBusinessId)
           .single();
 
-        if (businessDetailsError) {
-          console.error('Error fetching business details:', businessDetailsError);
-        } else {
-          setBusinessName(businessDetails.name);
+        if (businessError && businessError.code !== 'PGRST116') {
+          console.error('Error fetching business name:', businessError);
+        } else if (businessData) {
+          setBusinessName(businessData.name);
         }
       } else {
         console.warn('No business found for user:', user.id);
@@ -96,7 +94,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       }
     } catch (err: any) {
       console.error('Error fetching business data:', err);
-      setError(err.message || 'Failed to fetch business information');
+      setError('Falha ao buscar informações do negócio');
       setBusinessId(null);
       setBusinessName(null);
     } finally {
@@ -114,16 +112,16 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
     }
   }, [user, authLoading]);
 
-  const value = {
-    businessId,
-    businessName,
-    isLoading: isLoading || authLoading,
-    error,
-    refetch,
-  };
-
   return (
-    <TenantContext.Provider value={value}>
+    <TenantContext.Provider
+      value={{
+        businessId,
+        businessName,
+        isLoading,
+        error,
+        refetch,
+      }}
+    >
       {children}
     </TenantContext.Provider>
   );

@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentBusiness } from "@/hooks/useCurrentBusiness";
 
 interface BusinessHours {
   [key: string]: {
@@ -37,18 +38,30 @@ const defaultConfig: BusinessConfig = {
 export const useBusinessConfig = () => {
   const [config, setConfig] = useState<BusinessConfig>(defaultConfig);
   const [loading, setLoading] = useState(true);
+  const { businessId } = useCurrentBusiness();
 
   useEffect(() => {
     const fetchConfig = async () => {
+      if (!businessId) {
+        setConfig(defaultConfig);
+        setLoading(false);
+        return;
+      }
+
       try {
+        setLoading(true);
+
+        // Use the new standardized business_settings table
         const { data: businessConfig, error } = await supabase
           .from("business_settings")
           .select("*")
+          .eq("business_id", businessId)
           .limit(1)
           .maybeSingle();
 
         if (error) {
           console.error("Erro ao buscar configurações:", error);
+          setConfig(defaultConfig);
           return;
         }
 
@@ -61,19 +74,22 @@ export const useBusinessConfig = () => {
             maxFutureDays: businessConfig.maximum_days_in_advance || defaultConfig.maxFutureDays,
             requireConfirmation: businessConfig.require_advance_payment ?? defaultConfig.requireConfirmation,
           });
+        } else {
+          setConfig(defaultConfig);
         }
       } catch (error) {
         console.error("Erro ao buscar configurações:", error);
+        setConfig(defaultConfig);
       } finally {
         setLoading(false);
       }
     };
 
     fetchConfig();
-  }, []);
+  }, [businessId]);
 
   return {
     ...config,
     loading,
   };
-}; 
+};

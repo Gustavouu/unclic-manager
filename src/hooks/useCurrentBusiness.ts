@@ -28,18 +28,19 @@ export const useCurrentBusiness = () => {
           return;
         }
 
-        // Then try the safe function
+        // Use the new safe function
         const { data: businessIdData, error: businessIdError } = await supabase
           .rpc('get_user_business_id_safe');
 
         if (businessIdError) {
+          console.error('Error calling get_user_business_id_safe:', businessIdError);
           throw businessIdError;
         }
 
         if (businessIdData) {
           setBusinessId(businessIdData);
         } else {
-          // Try to get business ID from business_users table as fallback
+          // Fallback to business_users table query
           const { data: businessUserData, error: businessUserError } = await supabase
             .from('business_users')
             .select('business_id')
@@ -55,7 +56,7 @@ export const useCurrentBusiness = () => {
           if (businessUserData?.business_id) {
             setBusinessId(businessUserData.business_id);
           } else {
-            console.warn('No business found for user:', user.id);
+            console.warn('No active business found for user:', user.id);
             setBusinessId(null);
           }
         }
