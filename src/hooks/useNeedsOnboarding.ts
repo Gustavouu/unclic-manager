@@ -1,20 +1,18 @@
 
-import { useTenant } from "@/contexts/TenantContext";
+import { useMultiTenant } from "@/contexts/MultiTenantContext";
 
 export const useNeedsOnboarding = () => {
-  const { businessId } = useTenant();
+  const { currentBusiness, isLoading, error } = useMultiTenant();
   
-  // For now, return false since we don't have a currentBusiness property
-  // In a real implementation, this would check onboarding status
+  // For now, return false since we don't have onboarding status in the business object
+  // In a real implementation, this would check onboarding status from the business data
   const needsOnboarding = false;
-  const isLoading = false;
-  const loading = false;
-  const error = null;
+  const loading = isLoading;
   
   return {
     needsOnboarding,
     isLoading,
     loading,
-    error
+    error: error || null
   };
 };
