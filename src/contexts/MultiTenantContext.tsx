@@ -1,7 +1,9 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Loader } from '@/components/ui/loader';
+import { ensureUserBusinessAccess } from '@/utils/businessAccess';
 
 interface Business {
   id: string;
@@ -9,20 +11,18 @@ interface Business {
   slug: string;
   admin_email: string;
   status: string;
-  role?: string; // User's role in this business
-  logo_url?: string; // Business logo
+  role?: string;
+  logo_url?: string;
 }
 
 interface MultiTenantContextType {
   currentBusiness: Business | null;
   businesses: Business[];
-  availableBusinesses: Business[]; // Alias for businesses for backward compatibility
   isLoading: boolean;
   error: string | null;
   hasMultipleBusinesses: boolean;
   switchBusiness: (businessId: string) => void;
   refreshBusinessData: () => Promise<void>;
-  refreshBusinesses: () => Promise<void>; // Alias for refreshBusinessData
 }
 
 const MultiTenantContext = createContext<MultiTenantContextType | undefined>(undefined);
@@ -47,29 +47,69 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
   const [error, setError] = useState<string | null>(null);
 
   const refreshBusinessData = async () => {
-    if (!user || !profile?.business_id) {
+    if (!user) {
+      setCurrentBusiness(null);
+      setBusinesses([]);
       setIsLoading(false);
-      setError('Usuário não autenticado ou sem negócio associado');
       return;
     }
 
     try {
       setError(null);
-      // For now, create a mock business based on profile data
-      const mockBusiness: Business = {
-        id: profile.business_id,
-        name: 'Meu Negócio',
-        slug: `business-${profile.business_id.slice(0, 8)}`,
-        admin_email: user.email || '',
-        status: 'active',
-        role: 'owner', // Default role for the business owner
-        logo_url: undefined // No logo by default
-      };
+      console.log('Loading business data for user:', user.id);
 
-      setCurrentBusiness(mockBusiness);
-      setBusinesses([mockBusiness]);
+      // Ensure user has business access
+      await ensureUserBusinessAccess();
+
+      // Get user's businesses through business_users relationship
+      const { data: businessUsers, error: businessError } = await supabase
+        .from('business_users')
+        .select(`
+          business_id,
+          role,
+          status,
+          businesses!inner(
+            id,
+            name,
+            slug,
+            admin_email,
+            status,
+            logo_url
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'active');
+
+      if (businessError) {
+        console.error('Error fetching businesses:', businessError);
+        throw businessError;
+      }
+
+      if (!businessUsers || businessUsers.length === 0) {
+        console.log('No businesses found for user, creating default business');
+        await ensureUserBusinessAccess();
+        // Retry after ensuring business access
+        return refreshBusinessData();
+      }
+
+      const userBusinesses: Business[] = businessUsers.map(bu => ({
+        id: bu.businesses.id,
+        name: bu.businesses.name,
+        slug: bu.businesses.slug,
+        admin_email: bu.businesses.admin_email,
+        status: bu.businesses.status,
+        role: bu.role,
+        logo_url: bu.businesses.logo_url
+      }));
+
+      console.log('Businesses loaded:', userBusinesses);
+      setBusinesses(userBusinesses);
       
-      console.log('Business data loaded:', mockBusiness);
+      // Set current business (first one for now)
+      if (userBusinesses.length > 0) {
+        setCurrentBusiness(userBusinesses[0]);
+      }
+
     } catch (error) {
       console.error('Error loading business data:', error);
       setError('Erro ao carregar dados do negócio');
@@ -86,13 +126,14 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
   };
 
   useEffect(() => {
-    if (!authLoading && user && profile) {
+    if (!authLoading && user) {
       refreshBusinessData();
     } else if (!authLoading && !user) {
+      setCurrentBusiness(null);
+      setBusinesses([]);
       setIsLoading(false);
-      setError('Usuário não autenticado');
     }
-  }, [user, profile, authLoading]);
+  }, [user, authLoading]);
 
   // Show loading only when auth is ready but we're still loading business data
   if (!authLoading && isLoading) {
@@ -108,13 +149,11 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
   const value: MultiTenantContextType = {
     currentBusiness,
     businesses,
-    availableBusinesses: businesses, // Alias for backward compatibility
     isLoading,
     error,
     hasMultipleBusinesses,
     switchBusiness,
     refreshBusinessData,
-    refreshBusinesses: refreshBusinessData, // Alias for backward compatibility
   };
 
   return (

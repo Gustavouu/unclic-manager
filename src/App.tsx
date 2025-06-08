@@ -6,6 +6,7 @@ import { QueryProvider } from './contexts/QueryContext';
 import { ErrorHandlingProvider } from './contexts/ErrorHandlingContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { RequireAuth } from './components/auth/RequireAuth';
+import { DashboardLayout } from './components/DashboardLayout';
 import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
 import Services from './pages/Services';
@@ -34,54 +35,24 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   
-                  {/* Protected routes wrapped with RequireAuth and MultiTenantProvider */}
-                  <Route path="/dashboard" element={
-                    <RequireAuth>
-                      <MultiTenantProvider>
-                        <Dashboard />
-                      </MultiTenantProvider>
-                    </RequireAuth>
-                  } />
-                  
-                  <Route path="/clients" element={
-                    <RequireAuth>
-                      <MultiTenantProvider>
-                        <Clients />
-                      </MultiTenantProvider>
-                    </RequireAuth>
-                  } />
-                  
-                  <Route path="/services" element={
-                    <RequireAuth>
-                      <MultiTenantProvider>
-                        <Services />
-                      </MultiTenantProvider>
-                    </RequireAuth>
-                  } />
-                  
-                  <Route path="/professionals" element={
-                    <RequireAuth>
-                      <MultiTenantProvider>
-                        <Professionals />
-                      </MultiTenantProvider>
-                    </RequireAuth>
-                  } />
-                  
-                  <Route path="/bookings" element={
-                    <RequireAuth>
-                      <MultiTenantProvider>
-                        <Bookings />
-                      </MultiTenantProvider>
-                    </RequireAuth>
-                  } />
-                  
-                  <Route path="/settings" element={
-                    <RequireAuth>
-                      <MultiTenantProvider>
-                        <Settings />
-                      </MultiTenantProvider>
-                    </RequireAuth>
-                  } />
+                  {/* Protected routes with layout */}
+                  <Route 
+                    path="/*" 
+                    element={
+                      <RequireAuth>
+                        <MultiTenantProvider>
+                          <DashboardLayout />
+                        </MultiTenantProvider>
+                      </RequireAuth>
+                    }
+                  >
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="clients" element={<Clients />} />
+                    <Route path="services" element={<Services />} />
+                    <Route path="professionals" element={<Professionals />} />
+                    <Route path="bookings" element={<Bookings />} />
+                    <Route path="settings" element={<Settings />} />
+                  </Route>
                   
                   {/* Redirect any unknown routes to root */}
                   <Route path="*" element={<Navigate to="/" replace />} />
