@@ -3044,6 +3044,10 @@ export type Database = {
         Args: { tenant_id: string }
         Returns: boolean
       }
+      user_has_business_access_secure: {
+        Args: { business_id_param: string }
+        Returns: boolean
+      }
       user_has_permission: {
         Args: {
           permission_name: Database["public"]["Enums"]["permission_type"]

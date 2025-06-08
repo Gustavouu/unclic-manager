@@ -18,13 +18,13 @@ interface Business {
 interface MultiTenantContextType {
   currentBusiness: Business | null;
   businesses: Business[];
-  availableBusinesses: Business[]; // Added this property
+  availableBusinesses: Business[];
   isLoading: boolean;
   error: string | null;
   hasMultipleBusinesses: boolean;
   switchBusiness: (businessId: string) => void;
   refreshBusinessData: () => Promise<void>;
-  refreshBusinesses: () => Promise<void>; // Added this property
+  refreshBusinesses: () => Promise<void>;
 }
 
 const MultiTenantContext = createContext<MultiTenantContextType | undefined>(undefined);
@@ -104,17 +104,18 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
         logo_url: bu.businesses.logo_url
       }));
 
-      console.log('Businesses loaded:', userBusinesses);
+      console.log('Businesses loaded successfully:', userBusinesses);
       setBusinesses(userBusinesses);
       
       // Set current business (first one for now)
       if (userBusinesses.length > 0) {
         setCurrentBusiness(userBusinesses[0]);
+        console.log('Current business set to:', userBusinesses[0].name);
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading business data:', error);
-      setError('Erro ao carregar dados do negócio');
+      setError(error.message || 'Erro ao carregar dados do negócio');
     } finally {
       setIsLoading(false);
     }
@@ -127,13 +128,16 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
     const business = businesses.find(b => b.id === businessId);
     if (business) {
       setCurrentBusiness(business);
+      console.log('Switched to business:', business.name);
     }
   };
 
   useEffect(() => {
     if (!authLoading && user) {
+      console.log('Auth ready, loading business data for user:', user.id);
       refreshBusinessData();
     } else if (!authLoading && !user) {
+      console.log('No user authenticated, clearing business data');
       setCurrentBusiness(null);
       setBusinesses([]);
       setIsLoading(false);
@@ -154,13 +158,13 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
   const value: MultiTenantContextType = {
     currentBusiness,
     businesses,
-    availableBusinesses: businesses, // Added this - same as businesses for compatibility
+    availableBusinesses: businesses,
     isLoading,
     error,
     hasMultipleBusinesses,
     switchBusiness,
     refreshBusinessData,
-    refreshBusinesses, // Added this alias
+    refreshBusinesses,
   };
 
   return (
