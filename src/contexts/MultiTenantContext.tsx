@@ -18,11 +18,13 @@ interface Business {
 interface MultiTenantContextType {
   currentBusiness: Business | null;
   businesses: Business[];
+  availableBusinesses: Business[]; // Added this property
   isLoading: boolean;
   error: string | null;
   hasMultipleBusinesses: boolean;
   switchBusiness: (businessId: string) => void;
   refreshBusinessData: () => Promise<void>;
+  refreshBusinesses: () => Promise<void>; // Added this property
 }
 
 const MultiTenantContext = createContext<MultiTenantContextType | undefined>(undefined);
@@ -118,6 +120,9 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
     }
   };
 
+  // Alias for refreshBusinessData to maintain compatibility
+  const refreshBusinesses = refreshBusinessData;
+
   const switchBusiness = (businessId: string) => {
     const business = businesses.find(b => b.id === businessId);
     if (business) {
@@ -149,11 +154,13 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
   const value: MultiTenantContextType = {
     currentBusiness,
     businesses,
+    availableBusinesses: businesses, // Added this - same as businesses for compatibility
     isLoading,
     error,
     hasMultipleBusinesses,
     switchBusiness,
     refreshBusinessData,
+    refreshBusinesses, // Added this alias
   };
 
   return (
