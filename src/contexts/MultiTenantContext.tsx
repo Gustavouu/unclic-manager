@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader } from '@/components/ui/loader';
 import { ensureUserBusinessAccess } from '@/utils/businessAccess';
+import { useContextualErrorHandler } from '@/hooks/useContextualErrorHandler';
 
 interface Business {
   id: string;
@@ -47,6 +48,8 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const errorHandler = useContextualErrorHandler('MultiTenantProvider');
+  const isProduction = import.meta.env.PROD;
 
   const refreshBusinessData = async () => {
     if (!user) {
@@ -58,7 +61,9 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
 
     try {
       setError(null);
-      console.log('Loading business data for user:', user.id);
+      if (!isProduction) {
+        console.log('Loading business data for user:', user.id);
+      }
 
       // Ensure user has business access
       await ensureUserBusinessAccess();
@@ -83,12 +88,13 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
         .eq('status', 'active');
 
       if (businessError) {
-        console.error('Error fetching businesses:', businessError);
         throw businessError;
       }
 
       if (!businessUsers || businessUsers.length === 0) {
-        console.log('No businesses found for user, creating default business');
+        if (!isProduction) {
+          console.log('No businesses found for user, creating default business');
+        }
         await ensureUserBusinessAccess();
         // Retry after ensuring business access
         return refreshBusinessData();
@@ -104,18 +110,31 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
         logo_url: bu.businesses.logo_url
       }));
 
-      console.log('Businesses loaded successfully:', userBusinesses);
+      if (!isProduction) {
+        console.log('Businesses loaded successfully:', userBusinesses);
+      }
       setBusinesses(userBusinesses);
       
       // Set current business (first one for now)
       if (userBusinesses.length > 0) {
         setCurrentBusiness(userBusinesses[0]);
-        console.log('Current business set to:', userBusinesses[0].name);
+        if (!isProduction) {
+          console.log('Current business set to:', userBusinesses[0].name);
+        }
       }
 
     } catch (error: any) {
-      console.error('Error loading business data:', error);
-      setError(error.message || 'Erro ao carregar dados do negócio');
+      const errorMessage = error.message || 'Erro ao carregar dados do negócio';
+      setError(errorMessage);
+      
+      errorHandler.handleError(
+        error instanceof Error ? error : new Error(errorMessage),
+        'high',
+        { 
+          showToast: true,
+          customMessage: 'Erro ao carregar dados do negócio. Tente recarregar a página.'
+        }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -128,16 +147,22 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
     const business = businesses.find(b => b.id === businessId);
     if (business) {
       setCurrentBusiness(business);
-      console.log('Switched to business:', business.name);
+      if (!isProduction) {
+        console.log('Switched to business:', business.name);
+      }
     }
   };
 
   useEffect(() => {
     if (!authLoading && user) {
-      console.log('Auth ready, loading business data for user:', user.id);
+      if (!isProduction) {
+        console.log('Auth ready, loading business data for user:', user.id);
+      }
       refreshBusinessData();
     } else if (!authLoading && !user) {
-      console.log('No user authenticated, clearing business data');
+      if (!isProduction) {
+        console.log('No user authenticated, clearing business data');
+      }
       setCurrentBusiness(null);
       setBusinesses([]);
       setIsLoading(false);
