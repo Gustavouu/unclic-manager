@@ -90,3 +90,15 @@ O relatório será exibido no terminal. Para modo visual, use `npm run cy:open`.
 node scripts/checklist-producao.js
 ```
 O script valida pré-requisitos essenciais antes do deploy.
+
+## Novos Módulos
+
+O projeto agora inclui funcionalidades adicionais que estavam pendentes no PRD:
+
+- **Integração real com Google Calendar** em `src/services/calendar/GoogleCalendarService.ts`.
+- **Listas de espera** através do `WaitlistService`.
+- **Agendamentos recorrentes** via `RecurringAppointmentService`.
+- **Programa de fidelidade** implementado no `LoyaltySystem`.
+- **Envio de mensagens WhatsApp** usando o `WhatsAppService`.
+- **Cálculo de comissões** com `CommissionService`.
+- Diretórios `mobile/`, `totem/` e `voice-server/` iniciam os aplicativos móveis, totem de autoatendimento e servidor de comandos de voz.

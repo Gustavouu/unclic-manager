@@ -3,6 +3,10 @@ export interface AppointmentCreate {
   business_id: string;
   client_id: string;
   professional_id: string;
+  /**
+   * Optional list of professionals allocated to the appointment
+   */
+  professional_ids?: string[];
   service_id: string;
   date: string;
   start_time: string;
@@ -12,6 +16,10 @@ export interface AppointmentCreate {
   status?: 'scheduled' | 'confirmed' | 'completed' | 'canceled' | 'no_show';
   notes?: string;
   payment_method?: string;
+  /**
+   * Recurrence rule in iCal format for recurring bookings
+   */
+  recurrence_rule?: string;
 }
 
 export interface AppointmentUpdate {
@@ -30,6 +38,7 @@ export interface Appointment {
   business_id: string;
   client_id: string;
   professional_id: string;
+  professional_ids?: string[];
   service_id: string;
   date: string;
   start_time: string;
@@ -41,6 +50,8 @@ export interface Appointment {
   payment_method?: string;
   rating?: number;
   feedback_comment?: string;
+  /** Recurrence rule if this appointment is part of a series */
+  recurrence_rule?: string;
   reminder_sent?: boolean;
   client_name?: string;
   professional_name?: string;
@@ -53,6 +64,8 @@ export interface AppointmentSearchParams {
   business_id: string;
   client_id?: string;
   professional_id?: string;
+  /** Filter by any of the given professionals */
+  professional_ids?: string[];
   service_id?: string;
   status?: 'scheduled' | 'confirmed' | 'completed' | 'canceled' | 'no_show';
   date_from?: string;
