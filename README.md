@@ -73,7 +73,7 @@ We don't support custom domains (yet). If you want to deploy your project under 
 ### Cobertura de Testes Unitários
 
 ```sh
-npm run test -- --coverage
+npm run test:coverage
 ```
 O relatório será gerado na pasta `coverage/`.
 
@@ -87,7 +87,7 @@ O relatório será exibido no terminal. Para modo visual, use `npm run cy:open`.
 ### Checklist Automatizado de Produção
 
 ```sh
-node scripts/checklist-producao.js
+node scripts/checklist-producao.cjs
 ```
 O script valida pré-requisitos essenciais antes do deploy.
 

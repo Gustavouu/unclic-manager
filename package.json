@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "cy:open": "cypress open",
     "cy:run": "cypress run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test": "vitest"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.3",
