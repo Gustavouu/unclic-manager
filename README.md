@@ -73,7 +73,7 @@ We don't support custom domains (yet). If you want to deploy your project under 
 ### Cobertura de Testes Unitários
 
 ```sh
-npm run test -- --coverage
+npm run test:coverage
 ```
 O relatório será gerado na pasta `coverage/`.
 
@@ -87,6 +87,31 @@ O relatório será exibido no terminal. Para modo visual, use `npm run cy:open`.
 ### Checklist Automatizado de Produção
 
 ```sh
-node scripts/checklist-producao.js
+node scripts/checklist-producao.cjs
 ```
 O script valida pré-requisitos essenciais antes do deploy.
+
+## Novos Módulos
+
+O projeto agora inclui funcionalidades adicionais que estavam pendentes no PRD:
+
+- **Integração real com Google Calendar** em `src/services/calendar/GoogleCalendarService.ts`.
+- **Suporte a iCal e Outlook** com `IcalCalendarService` e `OutlookCalendarService`.
+- **Listas de espera** através do `WaitlistService`.
+- **Agendamentos recorrentes** via `RecurringAppointmentService`.
+- **Programa de fidelidade** implementado no `LoyaltySystem`.
+- **Envio de mensagens WhatsApp** usando o `WhatsAppService`.
+- **Integrações de marketing** por `MarketingIntegrationService`.
+- **Cálculo de comissões** com `CommissionService`.
+- **Reembolsos automáticos** com `RefundService`.
+- **Emissão de NF-e/NFS-e** pelo `NfeService`.
+- **Pagamentos presenciais** via `POSPaymentService`.
+- Diretórios `mobile/`, `totem/` e `voice-server/` iniciam os aplicativos móveis, totem de autoatendimento e servidor de comandos de voz.
+
+### Backup e Rollback
+
+Execute `scripts/backup.sh` para gerar um `backup.sql` e mantenha `scripts/rollback.sql` atualizado para desfazer a última migração.
+
+### Pipeline CI
+
+O repositório inclui o workflow `.github/workflows/ci.yml` que roda `npm run lint`, `npm run test` e `npm run build` em cada PR.

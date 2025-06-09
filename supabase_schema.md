@@ -574,6 +574,16 @@ Este documento descreve o schema completo do banco de dados, as políticas de se
   - `top_professionals` (jsonb, default: '{}')
   - `created_at` (timestamp with time zone, default: now())
 
+### 37. `public.waitlist`
+- **Colunas:**
+  - `id` (uuid, primary key)
+  - `business_id` (uuid, foreign key referencing `businesses.id`)
+  - `client_id` (uuid, foreign key referencing `clients.id`)
+  - `service_id` (uuid, foreign key referencing `services.id`)
+  - `preferred_date` (date)
+  - `notes` (text)
+  - `created_at` (timestamp with time zone, default: now())
+
 ## Políticas de Segurança (RLS)
 
 ### 1. `auth.users`
@@ -756,6 +766,11 @@ Este documento descreve o schema completo do banco de dados, as políticas de se
   - **Condição:** `business_id IN (SELECT business_id FROM business_users WHERE user_id = auth.uid())`
   - **Propósito:** Garante que usuários só possam acessar dados de análise de negócio do mesmo negócio.
 
+### 37. `public.waitlist`
+- **Política:** `waitlist_isolation`
+  - **Condição:** `business_id IN (SELECT business_id FROM business_users WHERE user_id = auth.uid())`
+  - **Propósito:** Garante que usuários só possam acessar dados da lista de espera do mesmo negócio.
+
 ## APIs
 
 ### 1. `get_tenant_data`
@@ -777,6 +792,12 @@ Este documento descreve o schema completo do banco de dados, as políticas de se
 ### 2. `validate_tenant_access`
 - **Função:** Valida o acesso do usuário ao tenant, garantindo que apenas usuários autorizados possam acessar os dados.
 - **Propósito:** Reforça a segurança do sistema, evitando acessos não autorizados.
+
+## Stored Procedures
+
+### 1. `calculate_commission`
+- **Propósito:** Calcula a comissão de um agendamento e registra o valor na tabela `commissions`.
+- **Parâmetros:** `p_appointment_id` (uuid)
 
 ## Conclusão
 
