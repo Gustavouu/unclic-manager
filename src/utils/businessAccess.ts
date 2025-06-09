@@ -70,10 +70,18 @@ export async function ensureUserBusinessAccess(): Promise<void> {
       ? `Negócio de ${user.user_metadata.full_name}`
       : 'Meu Negócio';
 
+    // Generate a unique slug
+    const slug = businessName.toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      + '-' + Date.now();
+
     const { data: newBusiness, error: createBusinessError } = await supabase
       .from('businesses')
       .insert({
         name: businessName,
+        slug: slug,
         admin_email: user.email!,
         status: 'active'
       })

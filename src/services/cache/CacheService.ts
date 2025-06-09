@@ -5,6 +5,14 @@ interface CacheItem<T> {
   ttl: number;
 }
 
+export const CacheKeys = {
+  BUSINESS_METRICS: 'business_metrics',
+  USER_PERMISSIONS: 'user_permissions',
+  DASHBOARD_DATA: 'dashboard_data',
+  CLIENTS_LIST: 'clients_list',
+  SERVICES_LIST: 'services_list',
+} as const;
+
 export class CacheService {
   private static instance: CacheService;
   private cache = new Map<string, CacheItem<any>>();
@@ -74,6 +82,10 @@ export class CacheService {
     }
 
     return deleted;
+  }
+
+  public remove(key: string): boolean {
+    return this.invalidate(key);
   }
 
   public invalidatePattern(pattern: string): number {

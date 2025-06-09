@@ -89,3 +89,7 @@ export const useContextualErrorHandler = (component: string) => {
     getErrorStats: () => errorHandler.getErrorStats()
   };
 };
+
+export const useReportsErrorHandler = () => {
+  return useContextualErrorHandler('Reports');
+};

@@ -1,3 +1,4 @@
+
 export interface Alert {
   id: string;
   type: 'error' | 'warning' | 'info';
@@ -11,7 +12,7 @@ export interface Alert {
 export class AlertService {
   private static instance: AlertService;
   private alerts: Alert[] = [];
-  private subscribers: (() => void)[] = [];
+  private subscribers: ((alert: Alert) => void)[] = [];
   private maxAlerts = 100;
   private isProduction = import.meta.env.PROD;
 
@@ -51,7 +52,7 @@ export class AlertService {
       this.alerts = this.alerts.slice(0, this.maxAlerts);
     }
 
-    this.notifySubscribers();
+    this.notifySubscribers(alert);
 
     if (!this.isProduction || type === 'error') {
       console.log(`🚨 Alert [${type.toUpperCase()}]: ${title} - ${message}`, metadata);
@@ -64,34 +65,45 @@ export class AlertService {
     const alert = this.alerts.find(a => a.id === alertId);
     if (alert) {
       alert.acknowledged = true;
-      this.notifySubscribers();
+      this.notifySubscribers(alert);
       return true;
     }
     return false;
   }
 
-  public getAlerts(type?: Alert['type']): Alert[] {
-    if (type) {
-      return this.alerts.filter(a => a.type === type);
+  public getAlerts(filter?: { type?: Alert['type']; acknowledged?: boolean; limit?: number }): Alert[] {
+    let filtered = [...this.alerts];
+    
+    if (filter?.type) {
+      filtered = filtered.filter(a => a.type === filter.type);
     }
-    return [...this.alerts];
+    
+    if (filter?.acknowledged !== undefined) {
+      filtered = filtered.filter(a => a.acknowledged === filter.acknowledged);
+    }
+    
+    if (filter?.limit) {
+      filtered = filtered.slice(0, filter.limit);
+    }
+    
+    return filtered;
   }
 
   public getUnacknowledgedCount(): number {
     return this.alerts.filter(a => !a.acknowledged).length;
   }
 
-  public subscribe(callback: () => void): () => void {
+  public subscribe(callback: (alert: Alert) => void): () => void {
     this.subscribers.push(callback);
     return () => {
       this.subscribers = this.subscribers.filter(sub => sub !== callback);
     };
   }
 
-  private notifySubscribers(): void {
+  private notifySubscribers(alert: Alert): void {
     this.subscribers.forEach(callback => {
       try {
-        callback();
+        callback(alert);
       } catch (error) {
         console.error('Error in alert subscriber:', error);
       }
@@ -122,6 +134,6 @@ export class AlertService {
     cutoff.setDate(cutoff.getDate() - olderThanDays);
     
     this.alerts = this.alerts.filter(alert => alert.timestamp >= cutoff);
-    this.notifySubscribers();
+    this.alerts.forEach(alert => this.notifySubscribers(alert));
   }
 }
