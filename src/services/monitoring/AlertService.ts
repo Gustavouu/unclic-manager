@@ -1,7 +1,7 @@
-
 export interface Alert {
   id: string;
   type: 'error' | 'warning' | 'info';
+  severity: 'low' | 'medium' | 'high' | 'critical';
   title: string;
   message: string;
   timestamp: Date;
@@ -33,11 +33,13 @@ export class AlertService {
     type: Alert['type'],
     title: string,
     message: string,
+    severity: Alert['severity'] = 'medium',
     metadata?: Record<string, any>
   ): string {
     const alert: Alert = {
       id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type,
+      severity,
       title,
       message,
       timestamp: new Date(),
@@ -55,7 +57,7 @@ export class AlertService {
     this.notifySubscribers(alert);
 
     if (!this.isProduction || type === 'error') {
-      console.log(`🚨 Alert [${type.toUpperCase()}]: ${title} - ${message}`, metadata);
+      console.log(`🚨 Alert [${type.toUpperCase()}/${severity.toUpperCase()}]: ${title} - ${message}`, metadata);
     }
 
     return alert.id;
@@ -124,6 +126,7 @@ export class AlertService {
         'warning',
         `High ${metricName}`,
         `${metricName} is ${value}, which exceeds threshold of ${threshold}`,
+        'medium',
         { metricName, value, threshold }
       );
     }

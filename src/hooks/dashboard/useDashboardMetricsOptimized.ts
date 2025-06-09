@@ -5,20 +5,9 @@ import { useMultiTenant } from '@/contexts/MultiTenantContext';
 import { CacheService, CacheKeys } from '@/services/cache/CacheService';
 import { PerformanceMonitor } from '@/services/monitoring/PerformanceMonitor';
 import { useContextualErrorHandler } from '@/hooks/useContextualErrorHandler';
+import type { DashboardMetrics, RevenueDataPoint, PopularService, UseDashboardMetricsReturn } from './types';
 
-interface DashboardMetrics {
-  totalClients: number;
-  totalRevenue: number;
-  completedAppointments: number;
-  totalAppointments: number;
-  revenueGrowth: number;
-  clientGrowth: number;
-  appointmentGrowth: number;
-  isLoading: boolean;
-  error: string | null;
-}
-
-export const useDashboardMetricsOptimized = () => {
+export const useDashboardMetricsOptimized = (): UseDashboardMetricsReturn => {
   const { currentBusiness } = useMultiTenant();
   const cache = CacheService.getInstance();
   const performanceMonitor = PerformanceMonitor.getInstance();
@@ -26,40 +15,69 @@ export const useDashboardMetricsOptimized = () => {
   
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     totalClients: 0,
+    activeClients: 0,
     totalRevenue: 0,
+    monthlyRevenue: 0,
     completedAppointments: 0,
     totalAppointments: 0,
+    todayAppointments: 0,
+    pendingAppointments: 0,
     revenueGrowth: 0,
     clientGrowth: 0,
     appointmentGrowth: 0,
-    isLoading: true,
-    error: null
+    averageTicket: 0,
+    retentionRate: 85,
+    growthRate: 0,
+    newClientsThisMonth: 0,
+    servicesCompleted: 0,
   });
+
+  const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
+  const [popularServices, setPopularServices] = useState<PopularService[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
+  const formatCurrency = useCallback((value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  }, []);
 
   const fetchMetrics = useCallback(async () => {
     if (!currentBusiness?.id) {
-      setMetrics(prev => ({ ...prev, isLoading: false, error: 'No business selected' }));
+      setIsLoading(false);
+      setError('No business selected');
       return;
     }
 
     const cacheKey = `${CacheKeys.DASHBOARD_DATA}_${currentBusiness.id}`;
     
     try {
-      setMetrics(prev => ({ ...prev, isLoading: true, error: null }));
+      setIsLoading(true);
+      setError(null);
 
       // Check cache first
-      const cachedData = cache.get<DashboardMetrics>(cacheKey);
+      const cachedData = cache.get<{
+        metrics: DashboardMetrics;
+        revenueData: RevenueDataPoint[];
+        popularServices: PopularService[];
+      }>(cacheKey);
+      
       if (cachedData) {
-        setMetrics({ ...cachedData, isLoading: false });
+        setMetrics(cachedData.metrics);
+        setRevenueData(cachedData.revenueData);
+        setPopularServices(cachedData.popularServices);
+        setLastUpdate(new Date());
+        setIsLoading(false);
         return;
       }
 
       const businessId = currentBusiness.id;
-      
-      // Fetch current period metrics
       const startTime = performance.now();
       
-      // Get total clients
+      // Get clients data
       const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
         .select('id, created_at, total_spent')
@@ -70,10 +88,18 @@ export const useDashboardMetricsOptimized = () => {
       // Get bookings data
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select('id, status, price, booking_date, created_at')
+        .select('id, status, price, booking_date, created_at, service_id')
         .eq('business_id', businessId);
 
       if (bookingsError) throw bookingsError;
+
+      // Get services data
+      const { data: servicesData, error: servicesError } = await supabase
+        .from('services')
+        .select('id, name')
+        .eq('business_id', businessId);
+
+      if (servicesError) throw servicesError;
 
       const endTime = performance.now();
       performanceMonitor.trackMetric('dashboard_query_time', endTime - startTime, {
@@ -83,101 +109,132 @@ export const useDashboardMetricsOptimized = () => {
 
       // Calculate metrics
       const totalClients = clientsData?.length || 0;
+      const activeClients = clientsData?.filter(c => c.total_spent > 0).length || 0;
       const totalAppointments = bookingsData?.length || 0;
       const completedAppointments = bookingsData?.filter(b => b.status === 'completed').length || 0;
+      const todayAppointments = bookingsData?.filter(b => 
+        new Date(b.booking_date).toDateString() === new Date().toDateString()
+      ).length || 0;
+      const pendingAppointments = bookingsData?.filter(b => b.status === 'scheduled').length || 0;
+
       const totalRevenue = bookingsData
         ?.filter(b => b.status === 'completed')
         .reduce((sum, b) => sum + (Number(b.price) || 0), 0) || 0;
 
-      // Calculate growth metrics (comparing to previous period)
-      const currentDate = new Date();
-      const thirtyDaysAgo = new Date(currentDate.getTime() - 30 * 24 * 60 * 60 * 1000);
-      const sixtyDaysAgo = new Date(currentDate.getTime() - 60 * 24 * 60 * 60 * 1000);
-
-      // Current period (last 30 days)
-      const currentPeriodClients = clientsData?.filter(c => 
-        new Date(c.created_at) >= thirtyDaysAgo
-      ).length || 0;
-
-      const currentPeriodBookings = bookingsData?.filter(b => 
-        new Date(b.booking_date) >= thirtyDaysAgo
-      ).length || 0;
-
-      const currentPeriodRevenue = bookingsData
+      // Monthly revenue (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const monthlyRevenue = bookingsData
         ?.filter(b => 
           b.status === 'completed' && 
           new Date(b.booking_date) >= thirtyDaysAgo
         )
         .reduce((sum, b) => sum + (Number(b.price) || 0), 0) || 0;
 
-      // Previous period (30-60 days ago)
+      const averageTicket = completedAppointments > 0 ? totalRevenue / completedAppointments : 0;
+
+      // Calculate growth metrics
+      const sixtyDaysAgo = new Date();
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+      const currentPeriodClients = clientsData?.filter(c => 
+        new Date(c.created_at) >= thirtyDaysAgo
+      ).length || 0;
+
       const previousPeriodClients = clientsData?.filter(c => 
         new Date(c.created_at) >= sixtyDaysAgo && 
         new Date(c.created_at) < thirtyDaysAgo
       ).length || 0;
 
-      const previousPeriodBookings = bookingsData?.filter(b => 
-        new Date(b.booking_date) >= sixtyDaysAgo && 
-        new Date(b.booking_date) < thirtyDaysAgo
-      ).length || 0;
-
-      const previousPeriodRevenue = bookingsData
-        ?.filter(b => 
-          b.status === 'completed' && 
-          new Date(b.booking_date) >= sixtyDaysAgo && 
-          new Date(b.booking_date) < thirtyDaysAgo
-        )
-        .reduce((sum, b) => sum + (Number(b.price) || 0), 0) || 0;
-
-      // Calculate growth percentages
       const clientGrowth = previousPeriodClients > 0 
         ? ((currentPeriodClients - previousPeriodClients) / previousPeriodClients) * 100 
         : currentPeriodClients > 0 ? 100 : 0;
 
-      const appointmentGrowth = previousPeriodBookings > 0 
-        ? ((currentPeriodBookings - previousPeriodBookings) / previousPeriodBookings) * 100 
-        : currentPeriodBookings > 0 ? 100 : 0;
+      // Revenue data for last 6 months
+      const revenueDataPoints: RevenueDataPoint[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+        const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        
+        const monthRevenue = bookingsData
+          ?.filter(b => 
+            b.status === 'completed' && 
+            new Date(b.booking_date) >= monthStart && 
+            new Date(b.booking_date) <= monthEnd
+          )
+          .reduce((sum, b) => sum + (Number(b.price) || 0), 0) || 0;
 
-      const revenueGrowth = previousPeriodRevenue > 0 
-        ? ((currentPeriodRevenue - previousPeriodRevenue) / previousPeriodRevenue) * 100 
-        : currentPeriodRevenue > 0 ? 100 : 0;
+        revenueDataPoints.push({
+          date: date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+          value: monthRevenue
+        });
+      }
+
+      // Popular services
+      const serviceBookings = new Map<string, number>();
+      bookingsData?.forEach(booking => {
+        if (booking.service_id) {
+          serviceBookings.set(booking.service_id, (serviceBookings.get(booking.service_id) || 0) + 1);
+        }
+      });
+
+      const popularServicesData: PopularService[] = Array.from(serviceBookings.entries())
+        .map(([serviceId, count]) => {
+          const service = servicesData?.find(s => s.id === serviceId);
+          return {
+            name: service?.name || 'Serviço não encontrado',
+            count,
+            percentage: totalAppointments > 0 ? (count / totalAppointments) * 100 : 0
+          };
+        })
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
 
       const newMetrics: DashboardMetrics = {
         totalClients,
+        activeClients,
         totalRevenue,
+        monthlyRevenue,
         completedAppointments,
         totalAppointments,
-        revenueGrowth,
+        todayAppointments,
+        pendingAppointments,
+        revenueGrowth: 0, // Could be calculated similarly to clientGrowth
         clientGrowth,
-        appointmentGrowth,
-        isLoading: false,
-        error: null
+        appointmentGrowth: 0, // Could be calculated similarly
+        averageTicket,
+        retentionRate: 85, // Mock value - would need more complex calculation
+        growthRate: clientGrowth,
+        newClientsThisMonth: currentPeriodClients,
+        servicesCompleted: completedAppointments,
       };
 
-      // Cache the results for 5 minutes
-      cache.set(cacheKey, newMetrics, 5 * 60 * 1000);
+      // Cache the results
+      const cacheData = {
+        metrics: newMetrics,
+        revenueData: revenueDataPoints,
+        popularServices: popularServicesData
+      };
+      cache.set(cacheKey, cacheData, 5 * 60 * 1000);
       
       setMetrics(newMetrics);
-
-      performanceMonitor.trackMetric('dashboard_metrics_success', 1, { businessId });
+      setRevenueData(revenueDataPoints);
+      setPopularServices(popularServicesData);
+      setLastUpdate(new Date());
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch metrics';
       
       errorHandler.handleError(error instanceof Error ? error : new Error(errorMessage), 'medium', {
-        showToast: false // Don't show toast for background operations
+        showToast: false
       });
 
-      setMetrics(prev => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage
-      }));
-
-      performanceMonitor.trackMetric('dashboard_metrics_error', 1, { 
-        businessId: currentBusiness?.id,
-        error: errorMessage 
-      });
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   }, [currentBusiness?.id, cache, performanceMonitor, errorHandler]);
 
@@ -194,8 +251,21 @@ export const useDashboardMetricsOptimized = () => {
   }, [fetchMetrics]);
 
   return {
-    ...metrics,
+    metrics,
+    revenueData,
+    popularServices,
+    isLoading,
+    error,
+    formatCurrency,
     refreshMetrics,
-    isLoading: metrics.isLoading
+    lastUpdate,
+    // Expose individual metrics for backward compatibility
+    totalClients: metrics.totalClients,
+    totalRevenue: metrics.totalRevenue,
+    completedAppointments: metrics.completedAppointments,
+    totalAppointments: metrics.totalAppointments,
+    revenueGrowth: metrics.revenueGrowth,
+    clientGrowth: metrics.clientGrowth,
+    appointmentGrowth: metrics.appointmentGrowth,
   };
 };

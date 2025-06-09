@@ -1,4 +1,3 @@
-
 export interface PerformanceMetric {
   name: string;
   value: number;
@@ -12,6 +11,12 @@ export interface PerformanceReport {
   errorRate: number;
   topSlowQueries: Array<{ name: string; avgTime: number; count: number }>;
   memoryUsage: number;
+  summary: {
+    avgResponseTime: number;
+    p95ResponseTime: number;
+    errorRate: number;
+  };
+  slowQueries: Array<{ name: string; avgTime: number; count: number }>;
 }
 
 export class PerformanceMonitor {
@@ -81,7 +86,7 @@ export class PerformanceMonitor {
 
   public generateReport(): PerformanceReport {
     const totalMetrics = this.metrics.length;
-    const responseTimeMetrics = this.metrics.filter(m => m.name.includes('response_time'));
+    const responseTimeMetrics = this.metrics.filter(m => m.name.includes('response_time') || m.name.includes('dashboard_query_time'));
     const errorMetrics = this.metrics.filter(m => m.name.includes('error'));
     
     const averageResponseTime = responseTimeMetrics.length > 0 
@@ -93,7 +98,7 @@ export class PerformanceMonitor {
     // Group by query name and calculate averages
     const queryGroups = new Map<string, { total: number; count: number }>();
     responseTimeMetrics.forEach(metric => {
-      const queryName = metric.metadata?.query || 'unknown';
+      const queryName = metric.metadata?.query || metric.name || 'unknown';
       if (!queryGroups.has(queryName)) {
         queryGroups.set(queryName, { total: 0, count: 0 });
       }
@@ -111,12 +116,25 @@ export class PerformanceMonitor {
       .sort((a, b) => b.avgTime - a.avgTime)
       .slice(0, 5);
 
+    // Calculate P95 response time
+    const sortedResponseTimes = responseTimeMetrics
+      .map(m => m.value)
+      .sort((a, b) => a - b);
+    const p95Index = Math.floor(sortedResponseTimes.length * 0.95);
+    const p95ResponseTime = sortedResponseTimes[p95Index] || 0;
+
     return {
       totalMetrics,
       averageResponseTime,
       errorRate,
       topSlowQueries,
-      memoryUsage: 0 // Placeholder for browser memory usage
+      memoryUsage: 0, // Placeholder for browser memory usage
+      summary: {
+        avgResponseTime: averageResponseTime,
+        p95ResponseTime,
+        errorRate
+      },
+      slowQueries: topSlowQueries
     };
   }
 
