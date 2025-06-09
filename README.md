@@ -96,9 +96,22 @@ O script valida pré-requisitos essenciais antes do deploy.
 O projeto agora inclui funcionalidades adicionais que estavam pendentes no PRD:
 
 - **Integração real com Google Calendar** em `src/services/calendar/GoogleCalendarService.ts`.
+- **Suporte a iCal e Outlook** com `IcalCalendarService` e `OutlookCalendarService`.
 - **Listas de espera** através do `WaitlistService`.
 - **Agendamentos recorrentes** via `RecurringAppointmentService`.
 - **Programa de fidelidade** implementado no `LoyaltySystem`.
 - **Envio de mensagens WhatsApp** usando o `WhatsAppService`.
+- **Integrações de marketing** por `MarketingIntegrationService`.
 - **Cálculo de comissões** com `CommissionService`.
+- **Reembolsos automáticos** com `RefundService`.
+- **Emissão de NF-e/NFS-e** pelo `NfeService`.
+- **Pagamentos presenciais** via `POSPaymentService`.
 - Diretórios `mobile/`, `totem/` e `voice-server/` iniciam os aplicativos móveis, totem de autoatendimento e servidor de comandos de voz.
+
+### Backup e Rollback
+
+Execute `scripts/backup.sh` para gerar um `backup.sql` e mantenha `scripts/rollback.sql` atualizado para desfazer a última migração.
+
+### Pipeline CI
+
+O repositório inclui o workflow `.github/workflows/ci.yml` que roda `npm run lint`, `npm run test` e `npm run build` em cada PR.

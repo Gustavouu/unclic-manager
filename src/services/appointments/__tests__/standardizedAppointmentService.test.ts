@@ -1,11 +1,11 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AppointmentService } from '../appointmentService';
-import { supabase } from '@/lib/supabase';
+import { StandardizedAppointmentService } from '../standardizedAppointmentService';
+import { supabase } from '@/integrations/supabase/client';
 import type { PostgrestResponse } from '@supabase/supabase-js';
 
 // Mock do Supabase
-vi.mock('@/lib/supabase', () => ({
+vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn(() => ({
       insert: vi.fn(() => ({
@@ -126,10 +126,10 @@ const mockStats = {
 };
 
 describe('AppointmentService', () => {
-  let service: AppointmentService;
+  let service: StandardizedAppointmentService;
 
   beforeEach(() => {
-    service = AppointmentService.getInstance();
+    service = StandardizedAppointmentService.getInstance();
     vi.clearAllMocks();
   });
 
@@ -137,7 +137,7 @@ describe('AppointmentService', () => {
     it('should create a new appointment', async () => {
       const result = await service.create(mockAppointmentData);
       expect(result).toEqual(mockAppointment);
-      expect(supabase.from).toHaveBeenCalledWith('Appointments');
+      expect(supabase.from).toHaveBeenCalledWith('bookings');
     });
   });
 
@@ -145,7 +145,7 @@ describe('AppointmentService', () => {
     it('should update an existing appointment', async () => {
       const result = await service.update('1', { status: 'confirmed' });
       expect(result).toEqual(mockAppointment);
-      expect(supabase.from).toHaveBeenCalledWith('Appointments');
+      expect(supabase.from).toHaveBeenCalledWith('bookings');
     });
 
     it('should check for conflicts when updating time', async () => {
@@ -170,7 +170,7 @@ describe('AppointmentService', () => {
     it('should get an appointment by id', async () => {
       const result = await service.getById('1');
       expect(result).toEqual(mockAppointment);
-      expect(supabase.from).toHaveBeenCalledWith('Appointments');
+      expect(supabase.from).toHaveBeenCalledWith('bookings');
     });
   });
 
@@ -190,14 +190,14 @@ describe('AppointmentService', () => {
 
       const result = await service.search(searchParams);
       expect(result).toEqual([mockAppointment]);
-      expect(supabase.from).toHaveBeenCalledWith('Appointments');
+      expect(supabase.from).toHaveBeenCalledWith('bookings');
     });
   });
 
   describe('delete', () => {
     it('should delete an appointment', async () => {
       await service.delete('1');
-      expect(supabase.from).toHaveBeenCalledWith('Appointments');
+      expect(supabase.from).toHaveBeenCalledWith('bookings');
     });
   });
 
@@ -205,7 +205,7 @@ describe('AppointmentService', () => {
     it('should update appointment status', async () => {
       const result = await service.updateStatus('1', 'canceled', 'Client cancelled', 50);
       expect(result).toEqual(mockAppointment);
-      expect(supabase.from).toHaveBeenCalledWith('Appointments');
+      expect(supabase.from).toHaveBeenCalledWith('bookings');
     });
   });
 
@@ -213,7 +213,7 @@ describe('AppointmentService', () => {
     it('should get appointment stats', async () => {
       const result = await service.getStats('1');
       expect(result).toEqual(mockStats);
-      expect(supabase.from).toHaveBeenCalledWith('Appointments');
+      expect(supabase.from).toHaveBeenCalledWith('bookings');
     });
   });
 });

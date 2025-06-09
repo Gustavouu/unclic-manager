@@ -1,5 +1,5 @@
 import { RRule } from 'rrule';
-import { AppointmentService } from './appointmentService';
+import { StandardizedAppointmentService } from './standardizedAppointmentService';
 import type { AppointmentCreate } from '@/types/appointment';
 import type { RecurringAppointmentOptions } from '@/types/recurrence';
 
@@ -12,8 +12,9 @@ export class RecurringAppointmentService {
     const dates = rule.all().slice(0, options.occurrences || 50);
 
     const appointments = [];
+    const service = StandardizedAppointmentService.getInstance();
     for (const date of dates) {
-      const appointment = await AppointmentService.getInstance().create({
+      const appointment = await service.create({
         ...base,
         date: date.toISOString().split('T')[0],
         start_time: base.start_time,

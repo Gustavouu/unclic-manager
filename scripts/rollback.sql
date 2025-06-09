@@ -1,0 +1,2 @@
+-- SQL commands to rollback last migration
+-- Adjust according to your database setup
