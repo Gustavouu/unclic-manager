@@ -6,39 +6,37 @@ export const usePersistence = (
   currentStep: number,
   businessData: BusinessData,
   services: ServiceData[],
-  staff: StaffData[],
+  staffMembers: StaffData[],
   businessHours: BusinessHours | null,
   onboardingMethod: OnboardingMethod
 ) => {
   const saveProgress = useCallback(() => {
     try {
-      const progress = {
+      const progressData = {
         currentStep,
         businessData,
         services,
-        staff,
+        staffMembers,
         businessHours,
         onboardingMethod,
-        timestamp: Date.now(),
+        savedAt: new Date().toISOString(),
       };
-
-      localStorage.setItem('onboarding-progress', JSON.stringify(progress));
-      console.log('Progress saved successfully');
+      
+      localStorage.setItem('unclic-manager-onboarding', JSON.stringify(progressData));
     } catch (error) {
-      console.error('Error saving progress:', error);
+      console.error('Error saving onboarding progress:', error);
     }
-  }, [currentStep, businessData, services, staff, businessHours, onboardingMethod]);
+  }, [currentStep, businessData, services, staffMembers, businessHours, onboardingMethod]);
 
   const loadProgress = useCallback(() => {
     try {
-      const saved = localStorage.getItem('onboarding-progress');
+      const saved = localStorage.getItem('unclic-manager-onboarding');
       if (saved) {
-        const progress = JSON.parse(saved);
-        console.log('Progress loaded:', progress);
-        return progress;
+        const progressData = JSON.parse(saved);
+        return progressData;
       }
     } catch (error) {
-      console.error('Error loading progress:', error);
+      console.error('Error loading onboarding progress:', error);
     }
     return null;
   }, []);

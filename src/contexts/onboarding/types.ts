@@ -1,7 +1,7 @@
 
 import { ReactNode } from 'react';
 
-export type OnboardingMethod = 'manual' | 'ai' | null;
+export type OnboardingMethod = 'manual' | 'ai' | 'import' | 'upload' | null;
 export type OnboardingStatus = 'idle' | 'processing' | 'verifying' | 'saving' | 'complete' | 'success' | 'error';
 
 export interface BusinessData {
@@ -24,10 +24,17 @@ export interface BusinessData {
   businessType: string;
   number?: string;
   cep?: string;
+  website?: string;
+  socialMedia?: {
+    facebook?: string;
+    instagram?: string;
+    website?: string;
+    linkedin?: string;
+  };
 }
 
 export interface ServiceData {
-  id?: string;
+  id: string;
   nome?: string;
   name?: string;
   descricao?: string;
@@ -43,7 +50,7 @@ export interface ServiceData {
 }
 
 export interface StaffData {
-  id?: string;
+  id: string;
   nome?: string;
   name?: string;
   cargo?: string;
@@ -95,14 +102,14 @@ export interface OnboardingContextType {
   setCurrentStep: (step: number) => void;
   updateBusinessData: (data: Partial<BusinessData>) => void;
   addService: (service: ServiceData) => void;
-  updateService: (index: number, service: ServiceData) => void;
-  removeService: (index: number) => void;
+  updateService: (id: string, service: Partial<ServiceData>) => void;
+  removeService: (id: string) => void;
   addStaff: (staff: StaffData) => void;
-  updateStaff: (index: number, staff: StaffData) => void;
-  removeStaff: (index: number) => void;
+  updateStaff: (id: string, staff: Partial<StaffData>) => void;
+  removeStaff: (id: string) => void;
   addStaffMember: (staff: StaffData) => void;
-  updateStaffMember: (index: number, staff: StaffData) => void;
-  removeStaffMember: (index: number) => void;
+  updateStaffMember: (id: string, staff: Partial<StaffData>) => void;
+  removeStaffMember: (id: string) => void;
   setHasStaff: (hasStaff: boolean) => void;
   updateBusinessHours: (hours: BusinessHours) => void;
   setOnboardingMethod: (method: OnboardingMethod) => void;

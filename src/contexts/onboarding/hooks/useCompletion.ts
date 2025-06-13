@@ -4,6 +4,7 @@ import { BusinessData, ServiceData, StaffData, BusinessHours, CompletionResult }
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useCompletion = (
   businessData: BusinessData,
@@ -99,18 +100,22 @@ export const useCompletion = (
       if (staff.length > 0) {
         for (const member of staff) {
           try {
+            const professionalId = uuidv4();
             const { error: staffError } = await supabase
               .from('professionals')
               .insert({
+                id: professionalId,
                 business_id: businessId,
                 tenantId: businessId,
-                establishmentId: businessId, // Using businessId as establishment for now
+                establishmentId: businessId,
                 name: member.nome || member.name,
                 email: member.email,
                 phone: member.phone,
                 bio: member.bio,
                 avatar_url: member.foto_url || member.photo_url,
                 isActive: member.ativo !== undefined ? member.ativo : member.active !== undefined ? member.active : true,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
               });
 
             if (staffError) {

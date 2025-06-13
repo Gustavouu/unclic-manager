@@ -7,8 +7,8 @@ export const initialBusinessData: BusinessData = {
   name: "",
   email: "",
   phone: "",
-  logo: null,
-  banner: null,
+  logoUrl: "",
+  bannerUrl: "",
   cep: "", // Maintain for backward compatibility
   zipCode: "", // New field name
   address: "",
@@ -17,10 +17,16 @@ export const initialBusinessData: BusinessData = {
   neighborhood: "",
   city: "",
   state: "",
+  adminEmail: "",
+  ownerName: "",
+  businessType: "",
+  description: "",
+  website: "",
   socialMedia: {
     facebook: "",
     instagram: "",
     website: "",
+    linkedin: "",
   }
 };
 
