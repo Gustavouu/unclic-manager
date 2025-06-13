@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { BusinessData, ServiceData, StaffData, BusinessHours } from '../types';
+import { BusinessData, ServiceData, StaffData, BusinessHours, CompletionResult } from '../types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -15,7 +15,7 @@ export const useCompletion = (
   const [isCompleting, setIsCompleting] = useState(false);
   const [completionStatus, setCompletionStatus] = useState<string>('');
 
-  const completeOnboarding = async (): Promise<{ success: boolean; businessId?: string; error?: string }> => {
+  const completeOnboarding = async (): Promise<CompletionResult> => {
     if (!user) {
       throw new Error('Usuário não autenticado');
     }
@@ -78,7 +78,7 @@ export const useCompletion = (
                 description: service.descricao || service.description,
                 price: service.preco || service.price,
                 duration: service.duracao || service.duration,
-                active: service.ativo !== undefined ? service.ativo : service.active !== undefined ? service.active : true,
+                is_active: service.ativo !== undefined ? service.ativo : service.active !== undefined ? service.active : true,
                 category: service.categoria || service.category,
               });
 
@@ -95,22 +95,22 @@ export const useCompletion = (
 
       setCompletionStatus('Criando funcionários...');
 
-      // Create staff members if any
+      // Create staff members if any using the correct table name
       if (staff.length > 0) {
         for (const member of staff) {
           try {
             const { error: staffError } = await supabase
-              .from('funcionarios')
+              .from('professionals')
               .insert({
                 business_id: businessId,
-                nome: member.nome || member.name,
-                cargo: member.cargo || member.role,
-                especializacoes: member.especializacoes || member.specialties || [],
-                foto_url: member.foto_url || member.photo_url,
-                bio: member.bio,
+                tenantId: businessId,
+                establishmentId: businessId, // Using businessId as establishment for now
+                name: member.nome || member.name,
                 email: member.email,
                 phone: member.phone,
-                ativo: true,
+                bio: member.bio,
+                avatar_url: member.foto_url || member.photo_url,
+                isActive: member.ativo !== undefined ? member.ativo : member.active !== undefined ? member.active : true,
               });
 
             if (staffError) {
