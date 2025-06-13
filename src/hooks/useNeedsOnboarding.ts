@@ -1,18 +1,15 @@
 
-import { useMultiTenant } from "@/contexts/MultiTenantContext";
+import { useOnboardingStatus } from './useOnboardingStatus';
 
 export const useNeedsOnboarding = () => {
-  const { currentBusiness, isLoading, error } = useMultiTenant();
-  
-  // For now, return false since we don't have onboarding status in the business object
-  // In a real implementation, this would check onboarding status from the business data
-  const needsOnboarding = false;
-  const loading = isLoading;
+  const { needsOnboarding, isLoading, error, businessId, onboardingComplete } = useOnboardingStatus();
   
   return {
     needsOnboarding,
     isLoading,
-    loading,
-    error: error || null
+    loading: isLoading, // Alias for backward compatibility
+    error,
+    businessId,
+    onboardingComplete,
   };
 };

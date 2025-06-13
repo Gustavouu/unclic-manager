@@ -6,6 +6,7 @@ import { QueryProvider } from './contexts/QueryContext';
 import { ErrorHandlingProvider } from './contexts/ErrorHandlingContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { RequireAuth } from './components/auth/RequireAuth';
+import { OnboardingRedirect } from './components/auth/OnboardingRedirect';
 import { DashboardLayout } from './components/DashboardLayout';
 import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
@@ -16,6 +17,8 @@ import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Index from './pages/Index';
+import OnboardingPage from './pages/Onboarding';
+import OnboardingFixedPage from './pages/OnboardingFixed';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { MultiTenantProvider } from '@/contexts/MultiTenantContext';
 
@@ -35,13 +38,33 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   
-                  {/* Protected routes with layout */}
+                  {/* Onboarding routes - protected but outside main layout */}
+                  <Route 
+                    path="/onboarding" 
+                    element={
+                      <RequireAuth>
+                        <OnboardingPage />
+                      </RequireAuth>
+                    } 
+                  />
+                  <Route 
+                    path="/onboarding-fixed" 
+                    element={
+                      <RequireAuth>
+                        <OnboardingFixedPage />
+                      </RequireAuth>
+                    } 
+                  />
+                  
+                  {/* Protected routes with layout and onboarding check */}
                   <Route 
                     path="/*" 
                     element={
                       <RequireAuth>
                         <MultiTenantProvider>
-                          <DashboardLayout />
+                          <OnboardingRedirect>
+                            <DashboardLayout />
+                          </OnboardingRedirect>
                         </MultiTenantProvider>
                       </RequireAuth>
                     }
