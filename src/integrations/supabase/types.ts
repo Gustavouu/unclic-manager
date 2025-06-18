@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       advertisements: {
         Row: {
+          business_id: string | null
           clicks: number
           createdAt: string
           description: string | null
@@ -26,6 +27,7 @@ export type Database = {
           url: string | null
         }
         Insert: {
+          business_id?: string | null
           clicks?: number
           createdAt?: string
           description?: string | null
@@ -41,6 +43,7 @@ export type Database = {
           url?: string | null
         }
         Update: {
+          business_id?: string | null
           clicks?: number
           createdAt?: string
           description?: string | null
@@ -647,6 +650,7 @@ export type Database = {
       }
       commission_rules: {
         Row: {
+          business_id: string | null
           createdAt: string
           description: string | null
           id: string
@@ -659,6 +663,7 @@ export type Database = {
           value: number
         }
         Insert: {
+          business_id?: string | null
           createdAt?: string
           description?: string | null
           id: string
@@ -671,6 +676,7 @@ export type Database = {
           value: number
         }
         Update: {
+          business_id?: string | null
           createdAt?: string
           description?: string | null
           id?: string
@@ -741,6 +747,7 @@ export type Database = {
           address: string | null
           addressComplement: string | null
           addressNumber: string | null
+          business_id: string | null
           city: string | null
           coverImage: string | null
           createdAt: string
@@ -764,6 +771,7 @@ export type Database = {
           address?: string | null
           addressComplement?: string | null
           addressNumber?: string | null
+          business_id?: string | null
           city?: string | null
           coverImage?: string | null
           createdAt?: string
@@ -787,6 +795,7 @@ export type Database = {
           address?: string | null
           addressComplement?: string | null
           addressNumber?: string | null
+          business_id?: string | null
           city?: string | null
           coverImage?: string | null
           createdAt?: string
@@ -821,6 +830,7 @@ export type Database = {
           accountNumber: string | null
           agency: string | null
           bank: string | null
+          business_id: string | null
           createdAt: string
           currentBalance: number
           description: string | null
@@ -837,6 +847,7 @@ export type Database = {
           accountNumber?: string | null
           agency?: string | null
           bank?: string | null
+          business_id?: string | null
           createdAt?: string
           currentBalance?: number
           description?: string | null
@@ -853,6 +864,7 @@ export type Database = {
           accountNumber?: string | null
           agency?: string | null
           bank?: string | null
+          business_id?: string | null
           createdAt?: string
           currentBalance?: number
           description?: string | null
@@ -884,6 +896,7 @@ export type Database = {
       }
       financial_categories: {
         Row: {
+          business_id: string | null
           color: string | null
           createdAt: string
           icon: string | null
@@ -896,6 +909,7 @@ export type Database = {
           updatedAt: string
         }
         Insert: {
+          business_id?: string | null
           color?: string | null
           createdAt?: string
           icon?: string | null
@@ -908,6 +922,7 @@ export type Database = {
           updatedAt: string
         }
         Update: {
+          business_id?: string | null
           color?: string | null
           createdAt?: string
           icon?: string | null
@@ -1278,6 +1293,7 @@ export type Database = {
       }
       loyalty_programs: {
         Row: {
+          business_id: string | null
           createdAt: string
           description: string | null
           id: string
@@ -1287,6 +1303,7 @@ export type Database = {
           updatedAt: string
         }
         Insert: {
+          business_id?: string | null
           createdAt?: string
           description?: string | null
           id: string
@@ -1296,6 +1313,7 @@ export type Database = {
           updatedAt: string
         }
         Update: {
+          business_id?: string | null
           createdAt?: string
           description?: string | null
           id?: string
@@ -1575,6 +1593,7 @@ export type Database = {
       }
       onboarding_progress: {
         Row: {
+          business_id: string | null
           completed: boolean
           completedAt: string | null
           createdAt: string
@@ -1585,6 +1604,7 @@ export type Database = {
           updatedAt: string
         }
         Insert: {
+          business_id?: string | null
           completed?: boolean
           completedAt?: string | null
           createdAt?: string
@@ -1595,6 +1615,7 @@ export type Database = {
           updatedAt: string
         }
         Update: {
+          business_id?: string | null
           completed?: boolean
           completedAt?: string | null
           createdAt?: string
@@ -1616,6 +1637,7 @@ export type Database = {
       }
       partnership_deals: {
         Row: {
+          business_id: string | null
           createdAt: string
           description: string | null
           endDate: string | null
@@ -1628,6 +1650,7 @@ export type Database = {
           updatedAt: string
         }
         Insert: {
+          business_id?: string | null
           createdAt?: string
           description?: string | null
           endDate?: string | null
@@ -1640,6 +1663,7 @@ export type Database = {
           updatedAt: string
         }
         Update: {
+          business_id?: string | null
           createdAt?: string
           description?: string | null
           endDate?: string | null
@@ -1849,6 +1873,7 @@ export type Database = {
       products: {
         Row: {
           barcode: string | null
+          business_id: string | null
           costPrice: number | null
           createdAt: string
           description: string | null
@@ -1867,6 +1892,7 @@ export type Database = {
         }
         Insert: {
           barcode?: string | null
+          business_id?: string | null
           costPrice?: number | null
           createdAt?: string
           description?: string | null
@@ -1885,6 +1911,7 @@ export type Database = {
         }
         Update: {
           barcode?: string | null
+          business_id?: string | null
           costPrice?: number | null
           createdAt?: string
           description?: string | null
@@ -2216,8 +2243,42 @@ export type Database = {
           },
         ]
       }
+      security_events: {
+        Row: {
+          business_id: string | null
+          created_at: string | null
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       service_categories: {
         Row: {
+          business_id: string | null
           color: string | null
           createdAt: string
           description: string | null
@@ -2230,6 +2291,7 @@ export type Database = {
           updatedAt: string
         }
         Insert: {
+          business_id?: string | null
           color?: string | null
           createdAt?: string
           description?: string | null
@@ -2242,6 +2304,7 @@ export type Database = {
           updatedAt: string
         }
         Update: {
+          business_id?: string | null
           color?: string | null
           createdAt?: string
           description?: string | null
@@ -2354,6 +2417,7 @@ export type Database = {
       stock_items: {
         Row: {
           batchNumber: string | null
+          business_id: string | null
           createdAt: string
           establishmentId: string
           expiryDate: string | null
@@ -2365,6 +2429,7 @@ export type Database = {
         }
         Insert: {
           batchNumber?: string | null
+          business_id?: string | null
           createdAt?: string
           establishmentId: string
           expiryDate?: string | null
@@ -2376,6 +2441,7 @@ export type Database = {
         }
         Update: {
           batchNumber?: string | null
+          business_id?: string | null
           createdAt?: string
           establishmentId?: string
           expiryDate?: string | null
@@ -2412,6 +2478,7 @@ export type Database = {
       stock_movements: {
         Row: {
           batchNumber: string | null
+          business_id: string | null
           createdAt: string
           createdById: string | null
           establishmentId: string
@@ -2426,6 +2493,7 @@ export type Database = {
         }
         Insert: {
           batchNumber?: string | null
+          business_id?: string | null
           createdAt?: string
           createdById?: string | null
           establishmentId: string
@@ -2440,6 +2508,7 @@ export type Database = {
         }
         Update: {
           batchNumber?: string | null
+          business_id?: string | null
           createdAt?: string
           createdById?: string | null
           establishmentId?: string
@@ -2800,7 +2869,72 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          business_id: string | null
+          client_id: string | null
+          created_at: string | null
+          date: string | null
+          duration: number | null
+          end_time: string | null
+          id: string | null
+          notes: string | null
+          price: number | null
+          professional_id: string | null
+          service_id: string | null
+          start_time: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          date?: string | null
+          duration?: number | null
+          end_time?: string | null
+          id?: string | null
+          notes?: string | null
+          price?: number | null
+          professional_id?: string | null
+          service_id?: string | null
+          start_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          date?: string | null
+          duration?: number | null
+          end_time?: string | null
+          id?: string | null
+          notes?: string | null
+          price?: number | null
+          professional_id?: string | null
+          service_id?: string | null
+          start_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_appointments_business"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_appointments_service"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       belongs_to_tenant: {
@@ -2823,6 +2957,10 @@ export type Database = {
       clear_tenant_context: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      convert_tenant_id_to_business_id: {
+        Args: { tenant_text: string }
+        Returns: string
       }
       create_default_roles_for_business: {
         Args: { business_id_param: string }
@@ -2909,6 +3047,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_security_event: {
+        Args: {
+          event_type_param: string
+          business_id_param?: string
+          details_param?: Json
+        }
+        Returns: undefined
+      }
       migrate_all_data: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -2931,6 +3077,10 @@ export type Database = {
           | { p_tenant_id: string; p_data_inicio: string; p_data_fim: string }
         Returns: Json
       }
+      obter_metricas_periodo_safe: {
+        Args: { business_id_param: string; periodo?: string }
+        Returns: Json
+      }
       set_business_status: {
         Args: { business_id: string; new_status: string }
         Returns: boolean
@@ -2947,12 +3097,20 @@ export type Database = {
         Args: { table_name: string }
         Returns: boolean
       }
+      user_belongs_to_business_safe: {
+        Args: { business_id_param: string }
+        Returns: boolean
+      }
       user_belongs_to_business_secure: {
         Args: { business_id_param: string }
         Returns: boolean
       }
       user_belongs_to_tenant: {
         Args: { tenant_id: string }
+        Returns: boolean
+      }
+      user_has_business_access_secure: {
+        Args: { business_id_param: string }
         Returns: boolean
       }
       user_has_permission: {
