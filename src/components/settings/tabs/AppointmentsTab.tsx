@@ -1,195 +1,354 @@
 
+import React, { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 export const AppointmentsTab = () => {
+  const [settings, setSettings] = useState({
+    allowOnlineBooking: true,
+    requireAdvancePayment: false,
+    minimumNoticeTime: 30,
+    maximumDaysInAdvance: 30,
+    automaticConfirmation: true,
+    enableWaitlist: true,
+    maxWaitlistSize: 10,
+    allowRescheduling: true,
+    rescheduleLimit: 24,
+    enableCancellation: true,
+    cancellationLimit: 2,
+    autoReminders: true,
+    reminderTime: 24,
+    enableNoShow: true,
+    noShowFee: 0,
+    overbookingAllowed: false,
+    simultaneousAppointments: 1,
+    bufferTime: 15,
+    defaultStatus: "confirmed",
+    requireClientInfo: true,
+    customFields: "",
+    paymentMethods: {
+      cash: true,
+      card: true,
+      pix: true,
+      transfer: false
+    }
+  });
+
+  const updateSetting = (key: string, value: any) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const updatePaymentMethod = (method: string, enabled: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      paymentMethods: {
+        ...prev.paymentMethods,
+        [method]: enabled
+      }
+    }));
+  };
+
+  const handleSave = () => {
+    toast.success("Configurações de agendamentos salvas com sucesso!");
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Configurações de Agendamentos</CardTitle>
-        <CardDescription>
-          Configure as regras e políticas para agendamentos de serviços
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Regras de Agendamento</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="allow-multiple">Permitir agendamentos simultâneos</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Clientes podem agendar mais de um serviço ao mesmo tempo
-                  </p>
-                </div>
-                <Switch id="allow-multiple" defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="require-confirmation">Confirmação manual de agendamentos</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Agendamentos precisam ser confirmados pela equipe
-                  </p>
-                </div>
-                <Switch id="require-confirmation" />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="block-no-shows">Bloquear clientes faltantes</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Impedir novos agendamentos de clientes que faltaram
-                  </p>
-                </div>
-                <Switch id="block-no-shows" />
-              </div>
-              
-              <div className="space-y-1">
-                <Label htmlFor="max-future-days">Limite de dias para agendamento futuro</Label>
-                <p className="text-sm text-muted-foreground">
-                  Quantos dias no futuro os clientes podem agendar
-                </p>
-                <Select defaultValue="30">
-                  <SelectTrigger id="max-future-days">
-                    <SelectValue placeholder="Selecione o limite" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7">7 dias</SelectItem>
-                    <SelectItem value="14">14 dias</SelectItem>
-                    <SelectItem value="30">30 dias</SelectItem>
-                    <SelectItem value="60">60 dias</SelectItem>
-                    <SelectItem value="90">90 dias</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Agendamentos Online</CardTitle>
+          <CardDescription>
+            Configure como os clientes podem fazer agendamentos
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Permitir agendamentos online</Label>
+              <p className="text-sm text-gray-600">Clientes podem agendar através do sistema</p>
             </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Lembretes e Confirmações</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="send-confirmation">Enviar confirmação</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Enviar email de confirmação após agendamento
-                  </p>
-                </div>
-                <Switch id="send-confirmation" defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="send-reminder">Enviar lembretes</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Enviar lembretes antes do agendamento
-                  </p>
-                </div>
-                <Switch id="send-reminder" defaultChecked />
-              </div>
-              
-              <div className="space-y-1">
-                <Label htmlFor="reminder-time">Tempo do lembrete</Label>
-                <p className="text-sm text-muted-foreground">
-                  Quando enviar o lembrete antes do agendamento
-                </p>
-                <Select defaultValue="24">
-                  <SelectTrigger id="reminder-time">
-                    <SelectValue placeholder="Selecione o tempo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 hora antes</SelectItem>
-                    <SelectItem value="2">2 horas antes</SelectItem>
-                    <SelectItem value="12">12 horas antes</SelectItem>
-                    <SelectItem value="24">24 horas antes</SelectItem>
-                    <SelectItem value="48">48 horas antes</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-1">
-                <Label htmlFor="follow-up">Mensagem pós-atendimento</Label>
-                <p className="text-sm text-muted-foreground">
-                  Enviar mensagem após o serviço para feedback
-                </p>
-                <Select defaultValue="2">
-                  <SelectTrigger id="follow-up">
-                    <SelectValue placeholder="Selecione o tempo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">Não enviar</SelectItem>
-                    <SelectItem value="1">1 hora depois</SelectItem>
-                    <SelectItem value="2">2 horas depois</SelectItem>
-                    <SelectItem value="24">24 horas depois</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <Separator />
-        
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Políticas de Cancelamento</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="cancellation-policy">Política de cancelamento</Label>
-              <Select defaultValue="24">
-                <SelectTrigger id="cancellation-policy">
-                  <SelectValue placeholder="Selecione a política" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Cancelamento a qualquer momento</SelectItem>
-                  <SelectItem value="2">Até 2 horas antes</SelectItem>
-                  <SelectItem value="12">Até 12 horas antes</SelectItem>
-                  <SelectItem value="24">Até 24 horas antes</SelectItem>
-                  <SelectItem value="48">Até 48 horas antes</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="no-show-fee">Taxa por não comparecimento</Label>
-              <div className="flex items-center gap-2">
-                <div className="relative w-full">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">R$</span>
-                  <Input id="no-show-fee" type="number" className="pl-8" defaultValue="0" />
-                </div>
-                <span className="text-sm text-muted-foreground">ou</span>
-                <div className="w-20">
-                  <Input type="number" className="text-right" defaultValue="0" />
-                </div>
-                <span className="text-sm text-muted-foreground">%</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="cancellation-message">Mensagem de cancelamento</Label>
-            <Textarea 
-              id="cancellation-message" 
-              placeholder="Mensagem exibida quando um agendamento é cancelado"
-              defaultValue="Lamentamos informar que seu agendamento foi cancelado. Entre em contato conosco para mais informações."
+            <Switch
+              checked={settings.allowOnlineBooking}
+              onCheckedChange={(checked) => updateSetting("allowOnlineBooking", checked)}
             />
           </div>
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-end gap-2">
-        <Button variant="outline">Cancelar</Button>
-        <Button>Salvar Alterações</Button>
-      </CardFooter>
-    </Card>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Confirmação automática</Label>
+              <p className="text-sm text-gray-600">Agendamentos são confirmados automaticamente</p>
+            </div>
+            <Switch
+              checked={settings.automaticConfirmation}
+              onCheckedChange={(checked) => updateSetting("automaticConfirmation", checked)}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="minimumNotice">Aviso mínimo (minutos)</Label>
+              <Input
+                id="minimumNotice"
+                type="number"
+                value={settings.minimumNoticeTime}
+                onChange={(e) => updateSetting("minimumNoticeTime", parseInt(e.target.value))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="maxDays">Máximo de dias de antecedência</Label>
+              <Input
+                id="maxDays"
+                type="number"
+                value={settings.maximumDaysInAdvance}
+                onChange={(e) => updateSetting("maximumDaysInAdvance", parseInt(e.target.value))}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>Status padrão dos agendamentos</Label>
+            <Select value={settings.defaultStatus} onValueChange={(value) => updateSetting("defaultStatus", value)}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Pendente</SelectItem>
+                <SelectItem value="confirmed">Confirmado</SelectItem>
+                <SelectItem value="waiting">Em espera</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Espera</CardTitle>
+          <CardDescription>
+            Configure a lista de espera para horários ocupados
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Habilitar lista de espera</Label>
+              <p className="text-sm text-gray-600">Clientes podem entrar em lista de espera</p>
+            </div>
+            <Switch
+              checked={settings.enableWaitlist}
+              onCheckedChange={(checked) => updateSetting("enableWaitlist", checked)}
+            />
+          </div>
+
+          {settings.enableWaitlist && (
+            <>
+              <Separator />
+              <div>
+                <Label htmlFor="maxWaitlist">Tamanho máximo da lista</Label>
+                <Input
+                  id="maxWaitlist"
+                  type="number"
+                  value={settings.maxWaitlistSize}
+                  onChange={(e) => updateSetting("maxWaitlistSize", parseInt(e.target.value))}
+                  className="w-32"
+                />
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Reagendamento e Cancelamentos</CardTitle>
+          <CardDescription>
+            Configure políticas de reagendamento e cancelamento
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Permitir reagendamento</Label>
+              <p className="text-sm text-gray-600">Clientes podem reagendar seus horários</p>
+            </div>
+            <Switch
+              checked={settings.allowRescheduling}
+              onCheckedChange={(checked) => updateSetting("allowRescheduling", checked)}
+            />
+          </div>
+
+          {settings.allowRescheduling && (
+            <>
+              <Separator />
+              <div>
+                <Label htmlFor="rescheduleLimit">Limite para reagendamento (horas antes)</Label>
+                <Input
+                  id="rescheduleLimit"
+                  type="number"
+                  value={settings.rescheduleLimit}
+                  onChange={(e) => updateSetting("rescheduleLimit", parseInt(e.target.value))}
+                  className="w-32"
+                />
+              </div>
+            </>
+          )}
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Permitir cancelamento</Label>
+              <p className="text-sm text-gray-600">Clientes podem cancelar seus agendamentos</p>
+            </div>
+            <Switch
+              checked={settings.enableCancellation}
+              onCheckedChange={(checked) => updateSetting("enableCancellation", checked)}
+            />
+          </div>
+
+          {settings.enableCancellation && (
+            <>
+              <Separator />
+              <div>
+                <Label htmlFor="cancellationLimit">Limite para cancelamento (horas antes)</Label>
+                <Input
+                  id="cancellationLimit"
+                  type="number"
+                  value={settings.cancellationLimit}
+                  onChange={(e) => updateSetting("cancellationLimit", parseInt(e.target.value))}
+                  className="w-32"
+                />
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Pagamento</CardTitle>
+          <CardDescription>
+            Configure as opções de pagamento para agendamentos
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Exigir pagamento antecipado</Label>
+              <p className="text-sm text-gray-600">Clientes devem pagar ao agendar</p>
+            </div>
+            <Switch
+              checked={settings.requireAdvancePayment}
+              onCheckedChange={(checked) => updateSetting("requireAdvancePayment", checked)}
+            />
+          </div>
+
+          <Separator />
+
+          <div>
+            <Label>Métodos de pagamento aceitos</Label>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="flex items-center justify-between">
+                <span>Dinheiro</span>
+                <Switch
+                  checked={settings.paymentMethods.cash}
+                  onCheckedChange={(checked) => updatePaymentMethod("cash", checked)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Cartão</span>
+                <Switch
+                  checked={settings.paymentMethods.card}
+                  onCheckedChange={(checked) => updatePaymentMethod("card", checked)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span>PIX</span>
+                <Switch
+                  checked={settings.paymentMethods.pix}
+                  onCheckedChange={(checked) => updatePaymentMethod("pix", checked)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Transferência</span>
+                <Switch
+                  checked={settings.paymentMethods.transfer}
+                  onCheckedChange={(checked) => updatePaymentMethod("transfer", checked)}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Configurações Avançadas</CardTitle>
+          <CardDescription>
+            Configurações adicionais para otimizar seus agendamentos
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="bufferTime">Tempo de intervalo (minutos)</Label>
+              <Input
+                id="bufferTime"
+                type="number"
+                value={settings.bufferTime}
+                onChange={(e) => updateSetting("bufferTime", parseInt(e.target.value))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="simultaneousAppointments">Agendamentos simultâneos</Label>
+              <Input
+                id="simultaneousAppointments"
+                type="number"
+                value={settings.simultaneousAppointments}
+                onChange={(e) => updateSetting("simultaneousAppointments", parseInt(e.target.value))}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="customFields">Campos personalizados (separados por vírgula)</Label>
+            <Textarea
+              id="customFields"
+              value={settings.customFields}
+              onChange={(e) => updateSetting("customFields", e.target.value)}
+              placeholder="Ex: Tipo de cabelo, Alergias, Preferências"
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Permitir overbooking</Label>
+              <p className="text-sm text-gray-600">Aceitar mais agendamentos que a capacidade</p>
+            </div>
+            <Switch
+              checked={settings.overbookingAllowed}
+              onCheckedChange={(checked) => updateSetting("overbookingAllowed", checked)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSave}>
+          Salvar Configurações de Agendamentos
+        </Button>
+      </div>
+    </div>
   );
 };

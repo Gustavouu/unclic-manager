@@ -35,20 +35,20 @@ export const SettingsTabs = ({ activeTab, onTabChange }: SettingsTabsProps) => {
 
   return (
     <Tabs defaultValue={initialTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-13 mb-8 h-auto p-1">
-        <TabsTrigger value="business-profile" className="text-xs">Perfil</TabsTrigger>
-        <TabsTrigger value="appointments" className="text-xs">Agendamentos</TabsTrigger>
-        <TabsTrigger value="hours" className="text-xs">Horários</TabsTrigger>
-        <TabsTrigger value="services" className="text-xs">Serviços</TabsTrigger>
-        <TabsTrigger value="staff" className="text-xs">Funcionários</TabsTrigger>
-        <TabsTrigger value="financial" className="text-xs">Financeiro</TabsTrigger>
-        <TabsTrigger value="notifications" className="text-xs">Notificações</TabsTrigger>
-        <TabsTrigger value="integrations" className="text-xs">Integrações</TabsTrigger>
-        <TabsTrigger value="permissions" className="text-xs">Permissões</TabsTrigger>
-        <TabsTrigger value="security" className="text-xs">Segurança</TabsTrigger>
-        <TabsTrigger value="backup" className="text-xs">Backup</TabsTrigger>
-        <TabsTrigger value="system" className="text-xs">Sistema</TabsTrigger>
-        <TabsTrigger value="other" className="text-xs">Outros</TabsTrigger>
+      <TabsList className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-13 mb-8 h-auto p-1 gap-1">
+        <TabsTrigger value="business-profile" className="text-xs px-2 py-2">Perfil</TabsTrigger>
+        <TabsTrigger value="appointments" className="text-xs px-2 py-2">Agendamentos</TabsTrigger>
+        <TabsTrigger value="hours" className="text-xs px-2 py-2">Horários</TabsTrigger>
+        <TabsTrigger value="services" className="text-xs px-2 py-2">Serviços</TabsTrigger>
+        <TabsTrigger value="staff" className="text-xs px-2 py-2">Funcionários</TabsTrigger>
+        <TabsTrigger value="financial" className="text-xs px-2 py-2">Financeiro</TabsTrigger>
+        <TabsTrigger value="notifications" className="text-xs px-2 py-2">Notificações</TabsTrigger>
+        <TabsTrigger value="integrations" className="text-xs px-2 py-2">Integrações</TabsTrigger>
+        <TabsTrigger value="permissions" className="text-xs px-2 py-2">Permissões</TabsTrigger>
+        <TabsTrigger value="security" className="text-xs px-2 py-2">Segurança</TabsTrigger>
+        <TabsTrigger value="backup" className="text-xs px-2 py-2">Backup</TabsTrigger>
+        <TabsTrigger value="system" className="text-xs px-2 py-2">Sistema</TabsTrigger>
+        <TabsTrigger value="other" className="text-xs px-2 py-2">Outros</TabsTrigger>
       </TabsList>
       
       <div className="p-6">

@@ -1,227 +1,376 @@
 
+import React, { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { CreditCard, DollarSign, Banknote, QrCode, PiggyBank, Receipt } from "lucide-react";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { CreditCard, DollarSign, Receipt, TrendingUp } from "lucide-react";
+import { toast } from "sonner";
 
 export const FinancialTab = () => {
-  const [showEfiPaySetup, setShowEfiPaySetup] = useState(false);
-  
+  const [settings, setSettings] = useState({
+    currency: "BRL",
+    taxPercentage: 0,
+    enableTax: false,
+    enableCommissions: true,
+    defaultCommission: 40,
+    enableAdvancePayments: false,
+    advancePaymentPercentage: 50,
+    paymentMethods: {
+      cash: { enabled: true, fee: 0 },
+      credit: { enabled: true, fee: 3.99 },
+      debit: { enabled: true, fee: 2.49 },
+      pix: { enabled: true, fee: 0 },
+      transfer: { enabled: false, fee: 0 }
+    },
+    automaticInvoicing: false,
+    invoiceTemplate: "standard",
+    enableReceipts: true,
+    enableFinancialReports: true,
+    bankingIntegration: false,
+    expenseCategories: [
+      { id: "1", name: "Aluguel", color: "#ef4444" },
+      { id: "2", name: "Produtos", color: "#3b82f6" },
+      { id: "3", name: "Marketing", color: "#10b981" },
+      { id: "4", name: "Equipamentos", color: "#f59e0b" }
+    ],
+    enableBudgetTracking: false,
+    monthlyBudget: 0
+  });
+
+  const updateSetting = (key: string, value: any) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const updatePaymentMethod = (method: string, field: string, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      paymentMethods: {
+        ...prev.paymentMethods,
+        [method]: {
+          ...prev.paymentMethods[method as keyof typeof prev.paymentMethods],
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  const handleSave = () => {
+    toast.success("Configurações financeiras salvas com sucesso!");
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Configurações Financeiras</CardTitle>
-        <CardDescription>
-          Defina as configurações financeiras do seu negócio
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Formas de Pagamento</h3>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between border p-3 rounded-md">
-                <div className="flex items-center gap-3">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-medium">Cartão de Crédito</p>
-                    <span className="text-sm text-muted-foreground">Taxa: 2.99%</span>
-                  </div>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between border p-3 rounded-md">
-                <div className="flex items-center gap-3">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-medium">Cartão de Débito</p>
-                    <span className="text-sm text-muted-foreground">Taxa: 1.99%</span>
-                  </div>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between border p-3 rounded-md">
-                <div className="flex items-center gap-3">
-                  <QrCode className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-medium">PIX</p>
-                    <span className="text-sm text-muted-foreground">Taxa: 0.99%</span>
-                  </div>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between border p-3 rounded-md">
-                <div className="flex items-center gap-3">
-                  <Banknote className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="font-medium">Dinheiro</p>
-                    <span className="text-sm text-muted-foreground">Taxa: 0%</span>
-                  </div>
-                </div>
-                <Switch defaultChecked />
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Configurações de Comissão</h3>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="default-commission-type">Tipo de Comissão Padrão</Label>
-                  <Select defaultValue="percentage">
-                    <SelectTrigger id="default-commission-type">
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="percentage">Percentual</SelectItem>
-                      <SelectItem value="fixed">Valor Fixo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="default-commission-value">Valor Padrão</Label>
-                  <div className="relative">
-                    <Input 
-                      id="default-commission-value"
-                      type="number" 
-                      placeholder="20" 
-                      defaultValue="20"
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500">%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Switch id="enable-individual-commission" defaultChecked />
-                <Label htmlFor="enable-individual-commission">Permitir comissões individuais por profissional</Label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Switch id="enable-service-commission" defaultChecked />
-                <Label htmlFor="enable-service-commission">Permitir comissões específicas por serviço</Label>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <Separator />
-        
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Integração com EFIPAY</h3>
-            <Switch 
-              id="efipay-integration" 
-              checked={showEfiPaySetup} 
-              onCheckedChange={setShowEfiPaySetup} 
-            />
-          </div>
-          
-          {showEfiPaySetup && (
-            <div className="border rounded-md p-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="efipay-client-id">Client ID</Label>
-                  <Input id="efipay-client-id" placeholder="Digite seu Client ID" />
-                </div>
-                
-                <div>
-                  <Label htmlFor="efipay-client-secret">Client Secret</Label>
-                  <Input id="efipay-client-secret" type="password" placeholder="Digite seu Client Secret" />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="efipay-environment">Ambiente</Label>
-                <Select defaultValue="sandbox">
-                  <SelectTrigger id="efipay-environment">
-                    <SelectValue placeholder="Selecione o ambiente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sandbox">Sandbox (Testes)</SelectItem>
-                    <SelectItem value="production">Produção</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Switch id="efipay-auto-capture" defaultChecked />
-                <Label htmlFor="efipay-auto-capture">Captura automática</Label>
-              </div>
-              
-              <div className="bg-blue-50 p-3 rounded-md flex items-start gap-2">
-                <PiggyBank className="h-5 w-5 text-blue-500 mt-0.5" />
-                <div>
-                  <p className="text-sm text-blue-800 font-medium">Como configurar o EFIPAY?</p>
-                  <p className="text-xs text-blue-700">
-                    Acesse o portal EFIPAY, crie sua conta e obtenha suas credenciais de API. 
-                    Após a configuração, você poderá receber pagamentos online diretamente na sua conta.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <Separator />
-        
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Configurações de Impostos</h3>
-          
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            Configurações Gerais
+          </CardTitle>
+          <CardDescription>
+            Configure as opções básicas do sistema financeiro
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="default-tax-rate">Taxa de Imposto Padrão</Label>
-              <div className="relative">
-                <Input 
-                  id="default-tax-rate"
-                  type="number" 
-                  placeholder="0" 
-                  defaultValue="0"
-                />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500">%</span>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="tax-calculation">Cálculo de Impostos</Label>
-              <Select defaultValue="included">
-                <SelectTrigger id="tax-calculation">
-                  <SelectValue placeholder="Selecione o tipo de cálculo" />
+              <Label>Moeda</Label>
+              <Select value={settings.currency} onValueChange={(value) => updateSetting("currency", value)}>
+                <SelectTrigger>
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="included">Incluído no preço</SelectItem>
-                  <SelectItem value="excluded">Aplicado sobre o preço</SelectItem>
+                  <SelectItem value="BRL">Real (R$)</SelectItem>
+                  <SelectItem value="USD">Dólar ($)</SelectItem>
+                  <SelectItem value="EUR">Euro (€)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            <div>
+              <Label htmlFor="defaultCommission">Comissão padrão (%)</Label>
+              <Input
+                id="defaultCommission"
+                type="number"
+                value={settings.defaultCommission}
+                onChange={(e) => updateSetting("defaultCommission", parseInt(e.target.value))}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Habilitar impostos</Label>
+              <p className="text-sm text-gray-600">Aplicar impostos automaticamente</p>
+            </div>
+            <Switch
+              checked={settings.enableTax}
+              onCheckedChange={(checked) => updateSetting("enableTax", checked)}
+            />
+          </div>
+
+          {settings.enableTax && (
+            <div>
+              <Label htmlFor="taxPercentage">Percentual de imposto (%)</Label>
+              <Input
+                id="taxPercentage"
+                type="number"
+                step="0.01"
+                value={settings.taxPercentage}
+                onChange={(e) => updateSetting("taxPercentage", parseFloat(e.target.value))}
+                className="w-32"
+              />
+            </div>
+          )}
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Sistema de comissões</Label>
+              <p className="text-sm text-gray-600">Calcular comissões automaticamente</p>
+            </div>
+            <Switch
+              checked={settings.enableCommissions}
+              onCheckedChange={(checked) => updateSetting("enableCommissions", checked)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Métodos de Pagamento
+          </CardTitle>
+          <CardDescription>
+            Configure os métodos de pagamento aceitos e suas taxas
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Object.entries(settings.paymentMethods).map(([method, config]) => {
+            const methodNames = {
+              cash: "Dinheiro",
+              credit: "Cartão de Crédito",
+              debit: "Cartão de Débito",
+              pix: "PIX",
+              transfer: "Transferência"
+            };
+
+            return (
+              <div key={method} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-medium">{methodNames[method as keyof typeof methodNames]}</h3>
+                    {!config.enabled && <Badge variant="secondary">Desabilitado</Badge>}
+                  </div>
+                  <Switch
+                    checked={config.enabled}
+                    onCheckedChange={(checked) => updatePaymentMethod(method, "enabled", checked)}
+                  />
+                </div>
+
+                {config.enabled && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Taxa (%)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={config.fee}
+                        onChange={(e) => updatePaymentMethod(method, "fee", parseFloat(e.target.value))}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Pagamentos Antecipados</CardTitle>
+          <CardDescription>
+            Configure pagamentos antecipados para agendamentos
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Exigir pagamento antecipado</Label>
+              <p className="text-sm text-gray-600">Clientes devem pagar ao agendar</p>
+            </div>
+            <Switch
+              checked={settings.enableAdvancePayments}
+              onCheckedChange={(checked) => updateSetting("enableAdvancePayments", checked)}
+            />
+          </div>
+
+          {settings.enableAdvancePayments && (
+            <div>
+              <Label htmlFor="advancePaymentPercentage">Percentual antecipado (%)</Label>
+              <Input
+                id="advancePaymentPercentage"
+                type="number"
+                value={settings.advancePaymentPercentage}
+                onChange={(e) => updateSetting("advancePaymentPercentage", parseInt(e.target.value))}
+                className="w-32"
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Receipt className="h-5 w-5" />
+            Faturas e Recibos
+          </CardTitle>
+          <CardDescription>
+            Configure a emissão automática de documentos
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Faturamento automático</Label>
+              <p className="text-sm text-gray-600">Gerar faturas automaticamente</p>
+            </div>
+            <Switch
+              checked={settings.automaticInvoicing}
+              onCheckedChange={(checked) => updateSetting("automaticInvoicing", checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Emitir recibos</Label>
+              <p className="text-sm text-gray-600">Gerar recibos para pagamentos</p>
+            </div>
+            <Switch
+              checked={settings.enableReceipts}
+              onCheckedChange={(checked) => updateSetting("enableReceipts", checked)}
+            />
+          </div>
+
+          <div>
+            <Label>Modelo de fatura</Label>
+            <Select value={settings.invoiceTemplate} onValueChange={(value) => updateSetting("invoiceTemplate", value)}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Padrão</SelectItem>
+                <SelectItem value="modern">Moderno</SelectItem>
+                <SelectItem value="classic">Clássico</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Relatórios e Análises
+          </CardTitle>
+          <CardDescription>
+            Configure relatórios financeiros e controle de orçamento
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Relatórios financeiros</Label>
+              <p className="text-sm text-gray-600">Gerar relatórios automáticos</p>
+            </div>
+            <Switch
+              checked={settings.enableFinancialReports}
+              onCheckedChange={(checked) => updateSetting("enableFinancialReports", checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Controle de orçamento</Label>
+              <p className="text-sm text-gray-600">Monitorar orçamento mensal</p>
+            </div>
+            <Switch
+              checked={settings.enableBudgetTracking}
+              onCheckedChange={(checked) => updateSetting("enableBudgetTracking", checked)}
+            />
+          </div>
+
+          {settings.enableBudgetTracking && (
+            <div>
+              <Label htmlFor="monthlyBudget">Orçamento mensal (R$)</Label>
+              <Input
+                id="monthlyBudget"
+                type="number"
+                value={settings.monthlyBudget}
+                onChange={(e) => updateSetting("monthlyBudget", parseFloat(e.target.value))}
+              />
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Integração bancária</Label>
+              <p className="text-sm text-gray-600">Sincronizar com conta bancária</p>
+            </div>
+            <Switch
+              checked={settings.bankingIntegration}
+              onCheckedChange={(checked) => updateSetting("bankingIntegration", checked)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Categorias de Despesas</CardTitle>
+          <CardDescription>
+            Gerencie as categorias para organizar suas despesas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {settings.expenseCategories.map((category) => (
+              <div key={category.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-4 h-4 rounded"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <span className="font-medium">{category.name}</span>
+                </div>
+                <Button variant="ghost" size="sm">
+                  Editar
+                </Button>
+              </div>
+            ))}
           </div>
           
-          <div className="flex items-center space-x-2">
-            <Switch id="show-tax-details" />
-            <Label htmlFor="show-tax-details">Mostrar detalhes de impostos nos recibos</Label>
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-end gap-2">
-        <Button variant="outline">Cancelar</Button>
-        <Button>Salvar Alterações</Button>
-      </CardFooter>
-    </Card>
+          <Button variant="outline" className="w-full mt-4">
+            Nova Categoria
+          </Button>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSave}>
+          Salvar Configurações Financeiras
+        </Button>
+      </div>
+    </div>
   );
 };

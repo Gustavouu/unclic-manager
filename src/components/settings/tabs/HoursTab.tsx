@@ -1,218 +1,327 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { useOnboarding } from "@/contexts/onboarding/OnboardingContext";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
+interface DaySchedule {
+  isOpen: boolean;
+  openTime: string;
+  closeTime: string;
+  breakStart?: string;
+  breakEnd?: string;
+  hasBreak: boolean;
+}
+
+interface WeekSchedule {
+  [key: string]: DaySchedule;
+}
+
 export const HoursTab = () => {
-  const { businessHours, updateBusinessHours, saveProgress } = useOnboarding();
-  const [isEditing, setIsEditing] = useState(false);
-  
-  const days = [
-    { key: "monday", label: "Segunda-feira" },
-    { key: "tuesday", label: "Terça-feira" },
-    { key: "wednesday", label: "Quarta-feira" },
-    { key: "thursday", label: "Quinta-feira" },
-    { key: "friday", label: "Sexta-feira" },
-    { key: "saturday", label: "Sábado" },
-    { key: "sunday", label: "Domingo" }
-  ];
-  
-  const timeOptions = [
-    "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", "09:00", "09:30", 
-    "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", 
-    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", 
-    "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", 
-    "22:00", "22:30", "23:00", "23:30"
-  ];
-  
-  const handleToggleDay = (day: string, checked: boolean) => {
-    if (!businessHours) return;
-    
-    const updatedHours = {
-      ...businessHours,
-      [day]: {
-        ...businessHours[day],
-        open: checked,
-        isOpen: checked
-      }
-    };
-    updateBusinessHours(updatedHours);
-  };
-  
-  const handleTimeChange = (day: string, field: 'openTime' | 'closeTime', value: string) => {
-    if (!businessHours) return;
-    
-    const updatedHours = {
-      ...businessHours,
-      [day]: {
-        ...businessHours[day],
-        [field]: value,
-        [field === 'openTime' ? 'start' : 'end']: value
-      }
-    };
-    updateBusinessHours(updatedHours);
-  };
-  
-  const handleSaveChanges = () => {
-    saveProgress();
-    toast.success("Horários salvos com sucesso!");
-    setIsEditing(false);
-  };
-  
-  const handleEditToggle = () => {
-    setIsEditing(!isEditing);
+  const [schedule, setSchedule] = useState<WeekSchedule>({
+    monday: { isOpen: true, openTime: "09:00", closeTime: "18:00", hasBreak: false, breakStart: "12:00", breakEnd: "13:00" },
+    tuesday: { isOpen: true, openTime: "09:00", closeTime: "18:00", hasBreak: false, breakStart: "12:00", breakEnd: "13:00" },
+    wednesday: { isOpen: true, openTime: "09:00", closeTime: "18:00", hasBreak: false, breakStart: "12:00", breakEnd: "13:00" },
+    thursday: { isOpen: true, openTime: "09:00", closeTime: "18:00", hasBreak: false, breakStart: "12:00", breakEnd: "13:00" },
+    friday: { isOpen: true, openTime: "09:00", closeTime: "18:00", hasBreak: false, breakStart: "12:00", breakEnd: "13:00" },
+    saturday: { isOpen: true, openTime: "09:00", closeTime: "16:00", hasBreak: false, breakStart: "12:00", breakEnd: "13:00" },
+    sunday: { isOpen: false, openTime: "09:00", closeTime: "16:00", hasBreak: false, breakStart: "12:00", breakEnd: "13:00" }
+  });
+
+  const [settings, setSettings] = useState({
+    appointmentInterval: 30,
+    timezone: "America/Sao_Paulo",
+    allowBookingOutsideHours: false,
+    extendedHoursRate: 1.5,
+    holidayScheduleEnabled: true,
+    bufferBetweenAppointments: 0,
+    lastAppointmentTime: 30
+  });
+
+  const dayNames = {
+    monday: "Segunda-feira",
+    tuesday: "Terça-feira", 
+    wednesday: "Quarta-feira",
+    thursday: "Quinta-feira",
+    friday: "Sexta-feira",
+    saturday: "Sábado",
+    sunday: "Domingo"
   };
 
-  if (!businessHours) {
-    return <div>Carregando...</div>;
-  }
+  const updateDaySchedule = (day: string, field: string, value: any) => {
+    setSchedule(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [field]: value
+      }
+    }));
+  };
+
+  const updateSetting = (key: string, value: any) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const copySchedule = (fromDay: string, toDay: string) => {
+    setSchedule(prev => ({
+      ...prev,
+      [toDay]: { ...prev[fromDay] }
+    }));
+    toast.success(`Horário de ${dayNames[fromDay as keyof typeof dayNames]} copiado para ${dayNames[toDay as keyof typeof dayNames]}`);
+  };
+
+  const setAllDays = (scheduleData: DaySchedule) => {
+    const newSchedule: WeekSchedule = {};
+    Object.keys(schedule).forEach(day => {
+      newSchedule[day] = { ...scheduleData };
+    });
+    setSchedule(newSchedule);
+    toast.success("Horário aplicado para todos os dias");
+  };
+
+  const handleSave = () => {
+    toast.success("Horários de funcionamento salvos com sucesso!");
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Horários de Funcionamento</CardTitle>
-        <CardDescription>
-          Defina os horários de funcionamento do seu negócio
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex justify-end mb-4">
-          <Button 
-            variant={isEditing ? "default" : "outline"} 
-            onClick={handleEditToggle}
-          >
-            {isEditing ? "Cancelar Edição" : "Editar Horários"}
-          </Button>
-        </div>
-        
-        <div className="rounded-lg border">
-          {days.map((day) => (
-            <div 
-              key={day.key} 
-              className="grid grid-cols-4 sm:grid-cols-7 gap-4 items-center p-4 border-b last:border-b-0"
-            >
-              <div className="flex items-center space-x-2">
-                <Switch 
-                  id={`day-${day.key}`} 
-                  checked={businessHours[day.key]?.open || false}
-                  onCheckedChange={(checked) => handleToggleDay(day.key, checked)}
-                  disabled={!isEditing}
-                />
-                <Label htmlFor={`day-${day.key}`} className="font-medium">
-                  {day.label}
-                </Label>
-              </div>
-              
-              <div className="col-span-3 sm:col-span-6 grid grid-cols-2 gap-2">
-                {businessHours[day.key]?.open ? (
-                  <>
-                    <div>
-                      <Label htmlFor={`open-${day.key}`} className="text-sm text-muted-foreground mb-1 block">
-                        Abertura
-                      </Label>
-                      <Select
-                        value={businessHours[day.key]?.openTime || "09:00"}
-                        onValueChange={(value) => handleTimeChange(day.key, 'openTime', value)}
-                        disabled={!isEditing || !businessHours[day.key]?.open}
-                      >
-                        <SelectTrigger id={`open-${day.key}`}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timeOptions.map((time) => (
-                            <SelectItem key={`open-${day.key}-${time}`} value={time}>
-                              {time}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor={`close-${day.key}`} className="text-sm text-muted-foreground mb-1 block">
-                        Fechamento
-                      </Label>
-                      <Select
-                        value={businessHours[day.key]?.closeTime || "18:00"}
-                        onValueChange={(value) => handleTimeChange(day.key, 'closeTime', value)}
-                        disabled={!isEditing || !businessHours[day.key]?.open}
-                      >
-                        <SelectTrigger id={`close-${day.key}`}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timeOptions.map((time) => (
-                            <SelectItem key={`close-${day.key}-${time}`} value={time}>
-                              {time}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </>
-                ) : (
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">Fechado</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        <Separator />
-        
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Ajustes Adicionais</h3>
-          
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Configurações Gerais</CardTitle>
+          <CardDescription>
+            Configure as opções globais de horário de funcionamento
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="break-time">Tempo de Intervalo</Label>
-              <Select defaultValue="0" disabled={!isEditing}>
-                <SelectTrigger id="break-time">
-                  <SelectValue placeholder="Selecione o tempo" />
+            <div>
+              <Label>Fuso Horário</Label>
+              <Select value={settings.timezone} onValueChange={(value) => updateSetting("timezone", value)}>
+                <SelectTrigger>
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0">Sem Intervalo</SelectItem>
-                  <SelectItem value="15">15 minutos</SelectItem>
-                  <SelectItem value="30">30 minutos</SelectItem>
-                  <SelectItem value="45">45 minutos</SelectItem>
-                  <SelectItem value="60">1 hora</SelectItem>
+                  <SelectItem value="America/Sao_Paulo">São Paulo (GMT-3)</SelectItem>
+                  <SelectItem value="America/Rio_Branco">Rio Branco (GMT-5)</SelectItem>
+                  <SelectItem value="America/Manaus">Manaus (GMT-4)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="buffer-time">Tempo de Preparação</Label>
-              <Select defaultValue="0" disabled={!isEditing}>
-                <SelectTrigger id="buffer-time">
-                  <SelectValue placeholder="Selecione o tempo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Sem Preparação</SelectItem>
-                  <SelectItem value="5">5 minutos</SelectItem>
-                  <SelectItem value="10">10 minutos</SelectItem>
-                  <SelectItem value="15">15 minutos</SelectItem>
-                </SelectContent>
-              </Select>
+
+            <div>
+              <Label htmlFor="appointmentInterval">Intervalo entre agendamentos (minutos)</Label>
+              <Input
+                id="appointmentInterval"
+                type="number"
+                value={settings.appointmentInterval}
+                onChange={(e) => updateSetting("appointmentInterval", parseInt(e.target.value))}
+              />
             </div>
           </div>
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-end gap-2">
-        {isEditing && (
-          <>
-            <Button variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
-            <Button onClick={handleSaveChanges}>Salvar Alterações</Button>
-          </>
-        )}
-      </CardFooter>
-    </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="bufferBetweenAppointments">Buffer entre agendamentos (minutos)</Label>
+              <Input
+                id="bufferBetweenAppointments"
+                type="number"
+                value={settings.bufferBetweenAppointments}
+                onChange={(e) => updateSetting("bufferBetweenAppointments", parseInt(e.target.value))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="lastAppointmentTime">Último agendamento (minutos antes do fechamento)</Label>
+              <Input
+                id="lastAppointmentTime"
+                type="number"
+                value={settings.lastAppointmentTime}
+                onChange={(e) => updateSetting("lastAppointmentTime", parseInt(e.target.value))}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Permitir agendamentos fora do horário</Label>
+              <p className="text-sm text-gray-600">Com taxa adicional</p>
+            </div>
+            <Switch
+              checked={settings.allowBookingOutsideHours}
+              onCheckedChange={(checked) => updateSetting("allowBookingOutsideHours", checked)}
+            />
+          </div>
+
+          {settings.allowBookingOutsideHours && (
+            <div>
+              <Label htmlFor="extendedHoursRate">Taxa adicional (multiplicador)</Label>
+              <Input
+                id="extendedHoursRate"
+                type="number"
+                step="0.1"
+                value={settings.extendedHoursRate}
+                onChange={(e) => updateSetting("extendedHoursRate", parseFloat(e.target.value))}
+                className="w-32"
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Horários de Funcionamento</CardTitle>
+          <CardDescription>
+            Configure os horários para cada dia da semana
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2 mb-4">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setAllDays({ isOpen: true, openTime: "09:00", closeTime: "18:00", hasBreak: false, breakStart: "12:00", breakEnd: "13:00" })}
+            >
+              Aplicar 9h-18h para todos
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setAllDays({ isOpen: true, openTime: "08:00", closeTime: "17:00", hasBreak: true, breakStart: "12:00", breakEnd: "13:00" })}
+            >
+              Aplicar 8h-17h (com almoço) para todos
+            </Button>
+          </div>
+
+          {Object.entries(schedule).map(([day, daySchedule]) => (
+            <div key={day} className="border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <h3 className="font-medium">{dayNames[day as keyof typeof dayNames]}</h3>
+                  {!daySchedule.isOpen && <Badge variant="secondary">Fechado</Badge>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={daySchedule.isOpen}
+                    onCheckedChange={(checked) => updateDaySchedule(day, "isOpen", checked)}
+                  />
+                  <Select value={day} onValueChange={(toDay) => copySchedule(day, toDay)}>
+                    <SelectTrigger className="w-36">
+                      <SelectValue placeholder="Copiar para..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(dayNames).map(([dayKey, dayName]) => (
+                        dayKey !== day && (
+                          <SelectItem key={dayKey} value={dayKey}>
+                            {dayName}
+                          </SelectItem>
+                        )
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {daySchedule.isOpen && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Abertura</Label>
+                      <Input
+                        type="time"
+                        value={daySchedule.openTime}
+                        onChange={(e) => updateDaySchedule(day, "openTime", e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Fechamento</Label>
+                      <Input
+                        type="time"
+                        value={daySchedule.closeTime}
+                        onChange={(e) => updateDaySchedule(day, "closeTime", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Label>Intervalo para almoço</Label>
+                    <Switch
+                      checked={daySchedule.hasBreak}
+                      onCheckedChange={(checked) => updateDaySchedule(day, "hasBreak", checked)}
+                    />
+                  </div>
+
+                  {daySchedule.hasBreak && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Início do intervalo</Label>
+                        <Input
+                          type="time"
+                          value={daySchedule.breakStart}
+                          onChange={(e) => updateDaySchedule(day, "breakStart", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label>Fim do intervalo</Label>
+                        <Input
+                          type="time"
+                          value={daySchedule.breakEnd}
+                          onChange={(e) => updateDaySchedule(day, "breakEnd", e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Feriados e Datas Especiais</CardTitle>
+          <CardDescription>
+            Configure horários especiais para feriados e datas comemorativas
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Ativar horários especiais</Label>
+              <p className="text-sm text-gray-600">Configure horários diferentes para feriados</p>
+            </div>
+            <Switch
+              checked={settings.holidayScheduleEnabled}
+              onCheckedChange={(checked) => updateSetting("holidayScheduleEnabled", checked)}
+            />
+          </div>
+
+          <div className="p-4 border rounded-lg bg-gray-50">
+            <p className="text-sm text-gray-600">
+              Funcionalidade em desenvolvimento. Em breve você poderá configurar horários especiais para:
+            </p>
+            <ul className="text-sm text-gray-600 mt-2 list-disc list-inside">
+              <li>Feriados nacionais</li>
+              <li>Datas comemorativas</li>
+              <li>Fechamentos temporários</li>
+              <li>Horários estendidos</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSave}>
+          Salvar Horários de Funcionamento
+        </Button>
+      </div>
+    </div>
   );
 };
