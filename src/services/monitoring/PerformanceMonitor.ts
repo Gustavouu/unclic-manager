@@ -1,35 +1,26 @@
-export interface PerformanceMetric {
+
+interface PerformanceMetric {
   name: string;
   value: number;
-  timestamp: Date;
+  timestamp: number;
   metadata?: Record<string, any>;
 }
 
-export interface PerformanceReport {
-  totalMetrics: number;
-  averageResponseTime: number;
-  errorRate: number;
-  topSlowQueries: Array<{ name: string; avgTime: number; count: number }>;
-  memoryUsage: number;
-  summary: {
-    avgResponseTime: number;
-    p95ResponseTime: number;
-    errorRate: number;
-  };
-  slowQueries: Array<{ name: string; avgTime: number; count: number }>;
+interface QueryPerformance {
+  query: string;
+  duration: number;
+  timestamp: number;
+  success: boolean;
+  error?: string;
 }
 
 export class PerformanceMonitor {
   private static instance: PerformanceMonitor;
   private metrics: PerformanceMetric[] = [];
-  private maxMetrics = 1000;
-  private isProduction = import.meta.env.PROD;
+  private queryMetrics: QueryPerformance[] = [];
+  private readonly MAX_METRICS = 1000;
 
-  private constructor() {
-    if (!this.isProduction) {
-      console.log('🔍 Performance Monitor initialized');
-    }
-  }
+  private constructor() {}
 
   public static getInstance(): PerformanceMonitor {
     if (!PerformanceMonitor.instance) {
@@ -42,140 +33,152 @@ export class PerformanceMonitor {
     const metric: PerformanceMetric = {
       name,
       value,
-      timestamp: new Date(),
+      timestamp: Date.now(),
       metadata
     };
 
     this.metrics.push(metric);
-
-    // Keep metrics array size manageable
-    if (this.metrics.length > this.maxMetrics) {
-      this.metrics = this.metrics.slice(-this.maxMetrics);
+    
+    // Manter apenas as últimas métricas
+    if (this.metrics.length > this.MAX_METRICS) {
+      this.metrics = this.metrics.slice(-this.MAX_METRICS);
     }
 
-    // Log in development, send to monitoring service in production
-    if (this.isProduction) {
-      this.sendToMonitoringService(metric);
-    } else {
-      console.log(`📊 Metric: ${name} = ${value}`, metadata);
+    // Log métricas críticas
+    if (this.isCriticalMetric(name, value)) {
+      console.warn(`Critical performance metric: ${name} = ${value}`, metadata);
     }
   }
 
-  public getMetrics(name?: string): PerformanceMetric[] {
+  public trackQuery(query: string, duration: number, success: boolean, error?: string): void {
+    const queryMetric: QueryPerformance = {
+      query,
+      duration,
+      timestamp: Date.now(),
+      success,
+      error
+    };
+
+    this.queryMetrics.push(queryMetric);
+    
+    if (this.queryMetrics.length > this.MAX_METRICS) {
+      this.queryMetrics = this.queryMetrics.slice(-this.MAX_METRICS);
+    }
+
+    // Alertar sobre queries lentas
+    if (duration > 1000) {
+      console.warn(`Slow query detected: ${duration}ms`, { query, error });
+    }
+  }
+
+  public measureAsync<T>(name: string, fn: () => Promise<T>): Promise<T> {
+    const startTime = performance.now();
+    
+    return fn()
+      .then(result => {
+        const duration = performance.now() - startTime;
+        this.trackMetric(`${name}_duration`, duration);
+        this.trackMetric(`${name}_success`, 1);
+        return result;
+      })
+      .catch(error => {
+        const duration = performance.now() - startTime;
+        this.trackMetric(`${name}_duration`, duration);
+        this.trackMetric(`${name}_error`, 1);
+        throw error;
+      });
+  }
+
+  public getMetrics(name?: string, timeRange?: { start: number; end: number }): PerformanceMetric[] {
+    let filtered = this.metrics;
+
     if (name) {
-      return this.metrics.filter(m => m.name === name);
+      filtered = filtered.filter(m => m.name === name);
     }
-    return [...this.metrics];
+
+    if (timeRange) {
+      filtered = filtered.filter(m => 
+        m.timestamp >= timeRange.start && m.timestamp <= timeRange.end
+      );
+    }
+
+    return filtered;
   }
 
-  public getAverageMetric(name: string, timeWindowMs: number = 300000): number {
-    const cutoff = new Date(Date.now() - timeWindowMs);
-    const relevantMetrics = this.metrics.filter(
-      m => m.name === name && m.timestamp >= cutoff
+  public getQueryMetrics(timeRange?: { start: number; end: number }): QueryPerformance[] {
+    let filtered = this.queryMetrics;
+
+    if (timeRange) {
+      filtered = filtered.filter(m => 
+        m.timestamp >= timeRange.start && m.timestamp <= timeRange.end
+      );
+    }
+
+    return filtered;
+  }
+
+  public getAverageMetric(name: string, timeRange?: { start: number; end: number }): number {
+    const metrics = this.getMetrics(name, timeRange);
+    if (metrics.length === 0) return 0;
+    
+    const sum = metrics.reduce((acc, m) => acc + m.value, 0);
+    return sum / metrics.length;
+  }
+
+  public getPercentile(name: string, percentile: number, timeRange?: { start: number; end: number }): number {
+    const metrics = this.getMetrics(name, timeRange);
+    if (metrics.length === 0) return 0;
+
+    const sorted = metrics.map(m => m.value).sort((a, b) => a - b);
+    const index = Math.ceil((percentile / 100) * sorted.length) - 1;
+    return sorted[Math.max(0, index)];
+  }
+
+  private isCriticalMetric(name: string, value: number): boolean {
+    const thresholds: Record<string, number> = {
+      'memory_usage': 80, // 80% usage
+      'cpu_usage': 90,    // 90% usage
+      'error_rate': 5,    // 5% error rate
+      'response_time': 2000, // 2 seconds
+    };
+
+    return thresholds[name] && value > thresholds[name];
+  }
+
+  public generateReport(): {
+    summary: Record<string, any>;
+    slowQueries: QueryPerformance[];
+    criticalMetrics: PerformanceMetric[];
+  } {
+    const now = Date.now();
+    const oneHourAgo = now - (60 * 60 * 1000);
+    const timeRange = { start: oneHourAgo, end: now };
+
+    const avgResponseTime = this.getAverageMetric('response_time', timeRange);
+    const p95ResponseTime = this.getPercentile('response_time', 95, timeRange);
+    const errorRate = this.getAverageMetric('error_rate', timeRange);
+
+    const slowQueries = this.queryMetrics
+      .filter(q => q.duration > 500)
+      .sort((a, b) => b.duration - a.duration)
+      .slice(0, 10);
+
+    const criticalMetrics = this.metrics.filter(m => 
+      this.isCriticalMetric(m.name, m.value) && 
+      m.timestamp >= oneHourAgo
     );
 
-    if (relevantMetrics.length === 0) return 0;
-
-    const sum = relevantMetrics.reduce((acc, m) => acc + m.value, 0);
-    return sum / relevantMetrics.length;
-  }
-
-  public clearMetrics(): void {
-    this.metrics = [];
-  }
-
-  public generateReport(): PerformanceReport {
-    const totalMetrics = this.metrics.length;
-    const responseTimeMetrics = this.metrics.filter(m => m.name.includes('response_time') || m.name.includes('dashboard_query_time'));
-    const errorMetrics = this.metrics.filter(m => m.name.includes('error'));
-    
-    const averageResponseTime = responseTimeMetrics.length > 0 
-      ? responseTimeMetrics.reduce((sum, m) => sum + m.value, 0) / responseTimeMetrics.length
-      : 0;
-
-    const errorRate = totalMetrics > 0 ? errorMetrics.length / totalMetrics : 0;
-
-    // Group by query name and calculate averages
-    const queryGroups = new Map<string, { total: number; count: number }>();
-    responseTimeMetrics.forEach(metric => {
-      const queryName = metric.metadata?.query || metric.name || 'unknown';
-      if (!queryGroups.has(queryName)) {
-        queryGroups.set(queryName, { total: 0, count: 0 });
-      }
-      const group = queryGroups.get(queryName)!;
-      group.total += metric.value;
-      group.count += 1;
-    });
-
-    const topSlowQueries = Array.from(queryGroups.entries())
-      .map(([name, data]) => ({
-        name,
-        avgTime: data.total / data.count,
-        count: data.count
-      }))
-      .sort((a, b) => b.avgTime - a.avgTime)
-      .slice(0, 5);
-
-    // Calculate P95 response time
-    const sortedResponseTimes = responseTimeMetrics
-      .map(m => m.value)
-      .sort((a, b) => a - b);
-    const p95Index = Math.floor(sortedResponseTimes.length * 0.95);
-    const p95ResponseTime = sortedResponseTimes[p95Index] || 0;
-
     return {
-      totalMetrics,
-      averageResponseTime,
-      errorRate,
-      topSlowQueries,
-      memoryUsage: 0, // Placeholder for browser memory usage
       summary: {
-        avgResponseTime: averageResponseTime,
+        avgResponseTime,
         p95ResponseTime,
-        errorRate
+        errorRate,
+        totalQueries: this.queryMetrics.length,
+        slowQueriesCount: slowQueries.length,
+        criticalAlertsCount: criticalMetrics.length
       },
-      slowQueries: topSlowQueries
+      slowQueries,
+      criticalMetrics
     };
-  }
-
-  public measureAsync<T>(name: string, operation: () => Promise<T>): Promise<T> {
-    const start = performance.now();
-    return operation().finally(() => {
-      const duration = performance.now() - start;
-      this.trackMetric(name, duration, { type: 'async_operation' });
-    });
-  }
-
-  public trackQuery(name: string, duration: number, success: boolean = true): void {
-    this.trackMetric('database_query', duration, { 
-      query: name, 
-      success,
-      status: success ? 'success' : 'error'
-    });
-  }
-
-  private sendToMonitoringService(metric: PerformanceMetric): void {
-    // In production, this would send to a real monitoring service
-    // For now, we'll just log it
-    console.log('📈 Production Metric:', metric);
-  }
-
-  public trackPageLoad(pageName: string): void {
-    const loadTime = performance.timing?.loadEventEnd - performance.timing?.navigationStart;
-    if (loadTime > 0) {
-      this.trackMetric('page_load_time', loadTime, { page: pageName });
-    }
-  }
-
-  public trackApiCall(endpoint: string, duration: number, success: boolean): void {
-    this.trackMetric('api_call_duration', duration, { 
-      endpoint, 
-      success,
-      status: success ? 'success' : 'error'
-    });
-  }
-
-  public trackUserAction(action: string, duration?: number): void {
-    this.trackMetric('user_action', duration || 1, { action });
   }
 }

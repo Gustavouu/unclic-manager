@@ -1,92 +1,205 @@
 
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { QueryProvider } from './contexts/QueryContext';
-import { ErrorHandlingProvider } from './contexts/ErrorHandlingContext';
-import { AuthProvider } from './contexts/AuthContext';
-import { RequireAuth } from './components/auth/RequireAuth';
-import { OnboardingRedirect } from './components/auth/OnboardingRedirect';
-import { DashboardLayout } from './components/DashboardLayout';
-import Dashboard from './pages/Dashboard';
-import Clients from './pages/Clients';
-import Services from './pages/Services';
-import Professionals from './pages/Professionals';
-import Bookings from './pages/Bookings';
-import Settings from './pages/Settings';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Index from './pages/Index';
-import OnboardingPage from './pages/Onboarding';
-import OnboardingFixedPage from './pages/OnboardingFixed';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { MultiTenantProvider } from '@/contexts/MultiTenantContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from 'next-themes';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { TenantProvider } from '@/contexts/TenantContext';
+import { Layout } from '@/components/layout/Layout';
+import { RequireAuth } from '@/components/auth/RequireAuth';
+import AuthPage from '@/pages/Auth';
+
+// Import pages
+import DashboardEnhanced from '@/pages/DashboardEnhanced';
+import AppointmentsPage from '@/pages/Appointments';
+import ClientsPage from '@/pages/Clients';
+import ServicesPage from '@/pages/Services';
+import ProfessionalsPage from '@/pages/Professionals';
+import InventoryPage from '@/pages/Inventory';
+import FinancePage from '@/pages/Finance';
+import PaymentsPage from '@/pages/Payments';
+import ReportsPage from '@/pages/Reports';
+import MarketingPage from '@/pages/Marketing';
+import DocumentsPage from '@/pages/Documents';
+import SettingsPage from '@/pages/Settings';
+import OnboardingPage from '@/pages/Onboarding';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   return (
-    <ErrorBoundary>
-      <BrowserRouter>
-        <QueryProvider>
-          <ErrorHandlingProvider>
-            <AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" enableSystem>
+        <AuthProvider>
+          <TenantProvider>
+            <Router>
               <div className="min-h-screen bg-background">
                 <Routes>
-                  {/* Root route - handles authentication check and redirects */}
-                  <Route path="/" element={<Index />} />
-                  
-                  {/* Public routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  
-                  {/* Onboarding routes - protected but outside main layout */}
-                  <Route 
-                    path="/onboarding" 
+                  {/* Public routes - não precisam de autenticação */}
+                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/onboarding" element={<OnboardingPage />} />
+
+                  {/* Protected routes - precisam de autenticação */}
+                  <Route
+                    path="/dashboard"
                     element={
                       <RequireAuth>
-                        <OnboardingPage />
-                      </RequireAuth>
-                    } 
-                  />
-                  <Route 
-                    path="/onboarding-fixed" 
-                    element={
-                      <RequireAuth>
-                        <OnboardingFixedPage />
-                      </RequireAuth>
-                    } 
-                  />
-                  
-                  {/* Protected routes with layout and onboarding check */}
-                  <Route 
-                    path="/*" 
-                    element={
-                      <RequireAuth>
-                        <MultiTenantProvider>
-                          <OnboardingRedirect>
-                            <DashboardLayout />
-                          </OnboardingRedirect>
-                        </MultiTenantProvider>
+                        <Layout>
+                          <DashboardEnhanced />
+                        </Layout>
                       </RequireAuth>
                     }
-                  >
-                    <Route path="dashboard" element={<Dashboard />} />
-                    <Route path="clients" element={<Clients />} />
-                    <Route path="services" element={<Services />} />
-                    <Route path="professionals" element={<Professionals />} />
-                    <Route path="bookings" element={<Bookings />} />
-                    <Route path="settings" element={<Settings />} />
-                  </Route>
+                  />
                   
-                  {/* Redirect any unknown routes to root */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
+                  <Route
+                    path="/appointments/*"
+                    element={
+                      <RequireAuth>
+                        <Layout>
+                          <AppointmentsPage />
+                        </Layout>
+                      </RequireAuth>
+                    }
+                  />
+                  
+                  <Route
+                    path="/clients/*"
+                    element={
+                      <RequireAuth>
+                        <Layout>
+                          <ClientsPage />
+                        </Layout>
+                      </RequireAuth>
+                    }
+                  />
+                  
+                  <Route
+                    path="/services/*"
+                    element={
+                      <RequireAuth>
+                        <Layout>
+                          <ServicesPage />
+                        </Layout>
+                      </RequireAuth>
+                    }
+                  />
+                  
+                  <Route
+                    path="/professionals/*"
+                    element={
+                      <RequireAuth>
+                        <Layout>
+                          <ProfessionalsPage />
+                        </Layout>
+                      </RequireAuth>
+                    }
+                  />
+                  
+                  <Route
+                    path="/inventory/*"
+                    element={
+                      <RequireAuth>
+                        <Layout>
+                          <InventoryPage />
+                        </Layout>
+                      </RequireAuth>
+                    }
+                  />
+                  
+                  <Route
+                    path="/finance/*"
+                    element={
+                      <RequireAuth>
+                        <Layout>
+                          <FinancePage />
+                        </Layout>
+                      </RequireAuth>
+                    }
+                  />
+                  
+                  <Route
+                    path="/payments/*"
+                    element={
+                      <RequireAuth>
+                        <Layout>
+                          <PaymentsPage />
+                        </Layout>
+                      </RequireAuth>
+                    }
+                  />
+                  
+                  <Route
+                    path="/reports/*"
+                    element={
+                      <RequireAuth>
+                        <Layout>
+                          <ReportsPage />
+                        </Layout>
+                      </RequireAuth>
+                    }
+                  />
+                  
+                  <Route
+                    path="/marketing/*"
+                    element={
+                      <RequireAuth>
+                        <Layout>
+                          <MarketingPage />
+                        </Layout>
+                      </RequireAuth>
+                    }
+                  />
+                  
+                  <Route
+                    path="/documents/*"
+                    element={
+                      <RequireAuth>
+                        <Layout>
+                          <DocumentsPage />
+                        </Layout>
+                      </RequireAuth>
+                    }
+                  />
+                  
+                  <Route
+                    path="/settings/*"
+                    element={
+                      <RequireAuth>
+                        <Layout>
+                          <SettingsPage />
+                        </Layout>
+                      </RequireAuth>
+                    }
+                  />
+
+                  {/* Redirect root to dashboard */}
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
-                <Toaster />
+
+                <Toaster 
+                  position="bottom-right"
+                  toastOptions={{
+                    style: {
+                      background: 'hsl(var(--background))',
+                      color: 'hsl(var(--foreground))',
+                      border: '1px solid hsl(var(--border))',
+                    },
+                  }}
+                />
               </div>
-            </AuthProvider>
-          </ErrorHandlingProvider>
-        </QueryProvider>
-      </BrowserRouter>
-    </ErrorBoundary>
+            </Router>
+          </TenantProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

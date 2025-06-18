@@ -83,7 +83,7 @@ const menuSections: MenuSection[] = [
       {
         title: 'Financeiro',
         icon: DollarSign,
-        href: '/financial',
+        href: '/finance',
         description: 'Receitas e despesas'
       },
       {
@@ -133,11 +133,6 @@ export const MenuSections: React.FC = () => {
     return location.pathname === href || location.pathname.startsWith(href + '/');
   };
 
-  const handleNavigation = (href: string) => {
-    // Use navigate instead of direct assignment to maintain React Router state
-    navigate(href);
-  };
-
   return (
     <nav className="space-y-6 px-3">
       {menuSections.map((section) => (
@@ -153,7 +148,7 @@ export const MenuSections: React.FC = () => {
               return (
                 <button
                   key={item.href}
-                  onClick={() => handleNavigation(item.href)}
+                  onClick={() => navigate(item.href)}
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200',
                     'hover:bg-accent hover:text-accent-foreground',

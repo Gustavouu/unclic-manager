@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from "react";
-import { useTenant } from "@/hooks/useTenant";
+import { useTenant } from "@/contexts/TenantContext";
 import { toast } from "sonner";
 
 interface BusinessFormData {

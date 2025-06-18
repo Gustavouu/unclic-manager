@@ -8,8 +8,7 @@ export const useBusinessDataState = (initialData: BusinessData) => {
     socialMedia: initialData.socialMedia || {
       facebook: '',
       instagram: '',
-      website: '',
-      linkedin: ''
+      website: ''
     }
   });
 

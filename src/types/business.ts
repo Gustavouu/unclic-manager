@@ -29,8 +29,6 @@ export interface Business {
   settings?: BusinessSettings;
   created_at: string;
   updated_at: string;
-  // Multi-tenant specific properties
-  role?: string; // User's role in this business (owner, admin, manager, staff)
 }
 
 export interface BusinessSettings {

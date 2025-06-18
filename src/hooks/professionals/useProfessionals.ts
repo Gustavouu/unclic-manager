@@ -1,190 +1,159 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { ProfessionalService } from '@/services/professional/professionalService';
 import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
-import { Professional, ProfessionalStatus } from '@/hooks/professionals/types';
+import { Professional, ProfessionalStatus, ProfessionalFormData } from './types';
 
-// Re-export the Professional interface for external use
-export type { Professional };
-
-export interface ProfessionalLegacy {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  avatar?: string;
-  bio?: string;
-  rating?: number;
-  total_reviews?: number;
-  status: string;
-  working_hours?: any;
-  business_id: string;
-  isActive: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export const useProfessionals = () => {
+export const useProfessionals = (options?: { 
+  activeOnly?: boolean, 
+  withServices?: boolean 
+}) => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { businessId } = useCurrentBusiness();
+  
+  const activeOnly = options?.activeOnly ?? true;
+  const professionalService = ProfessionalService.getInstance();
 
-  const fetchProfessionals = async () => {
-    if (!businessId) {
-      setProfessionals([]);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      console.log('Fetching professionals for business ID:', businessId);
-      
-      const { data, error } = await supabase
-        .from('professionals')
-        .select('*')
-        .eq('business_id', businessId)
-        .eq('isActive', true)
-        .order('name', { ascending: true });
-      
-      if (error) {
-        console.error("Error fetching professionals:", error);
-        throw error;
-      }
-      
-      // Transform the data to match our Professional type
-      const transformedData: Professional[] = (data || []).map(item => {
-        // Safely parse working_hours
-        let workingHours: { [day: string]: { start: string; end: string; isAvailable: boolean } } = {};
-        
-        if (item.working_hours && typeof item.working_hours === 'object') {
-          if (Array.isArray(item.working_hours)) {
-            // Handle array case - convert to object or use default
-            workingHours = {};
-          } else {
-            // Handle object case - ensure it matches our type
-            const whObject = item.working_hours as { [key: string]: any };
-            Object.keys(whObject).forEach(day => {
-              const dayData = whObject[day];
-              if (dayData && typeof dayData === 'object' && 'start' in dayData && 'end' in dayData) {
-                workingHours[day] = {
-                  start: String(dayData.start || '09:00'),
-                  end: String(dayData.end || '18:00'),
-                  isAvailable: Boolean(dayData.isAvailable !== false)
-                };
-              }
-            });
-          }
-        }
-
-        return {
-          id: item.id,
-          name: item.name,
-          email: item.email,
-          phone: item.phone,
-          position: undefined,
-          photo_url: item.avatar_url,
-          bio: item.bio,
-          specialties: undefined,
-          status: ProfessionalStatus.ACTIVE,
-          business_id: item.business_id,
-          user_id: item.userId,
-          commission_percentage: undefined,
-          hire_date: undefined,
-          working_hours: workingHours,
-          created_at: item.createdAt,
-          updated_at: item.updatedAt,
-        };
-      });
-      
-      setProfessionals(transformedData);
-      console.log(`Successfully loaded ${transformedData.length} professionals`);
-    } catch (err) {
-      console.error("Error in fetchProfessionals:", err);
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar profissionais';
-      setError(errorMessage);
-      setProfessionals([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Memoize available specialties
+  const specialties = Array.from(new Set(professionals.flatMap(p => p.specialties || [])));
 
   useEffect(() => {
-    fetchProfessionals();
-  }, [businessId]);
+    const fetchProfessionals = async () => {
+      if (!businessId) {
+        setLoading(false);
+        setProfessionals([]);
+        return;
+      }
 
-  const createProfessional = async (professionalData: Omit<Professional, 'id' | 'created_at' | 'updated_at' | 'business_id'>) => {
-    if (!businessId) throw new Error('No business selected');
-    
-    const { data, error } = await supabase
-      .from('professionals')
-      .insert({
-        id: crypto.randomUUID(),
-        name: professionalData.name,
-        email: professionalData.email,
-        phone: professionalData.phone,
-        avatar_url: professionalData.photo_url,
-        bio: professionalData.bio,
-        business_id: businessId,
-        tenantId: businessId,
-        establishmentId: businessId,
-        isActive: true,
-        status: 'active',
-        working_hours: professionalData.working_hours || {},
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    
-    await fetchProfessionals();
-    return data;
-  };
-
-  const updateProfessional = async (id: string, professionalData: Partial<Professional>) => {
-    const updateData: any = {
-      name: professionalData.name,
-      email: professionalData.email,
-      phone: professionalData.phone,
-      avatar_url: professionalData.photo_url,
-      bio: professionalData.bio,
-      working_hours: professionalData.working_hours,
-      updatedAt: new Date().toISOString(),
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const data = await professionalService.getByBusinessId(businessId);
+        
+        // Map data to match Professional interface
+        const mappedData: Professional[] = data.map(item => ({
+          id: item.id,
+          name: item.name || '',
+          email: item.email,
+          phone: item.phone,
+          bio: item.bio,
+          photo_url: item.photo_url,
+          specialties: item.specialties || [],
+          status: item.status === 'active' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
+          business_id: businessId,
+          position: item.position,
+          commission_percentage: item.commission_percentage,
+          hire_date: item.hire_date,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+        }));
+        
+        // Filter by active status if requested
+        const filteredData = activeOnly ? mappedData.filter(p => p.status === ProfessionalStatus.ACTIVE) : mappedData;
+        
+        setProfessionals(filteredData);
+        
+      } catch (err: any) {
+        console.error('Error in useProfessionals:', err);
+        setError(err.message || 'Failed to fetch professionals');
+        setProfessionals([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const { error } = await supabase
-      .from('professionals')
-      .update(updateData)
-      .eq('id', id);
+    fetchProfessionals();
+  }, [businessId, activeOnly]);
 
-    if (error) throw error;
+  // CRUD operations using the service
+  const createProfessional = async (data: ProfessionalFormData) => {
+    if (!businessId) throw new Error('No business selected');
     
-    await fetchProfessionals();
+    await professionalService.create({
+      ...data,
+      business_id: businessId,
+    });
+    
+    // Refresh the list
+    const updatedData = await professionalService.getByBusinessId(businessId);
+    const mappedData: Professional[] = updatedData.map(item => ({
+      id: item.id,
+      name: item.name || '',
+      email: item.email,
+      phone: item.phone,
+      bio: item.bio,
+      photo_url: item.photo_url,
+      specialties: item.specialties || [],
+      status: item.status === 'active' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
+      business_id: businessId,
+      position: item.position,
+      commission_percentage: item.commission_percentage,
+      hire_date: item.hire_date,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+    }));
+    setProfessionals(mappedData);
   };
-
+  
+  const updateProfessional = async (id: string, data: Partial<ProfessionalFormData>) => {
+    await professionalService.update(id, data);
+    
+    // Refresh the list
+    const updatedData = await professionalService.getByBusinessId(businessId!);
+    const mappedData: Professional[] = updatedData.map(item => ({
+      id: item.id,
+      name: item.name || '',
+      email: item.email,
+      phone: item.phone,
+      bio: item.bio,
+      photo_url: item.photo_url,
+      specialties: item.specialties || [],
+      status: item.status === 'active' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
+      business_id: businessId!,
+      position: item.position,
+      commission_percentage: item.commission_percentage,
+      hire_date: item.hire_date,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+    }));
+    setProfessionals(mappedData);
+  };
+  
   const deleteProfessional = async (id: string) => {
-    const { error } = await supabase
-      .from('professionals')
-      .update({ isActive: false })
-      .eq('id', id);
-
-    if (error) throw error;
+    await professionalService.delete(id);
     
-    await fetchProfessionals();
+    // Refresh the list
+    const updatedData = await professionalService.getByBusinessId(businessId!);
+    const mappedData: Professional[] = updatedData.map(item => ({
+      id: item.id,
+      name: item.name || '',
+      email: item.email,
+      phone: item.phone,
+      bio: item.bio,
+      photo_url: item.photo_url,
+      specialties: item.specialties || [],
+      status: item.status === 'active' ? ProfessionalStatus.ACTIVE : ProfessionalStatus.INACTIVE,
+      business_id: businessId!,
+      position: item.position,
+      commission_percentage: item.commission_percentage,
+      hire_date: item.hire_date,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+    }));
+    setProfessionals(mappedData);
   };
 
-  return {
-    professionals,
-    isLoading,
+  return { 
+    professionals, 
+    loading, 
+    isLoading: loading, 
     error,
-    refetch: fetchProfessionals,
+    specialties,
     createProfessional,
     updateProfessional,
-    deleteProfessional,
+    deleteProfessional
   };
 };

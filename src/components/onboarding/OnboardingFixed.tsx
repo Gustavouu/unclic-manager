@@ -8,7 +8,7 @@ import { BusinessInfoStepFixed } from "./steps/business-info/BusinessInfoStepFix
 import { ServicesStep } from "./steps/ServicesStep";
 import { StaffStep } from "./steps/StaffStep";
 import { HoursStep } from "./steps/HoursStep";
-import { SummaryStepImproved } from "./steps/SummaryStepImproved";
+import { SummaryStep } from "./steps/SummaryStep";
 import { OnboardingHeader } from "./OnboardingHeader";
 import { OnboardingControls } from "./OnboardingControls";
 import { WelcomeScreen } from "./welcome/WelcomeScreen";
@@ -134,7 +134,7 @@ export const OnboardingFixed = () => {
               </TabsContent>
               
               <TabsContent value="4" className="mt-0">
-                <SummaryStepImproved />
+                <SummaryStep />
               </TabsContent>
             </Tabs>
           </div>

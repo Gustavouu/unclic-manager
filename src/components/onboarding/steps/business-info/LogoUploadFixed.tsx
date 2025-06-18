@@ -9,7 +9,10 @@ export const LogoUploadFixed: React.FC = () => {
   
   const handleImageChange = (logoUrl: string | null) => {
     updateBusinessData({
-      logoUrl: logoUrl || "",
+      logoUrl,
+      logoData: logoUrl, // Keep for backward compatibility
+      logo: null, // Clear file object since we now have URL
+      logoName: logoUrl ? 'uploaded-logo' : undefined
     });
   };
   

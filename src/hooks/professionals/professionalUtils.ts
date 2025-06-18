@@ -1,6 +1,6 @@
 
 import { useMemo } from "react";
-import { Professional, ProfessionalStatus } from "./types";
+import { Professional, ProfessionalStatus, PROFESSIONAL_STATUS } from "./types";
 
 export const useProfessionalUtils = (professionals: Professional[] = []) => {
   const specialties = useMemo(() => {
@@ -11,7 +11,7 @@ export const useProfessionalUtils = (professionals: Professional[] = []) => {
   
   const getAvailableProfessionalsBySpecialty = (specialty: string) => {
     return professionals.filter(
-      p => p.status === ProfessionalStatus.ACTIVE && p.specialties && p.specialties.includes(specialty)
+      p => p.status === PROFESSIONAL_STATUS.ACTIVE && p.specialties && p.specialties.includes(specialty)
     );
   };
   

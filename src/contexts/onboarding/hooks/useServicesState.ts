@@ -1,34 +1,32 @@
 
 import { useState } from 'react';
 import { ServiceData } from '../types';
-import { v4 as uuidv4 } from 'uuid';
 
 export const useServicesState = () => {
   const [services, setServices] = useState<ServiceData[]>([]);
 
+  // Function to add a new service
   const addService = (service: ServiceData) => {
-    const newService = {
-      ...service,
-      id: service.id || uuidv4()
-    };
-    setServices(prev => [...prev, newService]);
+    setServices(prev => [...prev, service]);
   };
 
-  const updateService = (id: string, updatedService: Partial<ServiceData>) => {
-    setServices(prev => prev.map(service => 
-      service.id === id ? { ...service, ...updatedService } : service
-    ));
-  };
-
+  // Function to remove a service
   const removeService = (id: string) => {
     setServices(prev => prev.filter(service => service.id !== id));
   };
 
+  // Function to update a service
+  const updateService = (id: string, data: Partial<ServiceData>) => {
+    setServices(prev =>
+      prev.map(service => (service.id === id ? { ...service, ...data } : service))
+    );
+  };
+
   return {
     services,
-    addService,
-    updateService,
-    removeService,
     setServices,
+    addService,
+    removeService,
+    updateService,
   };
 };

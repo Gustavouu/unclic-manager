@@ -7,7 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from "@/components/ui/badge";
 import { supabase } from '@/integrations/supabase/client';
-import { useTenant } from '@/hooks/useTenant';
+import { useTenant } from '@/contexts/TenantContext';
 import { normalizeClientData } from '@/utils/databaseUtils';
 
 type ClientInfo = {

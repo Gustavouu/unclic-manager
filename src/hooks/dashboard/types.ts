@@ -2,22 +2,18 @@
 export type FilterPeriod = 'today' | 'week' | 'month' | 'quarter' | 'year';
 
 export interface DashboardMetrics {
-  totalClients: number;
-  activeClients: number;
-  totalRevenue: number;
-  monthlyRevenue: number;
-  completedAppointments: number;
   totalAppointments: number;
+  totalClients: number;
+  monthlyRevenue: number;
   todayAppointments: number;
   pendingAppointments: number;
-  revenueGrowth: number;
-  clientGrowth: number;
-  appointmentGrowth: number;
-  averageTicket: number;
-  retentionRate: number;
-  growthRate: number;
+  completedAppointments: number;
+  activeClients: number;
   newClientsThisMonth: number;
   servicesCompleted: number;
+  averageTicket: number;
+  growthRate: number;
+  retentionRate: number;
 }
 
 export interface RevenueDataPoint {
@@ -26,9 +22,39 @@ export interface RevenueDataPoint {
 }
 
 export interface PopularService {
+  id: string;
   name: string;
   count: number;
   percentage: number;
+}
+
+export interface AppointmentData {
+  id: string;
+  booking_date: string;
+  status: string;
+  price: number | null;
+  created_at: string;
+}
+
+export interface ClientData {
+  id: string;
+  status: string;
+  created_at: string;
+}
+
+export interface SupabaseResponse<T> {
+  data: T[] | null;
+  error: {
+    message: string;
+    code?: string;
+    details?: string;
+  } | null;
+}
+
+export interface DashboardData {
+  metrics: DashboardMetrics;
+  revenueData: RevenueDataPoint[];
+  popularServices: PopularService[];
 }
 
 export interface UseDashboardMetricsReturn {
@@ -37,14 +63,7 @@ export interface UseDashboardMetricsReturn {
   popularServices: PopularService[];
   isLoading: boolean;
   error: string | null;
-  formatCurrency: (value: number) => string;
-  refreshMetrics: () => void;
   lastUpdate: Date | null;
-  totalClients: number;
-  totalRevenue: number;
-  completedAppointments: number;
-  totalAppointments: number;
-  revenueGrowth: number;
-  clientGrowth: number;
-  appointmentGrowth: number;
+  refreshData: () => void;
+  formatCurrency: (value: number) => string;
 }

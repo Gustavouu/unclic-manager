@@ -30,20 +30,20 @@ export const WebsiteMainContent: React.FC<WebsiteMainContentProps> = ({
     id: businessData.id || '',
     name: businessData.name || '',
     description: businessData.description,
-    logo_url: businessData.logoUrl,
+    logo_url: businessData.logoUrl || businessData.logo_url,
     phone: businessData.phone,
     address: businessData.address,
-    address_number: businessData.addressNumber,
+    address_number: businessData.addressNumber || businessData.address_number,
     city: businessData.city,
     state: businessData.state,
-    zip_code: businessData.zipCode,
-    admin_email: businessData.adminEmail || '',
+    zip_code: businessData.zipCode || businessData.zip_code,
+    admin_email: businessData.adminEmail || businessData.admin_email || '',
     neighborhood: businessData.neighborhood
   };
 
   // Convert ServiceData to SimpleService format
   const simpleServices = availableServices.map(service => ({
-    id: service.id || '',
+    id: service.id,
     name: service.nome || service.name || '',
     description: service.descricao || service.description,
     price: service.preco || service.price || 0,
@@ -55,7 +55,6 @@ export const WebsiteMainContent: React.FC<WebsiteMainContentProps> = ({
   // Convert StaffData to website StaffData format
   const websiteStaff = staff.map(member => ({
     ...member,
-    id: member.id || '',
     name: member.nome || member.name || '',
     business_id: businessData.id || '',
     role: member.cargo || member.role || 'staff'

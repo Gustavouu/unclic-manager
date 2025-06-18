@@ -1,65 +1,26 @@
 
-import { useEffect, useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StandardizedAppointmentService } from '@/services/appointments/standardizedAppointmentService';
-import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
-import { Calendar, Clock, DollarSign, Users, TrendingUp, AlertCircle } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, XCircle, Users, TrendingUp } from 'lucide-react';
+import { useAppointments } from '@/hooks/useAppointments';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatCurrency } from '@/lib/format';
+import { isCompletedStatus, isScheduledStatus, isCanceledStatus } from '@/types/appointment-unified';
 
-interface Stats {
-  total: number;
-  scheduled: number;
-  confirmed: number;
-  completed: number;
-  cancelled: number;
-  no_show: number;
-  total_revenue: number;
-  average_value: number;
-  completion_rate: number;
-  cancellation_rate: number;
-}
-
-export const AppointmentStats = () => {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const { businessId } = useCurrentBusiness();
-  const appointmentService = StandardizedAppointmentService.getInstance();
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      if (!businessId) return;
-      
-      setIsLoading(true);
-      try {
-        // Get stats for the current month
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-        
-        const statsData = await appointmentService.getStats(businessId, startOfMonth, endOfMonth);
-        setStats(statsData);
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, [businessId, appointmentService]);
+export function AppointmentStats() {
+  const { appointments, isLoading } = useAppointments();
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-4" />
+            <CardHeader className="pb-2">
+              <Skeleton className="h-4 w-20" />
             </CardHeader>
             <CardContent>
               <Skeleton className="h-8 w-16 mb-2" />
-              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-3 w-24" />
             </CardContent>
           </Card>
         ))}
@@ -67,71 +28,89 @@ export const AppointmentStats = () => {
     );
   }
 
-  if (!stats) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <div className="text-center">
-            <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-muted-foreground">Não foi possível carregar as estatísticas</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Calculate statistics
+  const today = new Date();
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-  const statsCards = [
+  const monthAppointments = appointments.filter(apt => {
+    const aptDate = new Date(apt.date);
+    return aptDate >= startOfMonth && aptDate <= endOfMonth;
+  });
+
+  const stats = {
+    total: monthAppointments.length,
+    completed: monthAppointments.filter(apt => 
+      apt.status === 'completed' || apt.status === 'concluido'
+    ).length,
+    scheduled: monthAppointments.filter(apt => 
+      apt.status === 'scheduled' || apt.status === 'agendado' || apt.status === 'confirmed' || apt.status === 'confirmado'
+    ).length,
+    canceled: monthAppointments.filter(apt => 
+      apt.status === 'canceled' || apt.status === 'cancelado'
+    ).length,
+    revenue: monthAppointments
+      .filter(apt => apt.status === 'completed' || apt.status === 'concluido')
+      .reduce((sum, apt) => sum + apt.price, 0),
+  };
+
+  const statCards = [
     {
-      title: "Total de Agendamentos",
-      value: stats.total.toString(),
-      description: "Este mês",
+      title: 'Total do Mês',
+      value: stats.total,
       icon: Calendar,
-      color: "text-blue-600",
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      description: `${stats.scheduled} agendados`
     },
     {
-      title: "Agendamentos Confirmados",
-      value: (stats.confirmed + stats.scheduled).toString(),
-      description: `${((stats.confirmed + stats.scheduled) / Math.max(stats.total, 1) * 100).toFixed(0)}% do total`,
-      icon: Clock,
-      color: "text-green-600",
+      title: 'Concluídos',
+      value: stats.completed,
+      icon: CheckCircle,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      description: `${stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}% do total`
     },
     {
-      title: "Receita Total",
-      value: `R$ ${stats.total_revenue.toFixed(2)}`,
-      description: `Ticket médio: R$ ${stats.average_value.toFixed(2)}`,
-      icon: DollarSign,
-      color: "text-emerald-600",
+      title: 'Cancelados',
+      value: stats.canceled,
+      icon: XCircle,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      description: `${stats.total > 0 ? Math.round((stats.canceled / stats.total) * 100) : 0}% do total`
     },
     {
-      title: "Taxa de Conclusão",
-      value: `${stats.completion_rate.toFixed(1)}%`,
-      description: `${stats.completed} agendamentos concluídos`,
+      title: 'Receita do Mês',
+      value: formatCurrency(stats.revenue),
       icon: TrendingUp,
-      color: "text-purple-600",
-    },
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
+      description: `${stats.completed} atendimentos`
+    }
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {statsCards.map((stat, index) => {
-        const Icon = stat.icon;
-        return (
-          <Card key={index} className="hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <Icon className={`h-4 w-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold mb-1">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">
-                {stat.description}
-              </p>
-            </CardContent>
-          </Card>
-        );
-      })}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {statCards.map((stat, index) => (
+        <Card key={index} className="hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <div className={`p-1 rounded ${stat.bgColor}`}>
+                <stat.icon size={16} className={stat.color} />
+              </div>
+              {stat.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900 mb-1">
+              {stat.value}
+            </div>
+            <p className="text-xs text-gray-500">
+              {stat.description}
+            </p>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
-};
+}

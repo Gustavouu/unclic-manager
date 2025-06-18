@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useTenant } from "@/hooks/useTenant";
+import { useTenant } from "@/contexts/TenantContext";
 import { NewClientDialog } from "@/components/clients/NewClientDialog";
 
 export type ClientSelectWrapperProps = {

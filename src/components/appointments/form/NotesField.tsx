@@ -1,11 +1,10 @@
-
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
-import { AppointmentFormData } from "../schemas/appointmentFormSchema";
+import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
 
 export type NotesFieldProps = {
-  form: UseFormReturn<AppointmentFormData>;
+  form: UseFormReturn<AppointmentFormValues>;
 };
 
 export const NotesField = ({ form }: NotesFieldProps) => {

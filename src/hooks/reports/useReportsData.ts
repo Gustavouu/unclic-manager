@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useTenant } from '@/hooks/useTenant';
+import { useTenant } from '@/contexts/TenantContext';
 
 // Define proper types for reports
 export interface FinancialTransaction {

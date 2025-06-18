@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useTenant } from '@/hooks/useTenant';
+import { useTenant } from '@/contexts/TenantContext';
 
 interface DashboardRealtimeData {
   totalAppointments: number;
@@ -29,9 +29,7 @@ export const useDashboardRealtime = () => {
 
     const fetchData = async () => {
       try {
-        console.log('Fetching dashboard data for business:', businessId);
-
-        // Use the existing bookings table for appointments with improved error handling
+        // Use the existing bookings table for appointments
         const { data: bookingsData, error: bookingsError } = await supabase
           .from('bookings')
           .select('*')
@@ -41,7 +39,7 @@ export const useDashboardRealtime = () => {
           console.warn('Error fetching bookings:', bookingsError);
         }
 
-        // Use the existing clients table for client count with improved error handling
+        // Use the existing clients table for client count
         const { data: clientsData, error: clientsError } = await supabase
           .from('clients')
           .select('*')
@@ -72,12 +70,6 @@ export const useDashboardRealtime = () => {
           error: null
         });
 
-        console.log('Dashboard data loaded successfully:', {
-          totalAppointments,
-          totalRevenue,
-          newClientsCount
-        });
-
       } catch (err: any) {
         console.error('Error fetching dashboard data:', err);
         setData(prev => ({
@@ -101,7 +93,6 @@ export const useDashboardRealtime = () => {
           filter: `business_id=eq.${businessId}`
         }, 
         () => {
-          console.log('Bookings data changed, refetching dashboard data');
           fetchData();
         }
       )
@@ -118,7 +109,6 @@ export const useDashboardRealtime = () => {
           filter: `business_id=eq.${businessId}`
         }, 
         () => {
-          console.log('Clients data changed, refetching dashboard data');
           fetchData();
         }
       )

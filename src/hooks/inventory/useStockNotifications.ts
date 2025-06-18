@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useTenant } from '@/hooks/useTenant';
+import { useTenant } from '@/contexts/TenantContext';
 
 interface StockItem {
   id: string;
@@ -25,9 +25,7 @@ export const useStockNotifications = () => {
       }
 
       try {
-        console.log('Fetching inventory for business:', businessId);
-
-        // Use the existing inventory table with proper column names
+        // Use the correct inventory table with proper column names
         const { data, error } = await supabase
           .from('inventory')
           .select('id, name, quantity, min_quantity')
@@ -50,7 +48,6 @@ export const useStockNotifications = () => {
             unit: 'un' // Default unit
           }));
 
-        console.log('Low stock items found:', lowStock);
         setLowStockItems(lowStock);
         setHasUnreadNotifications(lowStock.length > 0);
         setIsLoading(false);

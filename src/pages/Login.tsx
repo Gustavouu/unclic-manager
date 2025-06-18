@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Navigate, Link, useNavigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,11 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader } from '@/components/ui/loader';
 import { Eye, EyeOff } from 'lucide-react';
-import { toast } from 'sonner';
 
 const Login = () => {
   const { user, loading, signIn } = useAuth();
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -21,10 +19,8 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    document.title = 'Login | Unclic Manager';
+    document.title = 'Login | Unclic';
   }, []);
-
-  console.log('Login page - user:', user?.id, 'loading:', loading);
 
   if (loading) {
     return (
@@ -35,35 +31,17 @@ const Login = () => {
   }
 
   if (user) {
-    console.log('Login: User authenticated, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.email || !formData.password) {
-      toast.error('Por favor, preencha todos os campos');
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      console.log('Login: Attempting sign in with email:', formData.email);
-      const { error } = await signIn(formData.email, formData.password);
-      
-      if (error) {
-        console.error('Login error:', error);
-        toast.error(error.message || 'Erro ao fazer login');
-      } else {
-        console.log('Login: Sign in successful, will redirect to dashboard');
-        toast.success('Login realizado com sucesso!');
-        // Navigation will be handled automatically by auth state change
-      }
+      await signIn(formData.email, formData.password);
     } catch (error) {
-      console.error('Login exception:', error);
-      toast.error('Erro inesperado ao fazer login');
+      console.error('Login error:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -146,6 +124,11 @@ const Login = () => {
               Não tem uma conta?{' '}
               <Link to="/register" className="text-blue-600 hover:underline">
                 Cadastre-se
+              </Link>
+            </p>
+            <p className="mt-2">
+              <Link to="/forgot-password" className="text-blue-600 hover:underline text-sm">
+                Esqueceu sua senha?
               </Link>
             </p>
           </div>

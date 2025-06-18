@@ -9,7 +9,10 @@ export const BannerUploadFixed: React.FC = () => {
   
   const handleImageChange = (bannerUrl: string | null) => {
     updateBusinessData({
-      bannerUrl: bannerUrl || "",
+      bannerUrl,
+      bannerData: bannerUrl, // Keep for backward compatibility
+      banner: null, // Clear file object since we now have URL
+      bannerName: bannerUrl ? 'uploaded-banner' : undefined
     });
   };
   

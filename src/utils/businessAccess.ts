@@ -1,153 +1,51 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { GlobalErrorHandler } from '@/services/error/GlobalErrorHandler';
 
-const errorHandler = GlobalErrorHandler.getInstance();
-const isProduction = import.meta.env.PROD;
-
-export async function ensureUserBusinessAccess(): Promise<void> {
+/**
+ * Ensures user has proper business access configured
+ */
+export const ensureUserBusinessAccess = async (): Promise<boolean> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: user } = await supabase.auth.getUser();
     
-    if (!user) {
-      throw new Error('User not authenticated');
+    if (!user?.user) {
+      console.log('No authenticated user found');
+      return false;
     }
 
-    // Check if user already has business access
-    const { data: existingBusinessUser, error: checkError } = await supabase
-      .from('business_users')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .limit(1);
-
-    if (checkError) {
-      throw checkError;
-    }
-
-    // If user already has access, return
-    if (existingBusinessUser && existingBusinessUser.length > 0) {
-      if (!isProduction) {
-        console.log('User already has business access');
-      }
-      return;
-    }
-
-    // Check if user has a business as admin
-    const { data: ownedBusiness, error: businessError } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('admin_email', user.email)
-      .limit(1);
-
-    if (businessError) {
-      throw businessError;
-    }
-
-    if (ownedBusiness && ownedBusiness.length > 0) {
-      // Create business_user relationship
-      const { error: insertError } = await supabase
-        .from('business_users')
-        .insert({
-          user_id: user.id,
-          business_id: ownedBusiness[0].id,
-          role: 'admin',
-          status: 'active'
-        });
-
-      if (insertError) {
-        throw insertError;
-      }
-
-      if (!isProduction) {
-        console.log('Created business access for existing business owner');
-      }
-      return;
-    }
-
-    // Create default business for new user
-    const businessName = user.user_metadata?.full_name 
-      ? `Negócio de ${user.user_metadata.full_name}`
-      : 'Meu Negócio';
-
-    // Generate a unique slug
-    const slug = businessName.toLowerCase()
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-      + '-' + Date.now();
-
-    const { data: newBusiness, error: createBusinessError } = await supabase
-      .from('businesses')
-      .insert({
-        name: businessName,
-        slug: slug,
-        admin_email: user.email!,
-        status: 'active'
-      })
-      .select()
-      .single();
-
-    if (createBusinessError) {
-      throw createBusinessError;
-    }
-
-    // Create business_user relationship
-    const { error: linkError } = await supabase
-      .from('business_users')
-      .insert({
-        user_id: user.id,
-        business_id: newBusiness.id,
-        role: 'admin',
-        status: 'active'
-      });
-
-    if (linkError) {
-      throw linkError;
-    }
-
-    if (!isProduction) {
-      console.log('Created default business and access for new user');
-    }
-
-  } catch (error) {
-    errorHandler.handleError(
-      error instanceof Error ? error : new Error(String(error)),
-      'high',
-      {
-        component: 'BusinessAccess',
-        action: 'ensureUserBusinessAccess',
-        additionalData: { isProduction }
-      }
-    );
-    throw error;
-  }
-}
-
-export async function checkUserBusinessAccess(businessId: string): Promise<boolean> {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
+    console.log('Ensuring business access for user:', user.user.id);
     
-    if (!user) return false;
-
-    const { data, error } = await supabase
-      .rpc('user_has_business_access_secure', { business_id_param: businessId });
-
+    // Try to call the RPC function to ensure business access
+    const { data, error } = await supabase.rpc('ensure_user_business_access');
+    
     if (error) {
-      throw error;
+      console.error('Error ensuring user business access:', error);
+      return false;
     }
 
-    return data || false;
+    console.log('User business access ensured successfully:', data);
+    return true;
   } catch (error) {
-    errorHandler.handleError(
-      error instanceof Error ? error : new Error(String(error)),
-      'medium',
-      {
-        component: 'BusinessAccess',
-        action: 'checkUserBusinessAccess',
-        additionalData: { businessId }
-      }
-    );
+    console.error('Exception ensuring user business access:', error);
     return false;
   }
-}
+};
+
+/**
+ * Gets the user's business ID safely
+ */
+export const getUserBusinessId = async (): Promise<string | null> => {
+  try {
+    const { data, error } = await supabase.rpc('get_user_business_id_safe');
+    
+    if (error) {
+      console.error('Error getting user business ID:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Exception getting user business ID:', error);
+    return null;
+  }
+};

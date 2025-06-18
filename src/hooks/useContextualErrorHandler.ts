@@ -1,95 +1,151 @@
 
 import { useCallback } from 'react';
-import { ErrorSeverity, ErrorContext } from '@/services/error/ErrorHandlingService';
 import { GlobalErrorHandler } from '@/services/error/GlobalErrorHandler';
+import { ErrorSeverity, ErrorContext } from '@/services/error/ErrorHandlingService';
 import { toast } from 'sonner';
 
 interface ContextualErrorOptions {
   showToast?: boolean;
+  logToConsole?: boolean;
+  reportToService?: boolean;
   customMessage?: string;
-  retryAction?: () => void;
 }
 
-export const useContextualErrorHandler = (component: string) => {
+export const useContextualErrorHandler = (context: string) => {
   const errorHandler = GlobalErrorHandler.getInstance();
 
   const handleError = useCallback((
     error: Error | string,
     severity: ErrorSeverity = 'medium',
     options: ContextualErrorOptions = {}
-  ): string => {
+  ) => {
     const {
       showToast = true,
-      customMessage,
-      retryAction
+      logToConsole = true,
+      reportToService = true,
+      customMessage
     } = options;
 
-    const context: ErrorContext = {
-      component,
-      action: 'user_action',
+    const errorContext: ErrorContext = {
+      component: context,
+      action: 'contextual_error',
       additionalData: {
-        hasRetryAction: !!retryAction,
-        customMessage
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        url: window.location.href
       }
     };
 
-    const errorId = errorHandler.handleError(error, severity, context);
+    let errorId = '';
+    
+    if (reportToService) {
+      errorId = errorHandler.handleError(error, severity, errorContext);
+    }
+
+    if (logToConsole) {
+      console.group(`🚨 Error in ${context}`);
+      console.error('Error:', error);
+      console.error('Severity:', severity);
+      console.error('Context:', errorContext);
+      if (errorId) console.error('Error ID:', errorId);
+      console.groupEnd();
+    }
 
     if (showToast) {
       const message = customMessage || errorHandler.errorService.getUserFriendlyMessage(error);
       
       if (severity === 'high' || severity === 'critical') {
         toast.error(message, {
-          description: retryAction ? 'Clique para tentar novamente' : `Código: ${errorId.slice(-8)}`,
-          action: retryAction ? {
-            label: 'Tentar novamente',
-            onClick: retryAction
-          } : undefined,
+          description: errorId ? `Código: ${errorId.slice(-8)}` : undefined,
           duration: 6000,
         });
       } else if (severity === 'medium') {
-        toast.warning(message, {
-          description: `Código: ${errorId.slice(-8)}`,
+        toast.error(message, {
           duration: 4000,
         });
       } else {
-        toast.info(message, {
+        toast.warning(message, {
           duration: 3000,
         });
       }
     }
 
     return errorId;
-  }, [component, errorHandler]);
+  }, [context, errorHandler]);
 
-  const handleAsyncOperation = useCallback(async <T>(
-    operation: () => Promise<T>,
-    operationName: string,
+  const handleApiError = useCallback((
+    error: any,
+    endpoint: string,
+    operation: string = 'unknown',
     options: ContextualErrorOptions = {}
-  ): Promise<T | null> => {
-    try {
-      return await operation();
-    } catch (error) {
-      handleError(
-        error instanceof Error ? error : new Error(String(error)),
-        'medium',
-        {
-          ...options,
-          customMessage: options.customMessage || `Erro em ${operationName}`
+  ) => {
+    return errorHandler.handleApiError(error, endpoint, operation);
+  }, [errorHandler]);
+
+  const handleFormError = useCallback((
+    error: any,
+    formName: string,
+    fieldName?: string,
+    options: ContextualErrorOptions = {}
+  ) => {
+    return errorHandler.handleFormError(error, formName, fieldName);
+  }, [errorHandler]);
+
+  const handleDatabaseError = useCallback((
+    error: any,
+    table: string,
+    operation: string,
+    options: ContextualErrorOptions = {}
+  ) => {
+    return errorHandler.handleDatabaseError(error, table, operation);
+  }, [errorHandler]);
+
+  const retryOperation = useCallback(async <T>(
+    operation: () => Promise<T>,
+    maxRetries: number = 3,
+    delayMs: number = 1000,
+    onRetry?: (attempt: number) => void
+  ): Promise<T> => {
+    let lastError: any;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        
+        if (attempt < maxRetries) {
+          if (onRetry) onRetry(attempt);
+          
+          await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
         }
-      );
-      return null;
+      }
     }
+
+    // Se chegou aqui, todas as tentativas falharam
+    handleError(lastError, 'high', {
+      customMessage: `Operação falhou após ${maxRetries} tentativas`
+    });
+    
+    throw lastError;
   }, [handleError]);
 
   return {
     handleError,
-    handleAsyncOperation,
+    handleApiError,
+    handleFormError,
+    handleDatabaseError,
+    retryOperation,
     getErrorHistory: () => errorHandler.getErrorHistory(),
     getErrorStats: () => errorHandler.getErrorStats()
   };
 };
 
-export const useReportsErrorHandler = () => {
-  return useContextualErrorHandler('Reports');
-};
+// Hook específico para cada contexto
+export const useClientErrorHandler = () => useContextualErrorHandler('Client');
+export const useServiceErrorHandler = () => useContextualErrorHandler('Service');
+export const useAppointmentErrorHandler = () => useContextualErrorHandler('Appointment');
+export const useProfessionalErrorHandler = () => useContextualErrorHandler('Professional');
+export const useInventoryErrorHandler = () => useContextualErrorHandler('Inventory');
+export const useReportsErrorHandler = () => useContextualErrorHandler('Reports');
+export const usePaymentErrorHandler = () => useContextualErrorHandler('Payment');

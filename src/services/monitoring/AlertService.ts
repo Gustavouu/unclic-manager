@@ -1,25 +1,34 @@
-export interface Alert {
+
+interface Alert {
   id: string;
-  type: 'error' | 'warning' | 'info';
+  type: 'performance' | 'error' | 'security' | 'business';
   severity: 'low' | 'medium' | 'high' | 'critical';
   title: string;
   message: string;
-  timestamp: Date;
+  timestamp: number;
   acknowledged: boolean;
   metadata?: Record<string, any>;
+}
+
+interface AlertRule {
+  id: string;
+  name: string;
+  metric: string;
+  condition: 'greater' | 'less' | 'equal';
+  threshold: number;
+  duration: number; // ms
+  severity: Alert['severity'];
+  enabled: boolean;
 }
 
 export class AlertService {
   private static instance: AlertService;
   private alerts: Alert[] = [];
-  private subscribers: ((alert: Alert) => void)[] = [];
-  private maxAlerts = 100;
-  private isProduction = import.meta.env.PROD;
+  private rules: AlertRule[] = [];
+  private subscribers: Array<(alert: Alert) => void> = [];
 
   private constructor() {
-    if (!this.isProduction) {
-      console.log('🚨 Alert Service initialized');
-    }
+    this.initializeDefaultRules();
   }
 
   public static getInstance(): AlertService {
@@ -29,77 +38,152 @@ export class AlertService {
     return AlertService.instance;
   }
 
-  public createAlert(
-    type: Alert['type'],
-    title: string,
-    message: string,
-    severity: Alert['severity'] = 'medium',
-    metadata?: Record<string, any>
-  ): string {
+  private initializeDefaultRules(): void {
+    this.rules = [
+      {
+        id: 'high-response-time',
+        name: 'Alto tempo de resposta',
+        metric: 'response_time',
+        condition: 'greater',
+        threshold: 2000,
+        duration: 30000,
+        severity: 'high',
+        enabled: true
+      },
+      {
+        id: 'high-error-rate',
+        name: 'Alta taxa de erro',
+        metric: 'error_rate',
+        condition: 'greater',
+        threshold: 5,
+        duration: 60000,
+        severity: 'critical',
+        enabled: true
+      },
+      {
+        id: 'low-cache-hit-rate',
+        name: 'Baixa taxa de cache hit',
+        metric: 'cache_hit_rate',
+        condition: 'less',
+        threshold: 70,
+        duration: 300000,
+        severity: 'medium',
+        enabled: true
+      },
+      {
+        id: 'high-memory-usage',
+        name: 'Alto uso de memória',
+        metric: 'memory_usage',
+        condition: 'greater',
+        threshold: 85,
+        duration: 120000,
+        severity: 'high',
+        enabled: true
+      },
+      {
+        id: 'slow-database-queries',
+        name: 'Queries de banco lentas',
+        metric: 'db_query_time',
+        condition: 'greater',
+        threshold: 1000,
+        duration: 30000,
+        severity: 'medium',
+        enabled: true
+      }
+    ];
+  }
+
+  public checkMetric(metric: string, value: number): void {
+    const applicableRules = this.rules.filter(rule => 
+      rule.enabled && rule.metric === metric
+    );
+
+    for (const rule of applicableRules) {
+      const shouldAlert = this.evaluateCondition(value, rule.condition, rule.threshold);
+      
+      if (shouldAlert) {
+        // Verificar se já existe um alerta similar recente
+        const recentAlert = this.alerts.find(alert => 
+          alert.metadata?.ruleId === rule.id &&
+          !alert.acknowledged &&
+          (Date.now() - alert.timestamp) < rule.duration
+        );
+
+        if (!recentAlert) {
+          this.createAlert(rule, value);
+        }
+      }
+    }
+  }
+
+  private evaluateCondition(value: number, condition: string, threshold: number): boolean {
+    switch (condition) {
+      case 'greater':
+        return value > threshold;
+      case 'less':
+        return value < threshold;
+      case 'equal':
+        return value === threshold;
+      default:
+        return false;
+    }
+  }
+
+  private createAlert(rule: AlertRule, value: number): void {
     const alert: Alert = {
       id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      type,
-      severity,
-      title,
-      message,
-      timestamp: new Date(),
+      type: this.getAlertType(rule.metric),
+      severity: rule.severity,
+      title: rule.name,
+      message: this.generateAlertMessage(rule, value),
+      timestamp: Date.now(),
       acknowledged: false,
-      metadata
+      metadata: {
+        ruleId: rule.id,
+        metric: rule.metric,
+        value,
+        threshold: rule.threshold
+      }
     };
 
     this.alerts.unshift(alert);
-
-    // Keep alerts array manageable
-    if (this.alerts.length > this.maxAlerts) {
-      this.alerts = this.alerts.slice(0, this.maxAlerts);
+    
+    // Manter apenas os últimos 100 alertas
+    if (this.alerts.length > 100) {
+      this.alerts = this.alerts.slice(0, 100);
     }
 
+    // Notificar subscribers
     this.notifySubscribers(alert);
 
-    if (!this.isProduction || type === 'error') {
-      console.log(`🚨 Alert [${type.toUpperCase()}/${severity.toUpperCase()}]: ${title} - ${message}`, metadata);
-    }
-
-    return alert.id;
+    console.warn(`Alert triggered: ${alert.title}`, alert);
   }
 
-  public acknowledgeAlert(alertId: string): boolean {
-    const alert = this.alerts.find(a => a.id === alertId);
-    if (alert) {
-      alert.acknowledged = true;
-      this.notifySubscribers(alert);
-      return true;
+  private getAlertType(metric: string): Alert['type'] {
+    if (metric.includes('error') || metric.includes('fail')) {
+      return 'error';
     }
-    return false;
+    if (metric.includes('security') || metric.includes('auth')) {
+      return 'security';
+    }
+    if (metric.includes('revenue') || metric.includes('business')) {
+      return 'business';
+    }
+    return 'performance';
   }
 
-  public getAlerts(filter?: { type?: Alert['type']; acknowledged?: boolean; limit?: number }): Alert[] {
-    let filtered = [...this.alerts];
-    
-    if (filter?.type) {
-      filtered = filtered.filter(a => a.type === filter.type);
-    }
-    
-    if (filter?.acknowledged !== undefined) {
-      filtered = filtered.filter(a => a.acknowledged === filter.acknowledged);
-    }
-    
-    if (filter?.limit) {
-      filtered = filtered.slice(0, filter.limit);
-    }
-    
-    return filtered;
-  }
-
-  public getUnacknowledgedCount(): number {
-    return this.alerts.filter(a => !a.acknowledged).length;
-  }
-
-  public subscribe(callback: (alert: Alert) => void): () => void {
-    this.subscribers.push(callback);
-    return () => {
-      this.subscribers = this.subscribers.filter(sub => sub !== callback);
+  private generateAlertMessage(rule: AlertRule, value: number): string {
+    const formatValue = (val: number) => {
+      if (rule.metric.includes('time')) {
+        return `${val.toFixed(0)}ms`;
+      }
+      if (rule.metric.includes('rate') || rule.metric.includes('percent')) {
+        return `${val.toFixed(1)}%`;
+      }
+      return val.toString();
     };
+
+    return `${rule.metric} atingiu ${formatValue(value)}, acima do limite de ${formatValue(rule.threshold)}`;
   }
 
   private notifySubscribers(alert: Alert): void {
@@ -107,36 +191,97 @@ export class AlertService {
       try {
         callback(alert);
       } catch (error) {
-        console.error('Error in alert subscriber:', error);
+        console.error('Error notifying alert subscriber:', error);
       }
     });
   }
 
-  public checkMetric(metricName: string, value: number): void {
-    // Simple threshold-based alerting
-    const thresholds = {
-      error_rate: 0.05, // 5% error rate
-      response_time: 2000, // 2 seconds
-      memory_usage: 0.9 // 90% memory usage
+  public subscribe(callback: (alert: Alert) => void): () => void {
+    this.subscribers.push(callback);
+    
+    return () => {
+      this.subscribers = this.subscribers.filter(sub => sub !== callback);
     };
-
-    const threshold = thresholds[metricName as keyof typeof thresholds];
-    if (threshold && value > threshold) {
-      this.createAlert(
-        'warning',
-        `High ${metricName}`,
-        `${metricName} is ${value}, which exceeds threshold of ${threshold}`,
-        'medium',
-        { metricName, value, threshold }
-      );
-    }
   }
 
-  public clearOldAlerts(olderThanDays: number = 7): void {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - olderThanDays);
-    
-    this.alerts = this.alerts.filter(alert => alert.timestamp >= cutoff);
-    this.alerts.forEach(alert => this.notifySubscribers(alert));
+  public getAlerts(options?: {
+    severity?: Alert['severity'][];
+    type?: Alert['type'][];
+    acknowledged?: boolean;
+    limit?: number;
+  }): Alert[] {
+    let filtered = [...this.alerts];
+
+    if (options?.severity) {
+      filtered = filtered.filter(alert => options.severity!.includes(alert.severity));
+    }
+
+    if (options?.type) {
+      filtered = filtered.filter(alert => options.type!.includes(alert.type));
+    }
+
+    if (options?.acknowledged !== undefined) {
+      filtered = filtered.filter(alert => alert.acknowledged === options.acknowledged);
+    }
+
+    if (options?.limit) {
+      filtered = filtered.slice(0, options.limit);
+    }
+
+    return filtered;
+  }
+
+  public acknowledgeAlert(alertId: string): boolean {
+    const alert = this.alerts.find(a => a.id === alertId);
+    if (alert) {
+      alert.acknowledged = true;
+      return true;
+    }
+    return false;
+  }
+
+  public acknowledgeAllAlerts(): void {
+    this.alerts.forEach(alert => {
+      alert.acknowledged = true;
+    });
+  }
+
+  public getUnacknowledgedCount(): number {
+    return this.alerts.filter(alert => !alert.acknowledged).length;
+  }
+
+  public getSummary(): {
+    total: number;
+    unacknowledged: number;
+    bySeverity: Record<Alert['severity'], number>;
+    byType: Record<Alert['type'], number>;
+  } {
+    const bySeverity = { low: 0, medium: 0, high: 0, critical: 0 };
+    const byType = { performance: 0, error: 0, security: 0, business: 0 };
+
+    this.alerts.forEach(alert => {
+      bySeverity[alert.severity]++;
+      byType[alert.type]++;
+    });
+
+    return {
+      total: this.alerts.length,
+      unacknowledged: this.getUnacknowledgedCount(),
+      bySeverity,
+      byType
+    };
+  }
+
+  public updateRule(ruleId: string, updates: Partial<AlertRule>): boolean {
+    const ruleIndex = this.rules.findIndex(rule => rule.id === ruleId);
+    if (ruleIndex !== -1) {
+      this.rules[ruleIndex] = { ...this.rules[ruleIndex], ...updates };
+      return true;
+    }
+    return false;
+  }
+
+  public getRules(): AlertRule[] {
+    return [...this.rules];
   }
 }

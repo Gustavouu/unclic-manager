@@ -2,10 +2,10 @@
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { AppointmentFormData } from "../schemas/appointmentFormSchema";
+import { AppointmentFormValues } from "../schemas/appointmentFormSchema";
 
 export type PaymentMethodSelectProps = {
-  form: UseFormReturn<AppointmentFormData>;
+  form: UseFormReturn<AppointmentFormValues>;
 };
 
 export const PaymentMethodSelect = ({ form }: PaymentMethodSelectProps) => {

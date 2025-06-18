@@ -15,7 +15,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface SidebarProps {
@@ -25,7 +25,6 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signOut } = useAuth();
 
   const menuItems = [
     {
@@ -56,7 +55,7 @@ export function Sidebar({ className }: SidebarProps) {
     {
       title: 'Financeiro',
       icon: DollarSign,
-      href: '/financial',
+      href: '/finance',
     },
     {
       title: 'Relatórios',
@@ -72,18 +71,13 @@ export function Sidebar({ className }: SidebarProps) {
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      await supabase.auth.signOut();
       navigate('/auth');
       toast.success('Logout realizado com sucesso!');
     } catch (error) {
       console.error('Error logging out:', error);
       toast.error('Erro ao fazer logout');
     }
-  };
-
-  const handleNavigation = (href: string) => {
-    // Use navigate to maintain React Router state and avoid page refresh
-    navigate(href);
   };
 
   return (
@@ -107,7 +101,7 @@ export function Sidebar({ className }: SidebarProps) {
                       'w-full justify-start',
                       isActive && 'bg-muted font-medium'
                     )}
-                    onClick={() => handleNavigation(item.href)}
+                    onClick={() => navigate(item.href)}
                   >
                     <Icon className="mr-2 h-4 w-4" />
                     {item.title}

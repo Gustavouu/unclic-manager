@@ -1,70 +1,79 @@
 
 import React from 'react';
+import { PageContainer } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useCurrentBusiness } from '@/hooks/useCurrentBusiness';
-import { Loader2, AlertCircle, Plus } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Megaphone, Users, Mail, TrendingUp } from 'lucide-react';
 
-const Marketing = () => {
-  const { businessId, isLoading, error } = useCurrentBusiness();
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Carregando marketing...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (!businessId) {
-    return (
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Nenhum negócio encontrado. Por favor, verifique suas permissões de acesso.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
+export default function MarketingPage() {
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Marketing</h1>
-          <p className="text-muted-foreground">
-            Gerencie campanhas e estratégias de marketing.
-          </p>
-        </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Campanha
-        </Button>
+    <PageContainer className="space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold">Marketing</h1>
+        <p className="text-muted-foreground">Gerencie campanhas e estratégias de marketing</p>
       </div>
+      
+      <div className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Campanhas Ativas</CardTitle>
+              <Megaphone className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">3</div>
+              <p className="text-xs text-muted-foreground">+1 desde o mês passado</p>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Campanhas de Marketing</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            Nenhuma campanha encontrada. Clique em "Nova Campanha" para começar.
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Alcance Total</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">2,350</div>
+              <p className="text-xs text-muted-foreground">+180 desde a semana passada</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">E-mails Enviados</CardTitle>
+              <Mail className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">1,234</div>
+              <p className="text-xs text-muted-foreground">+12% desde o mês passado</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">12.5%</div>
+              <p className="text-xs text-muted-foreground">+2.1% desde o mês passado</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Campanhas de Marketing</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-12">
+              <Megaphone className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Funcionalidade em Desenvolvimento</h3>
+              <p className="text-muted-foreground">
+                As ferramentas de marketing estarão disponíveis em breve.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </PageContainer>
   );
-};
-
-export default Marketing;
+}

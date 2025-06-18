@@ -10,7 +10,8 @@ import { useTimeSlots } from "./datetime/useTimeSlots";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { UnifiedAppointment } from "@/types/appointment-unified";
+import { Appointment } from "@/hooks/appointments/types";
+import { parseDateFromAppointment } from "../utils/dateUtils";
 
 interface StepDateTimeProps {
   bookingData: BookingData;
@@ -39,17 +40,19 @@ export function StepDateTime({ bookingData, updateBookingData, nextStep }: StepD
     const formattedSelectedDate = format(selectedDate, 'yyyy-MM-dd');
     
     // Find appointments for the selected date
-    const appointmentsForDate = appointments.filter((app: UnifiedAppointment) => {
+    const appointmentsForDate = appointments.filter((app: Appointment) => {
       if (!app.date) return false;
       
-      const appDate = app.date instanceof Date ? format(app.date, 'yyyy-MM-dd') : app.date;
+      const appDate = parseDateFromAppointment(app).date;
       return appDate === formattedSelectedDate;
     });
     
     // Mark time slots as booked
-    appointmentsForDate.forEach((app: UnifiedAppointment) => {
-      if (app.start_time) {
-        bookedTimeSlots.add(app.start_time);
+    appointmentsForDate.forEach((app: Appointment) => {
+      const { time } = parseDateFromAppointment(app);
+      
+      if (time) {
+        bookedTimeSlots.add(time);
       }
     });
     
